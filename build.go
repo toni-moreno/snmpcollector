@@ -63,7 +63,7 @@ func main() {
 			setup()
 
 		case "build":
-			pkg := "."
+			pkg := "./pkg/"
 			clean()
 			build(pkg, []string{})
 
