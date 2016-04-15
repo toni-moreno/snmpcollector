@@ -1,4 +1,23 @@
 typings/
 node_modules/
-*.js
-*.js.map
+npm-debug.log
+/dist
+/public_gen
+/tmp
+
+public/css/*.min.css
+
+# Editor junk
+*.sublime-workspace
+*.swp
+.idea/
+*.iml
+
+/data/*
+/bin/*
+
+conf/custom.ini
+fig.yml
+profile.cov
+.notouch
+
