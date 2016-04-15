@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{.AppName}} Site</title>
+  <style type="text/css" media="screen">
+    #message {
+      width: 100%;
+      max-width: 400px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hello {{.Name}}</h1>
+  <h3>Other Pages</h3>
+  <p><a href="welcome">Welcome Page</a></p>
+  <pre id="message"></pre>
+  <h3>JSON</h3>
+  <button type="button" onclick="testPost()">Test JSON Post</button>
+  <br>
+  <h3>Form Post</h3>
+  <form action="/contact/submit" method="post" accept-charset="utf-8">
+    <label for="name">Name <input type="text" name="name" id="name" required /></label>
+    <br>
+    <label for="email">Email <input type="email" name="email" id="email" required /></label>
+    <br>
+    <label for="message">Message <input type="text" name="message" id="message" required /></label>
+    <br>
+    <label for="mailing_address">Mailing Address <input type="text" name="mailing_address" id="mailing_address" required /></label>
+    <br>
+    <input type="submit" name="submit" value="Submit">
+  </form>
+  <br>
+  <h3>Cookie</h3>
+  <input type="text" name="cookie" id="cookie" value="my-cookie-value">
+  <button type="button" onclick="setCookie()">Set Cookie</button>
+  <button type="button" onclick="getCookie()">Get Cookie</button>
+  <br>
+  <h3>Cache</h3>
+  <input type="text" name="cache-key" id="cache-key" value="key">
+  <input type="text" name="cache-value" id="cache-value" value="value">
+  <button type="button" onclick="writeCache()">Write Cache</button>
+  <button type="button" onclick="readCache()">Read Cache</button>
+  <br>
+  <h3>SQL</h3>
+  <button type="button" onclick="newEntry()">Create DB Entry</button>
+  <button type="button" onclick="listEntries()">List All DB Entries</button>
+  <script src="/node_modules/whatwg-fetch/fetch.js"></script>
+  <script src="/main.js"></script>
+</body>
+</html>

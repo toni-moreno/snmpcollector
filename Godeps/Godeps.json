@@ -1,0 +1,47 @@
+{
+	"ImportPath": "_/root/influxsnmp",
+	"GoVersion": "go1.5.1",
+	"Packages": [
+		"./pkg/"
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/Unknwon/com",
+			"Rev": "d9bcf409c8a368d06c9b347705c381e7c12d54df"
+		},
+		{
+			"ImportPath": "github.com/Unknwon/macaron",
+			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
+		},
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.2-26-g9543750",
+			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"
+		},
+		{
+			"ImportPath": "github.com/jinzhu/gorm",
+			"Rev": "5174cc5c242a728b435ea2be8a2f7f998e15429b"
+		},
+		{
+			"ImportPath": "github.com/jinzhu/inflection",
+			"Rev": "3272df6c21d04180007eb3349844c89a3856bc25"
+		},
+		{
+			"ImportPath": "github.com/macaron-contrib/binding",
+			"Rev": "0fbe4b9707e6eb556ef843e5471592f55ce0a5e7"
+		},
+		{
+			"ImportPath": "github.com/macaron-contrib/cache",
+			"Rev": "ed9082daa6cb904fd1730a592f09d22847790d9f"
+		},
+		{
+			"ImportPath": "github.com/macaron-contrib/session",
+			"Rev": "31e841d95c7302b9ac456c830ea2d6dfcef4f84a"
+		},
+		{
+			"ImportPath": "gopkg.in/ini.v1",
+			"Comment": "v0-16-g1772191",
+			"Rev": "177219109c97e7920c933e21c9b25f874357b237"
+		}
+	]
+}
