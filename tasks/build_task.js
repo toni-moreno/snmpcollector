@@ -3,42 +3,27 @@ module.exports = function(grunt) {
 
   // Concat and Minify the src directory into dist
   grunt.registerTask('build', [
+    'clean:build',
     'jshint:source',
     'jshint:tests',
     'jscs',
     'tslint',
     'clean:release',
-    'copy:public_to_gen',
+   // 'copy:public_to_gen',
+   // 'copy:node_modules',
     'typescript:build',
     // 'karma:test',
-    'css',
-    'htmlmin:build',
-    'cssmin:build',
-    'ngAnnotate:build',
+   // 'css',
+    //'htmlmin:build',
+    //'cssmin:build',
+    //'ngAnnotate:build',
     //'systemjs:build',
-    'concat:js',
-    'filerev',
-    'remapFilerev',
-    'usemin',
-    'uglify:genDir'
+   // 'concat:js',
+   // 'filerev',
+   // 'remapFilerev',
+   // 'usemin',
+   // 'uglify:genDir'
   ]);
-
-  // task to add [[.AppSubUrl]] to reved path
-  grunt.registerTask('remapFilerev', function() {
-    var root = grunt.config().genDir;
-    var summary = grunt.filerev.summary;
-    var fixed = {};
-
-    for(var key in summary){
-      if(summary.hasOwnProperty(key)){
-        var orig = key.replace(root, root+'/[[.AppSubUrl]]/public');
-        var revved = summary[key].replace(root, root+'/[[.AppSubUrl]]/public');
-        fixed[orig] = revved;
-      }
-    }
-
-    grunt.filerev.summary = fixed;
-  });
 
   grunt.registerTask('build-post-process', function() {
     grunt.config('copy.public_gen_to_temp', {

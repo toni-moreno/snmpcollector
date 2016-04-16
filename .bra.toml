@@ -5,6 +5,7 @@ init_cmds = [
 ]
 watch_all = true
 watch_dirs = [
+	"$WORKDIR/public",
 	"$WORKDIR/pkg",
 	"$WORKDIR/conf",
 ]

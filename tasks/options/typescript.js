@@ -3,8 +3,8 @@ module.exports = function() {
 
   return {
     build: {
-      src: ['public/**/*.ts', "!public/vendor/**/*", "!**/*.d.ts"],
-      dest: 'public_gen/',
+      src: ['public/**/*.ts', "!public/vendor/**/*", "!**/*.d.ts","!node_modules"],
+      dest: 'public/',
       options: {
         module: 'system', //or commonjs
         target: 'es5', //or es3
@@ -15,7 +15,12 @@ module.exports = function() {
         experimentalDecorators: true,
         sourceMap: true,
         noImplicitAny: false,
-      }
+	/*rootDirs: [
+	            "./",
+		    "./public/",
+	            "./node_modules/*" 
+	         ]*/
+      },
     },
 
     // build2: {

@@ -1,23 +1,18 @@
 {
-    "compilerOptions": {
-        "sourceMap": true,
-        "declaration": true,
-        "outDir": "public_gen",
-        "noImplicitAny": false,
-        "target": "es5",
-        "rootDir": "public/",
-        "sourceRoot": "public/",
-        "module": "system",
-        "noEmitOnError": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true
-    },
-    "exclude": [
-        "node_modules",
-        "typings/main",
-        "typings/main.d.ts"
-    ],
-    "files": [
-        "public/app/**/*.ts"
-    ]
+  "compilerOptions": {
+    "target": "es5",
+    "module": "system",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "removeComments": false,
+    "noImplicitAny": false
+  },
+  "exclude": [
+    "node_modules",
+    "public/node_modules",
+    "typings/main",
+    "typings/main.d.ts"
+  ]
 }

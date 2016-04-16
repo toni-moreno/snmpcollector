@@ -1,5 +1,6 @@
 typings/
 node_modules/
+public/node_modules
 npm-debug.log
 /dist
 /public_gen
