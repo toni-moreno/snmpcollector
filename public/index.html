@@ -3,6 +3,9 @@
     <title>SNMP Collector</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">    
     <link rel="stylesheet" href="public/sass/styles/styles.css">
+    <base href="/">
+      <!-- styles -->
+      <link rel="stylesheet" type="text/css" href="node_modules/bootstrap/dist/css/bootstrap.css">
     <!-- 1. Load libraries -->
     <!-- IE required polyfills, in this exact order -->
     <script src="node_modules/es6-shim/es6-shim.min.js"></script>
@@ -22,12 +25,12 @@
           }
         }
       });
-      System.import('app/main')
+      System.import('main.js')
             .then(null, console.error.bind(console));
     </script>
   </head>
   <!-- 3. Display the application -->
   <body>
-    <isnmp-init>Loading...</isnmp-init>
+    <auth-app>Loading...</auth-app>
   </body>
 </html>

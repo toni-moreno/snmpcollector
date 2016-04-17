@@ -30,6 +30,7 @@ npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```
 npm install
+./node_modules/.bin/typings install
 ln -s ../node_modules/  public/node_modules
 npm run tsc
 ```

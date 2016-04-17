@@ -21,6 +21,9 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "angular2": "2.0.0-beta.15",
+    "angular2-jwt": "0.1.8",
+    "bootstrap": "^3.3.6",
     "grunt-jscs": "~1.5.x",
     "grunt-sass-lint": "^0.1.0",
     "grunt-sync": "^0.4.1",
