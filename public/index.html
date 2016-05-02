@@ -1,8 +1,9 @@
 <html>
   <head>
     <title>SNMP Collector</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">    
-    <link rel="stylesheet" href="public/sass/styles/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+     <link rel="stylesheet" href="public/css/simple-sidebar.css">
+    <!--link rel="stylesheet" href="public/sass/styles/styles.css"-->
     <base href="/">
       <!-- styles -->
       <link rel="stylesheet" type="text/css" href="node_modules/bootstrap/dist/css/bootstrap.css">
@@ -18,12 +19,21 @@
     <!-- 2. Configure SystemJS -->
     <script>
       System.config({
-        packages: {        
+	defaultJSExtensions: true,
+       /* packages: {        
           app: {
             format: 'register',
             defaultExtension: 'js'
           }
-        }
+        },*/
+	map: {
+	   angular2: '/node_modules/angular2',
+	   'angular2-jwt': '/node_modules/angular2-jwt/angular2-jwt',
+	   rxjs:'/node_modules/rxjs',
+	   lodash: 'node_modules/lodash/lodash.js',
+	   'ng2-bootstrap': 'node_modules/ng2-bootstrap/ng2-bootstrap.js',
+	   moment: 'node_modules/moment/moment.js',
+	   }
       });
       System.import('main.js')
             .then(null, console.error.bind(console));
@@ -33,4 +43,7 @@
   <body>
     <auth-app>Loading...</auth-app>
   </body>
+   <script src="/node_modules/jquery/dist/jquery.js"></script>
+   <script src="/node_modules/bootstrap/dist/js/bootstrap.js"></script>
+
 </html>

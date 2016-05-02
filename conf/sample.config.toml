@@ -1,0 +1,299 @@
+[general]
+ logdir = "./log"
+ logLevel = "debug"
+
+[selfmon]
+ enabled = true 
+ freq = 30
+ prefix = "gvm"
+ extratags = [ "instance=snmp1" ]
+
+#--------------------------
+#  METRIC PARAMETERS
+#--------------------------
+# [metrics."id"] => id for other structs
+# fielname : name  measurement 
+# Description : litle desciption for user easy understand
+# BaseOID : the real OID we need to query
+# Datasrctype : any of GAUGE,INTEGER,COUNTER32,COUNTER64
+# - GAUGE:  with this type of data this tool will send  direct value( float )
+# - INTEGUER:  with this type of data this tool will send  direct value( int)
+# - COUNTER32:  with this , this tool will compute the diference ( it takes care of  posible counter overflow)
+# - COUNTER64:  with this , this tool will compute the diference ( it takes care of  posible counter overflow)
+
+#http://www.debianadmin.com/linux-snmp-oids-for-cpumemory-and-disk-statistics.html
+#http://publib.boulder.ibm.com/tividd/td/ITMFNP/SC31-6364-00/en_US/HTML/MNPADMST84.htm
+
+
+
+[metrics]
+[metrics."Linux_user_CPU_percent"]
+  fieldname = "user"
+  description = "percentage of user CPU time"
+  baseOID = ".1.3.6.1.4.1.2021.11.9.0"
+  Datasrctype = "INTEGER"
+
+[metrics."Linux_system_CPU_percent"]
+  fieldname = "system"
+  description = "percentage of System CPU time"
+  baseOID = ".1.3.6.1.4.1.2021.11.10.0"
+  Datasrctype = "INTEGER"
+
+[metrics."Linux_idle_CPU_percent"]
+  fieldname = "idle"
+  description = "percentage of System CPU time"
+  baseOID = ".1.3.6.1.4.1.2021.11.11.0"
+  Datasrctype = "INTEGER"
+
+[metrics."ifHCInOctets"]
+  fieldname = "In.bytes"
+  description = "Bytes In - 64-bit Counters"
+  baseOID = ".1.3.6.1.2.1.31.1.1.1.6"
+  DatasrcType = "COUNTER64"
+  getrate = false
+
+[metrics."ifHCOutOctets"]
+  fieldname = "Out.bytes"
+  description = "Bytes In - 64-bit Counters"
+  baseOID = ".1.3.6.1.2.1.31.1.1.1.10" 
+  DatasrcType = "COUNTER64"
+  getRate = false
+
+[metrics."ifHCInUcastPkts"]
+  fieldname = "In.packets"
+  description = "Bytes In - 64-bit Counters"
+  baseOID = ".1.3.6.1.2.1.31.1.1.1.7"
+  DatasrcType = "COUNTER64"
+  getRate = false
+
+[metrics."ifHCOutUcastPkts"]
+  fieldname = "Out.packets"
+  description = "Packets - 64-bit Counters"
+  baseOID = ".1.3.6.1.2.1.31.1.1.1.11"
+  DatasrcType = "COUNTER64"
+  getRate = false
+
+#--------------------------
+#  MEASUREMENTS
+#--------------------------
+# [measurements."id"] => id unique for this measurement.
+# name 		: name  for the measurement 
+# fields 	: array of metric id's to join as fields in the measurement
+# getMode 	:  posible values [ "value", "indexed" ] 
+# 	* value: will send direct the value from these metrics.
+#	* indexed: will send points for each found indexed values ( like intefaces ) => needs indexOID/indexTag parameters
+# indexOID: the OID from we will get all real OID's to query data.
+# indexTAG: the tag name that will be sent after data gathered.
+
+#http://www.debianadmin.com/linux-snmp-oids-for-cpumemory-and-disk-statistics.html
+#http://publib.boulder.ibm.com/tividd/td/ITMFNP/SC31-6364-00/en_US/HTML/MNPADMST84.htm
+
+
+[measurements]
+
+[measurements."linux_cpu"]
+ name = "linux.cpu"
+ fields = [ 	"Linux_user_CPU_percent",
+		"Linux_system_CPU_percent",
+		"Linux_idle_CPU_percent",
+	]
+ getmode = "value"
+
+[measurements."linux_ports"]
+ name = "linux.ports"
+ fields = [ 	"ifHCInOctets",
+		"ifHCOutOctets",
+		"ifHCInUcastPkts",
+		"ifHCOutUcastPkts"
+ ]
+ getmode = "indexed"
+ indexOID = ".1.3.6.1.2.1.31.1.1.1.1" # ifName => needed to be "STRING"
+ IndexTAG = "portName"
+ 
+#--------------------------
+#  GetGroups
+#--------------------------
+# list of measurements for standarized devices
+
+
+[getgroups]
+
+[getgroups."Linux"]
+
+measurements = 	[ 
+		"linux_cpu", 
+		"linux_ports",
+		]
+
+
+#--------------------------
+#  CONETION PARAMETERS
+#--------------------------
+
+
+# host : hostname or IP (no default)
+# port : conection port (no default)
+# timeout : Timeout is the timeout for the SNMP Query in seconds
+# retries : Set the number of retries to attempt within timeout.
+# repeat : (Not used yet)
+
+# NOTE any device has an  any unique indentificator "ID" string in the [snmpdevice."id"] field
+
+#--------------------------------
+#   SNMP VERSION/AUTH PARAMETERS
+#-------------------------------- 
+
+# snmpversion 	: posible values values [ "1", "2c" , "3"] ( no default set)
+# community 	: (por snmpv2 only) commumity for authentication (no default set)
+#
+# -- for SNMP v3 only --
+#
+# v3seclevel	:  posible values [ "NoAuthNoPriv" , "AuthNoPriv" , "AuthPriv" ] ( no default set)
+# v3authuser 	:  Authentication user  
+# v3authpass	:  Autentication password
+# v3authprot 	:  Autehtication Protocol =>  values  [ "MD5", "SHA" ] ( default none)
+#
+# -- only needed if AuthPriv mode enabled ---
+#
+# v3privpass 	: Privacy Password
+# v3privprot 	: Privacy Protocol => values [ "DES", "AES"] ( default none)
+
+# ---------------------------
+# RUNTIME OPTIONS
+# --------------------------
+#
+# freq          : Frequency of polling in seconds ( default none)
+# devicetagname : The tag name that will identify the device (default : "device")
+# devicetagvalue: the tag valude that will identify the device ( default : "id" ) [ posible values "id" --hostsnmpv2_1--  or "host" --127.0.0.1-- ]
+# extratags     : Array with extratags in format key = value will be sent to the influxdb database
+# snmpdebug     :
+# filters       : Array containing filter file per measurement.
+
+	
+
+[snmpdevice]
+
+[snmpdevice.hostsnmpv2_1]
+ #conection parameters
+ host = "127.0.0.1"
+ port = 161
+ timeout = 20
+ retries = 5
+ #repeat = 0
+ #snmp version /auth params
+ snmpversion = "2c"  
+ community = "public"
+ # runtime parameters
+ freq = 30
+ devicetagname = "switch"
+ devicetagvalue = "id"
+ extratags = [ "tagA=1","tagB=2" , "tagC=3" ]
+ #debug = true
+ metricgroups = [ "Linux*" ]
+
+[snmpdevice.hostsnmpv2_2]
+ #conection parameters
+ host = "hostsnmpv2_2"
+ port = 161
+ timeout = 20
+ retries = 5
+ #repeat = 0
+ #snmp version /auth params
+ snmpversion = "2c"  
+ community = "public"
+ # runtime parameters
+ freq = 30
+ devicetagname = "switch"
+ devicetagvalue = "id"
+ extratags = [ "tagA=1","tagB=2" , "tagC=3" ]
+ #debug = true
+ metricgroups = [ "Linux*" ]
+
+
+[snmpdevice.hostsnmpv3a]
+ #conection parameters
+ host = "hostsnmpv3a"
+ port = 161
+ timeout = 20
+ retries = 5
+ repeat = 0
+ #snmp version /auth params
+ snmpversion = "3"
+ v3seclevel = "NoAuthNoPriv"
+ #only needed if Auth v3 enabled
+ v3authuser = "v3usernoauth"
+ # runtime parameters
+ freq = 60
+ devicetagname = "router"
+ devicetagvalue = "id"
+ extratags = [ "tagA=4","tagB=5" ,"tagC=6" ]
+ #loglevel = "info"
+ #snmpdebug  = true
+ metricgroups = [ "Linux.*" ]
+ measfilters = [ 
+		[ "linux_ports" , "file" , "lp_file_filter_a.txt" ,"EnableAlias"],
+	]
+
+[snmpdevice.hostsnmpv3b]
+ #conection parameters
+ host = "hostsnmpv3b"
+ port = 161
+ timeout = 20
+ retries = 5
+ repeat = 0
+ #snmp version /auth params
+ snmpversion = "3"
+ v3seclevel = "AuthNoPriv"
+ #only needed if Auth v3 enabled
+ v3authuser = "v3userauth"
+ v3authpass = "v3passauth"
+ v3authprot = "MD5"
+ # runtime parameters
+ freq = 30
+ #extratags = [ "tagA=4","tagB=5" ,"tagC=6" ]
+ loglevel = "info"
+ snmpdebug  = false 
+ metricgroups = [ ".*ux" ]
+ measfilters = [ 
+		[ "linux_ports" , "file", "lp_file_filter_b.txt","EnableAlia" ],
+	]
+
+ 
+[snmpdevice.hostsnmpv3c]
+ #conection parameters
+ host = "hostsnmpv3c"
+ port = 161
+ timeout = 20
+ retries = 5
+ repeat = 0
+ #snmp version /auth params
+ snmpversion = "3"
+ v3seclevel = "AuthPriv"
+ #only needed if Auth v3 enabled
+ v3authuser = "v3userpriv"
+ v3authpass = "v3passpriv"
+ v3authprot = "MD5"
+ #only needed if Privacy v3 enabled
+ v3privpass = "v3passenc"
+ v3privprot = "DES"
+ # runtime parameters
+ freq = 30
+ extratags = [ "tagA=4","tagB=5" ,"tagC=6" ]
+ loglevel = "debug"
+ snmpdebug  = true
+ metricgroups = [ "Lin.*"]
+ measfilters = [ 
+		[ "linux_ports" , "OIDCondition", ".1.3.6.1.2.1.2.2.1.8","eq","1" ], #IfOperStatus
+]
+
+[influx]
+
+[influx."*"]
+ host = "192.168.1.103"
+ port = 8086
+ db = "snmp"
+ user = "snmpuser"
+ password = "snmppass"
+
+[http]
+ port   = 8090

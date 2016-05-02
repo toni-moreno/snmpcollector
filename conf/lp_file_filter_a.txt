@@ -1,0 +1,3 @@
+#coment
+lo	loopback
+eth0	alias_eth0

@@ -1,0 +1,3 @@
+#coment
+eth0	alias_ethN
+sit0	

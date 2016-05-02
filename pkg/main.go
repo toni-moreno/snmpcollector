@@ -1,251 +1,241 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"html/template"
-	"log"
-	"net/http"
+	"os"
+	"path/filepath"
+	"sync"
 	"time"
 
-	"github.com/Unknwon/macaron"
-	"github.com/macaron-contrib/binding"
-	"github.com/macaron-contrib/cache"
-	"github.com/macaron-contrib/session"
-
-	// gorm database ORM
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	"github.com/Sirupsen/logrus"
+	//"github.com/kardianos/osext"
+	"github.com/spf13/viper"
 )
 
-type Person struct {
-	Name string
-	Age  int
-	Time string
+const layout = "2006-01-02 15:04:05"
+
+type GeneralConfig struct {
+	LogDir   string `toml:"logdir"`
+	LogLevel string `toml:"loglevel"`
 }
 
-type ContactEntry struct {
-	ID             uint   `gorm:"primary_key"`
-	Name           string `sql:"type:varchar(255)"`
-	Email          string `sql:"type:varchar(255);unique_index"`
-	Message        string `sql:"type:text"`
-	MailingAddress string `sql:"type:varchar(255)"`
+var (
+	log        = logrus.New()
+	quit       = make(chan struct{})
+	verbose    bool
+	startTime  = time.Now()
+	showConfig bool
+	repeat     = 0
+	freq       = 30
+	httpPort   = 8080
+	//	oidToName     = make(map[string]string)
+	//	nameToOid     = make(map[string]string)
+	//appdir, _  = osext.ExecutableFolder()
+	appdir     = os.Getenv("PWD")
+	logDir     = filepath.Join(appdir, "log")
+	confDir    = filepath.Join(appdir, "conf")
+	configFile = filepath.Join(confDir, "config.toml")
+	//	errorLog      *os.File
+	//	errorDuration = time.Duration(10 * time.Minute)
+	//	errorPeriod   = errorDuration.String()
+	//	errorMax      = 100
+	//	errorName     string
+
+	cfg = struct {
+		Selfmon      SelfMonConfig
+		Metrics      map[string]*SnmpMetricCfg
+		Measurements map[string]*InfluxMeasurementCfg
+		GetGroups    map[string]*MGroupsCfg
+		SnmpDevice   map[string]*SnmpDeviceCfg
+		Influx       map[string]*InfluxConfig
+		HTTP         HTTPConfig
+		General      GeneralConfig
+	}{}
+)
+
+func fatal(v ...interface{}) {
+	log.Fatalln(v...)
 }
 
-type ContactForm struct {
-	Name           string `form:"name" binding:"Required"`
-	Email          string `form:"email"`
-	Message        string `form:"message" binding:"Required"`
-	MailingAddress string `form:"mailing_address"`
+func flags() *flag.FlagSet {
+	var f flag.FlagSet
+	f.BoolVar(&showConfig, "showconf", showConfig, "show all devices config and exit")
+	f.StringVar(&configFile, "config", configFile, "config file")
+	f.BoolVar(&verbose, "verbose", verbose, "verbose mode")
+	f.IntVar(&freq, "freq", freq, "delay (in seconds)")
+	f.IntVar(&httpPort, "http", httpPort, "http port")
+	f.StringVar(&logDir, "logs", logDir, "log directory")
+	f.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+		f.VisitAll(func(flag *flag.Flag) {
+			format := "%10s: %s\n"
+			fmt.Fprintf(os.Stderr, format, "-"+flag.Name, flag.Usage)
+		})
+		fmt.Fprintf(os.Stderr, "\nAll settings can be set in config file: %s\n", configFile)
+		os.Exit(1)
+
+	}
+	return &f
 }
 
-type UserLogin struct {
-	UserName string `form:"username" binding:"Required"`
-	Password string `form:"password" binding:"Required"`
+/*
+init_metrics_cfg this function does 2 things
+1.- Initialice id from key of maps for all SnmpMetricCfg and InfluxMeasurementCfg objects
+2.- Initialice references between InfluxMeasurementCfg and SnmpMetricGfg objects
+*/
+
+func init_metrics_cfg() error {
+	//TODO:
+	// - check duplicates OID's => warning messages
+	//Initialize references to SnmpMetricGfg into InfluxMeasurementCfg
+	log.Debug("--------------------Initializing Config metrics-------------------")
+	log.Debug("Initializing SNMPMetricconfig...")
+	for m_key, m_val := range cfg.Metrics {
+		err := m_val.Init(m_key)
+		if err != nil {
+			log.Warnln("Error in Metric config:", err)
+			//if some error int the format the metric is deleted from the config
+			delete(cfg.Metrics, m_key)
+		}
+	}
+	log.Debug("Initializing MEASSUREMENTSconfig...")
+	for m_key, m_val := range cfg.Measurements {
+		err := m_val.Init(m_key, &cfg.Metrics)
+		if err != nil {
+			log.Warnln("Error in Metric config:", err)
+			//if some error int the format the metric is deleted from the config
+			delete(cfg.Metrics, m_key)
+		}
+
+		log.Debugf("FIELDMETRICS: %+v", m_val.fieldMetric)
+	}
+	log.Debug("-----------------------END Config metrics----------------------")
+	return nil
+}
+
+func init() {
+	log.Printf("set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n", appdir, confDir, logDir)
+
+	// parse first time to see if config file is being specified
+	f := flags()
+	f.Parse(os.Args[1:])
+	// now load up config settings
+	if _, err := os.Stat(configFile); err == nil {
+		viper.SetConfigFile(configFile)
+	} else {
+		viper.SetConfigName("config")
+		viper.AddConfigPath("/opt/influxsnmp/conf/")
+		viper.AddConfigPath("./conf/")
+		viper.AddConfigPath(".")
+	}
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+	err = viper.Unmarshal(&cfg)
+	if err != nil {
+		panic(fmt.Errorf("unable to decode into struct, %v \n", err))
+	}
+	//Debug	fmt.Printf("%+v\n", cfg)
+	if len(cfg.General.LogDir) > 0 {
+		logDir = cfg.General.LogDir
+	}
+	if len(cfg.General.LogLevel) > 0 {
+		l, _ := logrus.ParseLevel(cfg.General.LogLevel)
+		log.Level = l
+
+	}
+
+	init_metrics_cfg()
+
+	for _, s := range cfg.SnmpDevice {
+		s.debugging = make(chan bool)
+		s.enabled = make(chan chan bool)
+	}
+	var ok bool
+	for k, c := range cfg.SnmpDevice {
+		//Inticialize each SNMP device
+		c.Init(k)
+		if c.Freq == 0 {
+			c.Freq = freq
+		}
+	}
+
+	// only run when one needs to see the interface names of the device
+	if showConfig {
+		for _, c := range cfg.SnmpDevice {
+			fmt.Println("\nSNMP host:", c.id)
+			fmt.Println("=========================================")
+			c.printConfig()
+		}
+		os.Exit(0)
+	}
+
+	// re-read cmd line args to override as indicated
+	f = flags()
+	f.Parse(os.Args[1:])
+	os.Mkdir(logDir, 0755)
+
+	// now make sure each snmp device has a db
+
+	for name, c := range cfg.SnmpDevice {
+		// default is to use name of snmp config, but it can be overridden
+		if len(c.Config) > 0 {
+			name = c.Config
+		}
+		if c.Influx, ok = cfg.Influx[name]; !ok {
+			if c.Influx, ok = cfg.Influx["*"]; !ok {
+				fatal("No influx config for snmp device:", name)
+			}
+		}
+		c.Influx.Init()
+	}
+
+	//make sure the selfmon has a deb
+
+	if cfg.Selfmon.Enabled {
+		cfg.Selfmon.Init()
+		cfg.Selfmon.Influx, ok = cfg.Influx["*"]
+		cfg.Selfmon.Influx.Init()
+		fmt.Printf("SELFMON enabled %+vn\n", cfg.Selfmon)
+	} else {
+		fmt.Printf("SELFMON disabled %+vn\n", cfg.Selfmon)
+	}
+	/*
+		var ferr error
+		errorName = fmt.Sprintf("error.%d.log", cfg.HTTP.Port)
+		errorPath := filepath.Join(logDir, errorName)
+		errorLog, ferr = os.OpenFile(errorPath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+		if ferr != nil {
+			log.Fatalln("Can't open error log:", ferr)
+		}*/
 }
 
 func main() {
-	// initiate the app
-	m := macaron.Classic()
-
-	// register middleware
-	m.Use(macaron.Recovery())
-	m.Use(macaron.Gziper())
-	m.Use(macaron.Static("public",
-		macaron.StaticOptions{
-			// Prefix is the optional prefix used to serve the static directory content. Default is empty string.
-			Prefix: "public",
-			// SkipLogging will disable [Static] log messages when a static file is served. Default is false.
-			SkipLogging: true,
-			// IndexFile defines which file to serve as index if it exists. Default is "index.html".
-			IndexFile: "index.html",
-			// Expires defines which user-defined function to use for producing a HTTP Expires Header. Default is nil.
-			// https://developers.google.com/speed/docs/insights/LeverageBrowserCaching
-			Expires: func() string { return "max-age=0" },
-		}))
-	m.Use(session.Sessioner(session.Options{
-		// Name of provider. Default is "memory".
-		Provider: "memory",
-		// Provider configuration, it's corresponding to provider.
-		ProviderConfig: "",
-		// Cookie name to save session ID. Default is "MacaronSession".
-		CookieName: "MacaronSession",
-		// Cookie path to store. Default is "/".
-		CookiePath: "/",
-		// GC interval time in seconds. Default is 3600.
-		Gclifetime: 3600,
-		// Max life time in seconds. Default is whatever GC interval time is.
-		Maxlifetime: 3600,
-		// Use HTTPS only. Default is false.
-		Secure: false,
-		// Cookie life time. Default is 0.
-		CookieLifeTime: 0,
-		// Cookie domain name. Default is empty.
-		Domain: "",
-		// Session ID length. Default is 16.
-		IDLength: 16,
-		// Configuration section name. Default is "session".
-		Section: "session",
-	}))
-	m.Use(macaron.Renderer(macaron.RenderOptions{
-		// Directory to load templates. Default is "templates".
-		Directory: "templates",
-		// Extensions to parse template files from. Defaults are [".tmpl", ".html"].
-		Extensions: []string{".tmpl", ".html"},
-		// Funcs is a slice of FuncMaps to apply to the template upon compilation. Default is [].
-		Funcs: []template.FuncMap{map[string]interface{}{
-			"AppName": func() string {
-				return "snmpcollector"
-			},
-			"AppVer": func() string {
-				return "0.1.0"
-			},
-		}},
-		// Delims sets the action delimiters to the specified strings. Defaults are ["{{", "}}"].
-		Delims: macaron.Delims{"{{", "}}"},
-		// Appends the given charset to the Content-Type header. Default is "UTF-8".
-		Charset: "UTF-8",
-		// Outputs human readable JSON. Default is false.
-		IndentJSON: true,
-		// Outputs human readable XML. Default is false.
-		IndentXML: true,
-		// Prefixes the JSON output with the given bytes. Default is no prefix.
-		// PrefixJSON: []byte("macaron"),
-		// Prefixes the XML output with the given bytes. Default is no prefix.
-		// PrefixXML: []byte("macaron"),
-		// Allows changing of output to XHTML instead of HTML. Default is "text/html".
-		HTMLContentType: "text/html",
-	}))
-	m.Use(cache.Cacher(cache.Options{
-		// Name of adapter. Default is "memory".
-		Adapter: "memory",
-		// Adapter configuration, it's corresponding to adapter.
-		AdapterConfig: "",
-		// GC interval time in seconds. Default is 60.
-		Interval: 60,
-		// Configuration section name. Default is "cache".
-		Section: "cache",
-	}))
-
-	// setup handlers
-	m.Get("/", myHandler)
-	m.Get("/welcome", myOtherHandler)
-	m.Get("/query", myQueryStringHandler) // /query?name=Some+Name
-	m.Get("/json", myJsonHandler)
-	m.Post("/contact/submit", binding.Bind(ContactForm{}), mySubmitHandler)
-	m.Get("/session", mySessionHandler)
-	m.Post("/session/create", myLoginHandler)
-
-	m.Get("/set/cookie/:value", mySetCookieHandler)
-	m.Get("/get/cookie", myGetCookieHandler)
-	m.Get("/database", myDatabaseHandler)
-	m.Get("/database/list", myDatabaseListHandler)
-	m.Get("/cache/write/:key/:value", myCacheWriteHandler)
-	m.Get("/cache/read/:key", myCacheReadHandler)
-
-	log.Println("Server is running on localhost:4000...")
-	log.Println(http.ListenAndServe("0.0.0.0:4000", m))
-}
-
-func myHandler(ctx *macaron.Context) {
-	ctx.Data["Name"] = "Person"
-	ctx.HTML(200, "hello") // 200 is the response code.
-}
-
-func myOtherHandler(ctx *macaron.Context) {
-	ctx.Data["Message"] = "the request path is: " + ctx.Req.RequestURI
-	ctx.HTML(200, "welcome")
-}
-
-func myJsonHandler(ctx *macaron.Context) {
-	t := time.Now()
-	p := Person{"James", 25, fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())}
-	ctx.JSON(200, &p)
-}
-
-func myQueryStringHandler(ctx *macaron.Context) {
-	ctx.Data["Name"] = ctx.QueryEscape("name")
-	ctx.HTML(200, "hello")
-}
-
-func myLoginHandler(ctx *macaron.Context, user UserLogin) {
-
-}
-
-func mySubmitHandler(ctx *macaron.Context, contact ContactForm) {
-	submission := ContactEntry{0, contact.Name, contact.Email, contact.Message, contact.MailingAddress}
-	// ctx.JSON(200, &submission)
-	ctx.Data["Submission"] = &submission
-	ctx.HTML(200, "success")
-}
-
-func mySessionHandler(sess session.Store) string {
-	sess.Set("session", "session middleware")
-	return sess.Get("session").(string)
-}
-
-func mySetCookieHandler(ctx *macaron.Context) string {
-	// set the cookie for 5 minutes
-	ctx.SetCookie("user", ctx.Params(":value"), 300)
-	return "cookie set for 5 minutes"
-}
-
-func myGetCookieHandler(ctx *macaron.Context) string {
-	name := ctx.GetCookie("user")
-	if name == "" {
-		name = "no cookie set"
-	}
-	return name
-}
-
-func myDatabaseHandler(ctx *macaron.Context) string {
-	db, err := gorm.Open("mysql", "gorm:gorm@/gorm?charset=utf8&parseTime=True&loc=Local")
-
-	if err != nil {
-		log.Println("Database Error")
-		return fmt.Sprintf("%s", err)
+	var wg sync.WaitGroup
+	defer func() {
+		//errorLog.Close()
+	}()
+	if cfg.Selfmon.Enabled {
+		cfg.Selfmon.ReportStats(&wg)
 	}
 
-	db.DB()
-
-	t := time.Now()
-
-	entry := ContactEntry{
-		Name:           "James",
-		Email:          "james2doyle@gmail.com",
-		Message:        fmt.Sprintf("The time is %02d:%02d:%02d", t.Hour(), t.Minute(), t.Second()),
-		MailingAddress: "998 Oxford Street East, London ON, N5Y3K7",
+	for _, c := range cfg.SnmpDevice {
+		wg.Add(1)
+		go c.Gather(&wg)
 	}
 
-	db.Create(&entry)
-
-	return fmt.Sprintf("New Entry Id: %d\n", entry.ID)
-}
-
-func myDatabaseListHandler(ctx *macaron.Context) {
-	db, err := gorm.Open("mysql", "gorm:gorm@/gorm?charset=utf8&parseTime=True&loc=Local")
-
-	if err != nil {
-		log.Println("Database Error")
-	}
-
-	db.DB()
-
-	contact_entries := []ContactEntry{}
-	db.Find(&contact_entries)
-
-	ctx.JSON(200, contact_entries)
-}
-
-func myCacheWriteHandler(ctx *macaron.Context, c cache.Cache) string {
-	c.Put(ctx.Params(":key"), ctx.Params(":value"), 300)
-	return "cached for 5 minutes"
-}
-
-func myCacheReadHandler(ctx *macaron.Context, c cache.Cache) interface{} {
-	val := c.Get(ctx.Params(":key"))
-	if val != nil {
-		return val
+	var port int
+	if cfg.HTTP.Port > 0 {
+		port = cfg.HTTP.Port
 	} else {
-		return fmt.Sprintf("no cache with \"%s\" set", ctx.Params(":key"))
+		port = httpPort
+	}
+
+	if port > 0 {
+		webServer(port)
+	} else {
+		<-quit
 	}
 }

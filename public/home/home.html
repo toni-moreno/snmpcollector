@@ -1,14 +1,65 @@
-<div>
-  <div class="home jumbotron centered">
-    <h1>Welcome to the angular2 authentication sample!</h1>
-    <h2 *ngIf="jwt">Your JWT is:</h2>
-    <pre *ngIf="jwt" class="jwt"><code>{{ jwt }}</code></pre>
-    <pre *ngIf="jwt" class="jwt"><code>{{ decodedJwt | json }}</code></pre>
-    <p>Click any of the buttons to call an API and get a response</p>
-    <p><a class="btn btn-primary btn-lg" role="button" (click)="callAnonymousApi()">Call Anonymous API</a></p>
-    <p><a class="btn btn-primary btn-lg" role="button" (click)="callSecuredApi()">Call Secure API</a></p>
-    <p><a class="btn btn-primary btn-lg" role="button" (click)="logout()">Logout</a></p>
-    <h2 *ngIf="response">The response of calling the <span class="red">{{api}}</span> API is:</h2>
-    <h3 *ngIf="response">{{response}}</h3>
-  </div>
-</div>
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav">
+                <li class="sidebar-brand">
+                    <a href="#">
+                        SNMP Collector
+                    </a>
+                </li>
+                <li>
+		    <a class="btn btn-primary btn-lg" role="button" (click)="logout()">Logout</a>
+                </li>
+                <li>
+		   <a  (click)="SNMPDevices()">SNMP Devices</a>
+                </li>
+                <li>
+                    <a (click)="SNMPMetrics()">SNMP Metrics</a>
+                </li>
+                <li>
+                    <a (click)="IflxMeasurements()">Influx Measurements</a>
+                </li>
+                <li>
+                    <a (click)="MetricGroups()">Metric Groups</a>
+                </li>
+                <li>
+		    <a (click)="InfluxServers()">Influx Servers</a>
+                </li>
+                <li>
+                    <a href="#">About</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+			   <p [ngSwitch]="item_type">
+			      <template ngSwitchWhen="snmpdevice">
+			      	<h1>SNMP Devices</h1>
+			      	<snmpdevs></snmpdevs>
+			      </template>
+			      <template ngSwitchWhen="snmpmetrics">
+			      <h1> SNMP Metrics</h1>
+			      </template>
+			      <template ngSwitchWhen="ifluxmeas">
+			      <h1>measurents</h1>
+			      </template>
+			      <template ngSwitchWhen="metricgroup">
+			      <h1>metric Group</h1>
+			      </template>
+			      <template ngSwitchDefault>DEFAULT</template>
+			    </p>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->

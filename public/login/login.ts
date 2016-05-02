@@ -4,14 +4,11 @@ import { CORE_DIRECTIVES, FORM_DIRECTIVES } from 'angular2/common';
 import { Http, Headers } from 'angular2/http';
 import { contentHeaders } from '../common/headers';
 
-let styles   = require('./login.css');
-let template = require('./login.html');
-
 @Component({
   selector: 'login',
   directives: [RouterLink, CORE_DIRECTIVES, FORM_DIRECTIVES ],
-  template: template,
-  styles: [ styles ]
+  templateUrl: '/public/login/login.html',
+  styleUrls: ['/public/login/login.css']
 })
 export class Login {
   constructor(public router: Router, public http: Http) {
@@ -20,7 +17,7 @@ export class Login {
   login(event, username, password) {
     event.preventDefault();
     let body = JSON.stringify({ username, password });
-    this.http.post('http://localhost:3001/sessions/create', body, { headers: contentHeaders })
+    this.http.post('/session/create', body, { headers: contentHeaders })
       .subscribe(
         response => {
           localStorage.setItem('jwt', response.json().id_token);
@@ -32,9 +29,9 @@ export class Login {
         }
       );
   }
-
+/*
   signup(event) {
     event.preventDefault();
     this.router.parent.navigateByUrl('/signup');
-  }
+  }*/
 }
