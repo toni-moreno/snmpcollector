@@ -165,7 +165,7 @@ func init() {
 	// only run when one needs to see the interface names of the device
 	if showConfig {
 		for _, c := range cfg.SnmpDevice {
-			fmt.Println("\nSNMP host:", c.id)
+			fmt.Println("\nSNMP host:", c.ID)
 			fmt.Println("=========================================")
 			c.printConfig()
 		}

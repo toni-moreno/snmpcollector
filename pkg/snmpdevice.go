@@ -17,7 +17,7 @@ import (
 )
 
 type SnmpDeviceCfg struct {
-	id string
+	ID string
 	//snmp connection config
 	Host    string `toml:"host"`
 	Port    int    `toml:"port"`
@@ -78,7 +78,7 @@ Init  does the following
 func (c *SnmpDeviceCfg) Init(name string) {
 	log.Infof("Initializing device %s\n", name)
 	//Init id
-	c.id = name
+	c.ID = name
 	//Init Logger
 
 	if len(c.LogFile) == 0 {
@@ -107,11 +107,11 @@ func (c *SnmpDeviceCfg) Init(name string) {
 
 	switch c.DeviceTagValue {
 	case "id":
-		val = c.id
+		val = c.ID
 	case "host":
 		val = c.Host
 	default:
-		val = c.id
+		val = c.ID
 		c.log.Warnf("Unkwnown DeviceTagValue %s set ID (%s) as value", c.DeviceTagValue, val)
 	}
 
@@ -154,7 +154,7 @@ func (c *SnmpDeviceCfg) Init(name string) {
 
 		}
 
-		c.log.Debugf("SNMP device %s has this SELECTED GROUPS: %+v", c.id, selGroups)
+		c.log.Debugf("SNMP device %s has this SELECTED GROUPS: %+v", c.ID, selGroups)
 
 		//Only For selected Groups we will get all selected measurements and we will remove repeated values
 
@@ -373,7 +373,7 @@ func (c *SnmpDeviceCfg) addErrors(n int64) {
 }
 
 func (c *SnmpDeviceCfg) DebugLog() *olog.Logger {
-	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(c.id, ".", "-", -1)+".log")
+	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(c.ID, ".", "-", -1)+".log")
 	if l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644); err == nil {
 		return olog.New(l, "", 0)
 	} else {
@@ -386,7 +386,7 @@ func (c *SnmpDeviceCfg) Gather(wg *sync.WaitGroup) {
 	client := c.snmpClient
 	debug := false
 
-	c.log.Infof("Beginning gather process for device %s (%s)", c.id, c.Host)
+	c.log.Infof("Beginning gather process for device %s (%s)", c.ID, c.Host)
 
 	client = c.snmpClient
 	s := time.Tick(time.Duration(c.Freq) * time.Second)

@@ -188,6 +188,7 @@ func GetSNMPDevices(ctx *macaron.Context) {
 }
 
 func AddSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
+	log.Printf("ADDING DEVICE %+v", dev)
 }
 
 func UpdateSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
