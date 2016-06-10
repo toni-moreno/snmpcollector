@@ -69,19 +69,19 @@ func main() {
 
 		case "test":
 			test("./pkg/...")
-			grunt("test")
+			//grunt("test")
 
 		case "package":
 			//verifyGitRepoIsClean()
-			grunt("release")
+			//grunt("release")
 			createLinuxPackages()
 
 		case "pkg-rpm":
-			grunt("release")
+			//grunt("release")
 			createRpmPackages()
 
 		case "pkg-deb":
-			grunt("release")
+			//grunt("release")
 			createDebPackages()
 
 		case "latest":
@@ -290,9 +290,9 @@ func ChangeWorkingDir(dir string) {
 	os.Chdir(dir)
 }
 
-func grunt(params ...string) {
+/*func grunt(params ...string) {
 	runPrint("./node_modules/grunt-cli/bin/grunt", params...)
-}
+}*/
 
 func setup() {
 	runPrint("go", "get", "-v", "github.com/tools/godep")

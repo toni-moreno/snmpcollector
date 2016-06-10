@@ -12,7 +12,7 @@
   "exclude": [
     "node_modules",
     "public/node_modules",
-    "typings/main",
-    "typings/main.d.ts"
+    "typings/globals",
+    "typings/index.d.ts"
   ]
 }
