@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	//"github.com/kardianos/osext"
 	"github.com/spf13/viper"
 )
 
 const layout = "2006-01-02 15:04:05"
 
+// GeneralConfig has miscelaneous configuration options
 type GeneralConfig struct {
 	LogDir   string `toml:"logdir"`
 	LogLevel string `toml:"loglevel"`
@@ -29,18 +29,11 @@ var (
 	repeat     = 0
 	freq       = 30
 	httpPort   = 8080
-	//	oidToName     = make(map[string]string)
-	//	nameToOid     = make(map[string]string)
-	//appdir, _  = osext.ExecutableFolder()
+
 	appdir     = os.Getenv("PWD")
 	logDir     = filepath.Join(appdir, "log")
 	confDir    = filepath.Join(appdir, "conf")
 	configFile = filepath.Join(confDir, "config.toml")
-	//	errorLog      *os.File
-	//	errorDuration = time.Duration(10 * time.Minute)
-	//	errorPeriod   = errorDuration.String()
-	//	errorMax      = 100
-	//	errorName     string
 
 	cfg = struct {
 		Selfmon      SelfMonConfig
@@ -80,35 +73,35 @@ func flags() *flag.FlagSet {
 }
 
 /*
-init_metrics_cfg this function does 2 things
+initMetricsCfg this function does 2 things
 1.- Initialice id from key of maps for all SnmpMetricCfg and InfluxMeasurementCfg objects
 2.- Initialice references between InfluxMeasurementCfg and SnmpMetricGfg objects
 */
 
-func init_metrics_cfg() error {
+func initMetricsCfg() error {
 	//TODO:
 	// - check duplicates OID's => warning messages
 	//Initialize references to SnmpMetricGfg into InfluxMeasurementCfg
 	log.Debug("--------------------Initializing Config metrics-------------------")
 	log.Debug("Initializing SNMPMetricconfig...")
-	for m_key, m_val := range cfg.Metrics {
-		err := m_val.Init(m_key)
+	for mKey, mVal := range cfg.Metrics {
+		err := mVal.Init(mKey)
 		if err != nil {
 			log.Warnln("Error in Metric config:", err)
 			//if some error int the format the metric is deleted from the config
-			delete(cfg.Metrics, m_key)
+			delete(cfg.Metrics, mKey)
 		}
 	}
 	log.Debug("Initializing MEASSUREMENTSconfig...")
-	for m_key, m_val := range cfg.Measurements {
-		err := m_val.Init(m_key, &cfg.Metrics)
+	for mKey, mVal := range cfg.Measurements {
+		err := mVal.Init(mKey, &cfg.Metrics)
 		if err != nil {
 			log.Warnln("Error in Metric config:", err)
 			//if some error int the format the metric is deleted from the config
-			delete(cfg.Metrics, m_key)
+			delete(cfg.Metrics, mKey)
 		}
 
-		log.Debugf("FIELDMETRICS: %+v", m_val.fieldMetric)
+		log.Debugf("FIELDMETRICS: %+v", mVal.fieldMetric)
 	}
 	log.Debug("-----------------------END Config metrics----------------------")
 	return nil
@@ -147,12 +140,8 @@ func init() {
 
 	}
 
-	init_metrics_cfg()
+	initMetricsCfg()
 
-	for _, s := range cfg.SnmpDevice {
-		s.debugging = make(chan bool)
-		s.enabled = make(chan chan bool)
-	}
 	var ok bool
 	for k, c := range cfg.SnmpDevice {
 		//Inticialize each SNMP device
@@ -196,7 +185,7 @@ func init() {
 
 	if cfg.Selfmon.Enabled {
 		cfg.Selfmon.Init()
-		cfg.Selfmon.Influx, ok = cfg.Influx["*"]
+		cfg.Selfmon.Influx = cfg.Influx["*"]
 		cfg.Selfmon.Influx.Init()
 		fmt.Printf("SELFMON enabled %+vn\n", cfg.Selfmon)
 	} else {

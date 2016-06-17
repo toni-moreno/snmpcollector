@@ -2,10 +2,8 @@ package main
 
 import (
 	ers "errors"
-	"fmt"
 	//	"log"
 	"net"
-	"os"
 	//"strings"
 	"time"
 
@@ -32,6 +30,46 @@ func pduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 const (
 	maxOids = 60 // const in gosnmp
 )
+
+func getSysInfo(s *SnmpDeviceCfg, client *gosnmp.GoSNMP) (string, error) {
+	//Get Basic System Info
+	// sysDescr     .1.3.6.1.2.1.1.1.0
+	// sysUpTime    .1.3.6.1.2.1.1.3.0
+	// sysContact   .1.3.6.1.2.1.1.4.0
+	// sysName      .1.3.6.1.2.1.1.5.0
+	// sysLocation  .1.3.6.1.2.1.1.6.0
+	sysOids := []string{
+		".1.3.6.1.2.1.1.1.0",
+		".1.3.6.1.2.1.1.3.0",
+		".1.3.6.1.2.1.1.4.0",
+		".1.3.6.1.2.1.1.5.0",
+		".1.3.6.1.2.1.1.6.0"}
+	pkt, err := client.Get(sysOids)
+	var sysDescription string
+	if err != nil {
+		s.log.Errorf("Error on getting initial basic system, Info to device %s: %s", s.Host, err)
+		return "", err
+	}
+	for _, pdu := range pkt.Variables {
+		s.log.Debugf("DEBUG pdu:%+v", pdu)
+		if pdu.Value == nil {
+			continue
+		}
+		switch pdu.Type {
+		case gosnmp.OctetString:
+			name := string(pdu.Value.([]byte))
+			sysDescription += name + " ; "
+		case gosnmp.TimeTicks:
+			//This represents a non-negative integer which specifies the elapsed time between two events, in units of hundredth of a second
+			seconds := uint32(pdu.Value.(int)) / 100
+			d := time.Duration(seconds) * time.Second
+			sysDescription += " UPTIME (" + d.String() + ") "
+		default:
+			s.log.Errorf("Error got systemInfo : string as expected data for %s  and got : %d  ", pdu.Name, pdu.Type)
+		}
+	}
+	return sysDescription, nil
+}
 
 func snmpClient(s *SnmpDeviceCfg) (*gosnmp.GoSNMP, error) {
 	var client *gosnmp.GoSNMP
@@ -103,7 +141,7 @@ func snmpClient(s *SnmpDeviceCfg) (*gosnmp.GoSNMP, error) {
 			//validate correct s.authuser
 
 			if val, ok := authpmap[s.V3AuthProt]; !ok {
-				s.log.Errorf("Error in Auth Protocol %s | %s  in host %s", s.V3AuthProt, val, s.Host)
+				s.log.Errorf("Error in Auth Protocol %v | %v  in host %s", s.V3AuthProt, val, s.Host)
 				return nil, ers.New("Error on snmp v3 AuthProt")
 			}
 
@@ -123,7 +161,7 @@ func snmpClient(s *SnmpDeviceCfg) (*gosnmp.GoSNMP, error) {
 			}
 
 			if val, ok := authpmap[s.V3AuthProt]; !ok {
-				s.log.Errorf("Error in Auth Protocol %s | %s  in host %s", s.V3AuthProt, val, s.Host)
+				s.log.Errorf("Error in Auth Protocol %v | %v  in host %s", s.V3AuthProt, val, s.Host)
 				return nil, ers.New("Error on snmp v3 AuthProt")
 			}
 
@@ -136,7 +174,7 @@ func snmpClient(s *SnmpDeviceCfg) (*gosnmp.GoSNMP, error) {
 			}
 
 			if val, ok := privpmap[s.V3PrivProt]; !ok {
-				s.log.Errorf("Error in Priv Protocol %s | %s  in host %s", s.V3PrivProt, val, s.Host)
+				s.log.Errorf("Error in Priv Protocol %v | %v  in host %s", s.V3PrivProt, val, s.Host)
 				return nil, ers.New("Error on snmp v3 AuthPass")
 			}
 
@@ -169,9 +207,19 @@ func snmpClient(s *SnmpDeviceCfg) (*gosnmp.GoSNMP, error) {
 	if s.SnmpDebug {
 		client.Logger = s.DebugLog()
 	}
+	//first connect
 	err := client.Connect()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		s.log.Errorf("error on first connect %s", err)
+	} else {
+		s.log.Infof("First SNMP connection to host  %s stablished", s.Host)
+	}
+	//first snmp query
+	sysInfo, err := getSysInfo(s, client)
+	if err != nil {
+		s.log.Errorf("error on get System Info %s", err)
+	} else {
+		s.log.Infof("Got basic system info %s ", sysInfo)
 	}
 	return client, err
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/soniah/gosnmp"
 )
 
+// SnmpDeviceCfg contains all snmp related device definitions
 type SnmpDeviceCfg struct {
 	ID string
 	//snmp connection config
@@ -42,8 +43,8 @@ type SnmpDeviceCfg struct {
 	log       *logrus.Logger
 	SnmpDebug bool `toml:"snmpdebug"`
 	//influx tags
-	DeviceTagName  string   `toml:devicetagname`
-	DeviceTagValue string   `toml:devicetagvalue`
+	DeviceTagName  string   `toml:"devicetagname"`
+	DeviceTagValue string   `toml:"devicetagvalue"`
 	ExtraTags      []string `toml:"extra-tags"`
 	TagMap         map[string]string
 	//Filters for measurements
@@ -63,77 +64,17 @@ type SnmpDeviceCfg struct {
 	Gets     int64
 	Errors   int64
 	//runtime controls
-	debugging chan bool
-	enabled   chan chan bool
+	/*debugging chan bool
+	enabled   chan chan bool*/
+
+	chDebug      chan bool
+	chEnabled    chan bool
+	deviceActive bool
+	stateDebug   bool
 }
 
-/*
-Init  does the following
-
-- allocate and fill array for all measurements defined for this device
-- for each indexed measurement  load device labels from IndexedOID and fiter them if defined measurement filters.
-- Initialice each SnmpMetric from each measuremet.
-*/
-
-func (c *SnmpDeviceCfg) Init(name string) {
-	log.Infof("Initializing device %s\n", name)
-	//Init id
-	c.ID = name
-	//Init Logger
-
-	if len(c.LogFile) == 0 {
-		c.LogFile = cfg.General.LogDir + "/" + name + ".log"
-
-	}
-	if len(c.LogLevel) == 0 {
-		c.LogLevel = "info"
-	}
-
-	f, err := os.OpenFile(c.LogFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
-
-	c.log = logrus.New()
-	c.log.Out = f
-	l, _ := logrus.ParseLevel(c.LogLevel)
-	c.log.Level = l
-
-	//Init Device Tags
-
-	c.TagMap = make(map[string]string)
-	if len(c.DeviceTagName) == 0 {
-		c.DeviceTagName = "device"
-	}
-
-	var val string
-
-	switch c.DeviceTagValue {
-	case "id":
-		val = c.ID
-	case "host":
-		val = c.Host
-	default:
-		val = c.ID
-		c.log.Warnf("Unkwnown DeviceTagValue %s set ID (%s) as value", c.DeviceTagValue, val)
-	}
-
-	c.TagMap[c.DeviceTagName] = val
-
-	if len(c.ExtraTags) > 0 {
-		for _, tag := range c.ExtraTags {
-			s := strings.Split(tag, "=")
-			key, value := s[0], s[1]
-			c.TagMap[key] = value
-		}
-	} else {
-		c.log.Warnf("No map detected in device %s\n", name)
-	}
-
-	//Init SNMP client device
-
-	client, err := snmpClient(c)
-	if err != nil {
-		fatal("Client connect error:", err)
-	}
-	c.snmpClient = client
+//InitDevSnmpInfo generte all internal structs from SNMP device
+func (c *SnmpDeviceCfg) InitDevSnmpInfo() {
 
 	//Alloc array
 	c.InfmeasArray = make([]*InfluxMeasurement, 0, 0)
@@ -141,12 +82,12 @@ func (c *SnmpDeviceCfg) Init(name string) {
 	//for this device get MetricGroups and search all measurements
 
 	//log.Printf("SNMPDEV: %+v", c)
-	for _, dev_meas := range c.MetricGroups {
+	for _, devMeas := range c.MetricGroups {
 
 		//Selecting all Metric Groups that matches with device.MetricGroups
 
 		selGroups := make(map[string]*MGroupsCfg, 0)
-		var RegExp = regexp.MustCompile(dev_meas)
+		var RegExp = regexp.MustCompile(devMeas)
 		for key, val := range cfg.GetGroups {
 			if RegExp.MatchString(key) {
 				selGroups[key] = val
@@ -158,7 +99,7 @@ func (c *SnmpDeviceCfg) Init(name string) {
 
 		//Only For selected Groups we will get all selected measurements and we will remove repeated values
 
-		selMeas := make([]string, 0)
+		var selMeas []string
 		for key, val := range selGroups {
 			c.log.Debugln("Selecting from group", key)
 			for _, item := range val.Measurements {
@@ -171,15 +112,15 @@ func (c *SnmpDeviceCfg) Init(name string) {
 
 		//Now we know what measurements names  will send influx from this device
 
-		c.log.Debugln("DEVICE MEASUREMENT: ", dev_meas, "HOST: ", c.Host)
+		c.log.Debugln("DEVICE MEASUREMENT: ", devMeas, "HOST: ", c.Host)
 		for _, val := range selMeasUniq {
 			//check if measurement exist
-			if m_val, ok := cfg.Measurements[val]; !ok {
+			if mVal, ok := cfg.Measurements[val]; !ok {
 				c.log.Warnln("no measurement configured with name ", val, "in host :", c.Host)
 			} else {
-				c.log.Debugln("MEASUREMENT CFG KEY:", val, " VALUE ", m_val.Name)
+				c.log.Debugln("MEASUREMENT CFG KEY:", val, " VALUE ", mVal.Name)
 				imeas := &InfluxMeasurement{
-					cfg: m_val,
+					cfg: mVal,
 					log: c.log,
 				}
 				c.InfmeasArray = append(c.InfmeasArray, imeas)
@@ -297,13 +238,13 @@ func (c *SnmpDeviceCfg) Init(name string) {
 		m.snmpOids = []string{}
 		m.oidSnmpMap = make(map[string]*SnmpMetric)
 		//metric level
-		for k_idx, v_idx := range m.values {
-			c.log.Debugf("KEY iDX %s", k_idx)
+		for kIdx, vIdx := range m.values {
+			c.log.Debugf("KEY iDX %s", kIdx)
 			//index level
-			for k_m, v_m := range v_idx {
-				c.log.Debugf("KEY METRIC %s OID %s", k_m, v_m.realOID)
-				m.snmpOids = append(m.snmpOids, v_m.realOID)
-				m.oidSnmpMap[v_m.realOID] = v_m
+			for kM, vM := range vIdx {
+				c.log.Debugf("KEY METRIC %s OID %s", kM, vM.realOID)
+				m.snmpOids = append(m.snmpOids, vM.realOID)
+				m.oidSnmpMap[vM.realOID] = vM
 
 			}
 		}
@@ -330,24 +271,90 @@ func (c *SnmpDeviceCfg) Init(name string) {
 
 }
 
+/*
+Init  does the following
+
+- allocate and fill array for all measurements defined for this device
+- for each indexed measurement  load device labels from IndexedOID and fiter them if defined measurement filters.
+- Initialice each SnmpMetric from each measuremet.
+*/
+func (c *SnmpDeviceCfg) Init(name string) {
+	log.Infof("Initializing device %s\n", name)
+	//Init id
+	c.ID = name
+	//Init Logger
+
+	if len(c.LogFile) == 0 {
+		c.LogFile = cfg.General.LogDir + "/" + name + ".log"
+
+	}
+	if len(c.LogLevel) == 0 {
+		c.LogLevel = "info"
+	}
+
+	f, err := os.OpenFile(c.LogFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	c.log = logrus.New()
+	c.log.Out = f
+	l, _ := logrus.ParseLevel(c.LogLevel)
+	c.log.Level = l
+
+	//Init channels
+	c.chDebug = make(chan bool)
+	c.chEnabled = make(chan bool)
+	c.deviceActive = true
+
+	//Init Device Tags
+
+	c.TagMap = make(map[string]string)
+	if len(c.DeviceTagName) == 0 {
+		c.DeviceTagName = "device"
+	}
+
+	var val string
+
+	switch c.DeviceTagValue {
+	case "id":
+		val = c.ID
+	case "host":
+		val = c.Host
+	default:
+		val = c.ID
+		c.log.Warnf("Unkwnown DeviceTagValue %s set ID (%s) as value", c.DeviceTagValue, val)
+	}
+
+	c.TagMap[c.DeviceTagName] = val
+
+	if len(c.ExtraTags) > 0 {
+		for _, tag := range c.ExtraTags {
+			s := strings.Split(tag, "=")
+			key, value := s[0], s[1]
+			c.TagMap[key] = value
+		}
+	} else {
+		c.log.Warnf("No map detected in device %s\n", name)
+	}
+
+	//Init SNMP client device
+
+	client, err := snmpClient(c)
+	if err != nil {
+		c.log.Errorf("Client connect error to device: %s  error :%s", c.ID, err)
+		c.snmpClient = nil
+		return
+	}
+	c.snmpClient = client
+	c.InitDevSnmpInfo()
+}
+
 func (c *SnmpDeviceCfg) printConfig() {
 
 	fmt.Printf("Host: %s Port: %d Version: %s\n", c.Host, c.Port, c.SnmpVersion)
 	fmt.Printf("----------------------------------------------\n")
-	for _, v_m := range c.InfmeasArray {
-		fmt.Printf(" Measurement : %s\n", v_m.cfg.id)
+	for _, vM := range c.InfmeasArray {
+		fmt.Printf(" Measurement : %s\n", vM.cfg.id)
 		fmt.Printf(" ----------------------------------------------------------\n")
-		v_m.printConfig()
+		vM.printConfig()
 	}
-}
-
-func (c *SnmpDeviceCfg) DebugAction() string {
-	debug := make(chan bool)
-	c.enabled <- debug
-	if <-debug {
-		return "disable"
-	}
-	return "enable"
 }
 
 func (c *SnmpDeviceCfg) incRequests() {
@@ -372,6 +379,7 @@ func (c *SnmpDeviceCfg) addErrors(n int64) {
 	atomic.AddInt64(&c.Errors, n)
 }
 
+// DebugLog returns a logger handler for snmp debug data
 func (c *SnmpDeviceCfg) DebugLog() *olog.Logger {
 	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(c.ID, ".", "-", -1)+".log")
 	if l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644); err == nil {
@@ -382,60 +390,78 @@ func (c *SnmpDeviceCfg) DebugLog() *olog.Logger {
 	}
 }
 
+//Gather Main GoRutine method to begin snmp data collecting
 func (c *SnmpDeviceCfg) Gather(wg *sync.WaitGroup) {
-	client := c.snmpClient
-	debug := false
+	//client := c.snmpClient
+	//debug := false
 
 	c.log.Infof("Beginning gather process for device %s (%s)", c.ID, c.Host)
 
-	client = c.snmpClient
 	s := time.Tick(time.Duration(c.Freq) * time.Second)
 	for {
-		time.Sleep(time.Duration(c.Timeout) * time.Second)
-		bpts := c.Influx.BP()
-
-		for _, m := range c.InfmeasArray {
-			c.log.Debugf("----------------Processing measurement : %s", m.cfg.id)
-			if m.cfg.GetMode == "value" || c.SnmpVersion == "1" {
-				n_gets, n_errors, _ := m.SnmpGetData(client)
-				if n_gets > 0 {
-					c.addGets(n_gets)
-				}
-				if n_errors > 0 {
-					c.addErrors(n_errors)
+		//if active
+		if c.deviceActive {
+			//check if device is online
+			if c.snmpClient == nil {
+				client, err := snmpClient(c)
+				if err != nil {
+					c.log.Errorf("Client connect error to device: %s  error :%s", c.ID, err)
+				} else {
+					c.snmpClient = client
+					c.log.Infof("SNMP connection stablishedm initializing SnmpDevice")
+					c.InitDevSnmpInfo()
+					//device not initialized
 				}
 			} else {
-				n_gets, n_errors, _ := m.SnmpBulkData(client)
-				if n_gets > 0 {
-					c.addGets(n_gets)
-				}
-				if n_errors > 0 {
-					c.addErrors(n_errors)
-				}
+				//TODO: review if necesary this Sleep and what is the exact goal for the Timeout
+				//time.Sleep(time.Duration(c.Timeout) * time.Second)
 
+				bpts := c.Influx.BP()
+				startSnmp := time.Now()
+				for _, m := range c.InfmeasArray {
+					c.log.Debugf("----------------Processing measurement : %s", m.cfg.id)
+					var nGets, nErrors int64
+					if m.cfg.GetMode == "value" || c.SnmpVersion == "1" {
+						nGets, nErrors, _ = m.SnmpGetData(c.snmpClient)
+					} else {
+						nGets, nErrors, _ = m.SnmpBulkData(c.snmpClient)
+					}
+					if nGets > 0 {
+						c.addGets(nGets)
+					}
+					if nErrors > 0 {
+						c.addErrors(nErrors)
+					}
+					//prepare batchpoint and
+					points := m.GetInfluxPoint( /*c.Host,*/ c.TagMap)
+					(*bpts).AddPoints(points)
+
+				}
+				elapsedSnmp := time.Since(startSnmp)
+				c.log.Infof("snmpdevice [%s] snmp poolling took [%s] ", c.ID, elapsedSnmp)
+				startInflux := time.Now()
+				c.Influx.Send(bpts)
+				elapsedInflux := time.Since(startInflux)
+				c.log.Infof("snmpdevice [%s] influx send took [%s]", c.ID, elapsedInflux)
+				// pause for interval period and have optional debug toggling
 			}
-			//prepare batchpoint and
-			points := m.GetInfluxPoint( /*c.Host,*/ c.TagMap)
-			(*bpts).AddPoints(points)
-
 		}
-		c.Influx.Send(bpts)
-
-		// pause for interval period and have optional debug toggling
 	LOOP:
 		for {
 			select {
 			case <-s:
 				break LOOP
-			case debug := <-c.debugging:
-				c.log.Infof("debugging: %s", debug)
-				if debug && client.Logger == nil {
-					client.Logger = c.DebugLog()
+			case debug := <-c.chDebug:
+				c.stateDebug = debug
+				c.log.Infof("DEBUG  ACTIVE %s [%t] ", c.ID, debug)
+				if debug && c.snmpClient.Logger == nil {
+					c.snmpClient.Logger = c.DebugLog()
 				} else {
-					client.Logger = nil
+					c.snmpClient.Logger = nil
 				}
-			case status := <-c.enabled:
-				status <- debug
+			case status := <-c.chEnabled:
+				c.deviceActive = status
+				c.log.Printf("STATUS  ACTIVE %s [%t] ", c.ID, status)
 			}
 		}
 	}
