@@ -3,53 +3,27 @@ package main
 import (
 	"fmt"
 	"html/template"
-	//"log"
 	"net/http"
-	//"time"
 
-	//"github.com/auth0/go-jwt-middleware"
-	//"github.com/dgrijalva/jwt-go"
 	"github.com/go-macaron/binding"
 	"github.com/go-macaron/cache"
 	//"github.com/go-macaron/gzip"
 	"github.com/go-macaron/session"
 	"gopkg.in/macaron.v1"
 	//"github.com/go-macaron/auth"
-
 	// gorm database ORM
-	_ "github.com/go-sql-driver/mysql"
+	//_ "github.com/go-sql-driver/mysql"
 	//	"github.com/jinzhu/gorm"
 )
 
-/*
-type Person struct {
-	Name string
-	Age  int
-	Time string
-}
-
-type ContactEntry struct {
-	ID             uint   `gorm:"primary_key"`
-	Name           string `sql:"type:varchar(255)"`
-	Email          string `sql:"type:varchar(255);unique_index"`
-	Message        string `sql:"type:text"`
-	MailingAddress string `sql:"type:varchar(255)"`
-}
-
-type ContactForm struct {
-	Name           string `form:"name" binding:"Required"`
-	Email          string `form:"email"`
-	Message        string `form:"message" binding:"Required"`
-	MailingAddress string `form:"mailing_address"`
-}
-*/
-
+//HTTPConfig has webserver config options
 type HTTPConfig struct {
 	Port          int    `toml:"port"`
 	AdminUser     string `toml:"adminuser"`
 	AdminPassword string `toml:"adminpassword"`
 }
 
+//UserLogin for login purposes
 type UserLogin struct {
 	UserName string `form:"username" binding:"Required"`
 	Password string `form:"password" binding:"Required"`
@@ -173,31 +147,34 @@ func webServer(port int) {
 		m.Post("/", bind(SnmpDeviceCfg{}), AddSNMPDevice)
 		m.Put("/:id", bind(SnmpDeviceCfg{}), UpdateSNMPDevice)
 		m.Delete("/:id", DeleteSNMPDevice)
-		m.Get("/:id", GetSNMPDeviceById)
+		m.Get("/:id", GetSNMPDeviceByID)
 	})
 
 	log.Printf("Server is running on localhost:%d...", port)
-	http_server := fmt.Sprintf("0.0.0.0:%d", port)
-	log.Println(http.ListenAndServe(http_server, m))
+	httpServer := fmt.Sprintf("0.0.0.0:%d", port)
+	log.Println(http.ListenAndServe(httpServer, m))
 }
 
-//snmpmDevices
-
+// GetSNMPDevices Return snmpdevice list to frontend
 func GetSNMPDevices(ctx *macaron.Context) {
 	ctx.JSON(200, &cfg.SnmpDevice)
 }
 
+// AddSNMPDevice Insert new snmpdevice to de internal BBDD --pending--
 func AddSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
 	log.Printf("ADDING DEVICE %+v", dev)
 }
 
+// UpdateSNMPDevice --pending--
 func UpdateSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
 }
 
+//DeleteSNMPDevice --pending--
 func DeleteSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
 }
 
-func GetSNMPDeviceById(ctx *macaron.Context) {
+//GetSNMPDeviceByID --pending--
+func GetSNMPDeviceByID(ctx *macaron.Context) {
 }
 
 func myHandler(ctx *macaron.Context) {
@@ -210,21 +187,9 @@ func myOtherHandler(ctx *macaron.Context) {
 	ctx.HTML(200, "welcome")
 }
 
-/*
-func myJsonHandler(ctx *macaron.Context) {
-	t := time.Now()
-	p := Person{"James", 25, fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())}
-	ctx.JSON(200, &p)
-}
-
-func myQueryStringHandler(ctx *macaron.Context) {
-	ctx.Data["Name"] = ctx.QueryEscape("name")
-	ctx.HTML(200, "hello")
-}
-*/
 func myLoginHandler(ctx *macaron.Context, user UserLogin) {
-	fmt.Printf("USER LOGIN: +%v", user)
-	if user.UserName == "toni" && user.Password == "toni" {
+	fmt.Printf("USER LOGIN: USER: +%#v (Config: %#v)", user, cfg.HTTP)
+	if user.UserName == cfg.HTTP.AdminUser && user.Password == cfg.HTTP.AdminPassword {
 		fmt.Println("OK")
 		ctx.JSON(200, "OK")
 	} else {
@@ -232,83 +197,3 @@ func myLoginHandler(ctx *macaron.Context, user UserLogin) {
 		ctx.JSON(404, "ERROR")
 	}
 }
-
-/*
-func mySubmitHandler(ctx *macaron.Context, contact ContactForm) {
-	submission := ContactEntry{0, contact.Name, contact.Email, contact.Message, contact.MailingAddress}
-	// ctx.JSON(200, &submission)
-	ctx.Data["Submission"] = &submission
-	ctx.HTML(200, "success")
-}
-
-func mySessionHandler(sess session.Store) string {
-	sess.Set("session", "session middleware")
-	return sess.Get("session").(string)
-}
-
-func mySetCookieHandler(ctx *macaron.Context) string {
-	// set the cookie for 5 minutes
-	ctx.SetCookie("user", ctx.Params(":value"), 300)
-	return "cookie set for 5 minutes"
-}
-
-func myGetCookieHandler(ctx *macaron.Context) string {
-	name := ctx.GetCookie("user")
-	if name == "" {
-		name = "no cookie set"
-	}
-	return name
-}
-
-func myDatabaseHandler(ctx *macaron.Context) string {
-	db, err := gorm.Open("mysql", "gorm:gorm@/gorm?charset=utf8&parseTime=True&loc=Local")
-
-	if err != nil {
-		log.Println("Database Error")
-		return fmt.Sprintf("%s", err)
-	}
-
-	db.DB()
-
-	t := time.Now()
-
-	entry := ContactEntry{
-		Name:           "James",
-		Email:          "james2doyle@gmail.com",
-		Message:        fmt.Sprintf("The time is %02d:%02d:%02d", t.Hour(), t.Minute(), t.Second()),
-		MailingAddress: "998 Oxford Street East, London ON, N5Y3K7",
-	}
-
-	db.Create(&entry)
-
-	return fmt.Sprintf("New Entry Id: %d\n", entry.ID)
-}
-
-func myDatabaseListHandler(ctx *macaron.Context) {
-	db, err := gorm.Open("mysql", "gorm:gorm@/gorm?charset=utf8&parseTime=True&loc=Local")
-
-	if err != nil {
-		log.Println("Database Error")
-	}
-
-	db.DB()
-
-	contact_entries := []ContactEntry{}
-	db.Find(&contact_entries)
-
-	ctx.JSON(200, contact_entries)
-}
-
-func myCacheWriteHandler(ctx *macaron.Context, c cache.Cache) string {
-	c.Put(ctx.Params(":key"), ctx.Params(":value"), 300)
-	return "cached for 5 minutes"
-}
-
-func myCacheReadHandler(ctx *macaron.Context, c cache.Cache) interface{} {
-	val := c.Get(ctx.Params(":key"))
-	if val != nil {
-		return val
-	} else {
-		return fmt.Sprintf("no cache with \"%s\" set", ctx.Params(":key"))
-	}
-}*/

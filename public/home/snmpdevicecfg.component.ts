@@ -59,7 +59,7 @@ export class SnmpDeviceCfgComponent {
   onFilter(){
 	this.reloadData();
   }
- 
+
  viewItem(id,event){
 	console.log('view',id);
  }
@@ -71,11 +71,10 @@ export class SnmpDeviceCfgComponent {
  }
  cancelEdit(){
 	 this.editmode = "list";
-	 alert('CANCEL');
  }
  saveSnmpDev(){
 	 if(this.snmpdevForm.dirty && this.snmpdevForm.valid) {
-		 
+
 	console.log(this.snmpdevForm.value);
 	var result=this.snmpDeviceService.addDevice(this.snmpdevForm.value);
 	console.log(result);

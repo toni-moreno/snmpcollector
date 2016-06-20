@@ -25,11 +25,11 @@ export class LoggedInRouterOutlet extends RouterOutlet {
   activate(instruction: ComponentInstruction) {
     let url = instruction.urlPath;
     if (!this.publicRoutes[url] && !localStorage.getItem('jwt')) {
-	    alert('TO LOGIN url:'+url)
+	    //alert('TO LOGIN url:'+url)
       // todo: redirect to Login, may be there a better way?
       this.parentRouter.navigateByUrl('/login');
     } else {
-	    alert('ERROR url:'+url)
+	    console.log('ERROR url:'+url)
     }
     return super.activate(instruction);
   }
