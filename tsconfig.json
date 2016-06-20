@@ -11,8 +11,6 @@
   },
   "exclude": [
     "node_modules",
-    "public/node_modules",
-    "typings/globals",
-    "typings/index.d.ts"
+    "public/node_modules"
   ]
 }

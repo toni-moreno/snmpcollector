@@ -1,10 +1,10 @@
-import { Component} from 'angular2/core';
+import {Component} from 'angular2/core';
 import {Location, RouteConfig, RouterLink, Router} from 'angular2/router';
+//import {Location} from 'angular2/platform/common';
 
 import {LoggedInRouterOutlet} from './LoggedInOutlet';
 import {Home} from '../home/home';
 import {Login} from '../login/login';
-//import {Signup} from '../signup/signup';
 
 
 @Component({

@@ -23,6 +23,7 @@
   "dependencies": {
     "angular2": "2.0.0-beta.14",
     "angular2-jwt": "0.1.8",
+    "typings": "^1.0.4",
     "bootstrap": "^3.3.6",
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.35.0",
@@ -32,34 +33,25 @@
     "ng2-bootstrap": "1.0.15",
     "reflect-metadata": "0.1.2",
     "rxjs": "5.0.0-beta.2",
-    "systemjs": "0.19.25",
-    "systemjs-builder": "^0.15.13",
-    "tslint": "^3.4.0",
-    "typescript": "^1.7.5",
-    "zone.js": "0.6.6"
+    "systemjs": "0.19.31",
+    "zone.js": "^0.6.12"
   },
   "devDependencies": {
-    "angular2": "2.0.0-beta.14",
     "concurrently": "^2.0.0",
-    "es6-promise": "^3.0.2",
-    "es6-shim": "^0.33.3",
-    "expect.js": "~0.2.0",
-    "glob": "~3.2.7",
+    "lite-server": "^2.2.0",
+    "typescript": "1.8.9",
+    "typings": "^1.0.4",
+    "lodash": "^4.11.1",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",
     "gulp-todo": "^4.1.0",
-    "jshint-stylish": "~0.1.5",
     "karma": "~0.13.15",
     "karma-chrome-launcher": "~0.2.2",
     "karma-coverage": "0.5.3",
     "karma-coveralls": "1.1.2",
     "karma-expect": "~1.1.0",
     "karma-mocha": "~0.2.1",
-    "lite-server": "^2.2.0",
-    "load-grunt-tasks": "3.4.0",
-    "systemjs": "0.19.6",
-    "typescript": "^1.8.9",
-    "typings": "^1.0.4",
-    "zone.js": "0.5.10"
+    "mocha": "2.5.3"
+
   }
 }

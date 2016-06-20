@@ -1,8 +1,9 @@
 {
   "globalDependencies": {
     "es6-shim": "github:DefinitelyTyped/DefinitelyTyped/es6-shim/es6-shim.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
-    "jasmine": "github:DefinitelyTyped/DefinitelyTyped/jasmine/jasmine.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
-    "lodash": "registry:dt/lodash#3.10.0+20160330154726"
+    "jasmine": "github:DefinitelyTyped/DefinitelyTyped/jasmine/jasmine.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd"
   },
-  "dependencies": {}
+  "dependencies": {
+    "lodash": "registry:npm/lodash#4.0.0+20160416211519"
+  }
 }

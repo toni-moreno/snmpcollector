@@ -27,10 +27,12 @@ go run build.go build
 
 ```
 npm install
-cd public
-ln -s ./node_modules/  public/node_modules
 PATH=$(npm bin):$PATH
 npm run tsc
+cd public/
+ln -s ../node_modules/ ./node_modules
+cd ..
+
 ```
 
 ### Recompile backend on source change
