@@ -16,6 +16,15 @@ import (
 	"github.com/soniah/gosnmp"
 )
 
+// SysInfo basic information for any SNMP device
+type SysInfo struct {
+	sysDescr    string
+	sysUptime   time.Duration
+	sysContact  string
+	sysName     string
+	sysLocation string
+}
+
 // SnmpDeviceCfg contains all snmp related device definitions
 type SnmpDeviceCfg struct {
 	ID string
@@ -71,6 +80,73 @@ type SnmpDeviceCfg struct {
 	chEnabled    chan bool
 	deviceActive bool
 	stateDebug   bool
+	//basic sistem info
+	sysInfo SysInfo
+}
+
+// GetSysInfo got system basic info from a snmp client
+func (c *SnmpDeviceCfg) GetSysInfo(client *gosnmp.GoSNMP) (SysInfo, error) {
+	//Get Basic System Info
+	// sysDescr     .1.3.6.1.2.1.1.1.0
+	// sysUpTime    .1.3.6.1.2.1.1.3.0
+	// sysContact   .1.3.6.1.2.1.1.4.0
+	// sysName      .1.3.6.1.2.1.1.5.0
+	// sysLocation  .1.3.6.1.2.1.1.6.0
+	sysOids := []string{
+		".1.3.6.1.2.1.1.1.0",
+		".1.3.6.1.2.1.1.3.0",
+		".1.3.6.1.2.1.1.4.0",
+		".1.3.6.1.2.1.1.5.0",
+		".1.3.6.1.2.1.1.6.0"}
+
+	info := SysInfo{sysDescr: "", sysUptime: time.Duration(0), sysContact: "", sysName: "", sysLocation: ""}
+	pkt, err := client.Get(sysOids)
+
+	if err != nil {
+		c.log.Errorf("Error on getting initial basic system, Info to device %s: %s", c.Host, err)
+		return info, err
+	}
+
+	for idx, pdu := range pkt.Variables {
+		c.log.Debugf("DEBUG pdu:%+v", pdu)
+		if pdu.Value == nil {
+			continue
+		}
+		switch idx {
+		case 0: // sysDescr     .1.3.6.1.2.1.1.1.0
+			if pdu.Type == gosnmp.OctetString {
+				info.sysDescr = string(pdu.Value.([]byte))
+			} else {
+				c.log.Warnf("Error on getting system %s sysDescr return data of type %v", c.Host, pdu.Type)
+			}
+		case 1: // sysUpTime    .1.3.6.1.2.1.1.3.0
+			if pdu.Type == gosnmp.TimeTicks {
+				seconds := uint32(pdu.Value.(int)) / 100
+				info.sysUptime = time.Duration(seconds) * time.Second
+			} else {
+				c.log.Warnf("Error on getting system %s sysDescr return data of type %v", c.Host, pdu.Type)
+			}
+		case 2: // sysContact   .1.3.6.1.2.1.1.4.0
+			if pdu.Type == gosnmp.OctetString {
+				info.sysContact = string(pdu.Value.([]byte))
+			} else {
+				c.log.Warnf("Error on getting system %s sysContact return data of type %v", c.Host, pdu.Type)
+			}
+		case 3: // sysName      .1.3.6.1.2.1.1.5.0
+			if pdu.Type == gosnmp.OctetString {
+				info.sysName = string(pdu.Value.([]byte))
+			} else {
+				c.log.Warnf("Error on getting system %s sysName return data of type %v", c.Host, pdu.Type)
+			}
+		case 4: // sysLocation  .1.3.6.1.2.1.1.6.0
+			if pdu.Type == gosnmp.OctetString {
+				info.sysDescr = string(pdu.Value.([]byte))
+			} else {
+				c.log.Warnf("Error on getting system %s sysLocation return data of type %v", c.Host, pdu.Type)
+			}
+		}
+	}
+	return info, nil
 }
 
 //InitDevSnmpInfo generte all internal structs from SNMP device

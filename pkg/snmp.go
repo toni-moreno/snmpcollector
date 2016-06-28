@@ -8,68 +8,48 @@ import (
 	"time"
 
 	"github.com/soniah/gosnmp"
+	"strconv"
 )
 
 func pduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
-	val := pdu.Value
-	switch pdu.Type {
-	case gosnmp.Counter32:
-		return int64(val.(int32))
-	case gosnmp.Integer:
-		return int64(val.(int))
-	case gosnmp.Gauge32:
-		return int64(val.(uint))
-	case gosnmp.Counter64:
-		return val.(int64)
-	case gosnmp.Uinteger32:
-		return int64(val.(uint32))
+	value := pdu.Value
+	var val int64
+	switch value := value.(type) { // shadow
+	case int:
+		val = int64(value)
+	case int8:
+		val = int64(value)
+	case int16:
+		val = int64(value)
+	case int32:
+		val = int64(value)
+	case int64:
+		val = int64(value)
+	case uint:
+		val = int64(value)
+	case uint8:
+		val = int64(value)
+	case uint16:
+		val = int64(value)
+	case uint32:
+		val = int64(value)
+	case uint64:
+		val = int64(value)
+	case string:
+		// for testing and other apps - numbers may appear as strings
+		var err error
+		if val, err = strconv.ParseInt(value, 10, 64); err != nil {
+			return val
+		}
+	default:
+		return 0
 	}
-	return 0
+	return val
 }
 
 const (
 	maxOids = 60 // const in gosnmp
 )
-
-func getSysInfo(s *SnmpDeviceCfg, client *gosnmp.GoSNMP) (string, error) {
-	//Get Basic System Info
-	// sysDescr     .1.3.6.1.2.1.1.1.0
-	// sysUpTime    .1.3.6.1.2.1.1.3.0
-	// sysContact   .1.3.6.1.2.1.1.4.0
-	// sysName      .1.3.6.1.2.1.1.5.0
-	// sysLocation  .1.3.6.1.2.1.1.6.0
-	sysOids := []string{
-		".1.3.6.1.2.1.1.1.0",
-		".1.3.6.1.2.1.1.3.0",
-		".1.3.6.1.2.1.1.4.0",
-		".1.3.6.1.2.1.1.5.0",
-		".1.3.6.1.2.1.1.6.0"}
-	pkt, err := client.Get(sysOids)
-	var sysDescription string
-	if err != nil {
-		s.log.Errorf("Error on getting initial basic system, Info to device %s: %s", s.Host, err)
-		return "", err
-	}
-	for _, pdu := range pkt.Variables {
-		s.log.Debugf("DEBUG pdu:%+v", pdu)
-		if pdu.Value == nil {
-			continue
-		}
-		switch pdu.Type {
-		case gosnmp.OctetString:
-			name := string(pdu.Value.([]byte))
-			sysDescription += name + " ; "
-		case gosnmp.TimeTicks:
-			//This represents a non-negative integer which specifies the elapsed time between two events, in units of hundredth of a second
-			seconds := uint32(pdu.Value.(int)) / 100
-			d := time.Duration(seconds) * time.Second
-			sysDescription += " UPTIME (" + d.String() + ") "
-		default:
-			s.log.Errorf("Error got systemInfo : string as expected data for %s  and got : %d  ", pdu.Name, pdu.Type)
-		}
-	}
-	return sysDescription, nil
-}
 
 func snmpClient(s *SnmpDeviceCfg) (*gosnmp.GoSNMP, error) {
 	var client *gosnmp.GoSNMP
@@ -215,11 +195,11 @@ func snmpClient(s *SnmpDeviceCfg) (*gosnmp.GoSNMP, error) {
 		s.log.Infof("First SNMP connection to host  %s stablished", s.Host)
 	}
 	//first snmp query
-	sysInfo, err := getSysInfo(s, client)
+	s.sysInfo, err = s.GetSysInfo(client)
 	if err != nil {
 		s.log.Errorf("error on get System Info %s", err)
 	} else {
-		s.log.Infof("Got basic system info %s ", sysInfo)
+		s.log.Infof("Got basic system info %#v ", s.sysInfo)
 	}
 	return client, err
 }
