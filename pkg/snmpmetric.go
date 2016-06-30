@@ -71,7 +71,6 @@ type SnmpMetric struct {
 	realOID     string
 }
 
-
 func (s *SnmpMetric) Init() error {
 	switch s.cfg.DataSrcType {
 	case "GAUGE":
@@ -102,7 +101,7 @@ func (s *SnmpMetric) Init() error {
 				if s.curValue < s.lastValue {
 					s.cookedValue = float64(math.MaxInt32-s.lastValue+s.curValue) / duration.Seconds()
 				} else {
-					s.cookedValue = float64(s.lastValue-s.curValue) / duration.Seconds()
+					s.cookedValue = float64(s.curValue-s.lastValue) / duration.Seconds()
 				}
 			}
 		} else {
@@ -110,7 +109,7 @@ func (s *SnmpMetric) Init() error {
 				if s.curValue < s.lastValue {
 					s.cookedValue = float64(math.MaxInt32 - s.lastValue + s.curValue)
 				} else {
-					s.cookedValue = float64(s.lastValue - s.curValue)
+					s.cookedValue = float64(s.curValue - s.lastValue)
 				}
 			}
 
@@ -148,7 +147,6 @@ func (s *SnmpMetric) Init() error {
 	}
 	return nil
 }
-
 
 type MGroupsCfg struct {
 	Measurements []string `toml:"measurements"`
