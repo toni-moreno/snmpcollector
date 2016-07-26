@@ -45,6 +45,8 @@ var (
 		HTTP         HTTPConfig
 		General      GeneralConfig
 	}{}
+	//runtme array
+	devices map[string]*SnmpDevice
 )
 
 func fatal(v ...interface{}) {
@@ -142,19 +144,24 @@ func init() {
 
 	initMetricsCfg()
 
+	devices = make(map[string]*SnmpDevice)
+
 	var ok bool
 	for k, c := range cfg.SnmpDevice {
 		//Inticialize each SNMP device
-		c.Init(k)
-		if c.Freq == 0 {
-			c.Freq = freq
+		dev := SnmpDevice{}
+		dev.cfg = c
+		dev.Init(k)
+		if dev.cfg.Freq == 0 {
+			dev.cfg.Freq = freq
 		}
+		devices[k] = &dev
 	}
 
 	// only run when one needs to see the interface names of the device
 	if showConfig {
-		for _, c := range cfg.SnmpDevice {
-			fmt.Println("\nSNMP host:", c.ID)
+		for _, c := range devices {
+			fmt.Println("\nSNMP host:", c.cfg.ID)
 			fmt.Println("=========================================")
 			c.printConfig()
 		}
@@ -168,10 +175,11 @@ func init() {
 
 	// now make sure each snmp device has a db
 
-	for name, c := range cfg.SnmpDevice {
+	//for name, c := range cfg.SnmpDevice {
+	for name, c := range devices {
 		// default is to use name of snmp config, but it can be overridden
-		if len(c.Config) > 0 {
-			name = c.Config
+		if len(c.cfg.Config) > 0 {
+			name = c.cfg.Config
 		}
 		if c.Influx, ok = cfg.Influx[name]; !ok {
 			if c.Influx, ok = cfg.Influx["*"]; !ok {
@@ -210,7 +218,7 @@ func main() {
 		cfg.Selfmon.ReportStats(&wg)
 	}
 
-	for _, c := range cfg.SnmpDevice {
+	for _, c := range devices {
 		wg.Add(1)
 		go c.Gather(&wg)
 	}

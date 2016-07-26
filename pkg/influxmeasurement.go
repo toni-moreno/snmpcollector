@@ -299,9 +299,9 @@ func removeDuplicatesUnordered(elements []string) []string {
 	return result
 }
 
-func (m *InfluxMeasurement) loadIndexedLabels(c *SnmpDeviceCfg) error {
+func (m *InfluxMeasurement) loadIndexedLabels(c *SnmpDevice) error {
 	client := c.snmpClient
-	m.log.Debugf("Looking up column names for: %s  NAMES %s ", c.Host, m.cfg.IndexOID)
+	m.log.Debugf("Looking up column names for: %s  NAMES %s ", c.cfg.Host, m.cfg.IndexOID)
 	pdus, err := client.BulkWalkAll(m.cfg.IndexOID)
 	if err != nil {
 		m.log.Fatalln("SNMP bulkwalk error", err)
@@ -316,9 +316,9 @@ func (m *InfluxMeasurement) loadIndexedLabels(c *SnmpDeviceCfg) error {
 			name := string(pdu.Value.([]byte))
 			m.AllIndexedLabels[suffix] = name
 			m.numValOrig++
-			m.log.Debugf("Got the following index for %c :[%s/%s]", c.Host, suffix, name)
+			m.log.Debugf("Got the following index for %c :[%s/%s]", c.cfg.Host, suffix, name)
 		default:
-			m.log.Errorf("Error in IndexedLabel for host: %s  IndexLabel %s ERR: Not String", c.Host, m.cfg.IndexOID)
+			m.log.Errorf("Error in IndexedLabel for host: %s  IndexLabel %s ERR: Not String", c.cfg.Host, m.cfg.IndexOID)
 		}
 	}
 	return nil
@@ -369,9 +369,9 @@ func (m *InfluxMeasurement) IndexedLabels() error {
 	return nil
 }
 
-func (m *InfluxMeasurement) applyOIDCondFilter(c *SnmpDeviceCfg, oidCond string, typeCond string, valueCond string) error {
+func (m *InfluxMeasurement) applyOIDCondFilter(c *SnmpDevice, oidCond string, typeCond string, valueCond string) error {
 	client := c.snmpClient
-	m.log.Infof("Apply Condition Filter: Looking up column names in: %s Condition %s", c.Host, oidCond)
+	m.log.Infof("Apply Condition Filter: Looking up column names in: %s Condition %s", c.cfg.Host, oidCond)
 	pdus, err := client.BulkWalkAll(oidCond)
 	if err != nil {
 		m.log.Fatalf("SNMP bulkwalk error : %s", err)
@@ -398,7 +398,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(c *SnmpDeviceCfg, oidCond string,
 		case "le":
 			cond = (value <= vci)
 		default:
-			m.log.Errorf("Error in Condition filter for host: %s OidCondition: %s Type: %s ValCond: %s ", c.Host, oidCond, typeCond, valueCond)
+			m.log.Errorf("Error in Condition filter for host: %s OidCondition: %s Type: %s ValCond: %s ", c.cfg.Host, oidCond, typeCond, valueCond)
 		}
 		if cond == true {
 			i := strings.LastIndex(pdu.Name, ".")

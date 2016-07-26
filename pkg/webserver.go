@@ -161,7 +161,7 @@ func GetSNMPDevices(ctx *macaron.Context) {
 }
 
 // AddSNMPDevice Insert new snmpdevice to de internal BBDD --pending--
-func AddSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
+func AddSNMPDevice(ctx *macaron.Context, dev SnmpDevice) {
 	log.Printf("ADDING DEVICE %+v", dev)
 }
 
