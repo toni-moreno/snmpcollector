@@ -41,12 +41,13 @@ var (
 		Measurements map[string]*InfluxMeasurementCfg
 		GetGroups    map[string]*MGroupsCfg
 		SnmpDevice   map[string]*SnmpDeviceCfg
-		Influx       map[string]*InfluxConfig
+		Influxdb     map[string]*InfluxCfg
 		HTTP         HTTPConfig
 		General      GeneralConfig
 	}{}
 	//runtme array
-	devices map[string]*SnmpDevice
+	devices  map[string]*SnmpDevice
+	influxdb map[string]*InfluxDB
 )
 
 func fatal(v ...interface{}) {
@@ -120,7 +121,7 @@ func init() {
 		viper.SetConfigFile(configFile)
 	} else {
 		viper.SetConfigName("config")
-		viper.AddConfigPath("/opt/influxsnmp/conf/")
+		viper.AddConfigPath("/opt/snmpcollector/conf/")
 		viper.AddConfigPath("./conf/")
 		viper.AddConfigPath(".")
 	}
@@ -142,7 +143,24 @@ func init() {
 
 	}
 
+	//Init Metrics CFG
+
 	initMetricsCfg()
+
+	//Init InfluxDataBases
+
+	influxdb = make(map[string]*InfluxDB)
+
+	for k, c := range cfg.Influxdb {
+		//Inticialize each SNMP device
+		dev := InfluxDB{}
+		dev.cfg = c
+		dev.cfg.ID = k
+		//dev.Init(k) D'ont initialize if there is not any device really sending data to the output backend
+		influxdb[k] = &dev
+	}
+
+	//Init Devices
 
 	devices = make(map[string]*SnmpDevice)
 
@@ -178,11 +196,11 @@ func init() {
 	//for name, c := range cfg.SnmpDevice {
 	for name, c := range devices {
 		// default is to use name of snmp config, but it can be overridden
-		if len(c.cfg.Config) > 0 {
-			name = c.cfg.Config
+		if len(c.cfg.OutDB) > 0 {
+			name = c.cfg.OutDB
 		}
-		if c.Influx, ok = cfg.Influx[name]; !ok {
-			if c.Influx, ok = cfg.Influx["*"]; !ok {
+		if c.Influx, ok = influxdb[name]; !ok {
+			if c.Influx, ok = influxdb["*"]; !ok {
 				fatal("No influx config for snmp device:", name)
 			}
 		}
@@ -193,20 +211,13 @@ func init() {
 
 	if cfg.Selfmon.Enabled {
 		cfg.Selfmon.Init()
-		cfg.Selfmon.Influx = cfg.Influx["*"]
+		cfg.Selfmon.Influx = influxdb["*"]
 		cfg.Selfmon.Influx.Init()
 		fmt.Printf("SELFMON enabled %+vn\n", cfg.Selfmon)
 	} else {
 		fmt.Printf("SELFMON disabled %+vn\n", cfg.Selfmon)
 	}
-	/*
-		var ferr error
-		errorName = fmt.Sprintf("error.%d.log", cfg.HTTP.Port)
-		errorPath := filepath.Join(logDir, errorName)
-		errorLog, ferr = os.OpenFile(errorPath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
-		if ferr != nil {
-			log.Fatalln("Can't open error log:", ferr)
-		}*/
+
 }
 
 func main() {

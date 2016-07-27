@@ -2,106 +2,121 @@ package main
 
 import (
 	"fmt"
-	//"log"
-	"strings"
-	"time"
-	//"sync"
-	"sync/atomic"
-
 	"github.com/influxdata/influxdb/client/v2"
+	"math/rand"
+	"strings"
+	"sync/atomic"
+	"time"
 )
 
-type InfluxConfig struct {
+/*InfluxCfg : */
+type InfluxCfg struct {
+	ID        string
 	Host      string `toml:"host"`
 	Port      int    `toml:"port"`
 	DB        string `toml:"db"`
 	User      string `toml:"user"`
 	Password  string `toml:"password"`
 	Retention string `toml:"retention"`
-	iChan     chan *client.BatchPoints
-	client    client.Client
-	Sent      int64
-	Errors    int64
 }
 
-func (c *InfluxConfig) incSent() {
-	atomic.AddInt64(&c.Sent, 1)
+/*
+ InfluxDB: database export
+*/
+
+type InfluxDB struct {
+	cfg     *InfluxCfg
+	started bool
+	iChan   chan *client.BatchPoints
+	client  client.Client
+	Sent    int64
+	Errors  int64
 }
 
-func (c *InfluxConfig) addSent(n int64) {
-	atomic.AddInt64(&c.Sent, n)
+func (db *InfluxDB) incSent() {
+	atomic.AddInt64(&db.Sent, 1)
 }
 
-func (c *InfluxConfig) incErrors() {
-	atomic.AddInt64(&c.Errors, 1)
+func (db *InfluxDB) addSent(n int64) {
+	atomic.AddInt64(&db.Sent, n)
 }
 
-func (c *InfluxConfig) addErrors(n int64) {
-	atomic.AddInt64(&c.Errors, n)
+func (db *InfluxDB) incErrors() {
+	atomic.AddInt64(&db.Errors, 1)
 }
 
-func (c *InfluxConfig) BP() *client.BatchPoints {
-	if len(c.Retention) == 0 {
-		c.Retention = "default"
+func (db *InfluxDB) addErrors(n int64) {
+	atomic.AddInt64(&db.Errors, n)
+}
+
+func (db *InfluxDB) BP() *client.BatchPoints {
+	if len(db.cfg.Retention) == 0 {
+		db.cfg.Retention = "autogen"
 	}
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:        c.DB,
-		RetentionPolicy: c.Retention,
+		Database:        db.cfg.DB,
+		RetentionPolicy: db.cfg.Retention,
 		Precision:       "ns", //Default precision for Time lib
 	})
 	return &bp
 }
 
-func (c *InfluxConfig) Connect() error {
+func (db *InfluxDB) Connect() error {
 	conf := client.HTTPConfig{
-		Addr:     fmt.Sprintf("http://%s:%d", c.Host, c.Port),
-		Username: c.User,
-		Password: c.Password,
+		Addr:     fmt.Sprintf("http://%s:%d", db.cfg.Host, db.cfg.Port),
+		Username: db.cfg.User,
+		Password: db.cfg.Password,
 	}
 	cli, err := client.NewHTTPClient(conf)
-	c.client = cli
+	db.client = cli
 	if err != nil {
 		return err
 	}
 
-	_, _, err = c.client.Ping(time.Duration(5))
+	_, _, err = db.client.Ping(time.Duration(5))
 	return err
 }
 
-func (c *InfluxConfig) Init() {
+func (db *InfluxDB) Init() {
+	if db.started == true {
+		log.Infof("Emitter thread to : %s  already started (skipping Initialization)", db.cfg.ID)
+		return
+	}
+
+	log.Infof("Initializing influxdb with id = %s", db.cfg.ID)
 
 	if verbose {
-		log.Infoln("Connecting to: ", c.Host)
+		log.Infoln("Connecting to: ", db.cfg.Host)
 	}
-	c.iChan = make(chan *client.BatchPoints, 65535)
-	if err := c.Connect(); err != nil {
-		log.Errorln("failed connecting to: ", c.Host)
+	db.iChan = make(chan *client.BatchPoints, 65535)
+	if err := db.Connect(); err != nil {
+		log.Errorln("failed connecting to: ", db.cfg.Host)
 		log.Errorln("error: ", err)
 		log.Fatal(err)
 	}
 	if verbose {
-		log.Infoln("Connected to: ", c.Host)
+		log.Infoln("Connected to: ", db.cfg.Host)
 	}
-
-	go influxEmitter(c)
+	db.started = true
+	go influxEmitter(db, rand.Int())
 }
 
-func (c *InfluxConfig) Send(bps *client.BatchPoints) {
-	c.iChan <- bps
+func (db *InfluxDB) Send(bps *client.BatchPoints) {
+	db.iChan <- bps
 }
 
-func (c *InfluxConfig) Hostname() string {
-	return strings.Split(c.Host, ":")[0]
+func (db *InfluxDB) Hostname() string {
+	return strings.Split(db.cfg.Host, ":")[0]
 }
 
 // use chan as a queue so that interupted connections to
 // influxdb server don't drop collected data
 
-func influxEmitter(c *InfluxConfig) {
-	log.Info("beggining Influx Emmiter thread")
+func influxEmitter(db *InfluxDB, r int) {
+	log.Infof("beggining Influx Emmiter thread: %d", r)
 	for {
 		select {
-		case data := <-c.iChan:
+		case data := <-db.iChan:
 			/*if testing {
 				break
 			}*/
@@ -111,9 +126,10 @@ func influxEmitter(c *InfluxConfig) {
 			}
 
 			// keep trying until we get it (don't drop the data)
+			log.Debugf("sending data from Emmiter %d", r)
 			for {
-				if err := c.client.Write(*data); err != nil {
-					c.incErrors()
+				if err := db.client.Write(*data); err != nil {
+					db.incErrors()
 					log.Errorln("influxdb write error: ", err)
 					// try again in a bit
 					// TODO: this could be better
@@ -121,7 +137,7 @@ func influxEmitter(c *InfluxConfig) {
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
-					c.incSent()
+					db.incSent()
 				}
 				break
 			}

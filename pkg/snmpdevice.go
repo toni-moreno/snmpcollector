@@ -45,8 +45,8 @@ type SnmpDeviceCfg struct {
 	V3PrivProt  string `toml:"v3privprot"`
 	//snmp runtime config
 	Freq int `toml:"freq"`
-	//TODO revisar para que se usa el parámetro Config
-	Config   string `toml:"config"`
+
+	OutDB    string `toml:"outdb"`
 	LogLevel string `toml:"loglevel"`
 	LogFile  string `toml:"logfile"`
 
@@ -73,7 +73,7 @@ type SnmpDevice struct {
 
 	//SNMP and Influx Clients config
 	snmpClient *gosnmp.GoSNMP
-	Influx     *InfluxConfig
+	Influx     *InfluxDB
 	LastError  time.Time
 	//Runtime stats
 	Requests int64

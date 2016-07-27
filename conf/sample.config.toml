@@ -3,7 +3,7 @@
  logLevel = "debug"
 
 [selfmon]
- enabled = true 
+ enabled = true
  freq = 30
  prefix = "gvm"
  extratags = [ "instance=snmp1" ]
@@ -12,7 +12,7 @@
 #  METRIC PARAMETERS
 #--------------------------
 # [metrics."id"] => id for other structs
-# fielname : name  measurement 
+# fielname : name  measurement
 # Description : litle desciption for user easy understand
 # BaseOID : the real OID we need to query
 # Datasrctype : any of GAUGE,INTEGER,COUNTER32,COUNTER64
@@ -55,7 +55,7 @@
 [metrics."ifHCOutOctets"]
   fieldname = "Out.bytes"
   description = "Bytes In - 64-bit Counters"
-  baseOID = ".1.3.6.1.2.1.31.1.1.1.10" 
+  baseOID = ".1.3.6.1.2.1.31.1.1.1.10"
   DatasrcType = "COUNTER64"
   getRate = false
 
@@ -77,9 +77,9 @@
 #  MEASUREMENTS
 #--------------------------
 # [measurements."id"] => id unique for this measurement.
-# name 		: name  for the measurement 
+# name 		: name  for the measurement
 # fields 	: array of metric id's to join as fields in the measurement
-# getMode 	:  posible values [ "value", "indexed" ] 
+# getMode 	:  posible values [ "value", "indexed" ]
 # 	* value: will send direct the value from these metrics.
 #	* indexed: will send points for each found indexed values ( like intefaces ) => needs indexOID/indexTag parameters
 # indexOID: the OID from we will get all real OID's to query data.
@@ -109,7 +109,7 @@
  getmode = "indexed"
  indexOID = ".1.3.6.1.2.1.31.1.1.1.1" # ifName => needed to be "STRING"
  IndexTAG = "portName"
- 
+
 #--------------------------
 #  GetGroups
 #--------------------------
@@ -120,8 +120,8 @@
 
 [getgroups."Linux"]
 
-measurements = 	[ 
-		"linux_cpu", 
+measurements = 	[
+		"linux_cpu",
 		"linux_ports",
 		]
 
@@ -141,7 +141,7 @@ measurements = 	[
 
 #--------------------------------
 #   SNMP VERSION/AUTH PARAMETERS
-#-------------------------------- 
+#--------------------------------
 
 # snmpversion 	: posible values values [ "1", "2c" , "3"] ( no default set)
 # community 	: (por snmpv2 only) commumity for authentication (no default set)
@@ -149,7 +149,7 @@ measurements = 	[
 # -- for SNMP v3 only --
 #
 # v3seclevel	:  posible values [ "NoAuthNoPriv" , "AuthNoPriv" , "AuthPriv" ] ( no default set)
-# v3authuser 	:  Authentication user  
+# v3authuser 	:  Authentication user
 # v3authpass	:  Autentication password
 # v3authprot 	:  Autehtication Protocol =>  values  [ "MD5", "SHA" ] ( default none)
 #
@@ -161,7 +161,7 @@ measurements = 	[
 # ---------------------------
 # RUNTIME OPTIONS
 # --------------------------
-#
+# OutDB         : Influxdb where to put metrics
 # freq          : Frequency of polling in seconds ( default none)
 # devicetagname : The tag name that will identify the device (default : "device")
 # devicetagvalue: the tag valude that will identify the device ( default : "id" ) [ posible values "id" --hostsnmpv2_1--  or "host" --127.0.0.1-- ]
@@ -169,7 +169,7 @@ measurements = 	[
 # snmpdebug     :
 # filters       : Array containing filter file per measurement.
 
-	
+
 
 [snmpdevice]
 
@@ -181,7 +181,7 @@ measurements = 	[
  retries = 5
  #repeat = 0
  #snmp version /auth params
- snmpversion = "2c"  
+ snmpversion = "2c"
  community = "public"
  # runtime parameters
  freq = 30
@@ -199,7 +199,7 @@ measurements = 	[
  retries = 5
  #repeat = 0
  #snmp version /auth params
- snmpversion = "2c"  
+ snmpversion = "2c"
  community = "public"
  # runtime parameters
  freq = 30
@@ -230,7 +230,7 @@ measurements = 	[
  #loglevel = "info"
  #snmpdebug  = true
  metricgroups = [ "Linux.*" ]
- measfilters = [ 
+ measfilters = [
 		[ "linux_ports" , "file" , "lp_file_filter_a.txt" ,"EnableAlias"],
 	]
 
@@ -252,13 +252,13 @@ measurements = 	[
  freq = 30
  #extratags = [ "tagA=4","tagB=5" ,"tagC=6" ]
  loglevel = "info"
- snmpdebug  = false 
+ snmpdebug  = false
  metricgroups = [ ".*ux" ]
- measfilters = [ 
+ measfilters = [
 		[ "linux_ports" , "file", "lp_file_filter_b.txt","EnableAlia" ],
 	]
 
- 
+
 [snmpdevice.hostsnmpv3c]
  #conection parameters
  host = "hostsnmpv3c"
@@ -282,13 +282,13 @@ measurements = 	[
  loglevel = "debug"
  snmpdebug  = true
  metricgroups = [ "Lin.*"]
- measfilters = [ 
+ measfilters = [
 		[ "linux_ports" , "OIDCondition", ".1.3.6.1.2.1.2.2.1.8","eq","1" ], #IfOperStatus
 ]
 
-[influx]
+[influxdb]
 
-[influx."*"]
+[influxdb."*"]
  host = "192.168.1.103"
  port = 8086
  db = "snmp"

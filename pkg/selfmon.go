@@ -10,12 +10,13 @@ import (
 	"time"
 )
 
+//SelfMonConfig configuration for self monitoring
 type SelfMonConfig struct {
 	Enabled             bool     `toml:"enabled"`
 	Freq                int      `toml:"freq"`
 	Prefix              string   `toml:"prefix"`
 	ExtraTags           []string `toml:"extra-tags"`
-	Influx              *InfluxConfig
+	Influx              *InfluxDB
 	runtimeStatsRunning bool
 	TagMap              map[string]string
 	bps                 *client.BatchPoints
