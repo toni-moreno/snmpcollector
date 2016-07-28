@@ -17,6 +17,7 @@ const (
 	ABSOLUTE //It is intended for counters which are reset upon reading. In effect, the type is very similar to GAUGE except that the value is an (unsigned) integer
 )
 
+/*
 type SnmpMetricCfg struct {
 	id          string  //name of the key in the config array
 	FieldName   string  `toml:"field_name"`
@@ -27,21 +28,21 @@ type SnmpMetricCfg struct {
 	Scale       float64 `toml:"scale"`
 	Shift       float64 `toml:"shift"`
 }
-
+*/
 /*
 3.- Check minimal data is set  (pending)
 name, BaseOID BaseOID begining with "."
 fieldname != null
 */
-
+// Init initialize metrics
 func (m *SnmpMetricCfg) Init(name string) error {
-	m.id = name
-	//validate config values
+	m.ID = name
+	//valIDate config values
 	if len(m.FieldName) == 0 {
-		return errors.New("FieldName not set in metric Config " + m.id)
+		return errors.New("FieldName not set in metric Config " + m.ID)
 	}
 	if len(m.BaseOID) == 0 {
-		return errors.New("BaseOid not set in metric Config " + m.id)
+		return errors.New("BaseOid not set in metric Config " + m.ID)
 	}
 	switch m.DataSrcType {
 	case "GAUGE":
@@ -50,15 +51,16 @@ func (m *SnmpMetricCfg) Init(name string) error {
 	case "COUNTER64":
 	case "ABSOLUTE":
 	default:
-		return errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.id)
+		return errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
 	}
 	if !strings.HasPrefix(m.BaseOID, ".") {
-		return errors.New("Bad BaseOid format:" + m.BaseOID + " in metric Config " + m.id)
+		return errors.New("Bad BaseOid format:" + m.BaseOID + " in metric Config " + m.ID)
 	}
 
 	return nil
 }
 
+//SnmpMetric type to metric runtime
 type SnmpMetric struct {
 	cfg         *SnmpMetricCfg
 	cookedValue float64
@@ -146,8 +148,4 @@ func (s *SnmpMetric) Init() error {
 		//TODO
 	}
 	return nil
-}
-
-type MGroupsCfg struct {
-	Measurements []string `toml:"measurements"`
 }

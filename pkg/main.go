@@ -36,6 +36,8 @@ var (
 	configFile = filepath.Join(confDir, "config.toml")
 
 	cfg = struct {
+		General      GeneralConfig
+		Database     DatabaseCfg
 		Selfmon      SelfMonConfig
 		Metrics      map[string]*SnmpMetricCfg
 		Measurements map[string]*InfluxMeasurementCfg
@@ -43,7 +45,6 @@ var (
 		SnmpDevice   map[string]*SnmpDeviceCfg
 		Influxdb     map[string]*InfluxCfg
 		HTTP         HTTPConfig
-		General      GeneralConfig
 	}{}
 	//runtme array
 	devices  map[string]*SnmpDevice
@@ -142,7 +143,10 @@ func init() {
 		log.Level = l
 
 	}
-
+	//Init BD config
+	log.Debugf("%+v", cfg)
+	InitDB(cfg.Database)
+	cfg.Database.LoadConfig()
 	//Init Metrics CFG
 
 	initMetricsCfg()
@@ -210,10 +214,15 @@ func init() {
 	//make sure the selfmon has a deb
 
 	if cfg.Selfmon.Enabled {
-		cfg.Selfmon.Init()
-		cfg.Selfmon.Influx = influxdb["*"]
-		cfg.Selfmon.Influx.Init()
-		fmt.Printf("SELFMON enabled %+vn\n", cfg.Selfmon)
+		if val, ok := influxdb["*"]; ok {
+			//only executed if a "*" influxdb exist
+			cfg.Selfmon.Init()
+			cfg.Selfmon.Influx = val
+			cfg.Selfmon.Influx.Init()
+			fmt.Printf("SELFMON enabled %+vn\n", cfg.Selfmon)
+		} else {
+			cfg.Selfmon.Enabled = false
+		}
 	} else {
 		fmt.Printf("SELFMON disabled %+vn\n", cfg.Selfmon)
 	}

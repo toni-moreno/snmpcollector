@@ -25,7 +25,7 @@ type SysInfo struct {
 	sysLocation string
 }
 
-// SnmpDeviceCfg contains all snmp related device definitions
+/*/ SnmpDeviceCfg contains all snmp related device definitions
 type SnmpDeviceCfg struct {
 	ID string
 	//snmp connection config
@@ -60,7 +60,7 @@ type SnmpDeviceCfg struct {
 	MetricGroups []string   `toml:"metricgroups"`
 	MeasFilters  [][]string `toml:"measfilters"`
 }
-
+*/
 // SnmpDevice contains all runtime device related device configu ns and state
 type SnmpDevice struct {
 	cfg *SnmpDeviceCfg
@@ -228,15 +228,15 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 	for _, m := range d.InfmeasArray {
 		//loading all posible values.
 		if m.cfg.GetMode == "indexed" {
-			d.log.Infof("Loading Indexed values in : %s", m.cfg.id)
+			d.log.Infof("Loading Indexed values in : %s", m.cfg.ID)
 			m.loadIndexedLabels(d)
 		}
 		//loading filters
-		d.log.Debugf("Looking for filters set to: %s ", m.cfg.id)
+		d.log.Debugf("Looking for filters set to: %s ", m.cfg.ID)
 		var flt string
 		for _, f := range d.cfg.MeasFilters {
-			if f[0] == m.cfg.id {
-				d.log.Debugf("filter Found  %s  (type %s)", m.cfg.id, f[1])
+			if f[0] == m.cfg.ID {
+				d.log.Debugf("filter Found  %s  (type %s)", m.cfg.ID, f[1])
 				if m.cfg.GetMode == "indexed" {
 					flt = f[1]
 					//OK we can apply filters
@@ -262,16 +262,16 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 							m.Filter.condType,
 							m.Filter.condValue)
 					default:
-						d.log.Errorf("Invalid  GetMode Type %s for measurement: %s", flt, m.cfg.id)
+						d.log.Errorf("Invalid  GetMode Type %s for measurement: %s", flt, m.cfg.ID)
 					}
 
 				} else {
 					//no filters enabled  on not indexed measurements
-					d.log.Debugf("Filters %s not match with indexed measurements: %s", f[0], m.cfg.id)
+					d.log.Debugf("Filters %s not match with indexed measurements: %s", f[0], m.cfg.ID)
 				}
 
 			} else {
-				d.log.Infof("Filter not found for measurement:i %s", m.cfg.id)
+				d.log.Infof("Filter not found for measurement:i %s", m.cfg.ID)
 			}
 		}
 		//Loading final Values to query with snmp
@@ -280,7 +280,7 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 		} else {
 			m.IndexedLabels()
 		}
-		d.log.Debugf("MEASUREMENT HOST:%s | %s | %+v\n", d.cfg.Host, m.cfg.id, m)
+		d.log.Debugf("MEASUREMENT HOST:%s | %s | %+v\n", d.cfg.Host, m.cfg.ID, m)
 	}
 	//Initialize all snmpMetrics  objects and OID array
 	for _, m := range d.InfmeasArray {
@@ -293,10 +293,10 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 			//for each field
 			idx := make(map[string]*SnmpMetric)
 			for _, smcfg := range m.cfg.fieldMetric {
-				d.log.Debugf("initializing [value]metric cfgi %s", smcfg.id)
+				d.log.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
 				metric := &SnmpMetric{cfg: smcfg, realOID: smcfg.BaseOID}
 				metric.Init()
-				idx[smcfg.id] = metric
+				idx[smcfg.ID] = metric
 			}
 			m.values["0"] = idx
 
@@ -308,7 +308,7 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 				for _, smcfg := range m.cfg.fieldMetric {
 					metric := &SnmpMetric{cfg: smcfg, realOID: smcfg.BaseOID + "." + key}
 					metric.Init()
-					idx[smcfg.id] = metric
+					idx[smcfg.ID] = metric
 				}
 				m.values[label] = idx
 			}
@@ -435,7 +435,7 @@ func (d *SnmpDevice) printConfig() {
 	fmt.Printf("Host: %s Port: %d Version: %s\n", d.cfg.Host, d.cfg.Port, d.cfg.SnmpVersion)
 	fmt.Printf("----------------------------------------------\n")
 	for _, vM := range d.InfmeasArray {
-		fmt.Printf(" Measurement : %s\n", vM.cfg.id)
+		fmt.Printf(" Measurement : %s\n", vM.cfg.ID)
 		fmt.Printf(" ----------------------------------------------------------\n")
 		vM.printConfig()
 	}
@@ -503,7 +503,7 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 				bpts := d.Influx.BP()
 				startSnmp := time.Now()
 				for _, m := range d.InfmeasArray {
-					d.log.Debugf("----------------Processing measurement : %s", m.cfg.id)
+					d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
 					var nGets, nErrors int64
 					if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
 						nGets, nErrors, _ = m.SnmpGetData(d.snmpClient)

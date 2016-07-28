@@ -14,6 +14,7 @@ import (
 	"github.com/soniah/gosnmp"
 )
 
+/*
 type InfluxMeasurementCfg struct {
 	id          string   //name of the key in the config array
 	Name        string   `toml:"name"`
@@ -22,33 +23,34 @@ type InfluxMeasurementCfg struct {
 	IndexOID    string   `toml:"indexoid"`
 	IndexTag    string   `toml:"indextag"`
 	fieldMetric []*SnmpMetricCfg
-}
+}*/
 
+//Init initialize the measurement configuration
 func (mc *InfluxMeasurementCfg) Init(name string, MetricCfg *map[string]*SnmpMetricCfg) error {
-	mc.id = name
+	mc.ID = name
 	//validate config values
 	if len(mc.Name) == 0 {
-		return errors.New("Name not set in measurement Config " + mc.id)
+		return errors.New("Name not set in measurement Config " + mc.ID)
 	}
 	if len(mc.Fields) == 0 {
-		return errors.New("No Fields added to measurement " + mc.id)
+		return errors.New("No Fields added to measurement " + mc.ID)
 	}
 
 	switch mc.GetMode {
 	case "indexed":
 		if len(mc.IndexOID) == 0 {
-			return errors.New("Indexed measurement with no IndexOID in measurement Config " + mc.id)
+			return errors.New("Indexed measurement with no IndexOID in measurement Config " + mc.ID)
 		}
 		if len(mc.IndexTag) == 0 {
-			return errors.New("Indexed measurement with no IndexTag configuredin measurement " + mc.id)
+			return errors.New("Indexed measurement with no IndexTag configuredin measurement " + mc.ID)
 		}
 		if !strings.HasPrefix(mc.IndexOID, ".") {
-			return errors.New("Bad BaseOid format:" + mc.IndexOID + " in metric Config " + mc.id)
+			return errors.New("Bad BaseOid format:" + mc.IndexOID + " in metric Config " + mc.ID)
 		}
 
 	case "value":
 	default:
-		return errors.New("Unknown GetMode" + mc.GetMode + " in measurement Config " + mc.id)
+		return errors.New("Unknown GetMode" + mc.GetMode + " in measurement Config " + mc.ID)
 	}
 
 	log.Info("processing measurement key: ", name)
@@ -69,11 +71,12 @@ func (mc *InfluxMeasurementCfg) Init(name string, MetricCfg *map[string]*SnmpMet
 		for _, v := range mc.Fields {
 			s += v
 		}
-		return errors.New("No metrics found with names" + s + " in measurement Config " + mc.id)
+		return errors.New("No metrics found with names" + s + " in measurement Config " + mc.ID)
 	}
 	return nil
 }
 
+/*
 type MeasFilterCfg struct {
 	fType       string //file/OidCondition
 	FileName    string
@@ -81,8 +84,9 @@ type MeasFilterCfg struct {
 	OIDCond     string
 	condType    string
 	condValue   string
-}
+}*/
 
+//InfluxMeasurement the runtime measurement config
 type InfluxMeasurement struct {
 	cfg              *InfluxMeasurementCfg
 	values           map[string]map[string]*SnmpMetric //snmpMetric mapped with metric_names and Index
@@ -102,7 +106,7 @@ func (m *InfluxMeasurement) printConfig() {
 		switch m.Filter.fType {
 		case "file":
 			fmt.Printf(" ----------------------------------------------------------\n")
-			fmt.Printf(" File Filter: %s ( EnableAlias: %b)\n [ TOTAL: %d| FILTERED: %d]", m.Filter.FileName, m.Filter.enableAlias, m.numValOrig, m.numValFlt)
+			fmt.Printf(" File Filter: %s ( EnableAlias: %t)\n [ TOTAL: %d| FILTERED: %d]", m.Filter.FileName, m.Filter.enableAlias, m.numValOrig, m.numValFlt)
 			fmt.Printf(" ----------------------------------------------------------\n")
 		case "OIDCondition":
 			fmt.Printf(" ----------------------------------------------------------\n")
@@ -112,7 +116,7 @@ func (m *InfluxMeasurement) printConfig() {
 
 	}
 	for _, v := range m.cfg.fieldMetric {
-		fmt.Printf("\t*Metric[%s]\tName[%s]\tOID:%s\t(%s) \n", v.id, v.FieldName, v.BaseOID, v.DataSrcType)
+		fmt.Printf("\t*Metric[%s]\tName[%s]\tOID:%s\t(%s) \n", v.ID, v.FieldName, v.BaseOID, v.DataSrcType)
 	}
 	if m.cfg.GetMode == "indexed" {
 		fmt.Printf(" ---------------------------------------------------------\n")
@@ -122,16 +126,9 @@ func (m *InfluxMeasurement) printConfig() {
 	}
 }
 
-func (m *InfluxMeasurement) GetInfluxPoint( /*host string,*/ hostTags map[string]string) []*client.Point {
+//GetInfluxPoint get points from measuremnetsl
+func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client.Point {
 	var ptarray []*client.Point
-	/*
-		FullTags := map[string]string{
-			"host": host,
-		}
-		//adding host specific tabs
-		for key, value := range hostTags {
-			FullTags[key] = value
-		}*/
 
 	switch m.cfg.GetMode {
 	case "value":
@@ -209,8 +206,8 @@ SnmpBulkData GetSNMP Data
 func (m *InfluxMeasurement) SnmpBulkData(snmp *gosnmp.GoSNMP) (int64, int64, error) {
 
 	now := time.Now()
-	var sent int64 = 0
-	var errs int64 = 0
+	var sent int64
+	var errs int64
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
 		m.log.Debugf("received SNMP  pdu:%+v", pdu)
@@ -219,10 +216,10 @@ func (m *InfluxMeasurement) SnmpBulkData(snmp *gosnmp.GoSNMP) (int64, int64, err
 			return nil //if error return the bulk process will stop
 		}
 		if metric, ok := m.oidSnmpMap[pdu.Name]; ok {
-			m.log.Debugln("OK measurement ", m.cfg.id, "SNMP RESULT OID", pdu.Name, "MetricFound", pdu.Value)
+			m.log.Debugln("OK measurement ", m.cfg.ID, "SNMP RESULT OID", pdu.Name, "MetricFound", pdu.Value)
 			metric.setRawData(pduVal2Int64(pdu), now)
 		} else {
-			m.log.Debugf("returned OID from device: %s  Not Found in measurement /metric list: %+v", pdu.Name, m.cfg.id)
+			m.log.Debugf("returned OID from device: %s  Not Found in measurement /metric list: %+v", pdu.Name, m.cfg.ID)
 		}
 		return nil
 	}
@@ -244,8 +241,8 @@ GetSnmpData GetSNMP Data
 func (m *InfluxMeasurement) SnmpGetData(snmp *gosnmp.GoSNMP) (int64, int64, error) {
 
 	now := time.Now()
-	var sent int64 = 0
-	var errs int64 = 0
+	var sent int64
+	var errs int64
 	l := len(m.snmpOids)
 	for i := 0; i < l; i += maxOids {
 		end := i + maxOids
@@ -272,10 +269,10 @@ func (m *InfluxMeasurement) SnmpGetData(snmp *gosnmp.GoSNMP) (int64, int64, erro
 			oid := pdu.Name
 			val := pdu.Value
 			if metric, ok := m.oidSnmpMap[oid]; ok {
-				m.log.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %s ", m.cfg.id, oid, val)
+				m.log.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %s ", m.cfg.ID, oid, val)
 				metric.setRawData(pduVal2Int64(pdu), now)
 			} else {
-				m.log.Errorln("OID", oid, "Not Found in measurement", m.cfg.id)
+				m.log.Errorln("OID", oid, "Not Found in measurement", m.cfg.ID)
 			}
 		}
 	}
@@ -364,6 +361,7 @@ func (m *InfluxMeasurement) filterIndexedLabels(f_mode string) error {
 	return nil
 }
 
+//IndexedLabels
 func (m *InfluxMeasurement) IndexedLabels() error {
 	m.CurIndexedLabels = m.AllIndexedLabels
 	return nil
@@ -382,7 +380,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(c *SnmpDevice, oidCond string, ty
 		return errors.New("only accepted numeric value as value condition current :" + valueCond)
 	}
 	m.numValFlt = 0
-	var vci int64 = int64(vc)
+	vci := int64(vc)
 	for _, pdu := range pdus {
 		value := pduVal2Int64(pdu)
 		var cond bool

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-/*InfluxCfg : */
+/*InfluxCfg :
 type InfluxCfg struct {
 	ID        string
 	Host      string `toml:"host"`
@@ -19,7 +19,7 @@ type InfluxCfg struct {
 	Password  string `toml:"password"`
 	Retention string `toml:"retention"`
 }
-
+*/
 /*
  InfluxDB: database export
 */
