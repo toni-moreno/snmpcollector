@@ -18,18 +18,6 @@ const (
 )
 
 /*
-type SnmpMetricCfg struct {
-	id          string  //name of the key in the config array
-	FieldName   string  `toml:"field_name"`
-	Description string  `toml:"description"`
-	BaseOID     string  `toml:"baseoid"`
-	DataSrcType string  `toml:"datasrctype"`
-	GetRate     bool    `toml:"getrate"` //ony Valid with COUNTERS/ABSOLUTE
-	Scale       float64 `toml:"scale"`
-	Shift       float64 `toml:"shift"`
-}
-*/
-/*
 3.- Check minimal data is set  (pending)
 name, BaseOID BaseOID begining with "."
 fieldname != null

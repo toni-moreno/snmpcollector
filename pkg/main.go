@@ -41,6 +41,7 @@ var (
 		Selfmon      SelfMonConfig
 		Metrics      map[string]*SnmpMetricCfg
 		Measurements map[string]*InfluxMeasurementCfg
+		MFilters     map[string]*MeasFilterCfg
 		GetGroups    map[string]*MGroupsCfg
 		SnmpDevice   map[string]*SnmpDeviceCfg
 		Influxdb     map[string]*InfluxCfg
@@ -134,7 +135,7 @@ func init() {
 	if err != nil {
 		panic(fmt.Errorf("unable to decode into struct, %v \n", err))
 	}
-	//Debug	fmt.Printf("%+v\n", cfg)
+
 	if len(cfg.General.LogDir) > 0 {
 		logDir = cfg.General.LogDir
 	}
@@ -145,11 +146,13 @@ func init() {
 	}
 	//Init BD config
 	log.Debugf("%+v", cfg)
-	InitDB(cfg.Database)
+	InitDB(&cfg.Database)
 	cfg.Database.LoadConfig()
+	log.Debugf("%+v", cfg)
 	//Init Metrics CFG
 
 	initMetricsCfg()
+	log.Debugf("%+v", cfg)
 
 	//Init InfluxDataBases
 

@@ -25,42 +25,6 @@ type SysInfo struct {
 	sysLocation string
 }
 
-/*/ SnmpDeviceCfg contains all snmp related device definitions
-type SnmpDeviceCfg struct {
-	ID string
-	//snmp connection config
-	Host    string `toml:"host"`
-	Port    int    `toml:"port"`
-	Retries int    `toml:"retries"`
-	Timeout int    `toml:"timeout"`
-	Repeat  int    `toml:"repeat"`
-	//snmp auth  config
-	SnmpVersion string `toml:"snmpversion"`
-	Community   string `toml:"community"`
-	V3SecLevel  string `toml:"v3seclevel"`
-	V3AuthUser  string `toml:"v3authuser"`
-	V3AuthPass  string `toml:"v3authpass"`
-	V3AuthProt  string `toml:"v3authprot"`
-	V3PrivPass  string `toml:"v3privpass"`
-	V3PrivProt  string `toml:"v3privprot"`
-	//snmp runtime config
-	Freq int `toml:"freq"`
-
-	OutDB    string `toml:"outdb"`
-	LogLevel string `toml:"loglevel"`
-	LogFile  string `toml:"logfile"`
-
-	SnmpDebug bool `toml:"snmpdebug"`
-	//influx tags
-	DeviceTagName  string   `toml:"devicetagname"`
-	DeviceTagValue string   `toml:"devicetagvalue"`
-	ExtraTags      []string `toml:"extra-tags"`
-
-	//Filters for measurements
-	MetricGroups []string   `toml:"metricgroups"`
-	MeasFilters  [][]string `toml:"measfilters"`
-}
-*/
 // SnmpDevice contains all runtime device related device configu ns and state
 type SnmpDevice struct {
 	cfg *SnmpDeviceCfg
@@ -214,15 +178,6 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 	/*For each Indexed measurement
 	a) LoadLabels for all device available tags
 	b) apply filters , and get list of names Indexed tames for add to IndexTAG
-
-	Filter format
-	-------------
-	F[0] 	= measurement name
-	F[1] 	= FilterType ( know values "file" , "OIDCondition" )
-	F[2] 	= Filename ( if F[1] = file)
-		= OIDname for condition ( if[F1] = OIDCondition )
-	F[3]  = Condition Type ( if[F1] = OIDCondition ) (known values "eq","lt","gt")
-	F[4]  = Value for condition
 	*/
 
 	for _, m := range d.InfmeasArray {
@@ -233,51 +188,42 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 		}
 		//loading filters
 		d.log.Debugf("Looking for filters set to: %s ", m.cfg.ID)
-		var flt string
+		var ftype string
 		for _, f := range d.cfg.MeasFilters {
-			if f[0] == m.cfg.ID {
-				d.log.Debugf("filter Found  %s  (type %s)", m.cfg.ID, f[1])
-				if m.cfg.GetMode == "indexed" {
-					flt = f[1]
-					//OK we can apply filters
-					switch {
-					case flt == "file":
-						enable := f[3] == "EnableAlias"
-						m.Filter = &MeasFilterCfg{
-							fType:       flt,
-							FileName:    f[2],
-							enableAlias: enable,
+			if filter, ok := cfg.MFilters[f]; ok {
+				if filter.IDMeasurementCfg == m.cfg.ID {
+					m.Filter = filter
+					d.log.Debugf("filter Found  %s for measurement %s  (type %s)", f, m.cfg.ID, m.Filter.FType)
+					if m.cfg.GetMode == "indexed" {
+						ftype = m.Filter.FType
+						switch m.Filter.FType {
+						case "file":
+							m.applyFileFilter(m.Filter.FileName,
+								m.Filter.EnableAlias)
+						case "OIDCondition":
+							m.applyOIDCondFilter(d,
+								m.Filter.OIDCond,
+								m.Filter.CondType,
+								m.Filter.CondValue)
+						default:
+							d.log.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
 						}
-						m.applyFileFilter(m.Filter.FileName, enable)
-					case flt == "OIDCondition":
-						m.Filter = &MeasFilterCfg{
-							fType:     flt,
-							OIDCond:   f[2],
-							condType:  f[3],
-							condValue: f[4],
-						}
-
-						m.applyOIDCondFilter(d,
-							m.Filter.OIDCond,
-							m.Filter.condType,
-							m.Filter.condValue)
-					default:
-						d.log.Errorf("Invalid  GetMode Type %s for measurement: %s", flt, m.cfg.ID)
+					} else {
+						//no filters enabled  on not indexed measurements
+						d.log.Debugf("Filters %s not match with indexed measurements: %s", f, m.cfg.ID)
 					}
-
-				} else {
-					//no filters enabled  on not indexed measurements
-					d.log.Debugf("Filters %s not match with indexed measurements: %s", f[0], m.cfg.ID)
-				}
-
+				} //if filter.IDMeasurementCfg == m.cfg.ID
 			} else {
-				d.log.Infof("Filter not found for measurement:i %s", m.cfg.ID)
-			}
-		}
+				d.log.Debugf("Filters %s  found in device but not in configured filters", f)
+			} //ok
+		} //for
 		//Loading final Values to query with snmp
+
 		if len(d.cfg.MeasFilters) > 0 {
-			m.filterIndexedLabels(flt)
+			//FIXME: this final indexation is done only with the last type !!! even if more than one filter exist with different type
+			m.filterIndexedLabels(ftype)
 		} else {
+			log.Debugf("no filters found for device %s", d.cfg.ID)
 			m.IndexedLabels()
 		}
 		d.log.Debugf("MEASUREMENT HOST:%s | %s | %+v\n", d.cfg.Host, m.cfg.ID, m)

@@ -103,14 +103,14 @@ type InfluxMeasurement struct {
 
 func (m *InfluxMeasurement) printConfig() {
 	if m.Filter != nil {
-		switch m.Filter.fType {
+		switch m.Filter.FType {
 		case "file":
 			fmt.Printf(" ----------------------------------------------------------\n")
-			fmt.Printf(" File Filter: %s ( EnableAlias: %t)\n [ TOTAL: %d| FILTERED: %d]", m.Filter.FileName, m.Filter.enableAlias, m.numValOrig, m.numValFlt)
+			fmt.Printf(" File Filter: %s ( EnableAlias: %t)\n [ TOTAL: %d| FILTERED: %d]", m.Filter.FileName, m.Filter.EnableAlias, m.numValOrig, m.numValFlt)
 			fmt.Printf(" ----------------------------------------------------------\n")
 		case "OIDCondition":
 			fmt.Printf(" ----------------------------------------------------------\n")
-			fmt.Printf(" OID Condition Filter: %s ( [%s] %s) [ TOTAL: %d| FILTERED: %d] \n", m.Filter.OIDCond, m.Filter.condType, m.Filter.condValue, m.numValOrig, m.numValFlt)
+			fmt.Printf(" OID Condition Filter: %s ( [%s] %s) [ TOTAL: %d| FILTERED: %d] \n", m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue, m.numValOrig, m.numValFlt)
 			fmt.Printf(" ----------------------------------------------------------\n")
 		}
 

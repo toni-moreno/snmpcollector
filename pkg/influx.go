@@ -9,17 +9,6 @@ import (
 	"time"
 )
 
-/*InfluxCfg :
-type InfluxCfg struct {
-	ID        string
-	Host      string `toml:"host"`
-	Port      int    `toml:"port"`
-	DB        string `toml:"db"`
-	User      string `toml:"user"`
-	Password  string `toml:"password"`
-	Retention string `toml:"retention"`
-}
-*/
 /*
  InfluxDB: database export
 */
