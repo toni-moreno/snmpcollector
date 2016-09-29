@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -106,11 +107,11 @@ func (m *InfluxMeasurement) printConfig() {
 		switch m.Filter.FType {
 		case "file":
 			fmt.Printf(" ----------------------------------------------------------\n")
-			fmt.Printf(" File Filter: %s ( EnableAlias: %t)\n [ TOTAL: %d| FILTERED: %d]", m.Filter.FileName, m.Filter.EnableAlias, m.numValOrig, m.numValFlt)
+			fmt.Printf(" File Filter: %s ( EnableAlias: %t)\n [ TOTAL: %d| NON FILTERED: %d]", m.Filter.FileName, m.Filter.EnableAlias, m.numValOrig, m.numValFlt)
 			fmt.Printf(" ----------------------------------------------------------\n")
 		case "OIDCondition":
 			fmt.Printf(" ----------------------------------------------------------\n")
-			fmt.Printf(" OID Condition Filter: %s ( [%s] %s) [ TOTAL: %d| FILTERED: %d] \n", m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue, m.numValOrig, m.numValFlt)
+			fmt.Printf(" OID Condition Filter: %s ( [%s] %s) [ TOTAL: %d| NON FILTERED: %d] \n", m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue, m.numValOrig, m.numValFlt)
 			fmt.Printf(" ----------------------------------------------------------\n")
 		}
 
@@ -375,26 +376,44 @@ func (m *InfluxMeasurement) applyOIDCondFilter(c *SnmpDevice, oidCond string, ty
 		m.log.Fatalf("SNMP bulkwalk error : %s", err)
 	}
 	m.Filterlabels = make(map[string]string)
-	vc, err := strconv.Atoi(valueCond)
-	if err != nil {
-		return errors.New("only accepted numeric value as value condition current :" + valueCond)
-	}
+
 	m.numValFlt = 0
-	vci := int64(vc)
+
 	for _, pdu := range pdus {
-		value := pduVal2Int64(pdu)
+		var vci int64
+		var value int64
 		var cond bool
-		switch typeCond {
-		case "eq":
+
+		switch {
+		case strings.Contains(typeCond, "n"):
+			//undesrstand valueCondition as numeric
+			vc, err := strconv.Atoi(valueCond)
+			if err != nil {
+				return errors.New("only accepted numeric value as value condition  current :" + valueCond + " for typeCond " + typeCond)
+			}
+			vci = int64(vc)
+			value = pduVal2Int64(pdu)
+			fallthrough
+		case typeCond == "neq":
 			cond = (value == vci)
-		case "lt":
+		case typeCond == "nlt":
 			cond = (value < vci)
-		case "gt":
+		case typeCond == "ngt":
 			cond = (value > vci)
-		case "ge":
+		case typeCond == "nge":
 			cond = (value >= vci)
-		case "le":
+		case typeCond == "nle":
 			cond = (value <= vci)
+		case typeCond == "match":
+			//m.log.Debugf("PDU: %+v", pdu)
+			str := pduVal2str(pdu)
+			matched, err := regexp.MatchString(valueCond, str)
+			if err != nil {
+				m.log.Debugf("match condition error : %s", err)
+				return errors.New("Error regexp condition  current :" + valueCond + " on parsing string " + str)
+			}
+			m.log.Debugf("Evaluated condition  value: %s | filter: %s | result : %b", str, valueCond, matched)
+			cond = matched
 		default:
 			m.log.Errorf("Error in Condition filter for host: %s OidCondition: %s Type: %s ValCond: %s ", c.cfg.Host, oidCond, typeCond, valueCond)
 		}

@@ -15,13 +15,13 @@ metrics
 ======================
 # [metrics."id"] => id for other structs
 # fielname : name  measurement
-# Description : litle desciption for user easy understand
+# Description : little description for user easy understand
 # BaseOID : the real OID we need to query
 # Datasrctype : any of GAUGE,INTEGER,COUNTER32,COUNTER64
 # - GAUGE:  with this type of data this tool will send  direct value( float )
 # - INTEGER:  with this type of data this tool will send  direct value( int)
-# - COUNTER32:  with this , this tool will compute the diference ( it takes care of  posible counter overflow)
-# - COUNTER64:  with this , this tool will compute the diference ( it takes care of  posible counter overflow)
+# - COUNTER32:  with this , this tool will compute the difference ( it takes care of  posible counter overflow)
+# - COUNTER64:  with this , this tool will compute the difference ( it takes care of  posible counter overflow)
 
 #http://www.debianadmin.com/linux-snmp-oids-for-cpumemory-and-disk-statistics.html
 #http://publib.boulder.ibm.com/tividd/td/ITMFNP/SC31-6364-00/en_US/HTML/MNPADMST84.htm
@@ -225,7 +225,8 @@ Measurement filters
 
 INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,file_name,enable_alias) VALUES ('filter_ports_file_a','linux_ports','file','lp_file_filter_a.txt',1);
 INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,file_name,enable_alias) VALUES ('filter_ports_file_b','linux_ports','file','lp_file_filter_b.txt',1);
-INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,cond_oid,cond_type,cond_value) VALUES ('filter_port_if_status_up','linux_ports','OIDCondition','.1.3.6.1.2.1.2.2.1.8','eq','1');
+INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,cond_oid,cond_type,cond_value) VALUES ('filter_port_if_status_up','linux_ports','OIDCondition','.1.3.6.1.2.1.2.2.1.8','neq','1');
+INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,cond_oid,cond_type,cond_value) VALUES ('filter_port_if_name_match_eth','linux_ports','OIDCondition','.1.3.6.1.2.1.31.1.1.1.1','match','eth.*');
 
 
 /*=======================================
@@ -387,4 +388,5 @@ INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filte
 
 INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,v3authpass,v3authprot,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES ('hostsnmpv3c','hostsnmpv3c',161,20,5,0,'3','AuthNoPriv','v3userauth','v3passauth','MD5',30,'router','id','tagA=14,tagB=15,tagC=16','debug',0);
 INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3c','.*ux');
-INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3c','filter_port_if_status_up');
+/*INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3c','filter_port_if_status_up');*/
+INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3c','filter_port_if_name_match_eth');

@@ -11,9 +11,27 @@ import (
 	"strconv"
 )
 
+func B2S(bs []uint8) string {
+	b := make([]byte, len(bs))
+	for i, v := range bs {
+		b[i] = byte(v)
+	}
+	return string(b)
+}
+
+func pduVal2str(pdu gosnmp.SnmpPDU) string {
+	value := pdu.Value
+	if pdu.Type == gosnmp.OctetString {
+		return B2S(value.([]uint8))
+	} else {
+		return ""
+	}
+}
+
 func pduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 	value := pdu.Value
 	var val int64
+	//revisar esta asignación
 	switch value := value.(type) { // shadow
 	case int:
 		val = int64(value)
