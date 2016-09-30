@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
 )
-
-const layout = "2006-01-02 15:04:05"
 
 // GeneralConfig has miscelaneous configuration options
 type GeneralConfig struct {
@@ -21,11 +20,19 @@ type GeneralConfig struct {
 }
 
 var (
+	version    string
+	commit     string
+	branch     string
+	buildstamp string
+)
+
+var (
 	log        = logrus.New()
 	quit       = make(chan struct{})
 	verbose    bool
 	startTime  = time.Now()
 	showConfig bool
+	getversion bool
 	repeat     = 0
 	freq       = 30
 	httpPort   = 8080
@@ -58,6 +65,7 @@ func fatal(v ...interface{}) {
 
 func flags() *flag.FlagSet {
 	var f flag.FlagSet
+	f.BoolVar(&getversion, "version", getversion, "display de version")
 	f.BoolVar(&showConfig, "showconf", showConfig, "show all devices config and exit")
 	f.StringVar(&configFile, "config", configFile, "config file")
 	f.BoolVar(&verbose, "verbose", verbose, "verbose mode")
@@ -113,11 +121,25 @@ func initMetricsCfg() error {
 }
 
 func init() {
-	log.Printf("set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n", appdir, confDir, logDir)
+	//Log format
+	customFormatter := new(logrus.TextFormatter)
+	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
+	log.Formatter = customFormatter
+	customFormatter.FullTimestamp = true
+	//----
 
 	// parse first time to see if config file is being specified
 	f := flags()
 	f.Parse(os.Args[1:])
+
+	if getversion {
+		t, _ := strconv.ParseInt(buildstamp, 10, 64)
+		fmt.Printf("snmpcollector v%s (git: %s ) built at [%s]\n", version, commit, time.Unix(t, 0).Format("2006-01-02 15:04:05"))
+		os.Exit(0)
+	}
+
+	log.Printf("set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n", appdir, confDir, logDir)
+
 	// now load up config settings
 	if _, err := os.Stat(configFile); err == nil {
 		viper.SetConfigFile(configFile)
