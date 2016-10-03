@@ -1,17 +1,45 @@
 {
-	"ImportPath": "_/root/influxsnmp",
-	"GoVersion": "go1.5.1",
+	"ImportPath": "github.com/toni-moreno/snmpcollector",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v74",
 	"Packages": [
-		"./pkg/"
+		"./..."
 	],
 	"Deps": [
+		{
+			"ImportPath": "github.com/BurntSushi/toml",
+			"Comment": "v0.2.0-9-gf0aeabc",
+			"Rev": "f0aeabca5a127c4078abb8c8d64298b147264b55"
+		},
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.10.0-19-gf3cfb45",
+			"Rev": "f3cfb454f4c209e6668c95216c4744b8fddb2356"
+		},
 		{
 			"ImportPath": "github.com/Unknwon/com",
 			"Rev": "d9bcf409c8a368d06c9b347705c381e7c12d54df"
 		},
 		{
-			"ImportPath": "github.com/Unknwon/macaron",
-			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
+			"ImportPath": "github.com/fsnotify/fsnotify",
+			"Comment": "v1.3.0",
+			"Rev": "30411dbcefb7a1da7e84f75530ad3abe4011b4f8"
+		},
+		{
+			"ImportPath": "github.com/go-macaron/binding",
+			"Rev": "bd00823a7e9aa00cb3b1738fde244573ba7cce2c"
+		},
+		{
+			"ImportPath": "github.com/go-macaron/cache",
+			"Rev": "56173531277692bc2925924d51fda1cd0a6b8178"
+		},
+		{
+			"ImportPath": "github.com/go-macaron/inject",
+			"Rev": "c5ab7bf3a307593cd44cb272d1a5beea473dd072"
+		},
+		{
+			"ImportPath": "github.com/go-macaron/session",
+			"Rev": "66031fcb37a0fff002a1f028eb0b3a815c78306b"
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
@@ -19,29 +47,118 @@
 			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"
 		},
 		{
-			"ImportPath": "github.com/jinzhu/gorm",
-			"Rev": "5174cc5c242a728b435ea2be8a2f7f998e15429b"
+			"ImportPath": "github.com/go-xorm/core",
+			"Comment": "v0.5.4",
+			"Rev": "bc1b7f81f0e369289078424064634a5ee7d21051"
 		},
 		{
-			"ImportPath": "github.com/jinzhu/inflection",
-			"Rev": "3272df6c21d04180007eb3349844c89a3856bc25"
+			"ImportPath": "github.com/go-xorm/xorm",
+			"Comment": "v0.5.4-14-g01a03a3",
+			"Rev": "01a03a3092e1bce8f704afac2790052c1aef3069"
 		},
 		{
-			"ImportPath": "github.com/macaron-contrib/binding",
-			"Rev": "0fbe4b9707e6eb556ef843e5471592f55ce0a5e7"
+			"ImportPath": "github.com/hashicorp/hcl",
+			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
 		},
 		{
-			"ImportPath": "github.com/macaron-contrib/cache",
-			"Rev": "ed9082daa6cb904fd1730a592f09d22847790d9f"
+			"ImportPath": "github.com/hashicorp/hcl/hcl/ast",
+			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
 		},
 		{
-			"ImportPath": "github.com/macaron-contrib/session",
-			"Rev": "31e841d95c7302b9ac456c830ea2d6dfcef4f84a"
+			"ImportPath": "github.com/hashicorp/hcl/hcl/parser",
+			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/hcl/scanner",
+			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/hcl/strconv",
+			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/hcl/token",
+			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/json/parser",
+			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/json/scanner",
+			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/json/token",
+			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+		},
+		{
+			"ImportPath": "github.com/influxdata/influxdb/client/v2",
+			"Comment": "v0.13.0-249-g573d7ed",
+			"Rev": "573d7ed4e443573839057769f825761dcb16b3f4"
+		},
+		{
+			"ImportPath": "github.com/influxdata/influxdb/models",
+			"Comment": "v0.13.0-249-g573d7ed",
+			"Rev": "573d7ed4e443573839057769f825761dcb16b3f4"
+		},
+		{
+			"ImportPath": "github.com/influxdata/influxdb/pkg/escape",
+			"Comment": "v0.13.0-249-g573d7ed",
+			"Rev": "573d7ed4e443573839057769f825761dcb16b3f4"
+		},
+		{
+			"ImportPath": "github.com/magiconair/properties",
+			"Comment": "v1.7.0",
+			"Rev": "c265cfa48dda6474e208715ca93e987829f572f8"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-sqlite3",
+			"Comment": "v1.1.0-69-g38ee283",
+			"Rev": "38ee283dabf11c9cbdb968eebd79b1fa7acbabe6"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/mapstructure",
+			"Rev": "d2dd0262208475919e1a362f675cfc0e7c10e905"
+		},
+		{
+			"ImportPath": "github.com/soniah/gosnmp",
+			"Comment": "v1.9-memory-39-gf6904fd",
+			"Rev": "f6904fd235070fe56e2c2d799ac5f5862fc32543"
+		},
+		{
+			"ImportPath": "github.com/spf13/cast",
+			"Rev": "27b586b42e29bec072fe7379259cc719e1289da6"
+		},
+		{
+			"ImportPath": "github.com/spf13/jwalterweatherman",
+			"Rev": "33c24e77fb80341fe7130ee7c594256ff08ccc46"
+		},
+		{
+			"ImportPath": "github.com/spf13/pflag",
+			"Rev": "cb88ea77998c3f024757528e3305022ab50b43be"
+		},
+		{
+			"ImportPath": "github.com/spf13/viper",
+			"Rev": "d8a428b8a30606e1d0b355d91edf282609ade1a6"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "076b546753157f758b316e59bcb51e6807c04057"
 		},
 		{
 			"ImportPath": "gopkg.in/ini.v1",
 			"Comment": "v0-16-g1772191",
 			"Rev": "177219109c97e7920c933e21c9b25f874357b237"
+		},
+		{
+			"ImportPath": "gopkg.in/macaron.v1",
+			"Comment": "v1.1.3",
+			"Rev": "94a5ef7105036242f79e5e07a8eb8651d06c8533"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "a83829b6f1293c91addabc89d0571c246397bbf4"
 		}
 	]
 }
