@@ -32,7 +32,7 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-const _VERSION = "0.3.1"
+const _VERSION = "0.3.2"
 
 func Version() string {
 	return _VERSION
@@ -243,10 +243,10 @@ func Validate(obj interface{}) macaron.Handler {
 }
 
 var (
-	alphaDashPattern    = regexp.MustCompile("[^\\d\\w-_]")
-	alphaDashDotPattern = regexp.MustCompile("[^\\d\\w-_\\.]")
-	emailPattern        = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?")
-	urlPattern          = regexp.MustCompile(`(http|https):\/\/(?:\\S+(?::\\S*)?@)?[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
+	AlphaDashPattern    = regexp.MustCompile("[^\\d\\w-_]")
+	AlphaDashDotPattern = regexp.MustCompile("[^\\d\\w-_\\.]")
+	EmailPattern        = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?")
+	URLPattern          = regexp.MustCompile(`(http|https):\/\/(?:\\S+(?::\\S*)?@)?[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
 )
 
 type (
@@ -361,12 +361,12 @@ VALIDATE_RULES:
 				break VALIDATE_RULES
 			}
 		case rule == "AlphaDash":
-			if alphaDashPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
+			if AlphaDashPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
 				errors.Add([]string{field.Name}, ERR_ALPHA_DASH, "AlphaDash")
 				break VALIDATE_RULES
 			}
 		case rule == "AlphaDashDot":
-			if alphaDashDotPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
+			if AlphaDashDotPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
 				errors.Add([]string{field.Name}, ERR_ALPHA_DASH_DOT, "AlphaDashDot")
 				break VALIDATE_RULES
 			}
@@ -414,7 +414,7 @@ VALIDATE_RULES:
 				break VALIDATE_RULES
 			}
 		case rule == "Email":
-			if !emailPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
+			if !EmailPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
 				errors.Add([]string{field.Name}, ERR_EMAIL, "Email")
 				break VALIDATE_RULES
 			}
@@ -422,7 +422,7 @@ VALIDATE_RULES:
 			str := fmt.Sprintf("%v", fieldValue)
 			if len(str) == 0 {
 				continue
-			} else if !urlPattern.MatchString(str) {
+			} else if !URLPattern.MatchString(str) {
 				errors.Add([]string{field.Name}, ERR_URL, "Url")
 				break VALIDATE_RULES
 			}
