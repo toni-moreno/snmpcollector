@@ -151,11 +151,13 @@ func init() {
 	}
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		log.Errorf("Fatal error config file: %s \n", err)
+		os.Exit(1)
 	}
 	err = viper.Unmarshal(&cfg)
 	if err != nil {
-		panic(fmt.Errorf("unable to decode into struct, %v \n", err))
+		log.Errorf("Fatal error config file: %s \n", err)
+		os.Exit(1)
 	}
 
 	if len(cfg.General.LogDir) > 0 {
