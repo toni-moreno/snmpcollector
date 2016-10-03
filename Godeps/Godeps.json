@@ -38,6 +38,11 @@
 			"Rev": "c5ab7bf3a307593cd44cb272d1a5beea473dd072"
 		},
 		{
+			"ImportPath": "github.com/go-macaron/macaron",
+			"Comment": "v1.1.8-1-g826ddf1",
+			"Rev": "826ddf13862c544525338a2deda6f57ffd1a9083"
+		},
+		{
 			"ImportPath": "github.com/go-macaron/session",
 			"Rev": "66031fcb37a0fff002a1f028eb0b3a815c78306b"
 		},
@@ -150,11 +155,6 @@
 			"ImportPath": "gopkg.in/ini.v1",
 			"Comment": "v0-16-g1772191",
 			"Rev": "177219109c97e7920c933e21c9b25f874357b237"
-		},
-		{
-			"ImportPath": "gopkg.in/macaron.v1",
-			"Comment": "v1.1.3",
-			"Rev": "94a5ef7105036242f79e5e07a8eb8651d06c8533"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

@@ -4,16 +4,10 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-
+	"github.com/go-macaron/macaron"
 	"github.com/go-macaron/binding"
 	"github.com/go-macaron/cache"
-	//"github.com/go-macaron/gzip"
 	"github.com/go-macaron/session"
-	"gopkg.in/macaron.v1"
-	//"github.com/go-macaron/auth"
-	// gorm database ORM
-	//_ "github.com/go-sql-driver/mysql"
-	//	"github.com/jinzhu/gorm"
 )
 
 //HTTPConfig has webserver config options
