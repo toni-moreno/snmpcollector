@@ -65,8 +65,13 @@ func main() {
 		case "build":
 			pkg := "./pkg/"
 			clean()
-			build(pkg, []string{})
+			build(pkg, []string{}, []string{})
 
+		case "build-static":
+			pkg := "./pkg/"
+			clean()
+			build(pkg, []string{}, []string{"-linkmode", "external", "-extldflags", "-static"})
+			//"-linkmode external -extldflags -static"
 		case "test":
 			test("./pkg/...")
 			//grunt("test")
@@ -306,14 +311,14 @@ func test(pkg string) {
 	runPrint("go", "test", "-short", "-timeout", "60s", pkg)
 }
 
-func build(pkg string, tags []string) {
+func build(pkg string, tags []string, flags []string) {
 	binary := "./bin/" + serverBinaryName
 	if goos == "windows" {
 		binary += ".exe"
 	}
 
 	rmr(binary, binary+".md5")
-	args := []string{"build", "-ldflags", ldflags()}
+	args := []string{"build", "-ldflags", ldflags(flags)}
 	if len(tags) > 0 {
 		args = append(args, "-tags", strings.Join(tags, ","))
 	}
@@ -336,12 +341,15 @@ func build(pkg string, tags []string) {
 	}
 }
 
-func ldflags() string {
+func ldflags(flags []string) string {
 	var b bytes.Buffer
 	b.WriteString("-w")
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
+	for _, f := range flags {
+		b.WriteString(fmt.Sprintf(" %s", f))
+	}
 	return b.String()
 }
 
@@ -353,7 +361,7 @@ func rmr(paths ...string) {
 }
 
 func clean() {
-//	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
+	//	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
 	rmr("dist")
 	rmr("tmp")
 	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/toni-moreno/snmpcollector", goos, goarch)))
