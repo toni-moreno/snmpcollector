@@ -72,9 +72,17 @@ const (
 func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
 	s := d.cfg
 	var client *gosnmp.GoSNMP
-	hostIPs, _ := net.LookupHost(s.Host)
+	hostIPs, err := net.LookupHost(s.Host)
+	if err != nil {
+		log.Errorf("Error on Name Lookup for host: %s  ERROR: %s", s.Host, err)
+		return nil, err
+	}
+	if len(hostIPs) == 0 {
+		log.Errorf("Error on Name Lookup for host: %s ", s.Host)
+		return nil, ers.New("Error on Name Lookup for host :" + s.Host)
+	}
 	if len(hostIPs) > 1 {
-		d.log.Infof("Lookup for %s host has more than one IP: %v", s.Host, hostIPs)
+		d.log.Warnf("Lookup for %s host has more than one IP: %v => Finally used first IP %s", s.Host, hostIPs, hostIPs[0])
 	}
 	switch s.SnmpVersion {
 	case "1":
@@ -207,7 +215,7 @@ func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
 		client.Logger = d.DebugLog()
 	}
 	//first connect
-	err := client.Connect()
+	err = client.Connect()
 	if err != nil {
 		d.log.Errorf("error on first connect %s", err)
 	} else {
