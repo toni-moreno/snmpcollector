@@ -15,7 +15,8 @@ go get github.com/toni-moreno/snmpcollector
 ```
 
 ### Building the backend
-Replace X.Y.Z by actual version number.
+Replace X.Y.Z by current version number in package.json file
+
 ```
 cd $GOPATH/src/github.com/toni-moreno/snmpcollector
 go run build.go setup            (only needed once to install godep)
