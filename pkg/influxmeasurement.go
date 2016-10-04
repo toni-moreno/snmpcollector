@@ -103,6 +103,12 @@ type InfluxMeasurement struct {
 }
 
 func (m *InfluxMeasurement) printConfig() {
+	if m.cfg.GetMode == "indexed" {
+		fmt.Printf("-----------------------------------------------------------\n")
+		fmt.Printf(" ** Indexed by OID: %s (TagName: %s) **\n", m.cfg.IndexOID, m.cfg.IndexTag)
+		fmt.Printf("-----------------------------------------------------------\n")
+
+	}
 	if m.Filter != nil {
 		switch m.Filter.FType {
 		case "file":
