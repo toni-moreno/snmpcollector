@@ -314,9 +314,16 @@ func (m *InfluxMeasurement) loadIndexedLabels(c *SnmpDevice) error {
 			name := string(pdu.Value.([]byte))
 			m.AllIndexedLabels[suffix] = name
 			m.numValOrig++
-			m.log.Debugf("Got the following index for %c :[%s/%s]", c.cfg.Host, suffix, name)
+			m.log.Debugf("Got the following OctetString index for %c :[%s/%s]", c.cfg.Host, suffix, name)
+		case gosnmp.Integer, gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
+			i := strings.LastIndex(pdu.Name, ".")
+			suffix := pdu.Name[i+1:]
+			name := strconv.FormatInt(pduVal2Int64(pdu), 10)
+			m.AllIndexedLabels[suffix] = name
+			m.numValOrig++
+			m.log.Debugf("Got the following Numeric index for %c :[%s/%s]", c.cfg.Host, suffix, name)
 		default:
-			m.log.Errorf("Error in IndexedLabel for host: %s  IndexLabel %s ERR: Not String", c.cfg.Host, m.cfg.IndexOID)
+			m.log.Errorf("Error in IndexedLabel for host: %s  IndexLabel %s ERR: Not String or numeric Value", c.cfg.Host, m.cfg.IndexOID)
 		}
 	}
 	return nil

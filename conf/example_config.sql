@@ -171,6 +171,14 @@ INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('li
  INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports','ifHCInUcastPkts');
  INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports','ifHCOutUcastPkts');
 
+/*Test to check issue */
+INSERT INTO influx_measurement_cfg (id, name, getmode, indexoid, indextag) VALUES ('linux_ports_by_index','linux.ports','indexed','.1.3.6.1.2.1.2.2.1.1','ifindex');
+INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports_by_index','ifHCInOctets');
+INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports_by_index','ifHCOutOctets');
+INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports_by_index','ifHCInUcastPkts');
+INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports_by_index','ifHCOutUcastPkts');
+
+
  /*
 
 [measurements."network_32bits"]
@@ -205,6 +213,10 @@ measurements = 	[
 INSERT INTO m_groups_cfg (id ) VALUES ('Linux');
 INSERT INTO m_groups_measurements (id_mgroup_cfg,id_measurement_cfg) VALUES ('Linux','linux_cpu');
 INSERT INTO m_groups_measurements (id_mgroup_cfg,id_measurement_cfg) VALUES ('Linux','linux_ports');
+
+INSERT INTO m_groups_cfg (id ) VALUES ('Issue_index');
+INSERT INTO m_groups_measurements (id_mgroup_cfg,id_measurement_cfg) VALUES ('Issue_index','linux_cpu');
+INSERT INTO m_groups_measurements (id_mgroup_cfg,id_measurement_cfg) VALUES ('Issue_index','linux_ports_by_index');
 /*INSERT INTO m_groups_measurements (id_mgroup_cfg,id_measurement_cfg) VALUES ('Linux','network_32bits');*/
 
 
@@ -323,8 +335,9 @@ INSERT INTO influx_cfg (id,host,port,db,user,password,retention) VALUES ('*','12
 
     */
 INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES ('hostsnmpv3a','hostsnmpv3a',161,20,5,0,'3','NoAuthNoPriv','v3usernoauth',60,'router','id','tagA=4,tagB=5,tagC=6','debug',0);
-INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3a','Linux.*');
-INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filter_ports_file_a');
+INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3a','Issue_index');
+/*INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3a','Linux.*');
+INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filter_ports_file_a');*/
 
 
     /*
