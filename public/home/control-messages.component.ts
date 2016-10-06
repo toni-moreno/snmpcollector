@@ -1,26 +1,26 @@
-import {Component, Host} from 'angular2/core';
-import {NgFormModel} from 'angular2/common';
+
+//https://coryrylan.com/blog/angular-2-form-builder-and-validation-management
+
+import {Component, Input} from '@angular/core';
+import {FormGroup,FormControl} from '@angular/forms';
 import {ValidationService} from './validation.service';
 
 @Component({
     selector: 'control-messages',
-    inputs: ['controlName: control'],
     template: `<div *ngIf="errorMessage !== null">{{errorMessage}}</div>`
 })
-export class ControlMessages {
-    controlName: string;
-    constructor(@Host() private _formDir: NgFormModel) { }
 
-    get errorMessage() {
-        let c = this._formDir.form.find(this.controlName);
+export class ControlMessagesComponent {
+  @Input() control: FormControl;
+  constructor() { }
 
-        for (let propertyName in c.errors) {
-            if (c.errors.hasOwnProperty(propertyName) && c.touched) {
-              return ValidationService.getValidatorErrorMessage(propertyName);
-            }
-        }
-        
-        return null;
+  get errorMessage() {
+    for (let propertyName in this.control.errors) {
+      if (this.control.errors.hasOwnProperty(propertyName) && this.control.touched) {
+        return ValidationService.getValidatorErrorMessage(propertyName, this.control.errors[propertyName]);
+      }
     }
-}
 
+    return null;
+  }
+}

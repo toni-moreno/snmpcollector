@@ -1,5 +1,6 @@
+
 	<p [ngSwitch]="editmode">
-    <template ngSwitchWhen="list">
+    <template ngSwitchCase="list">
 	<div class="row-fluid">
       		<div class=".col-md-3">
         		<h2>SNMP devices</h2>
@@ -31,40 +32,40 @@
   		</accordion-group>
 	</accordion>
      </template>
-     <template ngSwitchWhen="create">
-   	<form [ngFormModel]="snmpdevForm" class="ui form" (ngSubmit)="saveSnmpDev()">
+     <template ngSwitchCase="create">
+   	<form [formGroup]="snmpdevForm" class="ui form" (ngSubmit)="saveSnmpDev()">
 		<label for="id">id</label>
-		 <input ngControl="id" id="id" />
-		 <control-messages control="id"></control-messages>
+		 <input formControlName="id" id="id" />
+		 <control-messages [control]="snmpdevForm.controls.id"></control-messages>
 		<label for="host">Host</label>
-      		<input ngControl="Host" id="Host" />
-		<control-messages control="Host"></control-messages>
+      		<input formControlName="Host" id="Host" />
+		<control-messages [control]="snmpdevForm.controls.Host"></control-messages>
 
 		<label for="Port">Port</label>
-      		<input ngControl="Port" id="Port" />
-		<control-messages control="Port"></control-messages>
+      		<input formControlName="Port" id="Port" />
+		<control-messages [control]="snmpdevForm.controls.Port"></control-messages>
 
 		<label for="Retries">Retries</label>
-      		<input ngControl="Retries" id="Retries" />
-		<control-messages control="Retries"></control-messages>
+      		<input formControlName="Retries" id="Retries" />
+		<control-messages [control]="snmpdevForm.controls.Retries"></control-messages>
 
 		<label for="Timeout">Timeout</label>
-      		<input ngControl="Timeout" id="Timeout" />
-		<control-messages control="Timeout"></control-messages>
+      		<input formControlName="Timeout" id="Timeout" />
+		<control-messages [control]="snmpdevForm.controls.Timeout"></control-messages>
 
 		<label for="SnmpVersion">SnmpVersion</label>
-		<select ngControl="SnmpVersion" id="SnmpVersion">
+		<select formControlName="SnmpVersion" id="SnmpVersion">
 			<option value="1">1</option>
 			<option value="2c"  selected="selected">2c</option>
 			<option value="3">3</option>
 		</select>
-      		<!--input ngControl="SnmpVersion" id="SnmpVersion" /-->
-		<control-messages control="SnmpVersion"></control-messages>
+      		<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
+		<control-messages [control]="snmpdevForm.controls.SnmpVersion"></control-messages>
 		<div *ngIf="snmpdevForm.value.SnmpVersion == '2c'" >
 
 		<label for="Community">Community</label>
-      		<input ngControl="Community" id="Community" />
-		<control-messages control="Community"></control-messages>
+      		<input formControlName="Community" id="Community" />
+		<control-messages [control]="snmpdevForm.controls.Community"></control-messages>
 
 		</div>
 
@@ -72,102 +73,103 @@
 
 		<label for="V3SecLevel">V3SecLevel</label>
 
-		<select ngControl="V3SecLevel" id="V3SecLevel">
+		<select formControlName="V3SecLevel" id="V3SecLevel">
 			<option value="NoAuthNoPriv">NoAuthNoPriv</option>
 			<option value="AuthNoPriv"  selected="selected">AuthNoPriv</option>
 			<option value="AuthPriv">AuthPriv</option>
 		</select>
 
-      		<!--input ngControl="V3SecLevel" id="V3SecLevel" /-->
-		<control-messages control="V3SecLevel"></control-messages>
+      		<!--input formControlName="V3SecLevel" id="V3SecLevel" /-->
+		<control-messages [control]="snmpdevForm.controls.V3SecLevel"></control-messages>
 
 		<label for="V3AuthUser">V3AuthUser</label>
-      		<input ngControl="V3AuthUser" id="V3AuthUser" />
-		<control-messages control="V3AuthUser"></control-messages>
+      		<input formControlName="V3AuthUser" id="V3AuthUser" />
+		<control-messages [control]="snmpdevForm.controls.V3AuthUser"></control-messages>
 
 		<label for="V3AuthPass">V3AuthPass</label>
-      		<input ngControl="V3AuthPass" id="V3AuthPass" />
-		<control-messages control="V3AuthPass"></control-messages>
+      		<input formControlName="V3AuthPass" id="V3AuthPass" />
+		<control-messages [control]="snmpdevForm.controls.V3AuthPass"></control-messages>
 
 
 		<label for="V3AuthProt">V3AuthProt</label>
-		<select ngControl="V3AuthProt" id="V3AuthProt">
+		<select formControlName="V3AuthProt" id="V3AuthProt">
 			<option value="MD5">MD5</option>
 			<option value="SHA">SHA</option>
 		</select>
 
-      		<!--input ngControl="V3AuthProt" id="V3AuthProt" /-->
-		<control-messages control="V3AuthProt"></control-messages>
+      		<!--input formControlName="V3AuthProt" id="V3AuthProt" /-->
+		<control-messages [control]="snmpdevForm.controls.V3AuthProt"></control-messages>
 
 		<label for="V3PrivPass">V3PrivPass</label>
-      		<input ngControl="V3PrivPass" id="V3PrivPass" />
-		<control-messages control="V3PrivPass"></control-messages>
+      		<input formControlName="V3PrivPass" id="V3PrivPass" />
+		<control-messages [control]="snmpdevForm.controls.V3PrivPass"></control-messages>
 
 		<label for="V3PrivProt">V3PrivProt</label>
-		<select ngControl="V3PrivProt" id="V3PrivProt">
+		<select formControlName="V3PrivProt" id="V3PrivProt">
 			<option value="AES">AES</option>
 			<option value="DES">DES</option>
 		</select>
 
-      		<!--input ngControl="V3PrivProt" id="V3PrivProt" /-->
-		<control-messages control="V3PrivProt"></control-messages>
+      		<!--input formControlName="V3PrivProt" id="V3PrivProt" /-->
+		<control-messages [control]="snmpdevForm.controls.V3PrivProt"></control-messages>
 		</div>
 
 		<label for="Freq">Freq</label>
-      		<input ngControl="Freq" id="Freq" />
-		<control-messages control="Freq"></control-messages>
+      		<input formControlName="Freq" id="Freq" />
+		<control-messages [control]="snmpdevForm.controls.Freq"></control-messages>
 
 		<label for="OutDB">Influx Server</label>
-		<select ngControl="OutDB" id="OutDB">
+		<select formControlName="OutDB" id="OutDB">
 			<option *ngFor="#influxserver of influxservers"
 					[value]="influxserver.ID"> {{influxserver.ID}}
 			</option>
 	</select>
-		<control-messages control="OutDB"></control-messages>
+		<control-messages [control]="snmpdevForm.controls.OutDB"></control-messages>
 
 		<label for="Config">Config</label>
-      		<input ngControl="Config" id="Config" />
-		<control-messages control="Config"></control-messages>
+      		<input formControlName="Config" id="Config" />
+		<control-messages [control]="snmpdevForm.controls.Config"></control-messages>
 
 		<label for="LogLevel">LogLevel</label>
-      		<input ngControl="LogLevel" id="LogLevel" />
-		<control-messages control="LogLevel"></control-messages>
+      		<input formControlName="LogLevel" id="LogLevel" />
+		<control-messages [control]="snmpdevForm.controls.LogLevel"></control-messages>
 
 		<label for="LogFile">LogFile</label>
- 				 <input ngControl="LogFile" id="LogFile"  />
- 	 <control-messages control="LogFile"></control-messages>
+ 				 <input formControlName="LogFile" id="LogFile"  />
+ 	 <control-messages [control]="snmpdevForm.controls.LogFile"></control-messages>
 
 		<label for="SnmpDebug">SnmpDebug</label>
-      		<input ngControl="SnmpDebug" id="SnmpDebug" />
-		<control-messages control="SnmpDebug"></control-messages>
+      		<input formControlName="SnmpDebug" id="SnmpDebug" />
+		<control-messages [control]="snmpdevForm.controls.SnmpDebug"></control-messages>
 
 		<label for="DeviceTagMame">DeviceTagMame</label>
-      		<input ngControl="DeviceTagMame" id="DeviceTagMame" />
-		<control-messages control="DeviceTagMame"></control-messages>
+      		<input formControlName="DeviceTagMame" id="DeviceTagMame" />
+		<control-messages [control]="snmpdevForm.controls.DeviceTagMame"></control-messages>
 
 		<label for="DeviceTagValue">DeviceTagValue</label>
-      		<input ngControl="DeviceTagValue" id="DeviceTagValue" />
-		<control-messages control="DeviceTagValue"></control-messages>
+      		<input formControlName="DeviceTagValue" id="DeviceTagValue" />
+		<control-messages [control]="snmpdevForm.controls.DeviceTagValue"></control-messages>
 
-		<label for="Extratags">Extratags</label>
-      		<input ngControl="Extratags" id="Extratags" />
-		<control-messages control="Extratags"></control-messages>
+
+      <label for="Freq">Freq</label>
+      <input formControlName="Freq" id="Freq" />
+      <control-messages [control]="snmpdevForm.controls.Freq"></control-messages>
 
 		<label for="MetricGroups">Measurement Groups</label>
-		<select ngControl="MetricGroups" id="MetricGroups">
+		<select formControlName="MetricGroups" id="MetricGroups">
 			<option *ngFor="#measgroup of measgroups"
 					[value]="measgroup.ID"> {{measgroup.ID}}
 			</option>
 	</select>
-		<control-messages control="MetricGroups"></control-messages>
+		<control-messages [control]="snmpdevForm.controls.MetricGroups"></control-messages>
 
 		<label for="MeasFilters">Measurement Filters</label>
-		<select ngControl="MeasFilters" id="MeasFilters">
+		<select formControlName="MeasFilters" id="MeasFilters">
 			<option *ngFor="#measfilter of measfilters"
 					[value]="measfilter.ID"> {{measfilter.ID}}
 			</option>
 		</select>
-		<control-messages control="MeasFilters"></control-messages>
+		<control-messages [control]="snmpdevForm.controls.MeasFilters"></control-messages>
 
 		<button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
 		<button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
@@ -176,40 +178,40 @@
 
      </template>
 
-		 <template ngSwitchWhen="modify">
-		 <form [ngFormModel]="snmpdevForm" class="ui form" (ngSubmit)="updateSnmpDev(testsnmpdev.ID)">
+		 <template ngSwitchCase="modify">
+		 <form [formGroup]="snmpdevForm" class="ui form" (ngSubmit)="updateSnmpDev(testsnmpdev.ID)">
 	 <label for="id">id</label>
-		<input ngControl="id" id="id" [ngModel] = "testsnmpdev.ID" />
-		<control-messages control="id"></control-messages>
+		<input formControlName="id" id="id" [ngModel] = "testsnmpdev.ID" />
+		<control-messages [control]="snmpdevForm.controls.id"></control-messages>
 	 <label for="host">Host</label>
-				 <input ngControl="Host" id="Host" [ngModel] = "testsnmpdev.Host" />
-	 <control-messages control="Host"></control-messages>
+				 <input formControlName="Host" id="Host" [ngModel] = "testsnmpdev.Host" />
+	 <control-messages [control]="snmpdevForm.controls.Host"></control-messages>
 
 	 <label for="Port">Port</label>
-				 <input ngControl="Port" id="Port" [ngModel] = "testsnmpdev.Port" />
-	 <control-messages control="Port"></control-messages>
+				 <input formControlName="Port" id="Port" [ngModel] = "testsnmpdev.Port" />
+	 <control-messages [control]="snmpdevForm.controls.Port"></control-messages>
 
 	 <label for="Retries">Retries</label>
-				 <input ngControl="Retries" id="Retries" [ngModel] = "testsnmpdev.Retries" />
-	 <control-messages control="Retries"></control-messages>
+				 <input formControlName="Retries" id="Retries" [ngModel] = "testsnmpdev.Retries" />
+	 <control-messages [control]="snmpdevForm.controls.Retries"></control-messages>
 
 	 <label for="Timeout">Timeout</label>
-				 <input ngControl="Timeout" id="Timeout" [ngModel] = "testsnmpdev.Timeout" />
-	 <control-messages control="Timeout"></control-messages>
+				 <input formControlName="Timeout" id="Timeout" [ngModel] = "testsnmpdev.Timeout" />
+	 <control-messages [control]="snmpdevForm.controls.Timeout"></control-messages>
 
 	 <label for="SnmpVersion">SnmpVersion</label>
-	 <select ngControl="SnmpVersion" id="SnmpVersion" [ngModel] = "testsnmpdev.SnmpVersion">
+	 <select formControlName="SnmpVersion" id="SnmpVersion" [ngModel] = "testsnmpdev.SnmpVersion">
 		 <option value="1">1</option>
 		 <option value="2c"  selected="selected">2c</option>
 		 <option value="3">3</option>
 	 </select>
-				 <!--input ngControl="SnmpVersion" id="SnmpVersion" /-->
-	 <control-messages control="SnmpVersion"></control-messages>
+				 <!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
+	 <control-messages [control]="snmpdevForm.controls.SnmpVersion"></control-messages>
 	 <div *ngIf="snmpdevForm.value.SnmpVersion == '2c'" >
 
 	 <label for="Community">Community</label>
-				 <input ngControl="Community" id="Community" />
-	 <control-messages control="Community"></control-messages>
+				 <input formControlName="Community" id="Community" />
+	 <control-messages [control]="snmpdevForm.controls.Community"></control-messages>
 
 	 </div>
 
@@ -217,106 +219,106 @@
 
 	 <label for="V3SecLevel">V3SecLevel</label>
 
-	 <select ngControl="V3SecLevel" id="V3SecLevel" [ngModel] = "testsnmpdev.V3SecLevel">
+	 <select formControlName="V3SecLevel" id="V3SecLevel" [ngModel] = "testsnmpdev.V3SecLevel">
 		 <option value="NoAuthNoPriv">NoAuthNoPriv</option>
 		 <option value="AuthNoPriv"  selected="selected">AuthNoPriv</option>
 		 <option value="AuthPriv">AuthPriv</option>
 	 </select>
 
-				 <!--input ngControl="V3SecLevel" id="V3SecLevel" /-->
-	 <control-messages control="V3SecLevel"></control-messages>
+				 <!--input formControlName="V3SecLevel" id="V3SecLevel" /-->
+	 <control-messages [control]="snmpdevForm.controls.V3SecLevel"></control-messages>
 
 	 <label for="V3AuthUser">V3AuthUser</label>
-				 <input ngControl="V3AuthUser" id="V3AuthUser" [ngModel] = "testsnmpdev.V3AuthUser"/>
-	 <control-messages control="V3AuthUser"></control-messages>
+				 <input formControlName="V3AuthUser" id="V3AuthUser" [ngModel] = "testsnmpdev.V3AuthUser"/>
+	 <control-messages [control]="snmpdevForm.controls.V3AuthUser"></control-messages>
 
 	 <label for="V3AuthPass">V3AuthPass</label>
-				 <input ngControl="V3AuthPass" id="V3AuthPass" [ngModel] = "testsnmpdev.V3AuthPass" />
-	 <control-messages control="V3AuthPass"></control-messages>
+				 <input formControlName="V3AuthPass" id="V3AuthPass" [ngModel] = "testsnmpdev.V3AuthPass" />
+	 <control-messages [control]="snmpdevForm.controls.V3AuthPass"></control-messages>
 
 
 	 <label for="V3AuthProt">V3AuthProt</label>
-	 <select ngControl="V3AuthProt" id="V3AuthProt" [ngModel] = "testsnmpdev.V3AuthProt">
+	 <select formControlName="V3AuthProt" id="V3AuthProt" [ngModel] = "testsnmpdev.V3AuthProt">
 		 <option value="MD5">MD5</option>
 		 <option value="SHA">SHA</option>
 	 </select>
 
 
-				 <!--input ngControl="V3AuthProt" id="V3AuthProt" /-->
-	 <control-messages control="V3AuthProt"></control-messages>
+				 <!--input formControlName="V3AuthProt" id="V3AuthProt" /-->
+	 <control-messages [control]="snmpdevForm.controls.V3AuthProt"></control-messages>
 
 	 <label for="V3PrivPass">V3PrivPass</label>
-				 <input ngControl="V3PrivPass" id="V3PrivPass" [ngModel] = "testsnmpdev.V3PrivPass" />
-	 <control-messages control="V3PrivPass"></control-messages>
+				 <input formControlName="V3PrivPass" id="V3PrivPass" [ngModel] = "testsnmpdev.V3PrivPass" />
+	 <control-messages [control]="snmpdevForm.controls.V3PrivPass"></control-messages>
 
 	 <label for="V3PrivProt">V3PrivProt</label>
-	 <select ngControl="V3PrivProt" id="V3PrivProt" [ngModel] = "testsnmpdev.V3PrivProt">
+	 <select formControlName="V3PrivProt" id="V3PrivProt" [ngModel] = "testsnmpdev.V3PrivProt">
 		 <option value="AES">AES</option>
 		 <option value="DES">DES</option>
 	 </select>
 
 
-				 <!--input ngControl="V3PrivProt" id="V3PrivProt" /-->
-	 <control-messages control="V3PrivProt"></control-messages>
+				 <!--input formControlName="V3PrivProt" id="V3PrivProt" /-->
+	 <control-messages [control]="snmpdevForm.controls.V3PrivProt"></control-messages>
 	 </div>
 
 	 <label for="Freq">Freq</label>
-				 <input ngControl="Freq" id="Freq" [ngModel] = "testsnmpdev.Freq"/>
-	 <control-messages control="Freq"></control-messages>
+				 <input formControlName="Freq" id="Freq" [ngModel] = "testsnmpdev.Freq"/>
+	 <control-messages [control]="snmpdevForm.controls.Freq"></control-messages>
 
 	 <label for="OutDB">Influx Server</label>
- 	<select ngControl="OutDB" id="OutDB" [ngModel] = "testsnmpdev.OutDB">
+ 	<select formControlName="OutDB" id="OutDB" [ngModel] = "testsnmpdev.OutDB">
  		<option *ngFor="#influxserver of influxservers"
  				[value]="influxserver.ID"> {{influxserver.ID}}
  		</option>
  </select>
- 	<control-messages control="OutDB"></control-messages>
+ 	<control-messages [control]="snmpdevForm.controls.OutDB"></control-messages>
 
 	 <label for="Config">Config</label>
-				 <input ngControl="Config" id="Config" [ngModel] = "testsnmpdev.Config" />
-	 <control-messages control="Config"></control-messages>
+				 <input formControlName="Config" id="Config" [ngModel] = "testsnmpdev.Config" />
+	 <control-messages [control]="snmpdevForm.controls.Config"></control-messages>
 
 	 <label for="LogLevel">LogLevel</label>
-				 <input ngControl="LogLevel" id="LogLevel" [ngModel] = "testsnmpdev.LogLevel" />
-	 <control-messages control="LogLevel"></control-messages>
+				 <input formControlName="LogLevel" id="LogLevel" [ngModel] = "testsnmpdev.LogLevel" />
+	 <control-messages [control]="snmpdevForm.controls.LogLevel"></control-messages>
 
 	 <label for="LogFile">LogFile</label>
-				 <input ngControl="LogFile" id="LogFile" [ngModel] = "testsnmpdev.LogFile" />
-	 <control-messages control="LogFile"></control-messages>
+				 <input formControlName="LogFile" id="LogFile" [ngModel] = "testsnmpdev.LogFile" />
+	 <control-messages [control]="snmpdevForm.controls.LogFile"></control-messages>
 
 	 <label for="SnmpDebug">SnmpDebug</label>
-				 <input ngControl="SnmpDebug" id="SnmpDebug" [ngModel] = "testsnmpdev.SnmpDebug" />
-	 <control-messages control="SnmpDebug"></control-messages>
+				 <input formControlName="SnmpDebug" id="SnmpDebug" [ngModel] = "testsnmpdev.SnmpDebug" />
+	 <control-messages [control]="snmpdevForm.controls.SnmpDebug"></control-messages>
 
 	 <label for="DeviceTagMame">DeviceTagMame</label>
-				 <input ngControl="DeviceTagMame" id="DeviceTagMame" />
-	 <control-messages control="DeviceTagMame"></control-messages>
+				 <input formControlName="DeviceTagMame" id="DeviceTagMame" />
+	 <control-messages [control]="snmpdevForm.controls.DeviceTagMame"></control-messages>
 
 	 <label for="DeviceTagValue">DeviceTagValue</label>
-				 <input ngControl="DeviceTagValue" id="DeviceTagValue" [ngModel] = "testsnmpdev.DeviceTagValue" />
-	 <control-messages control="DeviceTagValue"></control-messages>
+				 <input formControlName="DeviceTagValue" id="DeviceTagValue" [ngModel] = "testsnmpdev.DeviceTagValue" />
+	 <control-messages [control]="snmpdevForm.controls.DeviceTagValue"></control-messages>
 
 	 <label for="Extratags">Extratags</label>
-	 <control-messages control="Extratags"></control-messages>
-	 <input ngControl="Extratags" id="Extratags" [ngModel] = 'testsnmpdev.ExtraTags'>
+	 <control-messages [control]="snmpdevForm.controls.Extratags"></control-messages>
+	 <input formControlName="Extratags" id="Extratags" [ngModel] = 'testsnmpdev.ExtraTags'>
 
 
 	 <label for="MeasFilters">Measurement Filters</label>
- 	<select ngControl="MeasFilters" id="MeasFilters" [ngModel] = 'testsnmpdev.MeasFilters'>
+ 	<select formControlName="MeasFilters" id="MeasFilters" [ngModel] = 'testsnmpdev.MeasFilters'>
  		<option *ngFor="#measfilter of measfilters"
  				[value]="measfilter.ID"> {{measfilter.ID}}
  		</option>
  	</select>
- 	<control-messages control="MeasFilters"></control-messages>
+ 	<control-messages [control]="snmpdevForm.controls.MeasFilters"></control-messages>
 
 
 			<label for="MetricGroups">Metric Groups</label>
-			<select ngControl="MetricGroups" id="MetricGroups" [ngModel] = 'testsnmpdev.MetricGroups'>
+			<select formControlName="MetricGroups" id="MetricGroups" [ngModel] = 'testsnmpdev.MetricGroups'>
 				<option *ngFor="#measgroup of measgroups"
 						[value]="measgroup.ID"> {{measgroup.ID}}
 				</option>
 		</select>
-			<control-messages control="MetricGroups"></control-messages>
+			<control-messages [control]="snmpdevForm.controls.MetricGroups"></control-messages>
 
 	 <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
 	 <button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
@@ -324,5 +326,4 @@
 		 </form>
 
 		 </template>
-
 </p>

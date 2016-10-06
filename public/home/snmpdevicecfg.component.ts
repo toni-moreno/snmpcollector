@@ -1,28 +1,23 @@
-import { Component, Pipe, PipeTransform  } from 'angular2/core';
-import { CORE_DIRECTIVES } from 'angular2/common';
-import {FORM_DIRECTIVES, FORM_BINDINGS,FormBuilder, NgFormModel, ControlGroup, Control, Validators} from 'angular2/common';
-import { ACCORDION_DIRECTIVES } from 'ng2-bootstrap';
+import { Component } from '@angular/core';
+import {  FormBuilder,  Validators} from '@angular/forms';
 import { SnmpDeviceService } from './snmpdevicecfg.service';
 import { InfluxServerService } from './influxservercfg.service';
 import { MeasGroupService } from './measgroupcfg.service';
 import { MeasFilterService } from './measfiltercfg.service';
-import {ControlMessages} from './control-messages.component';
 
 @Component({
   selector: 'snmpdevs',
   providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService],
-  templateUrl: '/public/home/snmpdeviceeditor.html',
+  templateUrl: 'public/home/snmpdeviceeditor.html',
   styleUrls:['public/home/snmpdeviceeditor.css'],
-  bindings: [SnmpDeviceService, InfluxServerService, MeasGroupService, , MeasFilterService],
-  viewBindings: [FORM_BINDINGS],
-  directives: [ACCORDION_DIRECTIVES,CORE_DIRECTIVES,FORM_DIRECTIVES,ControlMessages]
 })
 
 export class SnmpDeviceCfgComponent {
+  public oneAtATime:boolean = true;
   editmode: string; //list , create, modify
   snmpdevs: Array<any>;
   filter: string;
-  snmpdevForm: ControlGroup;
+  snmpdevForm: any;
 	testsnmpdev: any;
 	influxservers: Array<any>;
   measfilters: Array<any>;

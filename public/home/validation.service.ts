@@ -1,5 +1,5 @@
 export class ValidationService {
-    static getValidatorErrorMessage(code: string) {
+    static getValidatorErrorMessage(validatorName: string, validatorValue?: any) {
         let config = {
             'required': 'Required',
             'invalidCreditCard': 'Is invalid credit card number',
@@ -7,7 +7,7 @@ export class ValidationService {
             'invalidPassword': 'Invalid password. Password must be at least 6 characters long, and contain a number.'
         };
 
-        return config[code];
+        return config[validatorName];
     }
 
     static creditCardValidator(control) {
@@ -38,4 +38,3 @@ export class ValidationService {
         }
     }
 }
-
