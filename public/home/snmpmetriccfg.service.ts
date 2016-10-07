@@ -6,67 +6,58 @@ import 'rxjs/Rx';
 import * as _ from 'lodash';
 
 @Injectable()
-export class SnmpDeviceService {
+export class SnmpMetricService {
 
     constructor(public http: Http) {
         console.log('Task Service created.', http);
     }
 
-    addDevice(dev) {
+    addMetric(dev) {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
-        return this.http.post('/snmpdevice',JSON.stringify(dev,function (key,value) {
-            console.log("KEY:"+key+" Value"+value);
-            if (	key == 'Port' ||
-            key == 'Retries' ||
-            key == 'Timeout' ||
-            key == 'Repeat' ||
-            key == 'Freq' ) {
-                return parseInt(value);
+        return this.http.post('/metric',JSON.stringify(dev,function (key,value) {
+            if (key == 'Scale' || key == 'Shift') {
+                return parseFloat(value);
+            };
+            if (key == 'GetRate'){
+                if (value === 'true')   return true;
+                else return false;
             }
-            if ( key == 'SnmpDebug' ) return ( value === "true");
-            if ( key == 'Extratags' ) return  String(value).split(',');
-            //TODO Actualizar en Angular2 Final con Multiselect
-            if ( key == 'MeasFilters') return value.split(',');
-            if ( key == 'MetricGroups') return value.split(',');
             return value;
 
         }), { headers: headers })
         .map( (responseData) => responseData.json());
     }
 
-    editDevice(dev, id) {
+    editMetric(dev, id) {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
-        return this.http.put('/snmpdevice/'+id,JSON.stringify(dev,function (key,value) {
-            if (key == 'Port' ||
-            key == 'Retries' ||
-            key == 'Timeout' ||
-            key == 'Repeat' ||
-            key == 'Freq' ) {
-                return parseInt(value);
+        return this.http.put('/metric/'+id,JSON.stringify(dev,function (key,value) {
+            if (key == 'Scale' || key == 'Shift') {
+                return parseFloat(value);
             }
-            if ( key == 'SnmpDebug' ) return ( value === "true");
-            if ( key == 'Extratags' ) return  String(value).split(',');
+            if (key == 'GetRate'){
+                return Boolean(value);
+            }
             return value;
 
         }), {  headers: headers   })
         .map( (responseData) => responseData.json());
     }
 
-    getDevices(filter_s: string) {
+    getMetrics(filter_s: string) {
         // return an observable
-        return this.http.get('/snmpdevice')
+        return this.http.get('/metric')
         .map( (responseData) => {
             return responseData.json();
         })
-        .map((snmpdevs) => {
-            console.log("MAP SERVICE",snmpdevs);
+        .map((snmpmetrics) => {
+            console.log("MAP SERVICE",snmpmetrics);
             let result = [];
-            if (snmpdevs) {
-                _.forEach(snmpdevs,function(value,key){
+            if (snmpmetrics) {
+                _.forEach(snmpmetrics,function(value,key){
                     console.log("FOREACH LOOP",value,key);
                     value.ID = key;
                     if(filter_s && filter_s.length > 0 ) {
@@ -84,19 +75,19 @@ export class SnmpDeviceService {
             return result;
         });
     }
-    getDevicesById(id : string) {
+    getMetricsById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.http.get('/snmpdevice/'+id)
+        return this.http.get('/metric/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
-    deleteDevice(id : string) {
+    deleteMetric(id : string) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.http.delete('/snmpdevice/'+id)
+        return this.http.delete('/metric/'+id)
         .map( (responseData) =>
          responseData.json()
         );

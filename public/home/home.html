@@ -9,22 +9,27 @@
                     </a>
                 </li>
                 <li>
-		    <a class="btn btn-primary btn-lg" role="button" (click)="logout()">Logout</a>
+		              <a class="btn btn-primary btn-lg" role="button" (click)="logout()">Logout</a>
                 </li>
                 <li>
-		   <a  (click)="SNMPDevices()">SNMP Devices</a>
+		             <a  (click)="SNMPDevices()">SNMP Devices</a>
                 </li>
                 <li>
                     <a (click)="SNMPMetrics()">SNMP Metrics</a>
                 </li>
                 <li>
-                    <a (click)="IflxMeasurements()">Influx Measurements</a>
+                    <a (click)="InfluxMeasurements()">Influx Measurements</a>
                 </li>
+                <ul>
+                    <li>
+                      <a (click)="MeasGroups()">Measurement Groups</a>
+                    </li>
+                    <li>
+                      <a (click)="MeasFilters()">Measurement Filters</a>
+                    </li>
+                  </ul>
                 <li>
-                    <a (click)="MetricGroups()">Metric Groups</a>
-                </li>
-                <li>
-		    <a (click)="InfluxServers()">Influx Servers</a>
+              		  <a (click)="InfluxServers()">Influx Servers</a>
                 </li>
                 <li>
                     <a href="#">About</a>
@@ -43,15 +48,26 @@
 			      	<h1>SNMP Devices</h1>
 			      	<snmpdevs></snmpdevs>
 			      </template>
-			      <template ngSwitchWhen="snmpmetrics">
-			      <h1> SNMP Metrics</h1>
+			      <template ngSwitchWhen="snmpmetric">
+              <h1> SNMP Metrics</h1>
+              <snmpmetrics></snmpmetrics>
 			      </template>
-			      <template ngSwitchWhen="ifluxmeas">
-			      <h1>measurents</h1>
+			      <template ngSwitchWhen="influxmeas">
+  			      <h1>Influx Measurements</h1>
+                  <influxmeas></influxmeas>
 			      </template>
-			      <template ngSwitchWhen="metricgroup">
-			      <h1>metric Group</h1>
+			      <template ngSwitchWhen="measgroup">
+  			      <h1>Meas Group</h1>
+                  <measgroups></measgroups>
 			      </template>
+                  <template ngSwitchWhen="measfilter">
+                    <h1>Meas Filters</h1>
+                  <measfilters></measfilters>
+                </template>
+                <template ngSwitchWhen="influxserver">
+                  <h1>Influx Servers</h1>
+                <influxservers></influxservers>
+              </template>
 			      <template ngSwitchDefault>DEFAULT</template>
 			    </p>
 

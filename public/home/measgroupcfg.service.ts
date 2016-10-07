@@ -6,67 +6,47 @@ import 'rxjs/Rx';
 import * as _ from 'lodash';
 
 @Injectable()
-export class SnmpDeviceService {
+export class MeasGroupService {
 
     constructor(public http: Http) {
         console.log('Task Service created.', http);
     }
 
-    addDevice(dev) {
+    addMeasGroup(dev) {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
-        return this.http.post('/snmpdevice',JSON.stringify(dev,function (key,value) {
-            console.log("KEY:"+key+" Value"+value);
-            if (	key == 'Port' ||
-            key == 'Retries' ||
-            key == 'Timeout' ||
-            key == 'Repeat' ||
-            key == 'Freq' ) {
-                return parseInt(value);
-            }
-            if ( key == 'SnmpDebug' ) return ( value === "true");
-            if ( key == 'Extratags' ) return  String(value).split(',');
-            //TODO Actualizar en Angular2 Final con Multiselect
-            if ( key == 'MeasFilters') return value.split(',');
-            if ( key == 'MetricGroups') return value.split(',');
-            return value;
-
+        return this.http.post('/measgroups',JSON.stringify(dev,function (key,value) {
+                if ( key == 'Measurements' ) return  String(value).split(',');
+                return value;
         }), { headers: headers })
         .map( (responseData) => responseData.json());
     }
 
-    editDevice(dev, id) {
+    editMeasGroup(dev, id) {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
-        return this.http.put('/snmpdevice/'+id,JSON.stringify(dev,function (key,value) {
-            if (key == 'Port' ||
-            key == 'Retries' ||
-            key == 'Timeout' ||
-            key == 'Repeat' ||
-            key == 'Freq' ) {
-                return parseInt(value);
-            }
-            if ( key == 'SnmpDebug' ) return ( value === "true");
-            if ( key == 'Extratags' ) return  String(value).split(',');
+        return this.http.put('/measgroups/'+id,JSON.stringify(dev,function (key,value) {
+            if ( key == 'Measurements' ) return  String(value).split(',');
+
             return value;
 
         }), {  headers: headers   })
         .map( (responseData) => responseData.json());
     }
 
-    getDevices(filter_s: string) {
+    getMeasGroup(filter_s: string) {
         // return an observable
-        return this.http.get('/snmpdevice')
+        return this.http.get('/measgroups')
         .map( (responseData) => {
             return responseData.json();
         })
-        .map((snmpdevs) => {
-            console.log("MAP SERVICE",snmpdevs);
+        .map((measgroups) => {
+            console.log("MAP SERVICE",measgroups);
             let result = [];
-            if (snmpdevs) {
-                _.forEach(snmpdevs,function(value,key){
+            if (measgroups) {
+                _.forEach(measgroups,function(value,key){
                     console.log("FOREACH LOOP",value,key);
                     value.ID = key;
                     if(filter_s && filter_s.length > 0 ) {
@@ -84,19 +64,19 @@ export class SnmpDeviceService {
             return result;
         });
     }
-    getDevicesById(id : string) {
+    getMeasGroupById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.http.get('/snmpdevice/'+id)
+        return this.http.get('/measgroups/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
-    deleteDevice(id : string) {
+    deleteMeasGroup(id : string) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.http.delete('/snmpdevice/'+id)
+        return this.http.delete('/measgroups/'+id)
         .map( (responseData) =>
          responseData.json()
         );

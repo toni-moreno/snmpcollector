@@ -1,16 +1,19 @@
-import { Component } from 'angular2/core';
+import { Component, Pipe, PipeTransform  } from 'angular2/core';
 import { CORE_DIRECTIVES } from 'angular2/common';
 import {FORM_DIRECTIVES, FORM_BINDINGS,FormBuilder, NgFormModel, ControlGroup, Control, Validators} from 'angular2/common';
 import { ACCORDION_DIRECTIVES } from 'ng2-bootstrap';
 import { SnmpDeviceService } from './snmpdevicecfg.service';
+import { InfluxServerService } from './influxservercfg.service';
+import { MeasGroupService } from './measgroupcfg.service';
+import { MeasFilterService } from './measfiltercfg.service';
 import {ControlMessages} from './control-messages.component';
 
 @Component({
   selector: 'snmpdevs',
-  providers: [SnmpDeviceService],
+  providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService],
   templateUrl: '/public/home/snmpdeviceeditor.html',
   styleUrls:['public/home/snmpdeviceeditor.css'],
-  bindings: [SnmpDeviceService],
+  bindings: [SnmpDeviceService, InfluxServerService, MeasGroupService, , MeasFilterService],
   viewBindings: [FORM_BINDINGS],
   directives: [ACCORDION_DIRECTIVES,CORE_DIRECTIVES,FORM_DIRECTIVES,ControlMessages]
 })
@@ -20,17 +23,22 @@ export class SnmpDeviceCfgComponent {
   snmpdevs: Array<any>;
   filter: string;
   snmpdevForm: ControlGroup;
+	testsnmpdev: any;
+	influxservers: Array<any>;
+  measfilters: Array<any>;
+  measgroups: Array<any>;
 
   reloadData(){
   // now it's a simple subscription to the observable
     this.snmpDeviceService.getDevices(this.filter)
-      .subscribe(data => { this.snmpdevs = data },
-		  err => console.error(err),
-		  () => console.log('SNMPDEV DONE')
-		      );
+      .subscribe(
+				data => { this.snmpdevs = data },
+		  	err => console.error(err),
+		  	() => console.log('DONE')
+		  );
 
   }
-  constructor(public snmpDeviceService: SnmpDeviceService,builder: FormBuilder) {
+  constructor(public snmpDeviceService: SnmpDeviceService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService, builder: FormBuilder) {
 	  this.editmode='list';
 	  this.reloadData();
 	  this.snmpdevForm = builder.group({
@@ -48,12 +56,16 @@ export class SnmpDeviceCfgComponent {
 		V3PrivPass:[''],
 		V3PrivProt:[''],
 		Freq:[60,Validators.required],
+		OutDB: ['',Validators.required],
 		Config:[''],
 		LogLevel:['info',Validators.required],
+		LogFile:[''],
 		SnmpDebug:['false',Validators.required],
 		DeviceTagMame: ['tagname',Validators.required],
 		DeviceTagValue: [''],
 		Extratags:[''],
+		MetricGroups: [''],
+		MeasFilters: ['']
 	});
     }
   onFilter(){
@@ -63,22 +75,92 @@ export class SnmpDeviceCfgComponent {
  viewItem(id,event){
 	console.log('view',id);
  }
- removeItem(id,event){
+ removeItem(id){
 	console.log('remove',id);
+	var r = confirm("Deleting SNMPDEVICE: "+id+". Proceed?");
+ 	if (r == true) {
+		this.snmpDeviceService.deleteDevice(id)
+		 .subscribe(
+			data => { console.log(data) },
+			err => console.error(err),
+			() => {this.editmode = "list"; this.reloadData()}
+			);
+
+ 	}
  }
  newDevice(){
 	 this.editmode = "create";
+	 this.getInfluxServersforDevices();
+	 this.getMeasGroupsforDevices();
+	 this.getMeasFiltersforDevices();
+
+ }
+ editDevice(id){
+	 this.getInfluxServersforDevices();
+	 this.getMeasGroupsforDevices();
+	 this.getMeasFiltersforDevices();
+
+	 this.snmpDeviceService.getDevicesById(id)
+ 		 .subscribe(data => { this.testsnmpdev = data },
+ 		 err => console.error(err),
+ 		 () =>  this.editmode = "modify"
+ 				 );
  }
  cancelEdit(){
 	 this.editmode = "list";
  }
  saveSnmpDev(){
 	 if(this.snmpdevForm.dirty && this.snmpdevForm.valid) {
+		 this.snmpDeviceService.addDevice(this.snmpdevForm.value)
+		 .subscribe(data => { console.log(data) },
+      err => console.error(err),
+      () =>  {this.editmode = "list"; this.reloadData()}
+			);
+		}
+ }
 
-	console.log(this.snmpdevForm.value);
-	var result=this.snmpDeviceService.addDevice(this.snmpdevForm.value);
-	console.log(result);
+ updateSnmpDev(oldId){
+	 console.log(oldId);
+	 console.log(this.snmpdevForm.value.id);
+	 if(this.snmpdevForm.dirty && this.snmpdevForm.valid) {
+		 var r = true;
+		 if (this.snmpdevForm.value.id != oldId) {
+			r = confirm("Changing Device ID from "+oldId+" to " +this.snmpdevForm.value.id+". Proceed?");
+		 }
+		if (r == true) {
+				this.snmpDeviceService.editDevice(this.snmpdevForm.value, oldId)
+				.subscribe(data => { console.log(data) },
+	       err => console.error(err),
+	       () =>  {this.editmode = "list"; this.reloadData()}
+	 			);
+		}
 	}
  }
 
+ getMeasGroupsforDevices(){
+ this.measgroupsDeviceService.getMeasGroup(null)
+ .subscribe(
+	 data => { this.measgroups = data },
+	 err => console.error(err),
+	 () => console.log('DONE')
+ 	);
+ }
+
+ getInfluxServersforDevices(){
+ this.influxserverDeviceService.getInfluxServer(null)
+ .subscribe(
+	 data => { this.influxservers = data },
+	 err => console.error(err),
+	 () => console.log('DONE')
+ 	);
+ }
+
+ getMeasFiltersforDevices(){
+ this.measfiltersDeviceService.getMeasFilter(null)
+ .subscribe(
+	data => { this.measfilters = data },
+	err => console.error(err),
+	() => console.log('DONE')
+	 );
+ }
 }
