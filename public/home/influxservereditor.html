@@ -1,0 +1,110 @@
+	<p [ngSwitch]="editmode">
+    <template ngSwitchWhen="list">
+	<div class="row-fluid">
+      		<div class=".col-md-3">
+        		<h2>Influx Servers</h2>
+        	</div>
+						<hr>
+						<h4>{{ errorhandler }} </h4>
+      		<div  class=".col-md-3">
+			<input type="text"  class="form-control" required [(ngModel)]="filter" >
+      <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
+	 		<button type="button" (click)="newInfluxServer()" class="btn btn-primary">New</button>
+     		</div>
+	</div>
+
+	<accordion [closeOthers]="oneAtATime">
+  		<accordion-group #group  *ngFor="#influxserver of influxservers" [heading]="influxserver.ID">
+   			<div accordion-heading>
+    				<i style="top: -15px" class="pull-right glyphicon"
+         			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
+   			</div>
+		<!--content-->
+					<i class="pull-right glyphicon glyphicon glyphicon-eye-open" (click)="viewItem(group,$event)"></i>
+					<i class="pull-right glyphicon glyphicon glyphicon glyphicon-edit"  (click)="editInfluxServer(influxserver.ID)"></i>
+    			<i class="pull-right glyphicon glyphicon glyphicon glyphicon-remove"  (click)="removeItem(influxserver.ID)"></i>
+
+    		 {{ influxserver.Host }}
+				 <hr>
+				 {{ influxserver | json }}
+
+  		</accordion-group>
+	</accordion>
+     </template>
+     <template ngSwitchWhen="create">
+   	<form [ngFormModel]="influxserverForm" class="ui form" (ngSubmit)="saveInfluxServer()">
+		<label for="id">id</label>
+		 <input ngControl="id" id="id" />
+		 <control-messages control="id"></control-messages>
+
+		 <label for="Host">Host</label>
+			<input ngControl="Host" id="Host" />
+			<control-messages control="Host"></control-messages>
+
+			<label for="Port">Port</label>
+			 <input ngControl="Port" id="Port" />
+			 <control-messages control="Port"></control-messages>
+
+			 <label for="DB">DB</label>
+				<input ngControl="DB" id="DB" />
+				<control-messages control="DB"></control-messages>
+
+				<label for="User">User</label>
+				 <input ngControl="User" id="User" />
+				 <control-messages control="User"></control-messages>
+
+			 <label for="Password">Password</label>
+				<input ngControl="Password" id="Password" />
+				<control-messages control="Password"></control-messages>
+
+
+			 <label for="Retention">Retention</label>
+				<input ngControl="Retention" id="Retention" />
+				<control-messages control="Retention"></control-messages>
+
+		<button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
+		<button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
+		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+    	</form>
+
+     </template>
+
+
+		 <template ngSwitchWhen="modify">
+   	<form [ngFormModel]="influxserverForm" class="ui form" (ngSubmit)="updateInfluxServer(testinfluxservers.ID)">
+		<label for="id">id</label>
+		 <input ngControl="id" id="id" [ngModel] = "testinfluxservers.ID"/>
+		 <control-messages control="id"></control-messages>
+
+		 <label for="Host">Host</label>
+			<input ngControl="Host" id="Host" [ngModel] = "testinfluxservers.Host" />
+			<control-messages control="Host"></control-messages>
+
+			<label for="Port">Port</label>
+			 <input ngControl="Port" id="Port" [ngModel] = "testinfluxservers.Port" />
+			 <control-messages control="Port"></control-messages>
+
+			 <label for="DB">DB</label>
+				<input ngControl="DB" id="DB" [ngModel] = "testinfluxservers.DB" />
+				<control-messages control="DB"></control-messages>
+
+				<label for="User">User</label>
+				 <input ngControl="User" id="User" [ngModel] = "testinfluxservers.User" />
+				 <control-messages control="User"></control-messages>
+
+			 <label for="Password">Password</label>
+				<input ngControl="Password" id="Password" [ngModel] = "testinfluxservers.Password" />
+				<control-messages control="Password"></control-messages>
+
+
+			 <label for="Retention">Retention</label>
+				<input ngControl="Retention" id="Retention" [ngModel] = "testinfluxservers.Retention" />
+				<control-messages control="Retention"></control-messages>
+
+		<button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
+		<button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
+		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+    	</form>
+
+     </template>
+</p>

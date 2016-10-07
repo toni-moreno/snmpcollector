@@ -5,11 +5,16 @@ import { Http, Headers } from 'angular2/http';
 import { AuthHttp,JwtHelper } from 'angular2-jwt';
 import { Router } from 'angular2/router';
 import { SnmpDeviceCfgComponent } from './snmpdevicecfg.component';
+import { SnmpMetricCfgComponent } from './snmpmetriccfg.component';
+import { InfluxMeasCfgComponent } from './influxmeascfg.component';
+import { MeasGroupCfgComponent } from './measgroupcfg.component'
+import { MeasFilterCfgComponent } from './measfiltercfg.component'
+import { InfluxServerCfgComponent } from './influxservercfg.component'
 
 
 @Component({
   selector: 'home',
-  directives: [CORE_DIRECTIVES,NgSwitch,NgSwitchWhen,NgSwitchDefault,SnmpDeviceCfgComponent],
+  directives: [CORE_DIRECTIVES,NgSwitch,NgSwitchWhen,NgSwitchDefault,SnmpDeviceCfgComponent, SnmpMetricCfgComponent, InfluxMeasCfgComponent, MeasGroupCfgComponent, MeasFilterCfgComponent, InfluxServerCfgComponent],
   templateUrl: '/public/home/home.html',
   styleUrls: [ '/public/home/home.css' ]
 })
@@ -36,23 +41,24 @@ export class Home {
 
   SNMPDevices() {
 	  this.item_type = "snmpdevice";
-	  alert('SnmpDevices!!!');
   }
 
   SNMPMetrics () {
-	  this.item_type = "snmpmetrics";
-	  alert('SnmpMetrics!!!');
+	  this.item_type = "snmpmetric";
   }
-  IflxMeasurements() {
-	  this.item_type = "ifluxmeas";
+  InfluxMeasurements() {
+	  this.item_type = "influxmeas";
   }
-  MetricGroups() {
-	  this.item_type = "metricgroup";
+  MeasGroups() {
+	  this.item_type = "measgroup";
+  }
+  MeasFilters() {
+    this.item_type = "measfilter";
   }
   InfluxServers() {
 	  this.item_type = "influxserver";
   }
-	
+
   /*
   callAnonymousApi() {
     this._callApi('Anonymous', 'http://localhost:3001/api/random-quote');

@@ -1,0 +1,117 @@
+	<p [ngSwitch]="editmode">
+    <template ngSwitchWhen="list">
+	<div class="row-fluid">
+      		<div class=".col-md-3">
+        		<h2>Influx measurements</h2>
+        	</div>
+						<hr>
+      		<div  class=".col-md-3">
+			<input type="text"  class="form-control" required [(ngModel)]="filter" >
+ 			<button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
+	 		<button type="button" (click)="newMeas()" class="btn btn-primary">New</button>
+     		</div>
+	</div>
+
+	<accordion [closeOthers]="oneAtATime">
+  		<accordion-group #group  *ngFor="#influxmea of influxmeas" [heading]="influxmea.ID">
+				<div accordion-heading>
+    				<i style="top: -15px" class="pull-right glyphicon"
+         			[ngClass]="{'alert-danger' : influxmea.Fields.length==0, 'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
+   			</div>
+		<!--content-->
+					<i class="pull-right glyphicon glyphicon glyphicon-eye-open" (click)="viewItem(group,$event)"></i>
+					<i class="pull-right glyphicon glyphicon glyphicon glyphicon-edit"  (click)="editMeas(influxmea.ID)"></i>
+    			<i class="pull-right glyphicon glyphicon glyphicon glyphicon-remove"  (click)="removeItem(influxmea.ID)"></i>
+
+    		 {{ influxmea.Name }} <br> #Metric Assigned
+				 {{ influxmea.Fields.length }}
+				 <hr>
+				 {{ influxmea | json }}
+
+  		</accordion-group>
+	</accordion>
+     </template>
+     <template ngSwitchWhen="create">
+   	<form [ngFormModel]="influxmeasForm" class="ui form" (ngSubmit)="saveInfluxMeas()">
+		<label for="id">id</label>
+		 <input ngControl="id" id="id" />
+		 <control-messages control="id"></control-messages>
+		<label for="Name">Name</label>
+      		<input ngControl="Name" id="Name" />
+		<control-messages control="Name"></control-messages>
+
+		<label for="GetMode">GetMode</label>
+		<select ngControl="GetMode" id="GetMode">
+			<option value="value">Value</option>
+			<option value="indexed">Indexed</option>
+		</select>
+      		<!--input ngControl="SnmpVersion" id="SnmpVersion" /-->
+		<control-messages control="GetMode"></control-messages>
+		<div *ngIf="influxmeasForm.value.GetMode == 'indexed'">
+
+		<label for="IndexOID">IndexOID</label>
+			<input ngControl="IndexOID" id="IndexOID" />
+		<control-messages control="IndexOID"></control-messages>
+		<label for="IndexTag">IndexTag</label>
+			<input ngControl="IndexTag" id="IndexTag" />
+		<control-messages control="IndexTag"></control-messages>
+		</div>
+
+		<label for="Fields">Metrics Associated</label>
+			<select ngControl="Fields" id="Fields">
+				<option *ngFor="#metric of snmpmetrics"
+						[value]="metric.ID"> {{metric.ID}}
+				</option>
+		</select>
+		<control-messages control="Fields"></control-messages>
+
+		<button type="submit" [disabled]="!influxmeasForm.valid">Submit</button>
+		<button type="reset" [disabled]="!influxmeasForm.dirty">Reset</button>
+		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+    	</form>
+
+     </template>
+
+
+		 <template ngSwitchWhen="modify">
+		<form [ngFormModel]="influxmeasForm" class="ui form" (ngSubmit)="updateInfluxMeas(testinfluxmeas.ID)">
+		<label for="id">id</label>
+		 <input ngControl="id" id="id" [ngModel] = "testinfluxmeas.ID"/>
+		 <control-messages control="id"></control-messages>
+		<label for="Name">Name</label>
+					<input ngControl="Name" id="Name" [ngModel] = "testinfluxmeas.Name" />
+		<control-messages control="Name"></control-messages>
+
+		<label for="GetMode">GetMode</label>
+		<select ngControl="GetMode" id="GetMode" [ngModel] = "testinfluxmeas.GetMode">
+			<option value="value">Value</option>
+			<option value="indexed">Indexed</option>
+		</select>
+					<!--input ngControl="SnmpVersion" id="SnmpVersion" /-->
+		<control-messages control="GetMode"></control-messages>
+		<div *ngIf="influxmeasForm.value.GetMode == 'indexed'">
+
+		<label for="IndexOID">IndexOID</label>
+			<input ngControl="IndexOID" id="IndexOID" [ngModel] = "testinfluxmeas.IndexOID"/>
+		<control-messages control="IndexOID"></control-messages>
+		<label for="IndexTag">IndexTag</label>
+			<input ngControl="IndexTag" id="IndexTag" [ngModel] = "testinfluxmeas.IndexTag" />
+		<control-messages control="IndexTag"></control-messages>
+		</div>
+
+		<label for="Fields">Fields</label>
+			<select ngControl="Fields" id="Fields" [ngModel] = "testinfluxmeas.Fields">
+				<option *ngFor="#metric of snmpmetrics"
+						[value]="metric.ID"> {{metric.ID}}
+				</option>
+		</select>
+		<control-messages control="Fields"></control-messages>
+
+		<button type="submit" [disabled]="!influxmeasForm.valid">Submit</button>
+		<button type="reset" [disabled]="!influxmeasForm.dirty">Reset</button>
+		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+			</form>
+
+		 </template>
+
+</p>

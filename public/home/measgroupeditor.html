@@ -1,0 +1,75 @@
+	<p [ngSwitch]="editmode">
+    <template ngSwitchWhen="list">
+	<div class="row-fluid">
+      		<div class=".col-md-3">
+        		<h2>Measurement Groups</h2>
+        	</div>
+						<hr>
+						<h4>{{ errorhandler }} </h4>
+      		<div  class=".col-md-3">
+			<input type="text"  class="form-control" required [(ngModel)]="filter" >
+      <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
+	 		<button type="button" (click)="newMeasGroup()" class="btn btn-primary">New</button>
+     		</div>
+	</div>
+
+	<accordion [closeOthers]="oneAtATime">
+  		<accordion-group #group  *ngFor="#measgroup of measgroups" [heading]="measgroup.ID">
+   			<div accordion-heading>
+    				<i style="top: -15px" class="pull-right glyphicon"
+         			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
+   			</div>
+		<!--content-->
+					<i class="pull-right glyphicon glyphicon glyphicon-eye-open" (click)="viewItem(group,$event)"></i>
+					<i class="pull-right glyphicon glyphicon glyphicon glyphicon-edit"  (click)="editMeasGroup(measgroup.ID)"></i>
+    			<i class="pull-right glyphicon glyphicon glyphicon glyphicon-remove"  (click)="removeItem(measgroup.ID)"></i>
+
+    		 Measurements:<br> {{ measgroup.Measurements }}
+				 <hr>
+				 {{ measgroup | json }}
+
+  		</accordion-group>
+	</accordion>
+     </template>
+     <template ngSwitchWhen="create">
+   	<form [ngFormModel]="measgroupForm" class="ui form" (ngSubmit)="saveMeasGroup()">
+		<label for="id">id</label>
+		 <input ngControl="id" id="id" />
+		 <control-messages control="id"></control-messages>
+
+		<label for="Measurements">Measurements</label>
+			<select ngControl="Measurements" id="Measurements">
+				<option *ngFor="#measurement of influxmeas"
+						[value]="measurement.ID"> {{measurement.ID}}
+				</option>
+		</select>
+    <control-messages control="Measurements"></control-messages>
+
+		<button type="submit" [disabled]="!measgroupForm.valid">Submit</button>
+		<button type="reset" [disabled]="!measgroupForm.dirty">Reset</button>
+		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+    	</form>
+
+     </template>
+
+		 <template ngSwitchWhen="modify">
+		<form [ngFormModel]="measgroupForm" class="ui form" (ngSubmit)="updateMeasGroup(testmeasgroups.ID)">
+			<label for="id">id</label>
+			 <input ngControl="id" id="id" [ngModel] = "testmeasgroups.ID"/>
+			 <control-messages control="id"></control-messages>
+
+			<label for="Measurements">Measurements</label>
+				<select ngControl="Measurements" id="Measurements" [ngModel]= "testmeasgroups.Measurements">
+					<option *ngFor="#measurement of influxmeas"
+							[value]="measurement.ID"> {{measurement.ID}}
+					</option>
+			</select>
+
+		<button type="submit" [disabled]="!measgroupForm.valid">Submit</button>
+		<button type="reset" [disabled]="!measgroupForm.dirty">Reset</button>
+		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+			</form>
+
+		 </template>
+
+</p>
