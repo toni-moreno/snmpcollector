@@ -59,14 +59,13 @@ export class SnmpMetricService {
             if (snmpmetrics) {
                 _.forEach(snmpmetrics,function(value,key){
                     console.log("FOREACH LOOP",value,key);
-                    value.ID = key;
                     if(filter_s && filter_s.length > 0 ) {
-                        console.log("maching: "+key+ "filter: "+filter_s);
+                        console.log("maching: "+value.ID+ "filter: "+filter_s);
                         var re = new RegExp(filter_s, 'gi');
-                        if (key.match(re)){
+                        if (value.ID.match(re)){
                             result.push(value);
                         }
-                        console.log(key.match(re));
+                        console.log(value.ID.match(re));
                     } else {
                         result.push(value);
                     }

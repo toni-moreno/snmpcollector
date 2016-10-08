@@ -136,6 +136,8 @@ func webServer(port int) {
 	//m.Get("/cache/read/:key", myCacheReadHandler)
 
 	// Data sources
+	m.Get("/runtimeinfo", GetRuntimeInfo)
+
 	m.Group("/snmpdevice", func() {
 		m.Get("/", GetSNMPDevices)
 		m.Post("/", bind(SnmpDeviceCfg{}), AddSNMPDevice)
@@ -190,13 +192,31 @@ func webServer(port int) {
 }
 
 /****************/
+/*Runtime Info
+/****************/
+
+func GetRuntimeInfo(ctx *macaron.Context) {
+	log.Debugf("Got device runtime info s %+v", &devices)
+	ctx.JSON(200, &devices)
+}
+
+/****************/
 /*SNMP DEVICES
 /****************/
 
 // GetSNMPDevices Return snmpdevice list to frontend
 func GetSNMPDevices(ctx *macaron.Context) {
-	ctx.JSON(200, &cfg.SnmpDevice)
-	log.Printf("Getting DEVICEs %+v", &cfg.SnmpDevice)
+
+	devcfgarray := make([]SnmpDeviceCfg, 0)
+	err := cfg.Database.x.Find(&devcfgarray)
+	if err != nil {
+		ctx.JSON(404, err)
+		log.Errorf("Error on get Devices :%+s", err)
+		return
+	}
+	ctx.JSON(200, &devcfgarray)
+	log.Debugf("Getting DEVICEs %+v", &devcfgarray)
+
 }
 
 // AddSNMPDevice Insert new snmpdevice to de internal BBDD --pending--
@@ -215,8 +235,7 @@ func AddSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
 // UpdateSNMPDevice --pending--
 func UpdateSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
 	id := ctx.Params(":id")
-	delete(cfg.SnmpDevice, id)
-	cfg.SnmpDevice[dev.ID] = &dev
+
 	log.Debugf("CFG SNMPDEVICE [%s]: %+v", id, cfg.SnmpDevice)
 	log.Debugf("Tying to update: %+v", dev)
 	affected, err := cfg.Database.x.Where("id='" + id + "'").Update(dev)
@@ -238,16 +257,12 @@ func DeleteSNMPDevice(ctx *macaron.Context) {
 		ctx.JSON(200, "deleted")
 	}
 
-	//Delete from config map
-	delete(cfg.SnmpDevice, id)
-	//Delete from SQL:
-
 }
 
 //GetSNMPDeviceByID --pending--
 func GetSNMPDeviceByID(ctx *macaron.Context) {
 	id := ctx.Params(":id")
-	log.Printf("ID: %+v", cfg.SnmpDevice[id])
+	log.Debugf("ID: %+v", cfg.SnmpDevice[id])
 	ctx.JSON(200, cfg.SnmpDevice[id])
 }
 
@@ -257,19 +272,25 @@ func GetSNMPDeviceByID(ctx *macaron.Context) {
 
 // GetMetrics Return metrics list to frontend
 func GetMetrics(ctx *macaron.Context) {
-	ctx.JSON(200, &cfg.Metrics)
-	log.Printf("Getting Metrics %+v", &cfg.Metrics)
+	metcfgarray := make([]SnmpMetricCfg, 0)
+	err := cfg.Database.x.Find(&metcfgarray)
+	if err != nil {
+		ctx.JSON(404, err)
+		log.Errorf("Error on get Metrics :%+s", err)
+		return
+	}
+	ctx.JSON(200, &metcfgarray)
+	log.Debugf("Getting Metric Array %+v", &metcfgarray)
 }
 
 // AddMetric Insert new metric to de internal BBDD --pending--
 func AddMetric(ctx *macaron.Context, met SnmpMetricCfg) {
 	log.Printf("ADDING METRIC %+v", met)
-	cfg.Metrics[met.ID] = &met
 	affected, err := cfg.Database.x.Insert(met)
 	if err != nil {
 		log.Warningf("Error on insert for metric %s  , affected : %+v , error: %s", met.ID, affected, err)
 	} else {
-		ctx.JSON(200, cfg.Metrics[met.ID])
+		ctx.JSON(200, &met)
 	}
 
 }
@@ -277,15 +298,13 @@ func AddMetric(ctx *macaron.Context, met SnmpMetricCfg) {
 // UpdateMetric --pending--
 func UpdateMetric(ctx *macaron.Context, met SnmpMetricCfg) {
 	id := ctx.Params(":id")
-	delete(cfg.Metrics, id)
-	cfg.Metrics[met.ID] = &met
 	log.Debugf("CFG METRIC [%s]: %+v", id, cfg.Metrics)
 	log.Debugf("Tying to update: %+v", met)
 	affected, err := cfg.Database.x.Where("id='" + id + "'").Update(met)
 	if err != nil {
 		log.Warningf("Error on update for metric %s  , affected : %+v , error: %s", met.ID, affected, err)
 	} else {
-		ctx.JSON(200, cfg.Metrics[met.ID])
+		ctx.JSON(200, &met)
 	}
 }
 
@@ -293,6 +312,7 @@ func UpdateMetric(ctx *macaron.Context, met SnmpMetricCfg) {
 func DeleteMetric(ctx *macaron.Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
+	//TODO: these two deletes should be done on the same commit (xorm session?)
 	//Deleting from SQL DDBB - snmp_metric_cfg
 	affected, err := cfg.Database.x.Where("id='" + id + "'").Delete(&SnmpMetricCfg{})
 	if err != nil {
@@ -307,21 +327,6 @@ func DeleteMetric(ctx *macaron.Context) {
 	affected, err = cfg.Database.x.Where("id_metric_cfg='" + id + "'").Delete(&MeasurementFieldCfg{})
 	if err != nil {
 		log.Warningf("Error on delete for metric %s  , affected : %+v , error: %s", id, affected, err)
-	}
-
-	//Delete from config map
-	delete(cfg.Metrics, id)
-
-	//Must update all Measurements with assigned metric?!
-	for _, mVal := range cfg.Measurements {
-		i := 0
-		for _, mm := range mVal.Fields {
-			if mm == id {
-				log.Warningf("i: %+v  , mVal.Field: %+v", i, mVal.Fields)
-				mVal.Fields = append(mVal.Fields[:i], mVal.Fields[i+1:]...)
-			}
-			i = i + 1
-		}
 	}
 
 }
@@ -350,6 +355,7 @@ func AddMeas(ctx *macaron.Context, meas InfluxMeasurementCfg) {
 	cfg.Measurements[meas.ID] = &meas
 
 	//Actualizando la relacional MeasurementFieldCfg????
+	//TODO: review this what this loop do
 	tempCfg := &MeasurementFieldCfg{}
 	for _, Field := range meas.Fields {
 		tempCfg.IDMeasurementCfg = (meas.ID)
