@@ -58,7 +58,7 @@ export class SnmpMetricService {
             let result = [];
             if (snmpmetrics) {
                 _.forEach(snmpmetrics,function(value,key){
-                    console.log("FOREACH LOOP",value,key);
+                    console.log("FOREACH LOOP",value,value.ID);
                     if(filter_s && filter_s.length > 0 ) {
                         console.log("maching: "+value.ID+ "filter: "+filter_s);
                         var re = new RegExp(filter_s, 'gi');

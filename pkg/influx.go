@@ -9,17 +9,25 @@ import (
 	"time"
 )
 
-/*
- InfluxDB: database export
-*/
-
+/*InfluxDB database export */
 type InfluxDB struct {
 	cfg     *InfluxCfg
 	started bool
+	dummy   bool
 	iChan   chan *client.BatchPoints
 	client  client.Client
 	Sent    int64
 	Errors  int64
+}
+
+var influxdbDummy = &InfluxDB{
+	cfg:     nil,
+	started: false,
+	dummy:   true,
+	iChan:   nil,
+	client:  nil,
+	Sent:    0,
+	Errors:  0,
 }
 
 func (db *InfluxDB) incSent() {
@@ -38,7 +46,17 @@ func (db *InfluxDB) addErrors(n int64) {
 	atomic.AddInt64(&db.Errors, n)
 }
 
+//BP create a Batch point influx object
 func (db *InfluxDB) BP() *client.BatchPoints {
+	if db.dummy == true {
+		bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
+			Database:        "dbdummy",
+			RetentionPolicy: "dbretention",
+			Precision:       "ns", //Default precision for Time lib
+		})
+		return &bp
+	}
+	//
 	if len(db.cfg.Retention) == 0 {
 		db.cfg.Retention = "autogen"
 	}
@@ -50,7 +68,11 @@ func (db *InfluxDB) BP() *client.BatchPoints {
 	return &bp
 }
 
+//Connect to influxdb
 func (db *InfluxDB) Connect() error {
+	if db.dummy == true {
+		return nil
+	}
 	conf := client.HTTPConfig{
 		Addr:     fmt.Sprintf("http://%s:%d", db.cfg.Host, db.cfg.Port),
 		Username: db.cfg.User,
@@ -66,7 +88,11 @@ func (db *InfluxDB) Connect() error {
 	return err
 }
 
+//Init initialies runtime info
 func (db *InfluxDB) Init() {
+	if db.dummy == true {
+		return
+	}
 	if db.started == true {
 		log.Infof("Emitter thread to : %s  already started (skipping Initialization)", db.cfg.ID)
 		return
@@ -90,10 +116,15 @@ func (db *InfluxDB) Init() {
 	go influxEmitter(db, rand.Int())
 }
 
+//Send send data
 func (db *InfluxDB) Send(bps *client.BatchPoints) {
+	if db.dummy == true {
+		return
+	}
 	db.iChan <- bps
 }
 
+//Hostname get hostname
 func (db *InfluxDB) Hostname() string {
 	return strings.Split(db.cfg.Host, ":")[0]
 }

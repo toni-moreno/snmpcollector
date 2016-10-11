@@ -256,7 +256,7 @@ Influx databases configuration
  retention = "autogen"
  */
 
-INSERT INTO influx_cfg (id,host,port,db,user,password,retention) VALUES ('*','127.0.0.1',8086,'snmp','snmpuser','snmppass','autogen');
+INSERT INTO influx_cfg (id,host,port,db,user,password,retention) VALUES ('default','127.0.0.1',8086,'snmp','snmpuser','snmppass','autogen');
 
 
 /*======================================
@@ -302,7 +302,7 @@ INSERT INTO influx_cfg (id,host,port,db,user,password,retention) VALUES ('*','12
   # freq          : Frequency of polling in seconds ( default none)
   # devicetagname : The tag name that will identify the device (default : "device")
   # devicetagvalue: the tag valude that will identify the device ( default : "id" ) [ posible values "id" --hostsnmpv2_1--  or "host" --127.0.0.1-- ]
-  # extratags     : Array with extratags in format key = value will be sent to the influxdb database
+  # extratags     : Array with extratags in format key = value will be sent to the influxdb database format [ "" , "" , ""]
   # snmpdebug     :
   # filters       : Array containing filter file per measurement.
 
@@ -334,7 +334,7 @@ INSERT INTO influx_cfg (id,host,port,db,user,password,retention) VALUES ('*','12
   	]
 
     */
-INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES ('hostsnmpv3a','hostsnmpv3a',161,20,5,0,'3','NoAuthNoPriv','v3usernoauth',60,'router','id','tagA=4,tagB=5,tagC=6','debug',0);
+INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES ('hostsnmpv3a','hostsnmpv3a',161,20,5,0,'3','NoAuthNoPriv','v3usernoauth',60,'router','id','[ "tagA=4","tagB=5","tagC=6" ]','debug',0);
 INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3a','Issue_index');
 /*INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3a','Linux.*');
 INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filter_ports_file_a');*/
@@ -369,8 +369,8 @@ INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filte
   	]
     */
 
-    INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,v3authpass,v3authprot,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES  ('hostsnmpv3b','hostsnmpv3b',161,20,5,0,'3','AuthNoPriv','v3userauth','v3passauth','MD5',30,'router','id','tagA=14,tagB=15,tagC=16','debug',0);
-    INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3b','.*ux');
+    INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,v3authpass,v3authprot,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES  ('hostsnmpv3b','hostsnmpv3b',161,20,5,0,'3','AuthNoPriv','v3userauth','v3passauth','MD5',30,'router','id','[ "tagA=14","tagB=15","tagC=16" ]','debug',0);
+    INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3b','Linux');
     INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3b','filter_ports_file_b');
 
     /*
@@ -399,7 +399,7 @@ INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filte
 
 */
 
-INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,v3authpass,v3authprot,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES ('hostsnmpv3c','hostsnmpv3c',161,20,5,0,'3','AuthNoPriv','v3userauth','v3passauth','MD5',30,'router','id','tagA=14,tagB=15,tagC=16','debug',0);
-INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3c','.*ux');
+INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,v3authpass,v3authprot,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES ('hostsnmpv3c','hostsnmpv3c',161,20,5,0,'3','AuthNoPriv','v3userauth','v3passauth','MD5',30,'router','id','[ "tagA=14","tagB=15","tagC=16' ],'debug',0);
+INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3c','Linux');
 /*INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3c','filter_port_if_status_up');*/
 INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3c','filter_port_if_name_match_eth');

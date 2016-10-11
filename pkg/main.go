@@ -59,10 +59,6 @@ var (
 	influxdb map[string]*InfluxDB
 )
 
-func fatal(v ...interface{}) {
-	log.Fatalln(v...)
-}
-
 func flags() *flag.FlagSet {
 	var f flag.FlagSet
 	f.BoolVar(&getversion, "version", getversion, "display de version")
@@ -182,13 +178,27 @@ func init() {
 
 	influxdb = make(map[string]*InfluxDB)
 
+	defFound := false
 	for k, c := range cfg.Influxdb {
 		//Inticialize each SNMP device
-		dev := InfluxDB{}
-		dev.cfg = c
-		dev.cfg.ID = k
+		if k == "default" {
+			defFound = true
+		}
+		dev := InfluxDB{
+			cfg:     c,
+			dummy:   false,
+			started: false,
+			Sent:    0,
+			Errors:  0,
+		}
+		//dev.cfg.ID = k
 		//dev.Init(k) D'ont initialize if there is not any device really sending data to the output backend
 		influxdb[k] = &dev
+	}
+	if defFound == false {
+		//no devices configured  as default device we need to set some device as itcan send data transparant to snmpdevices goroutines
+		log.Warn("No Output default found influxdb devices found !!")
+		influxdb["default"] = influxdbDummy
 	}
 
 	//Init Devices
@@ -231,11 +241,12 @@ func init() {
 			name = c.cfg.OutDB
 		}
 		if c.Influx, ok = influxdb[name]; !ok {
-			if c.Influx, ok = influxdb["*"]; !ok {
-				fatal("No influx config for snmp device:", name)
+			if c.Influx, ok = influxdb["default"]; !ok {
+				log.Errorf("No influx config for snmp device: %s", name)
 			}
 		}
 		c.Influx.Init()
+
 	}
 
 	//make sure the selfmon has a deb
