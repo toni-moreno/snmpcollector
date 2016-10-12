@@ -1,25 +1,21 @@
-import { Component, Pipe, PipeTransform  } from 'angular2/core';
-import { CORE_DIRECTIVES } from 'angular2/common';
-import {FORM_DIRECTIVES, FORM_BINDINGS,FormBuilder, NgFormModel, ControlGroup, Control, Validators} from 'angular2/common';
-import { ACCORDION_DIRECTIVES } from 'ng2-bootstrap';
+import { Component, Pipe, PipeTransform  } from '@angular/core';
+import {  FormBuilder,  Validators} from '@angular/forms';
 import { SnmpMetricService } from './snmpmetriccfg.service';
-import {ControlMessages} from './control-messages.component';
+
 
 @Component({
   selector: 'snmpmetrics',
   providers: [SnmpMetricService],
-  templateUrl: '/public/home/snmpmetriceditor.html',
+  templateUrl: 'public/home/snmpmetriceditor.html',
   styleUrls:['public/home/snmpmetriceditor.css'],
-  bindings: [SnmpMetricService],
-  viewBindings: [FORM_BINDINGS],
-  directives: [ACCORDION_DIRECTIVES,CORE_DIRECTIVES,FORM_DIRECTIVES,ControlMessages]
+
 })
 
 export class SnmpMetricCfgComponent {
   editmode: string; //list , create, modify
   snmpmetrics: Array<any>;
   filter: string;
-  snmpmetForm: ControlGroup;
+  snmpmetForm: any;
 	testsnmpmetric: any;
 
   reloadData(){

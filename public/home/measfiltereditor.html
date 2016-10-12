@@ -1,5 +1,5 @@
 	<p [ngSwitch]="editmode">
-    <template ngSwitchWhen="list">
+    <template ngSwitchCase="list">
 	<div class="row-fluid">
       		<div class=".col-md-3">
         		<h2>Measurement Filters</h2>
@@ -14,7 +14,7 @@
 	</div>
 
 	<accordion [closeOthers]="oneAtATime">
-  		<accordion-group #group  *ngFor="#measfilter of measfilters" [heading]="measfilter.ID">
+  		<accordion-group #group  *ngFor="let measfilter of measfilters" [heading]="measfilter.ID">
    			<div accordion-heading>
     				<i style="top: -15px" class="pull-right glyphicon"
          			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
@@ -31,53 +31,53 @@
   		</accordion-group>
 	</accordion>
      </template>
-     <template ngSwitchWhen="create">
-   	<form [ngFormModel]="measfilterForm" class="ui form" (ngSubmit)="saveMeasFilter()">
+     <template ngSwitchCase="create">
+   	<form [formGroup]="measfilterForm" class="ui form" (ngSubmit)="saveMeasFilter()">
 		<label for="id">id</label>
-		 <input ngControl="id" id="id" />
-		 <control-messages control="id"></control-messages>
+		 <input formControlName="id" id="id" />
+		 <control-messages [control]="measfilterForm.controls.id"></control-messages>
 
 		<label for="IDMeasurementCfg">Measurements</label>
-			<select ngControl="IDMeasurementCfg" id="IDMeasurementCfg">
-				<option *ngFor="#measurement of influxmeas"
+			<select formControlName="IDMeasurementCfg" id="IDMeasurementCfg">
+				<option *ngFor="let measurement of influxmeas"
 						[value]="measurement.ID"> {{measurement.ID}}
 				</option>
 		</select>
-		<control-messages control="IDMeasurementCfg"></control-messages>
+		<control-messages [control]="measfilterForm.controls.IDMeasurementCfg"></control-messages>
 
 		<label for="FType">GetMode</label>
-		<select ngControl="FType" id="FType">
+		<select formControlName="FType" id="FType">
 			<option value="file">File</option>
 			<option value="OIDCondition">OID Condition</option>
 		</select>
-					<!--input ngControl="SnmpVersion" id="SnmpVersion" /-->
-		<control-messages control="FType"></control-messages>
+					<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
+		<control-messages [control]="measfilterForm.controls.FType"></control-messages>
 
 		<div *ngIf="measfilterForm.value.FType == 'file'">
 		<ul><li>
 		<label for="FileName">File Name</label>
-			<input ngControl="FileName" id="FileName" />
-		<control-messages control="FileName"></control-messages>
+			<input formControlName="FileName" id="FileName" />
+		<control-messages [control]="measfilterForm.controls.FileName"></control-messages>
 	</li>
 	<li>
 			<label for="EnableAlias">Enable alias</label>
-		<select ngControl="EnableAlias" id="EnableAlias">
+		<select formControlName="EnableAlias" id="EnableAlias">
 		  <option value="true">Enable</option>
 			<option value="false">Disable</option>
 		</select>
-		<control-messages control="EnableAlias"></control-messages>
+		<control-messages [control]="measfilterForm.controls.EnableAlias"></control-messages>
 			</li></ul>
 		</div>
 
 		<div *ngIf="measfilterForm.value.FType == 'OIDCondition'">
 		<ul><li>
 		<label for="OIDCond">OID</label>
-			<input ngControl="OIDCond" id="OIDCond" />
-		<control-messages control="OIDCond"></control-messages>
+			<input formControlName="OIDCond" id="OIDCond" />
+		<control-messages [control]="measfilterForm.controls.OIDCond"></control-messages>
 	</li></ul>
 		</div>
 		<label for="CondValue">Condition type</label>
-		<select ngControl="CondType" id="CondType">
+		<select formControlName="CondType" id="CondType">
 			<option value="neq">Equal than</option>
 			<option value="nlt">Less than</option>
 			<option value="ngt">Greater than</option>
@@ -85,10 +85,10 @@
 			<option value="nle">Less or equal than</option>
 			<option value="match">Match string</option>
 		</select>
-		<control-messages control="CondType"></control-messages>
+		<control-messages [control]="measfilterForm.controls.CondType"></control-messages>
 		<label for="CondValue">Value</label>
-			<input ngControl="CondValue" id="CondValue" />
-		<control-messages control="CondValue"></control-messages>
+			<input formControlName="CondValue" id="CondValue" />
+		<control-messages [control]="measfilterForm.controls.CondValue"></control-messages>
 
 		<button type="submit" [disabled]="!measfilterForm.valid">Submit</button>
 		<button type="reset" [disabled]="!measfilterForm.dirty">Reset</button>
@@ -99,53 +99,53 @@
 
 
 
-		 <template ngSwitchWhen="modify">
-		<form [ngFormModel]="measfilterForm" class="ui form" (ngSubmit)="updateMeasFilter(testmeasfilters.ID)">
+		 <template ngSwitchCase="modify">
+		<form [formGroup]="measfilterForm" class="ui form" (ngSubmit)="updateMeasFilter(testmeasfilters.ID)">
 			<label for="id">id</label>
-			 <input ngControl="id" id="id" [ngModel] = "testmeasfilters.ID"/>
-			 <control-messages control="id"></control-messages>
+			 <input formControlName="id" id="id" [ngModel] = "testmeasfilters.ID"/>
+			 <control-messages [control]="measfilterForm.controls.id"></control-messages>
 
 		<label for="IDMeasurementCfg">Measurements</label>
-			<select ngControl="IDMeasurementCfg" id="IDMeasurementCfg" [ngModel] = "testmeasfilters.IDMeasurementCfg">
-				<option *ngFor="#measurement of influxmeas"
+			<select formControlName="IDMeasurementCfg" id="IDMeasurementCfg" [ngModel] = "testmeasfilters.IDMeasurementCfg">
+				<option *ngFor="let measurement of influxmeas"
 						[value]="measurement.ID"> {{measurement.ID}}
 				</option>
 		</select>
-		<control-messages control="IDMeasurementCfg"></control-messages>
+		<control-messages [control]="measfilterForm.controls.IDMeasurementCfg"></control-messages>
 
 		<label for="FType">GetMode</label>"
-		<select ngControl="FType" id="FType" [ngModel] = "testmeasfilters.FType">
+		<select formControlName="FType" id="FType" [ngModel] = "testmeasfilters.FType">
 			<option value="file">File</option>
 			<option value="OIDCondition">OID Condition</option>
 		</select>
-					<!--input ngControl="SnmpVersion" id="SnmpVersion" /-->
-		<control-messages control="FType"></control-messages>
+					<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
+		<control-messages [control]="measfilterForm.controls.FType"></control-messages>
 
 		<div *ngIf="measfilterForm.value.FType == 'file'">
 		<ul><li>
 		<label for="FileName">File Name</label>
-			<input ngControl="FileName" id="FileName" [ngModel] = "testmeasfilters.FileName"/>
-		<control-messages control="FileName"></control-messages>
+			<input formControlName="FileName" id="FileName" [ngModel] = "testmeasfilters.FileName"/>
+		<control-messages [control]="measfilterForm.controls.FileName"></control-messages>
 		</li>
 		<li>
 			<label for="EnableAlias">Enable alias</label>
-		<select ngControl="EnableAlias" id="EnableAlias" [ngModel] = "testmeasfilters.EnableAlias">
+		<select formControlName="EnableAlias" id="EnableAlias" [ngModel] = "testmeasfilters.EnableAlias">
 			<option value="true">Enable</option>
 			<option value="false">Disable</option>
 		</select>
-		<control-messages control="EnableAlias"></control-messages>
+		<control-messages [control]="measfilterForm.controls.EnableAlias"></control-messages>
 			</li></ul>
 		</div>
 
 		<div *ngIf="measfilterForm.value.FType == 'OIDCondition'">
 		<ul><li>
 		<label for="OIDCond">OID</label>
-			<input ngControl="OIDCond" id="OIDCond" [ngModel] = "testmeasfilters.OIDCond"/>
-		<control-messages control="OIDCond"></control-messages>
+			<input formControlName="OIDCond" id="OIDCond" [ngModel] = "testmeasfilters.OIDCond"/>
+		<control-messages [control]="measfilterForm.controls.OIDCond"></control-messages>
 		</li></ul>
 		</div>
 		<label for="CondType">Condition type</label>
-		<select ngControl="CondType" id="CondType" [ngModel] = "testmeasfilters.CondType">
+		<select formControlName="CondType" id="CondType" [ngModel] = "testmeasfilters.CondType">
 			<option value="neq">Equal than</option>
 			<option value="nlt">Less than</option>
 			<option value="ngt">Greater than</option>
@@ -153,10 +153,10 @@
 			<option value="nle">Less or equal than</option>
 			<option value="match">Match value</option>
 		</select>
-		<control-messages control="CondType"></control-messages>
+		<control-messages [control]="measfilterForm.controls.CondType"></control-messages>
 		<label for="CondValue">Value</label>
-			<input ngControl="CondValue" id="CondValue" [ngModel] = "testmeasfilters.CondValue"/>
-		<control-messages control="CondValue"></control-messages>
+			<input formControlName="CondValue" id="CondValue" [ngModel] = "testmeasfilters.CondValue"/>
+		<control-messages [control]="measfilterForm.controls.CondValue"></control-messages>
 
 		<button type="submit" [disabled]="!measfilterForm.valid">Submit</button>
 		<button type="reset" [disabled]="!measfilterForm.dirty">Reset</button>

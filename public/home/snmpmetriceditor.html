@@ -1,5 +1,5 @@
 	<p [ngSwitch]="editmode">
-    <template ngSwitchWhen="list">
+    <template ngSwitchCase="list">
 	<div class="row-fluid">
       		<div class=".col-md-3">
         		<h2>SNMP metrics</h2>
@@ -14,7 +14,7 @@
 	</div>
 
 	<accordion [closeOthers]="oneAtATime">
-  		<accordion-group #group  *ngFor="#snmpmetric of snmpmetrics" [heading]="snmpmetric.ID">
+  		<accordion-group #group  *ngFor="let snmpmetric of snmpmetrics" [heading]="snmpmetric.ID">
    			<div accordion-heading>
     				<i style="top: -15px" class="pull-right glyphicon"
          			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
@@ -31,51 +31,51 @@
   		</accordion-group>
 	</accordion>
      </template>
-     <template ngSwitchWhen="create">
-   	<form [ngFormModel]="snmpmetForm" class="ui form" (ngSubmit)="saveSnmpMet()">
+     <template ngSwitchCase="create">
+   	<form [formGroup]="snmpmetForm" class="ui form" (ngSubmit)="saveSnmpMet()">
 		<label for="id">id</label>
-		 <input ngControl="id" id="id" />
-		 <control-messages control="id"></control-messages>
+		 <input formControlName="id" id="id" />
+		 <control-messages [control]="snmpmetForm.controls.id"></control-messages>
 		<label for="FieldName">Field Name</label>
-      		<input ngControl="FieldName" id="FieldName" />
-		<control-messages control="FieldName"></control-messages>
+      		<input formControlName="FieldName" id="FieldName" />
+		<control-messages [control]="snmpmetForm.controls.FieldName"></control-messages>
 
 		<label for="Description">Description</label>
-      		<input ngControl="Description" id="Description" />
-		<control-messages control="Description"></control-messages>
+      		<input formControlName="Description" id="Description" />
+		<control-messages [control]="snmpmetForm.controls.Description"></control-messages>
 
 		<label for="BaseOID">Base OID</label>
-      		<input ngControl="BaseOID" id="BaseOID" />
-		<control-messages control="BaseOID"></control-messages>
+      		<input formControlName="BaseOID" id="BaseOID" />
+		<control-messages [control]="snmpmetForm.controls.BaseOID"></control-messages>
 
 		<label for="DataSrcType">Data source Type</label>
-		<select ngControl="DataSrcType" id="DataSrcType">
+		<select formControlName="DataSrcType" id="DataSrcType">
 			<option value="GAUGE">Gauge</option>
 			<option value="INTEGER"  selected="selected">Integer</option>
 			<option value="COUNTER32">Counter-32</option>
 			<option value="COUNTER64">Counter-64</option>
 
 		</select>
-      		<!--input ngControl="SnmpVersion" id="SnmpVersion" /-->
-		<control-messages control="DataSrcType"></control-messages>
+      		<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
+		<control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
 		<div *ngIf="snmpmetForm.value.DataSrcType == 'COUNTER32' || snmpmetForm.value.DataSrcType == 'COUNTER64'" >
 
 		<label for="GetRate">GetRate</label>
-		<select ngControl="GetRate" id="GetRate">
+		<select formControlName="GetRate" id="GetRate">
 			<option value="true" selected="selected">True</option>
 			<option value="false">False</option>
 		</select>
-		<control-messages control="GetRate"></control-messages>
+		<control-messages [control]="snmpmetForm.controls.GetRate"></control-messages>
 
 		</div>
 
 		<label for="Scale">Scale</label>
-      		<input ngControl="Scale" id="Scale" />
-		<control-messages control="Scale"></control-messages>
+      		<input formControlName="Scale" id="Scale" />
+		<control-messages [control]="snmpmetForm.controls.Scale"></control-messages>
 
 		<label for="Shift">Shift</label>
-      		<input ngControl="Shift" id="Shift" />
-		<control-messages control="Shift"></control-messages>
+      		<input formControlName="Shift" id="Shift" />
+		<control-messages [control]="snmpmetForm.controls.Shift"></control-messages>
 
 
 		<button type="submit" [disabled]="!snmpmetForm.valid">Submit</button>
@@ -85,51 +85,51 @@
 
      </template>
 
-		 <template ngSwitchWhen="modify">
-		<form [ngFormModel]="snmpmetForm" class="ui form" (ngSubmit)="updateSnmpMet(testsnmpmetric.ID)">
+		 <template ngSwitchCase="modify">
+		<form [formGroup]="snmpmetForm" class="ui form" (ngSubmit)="updateSnmpMet(testsnmpmetric.ID)">
 		<label for="id">id</label>
-		 <input ngControl="id" id="id" [ngModel] = "testsnmpmetric.ID"/>
-		 <control-messages control="id"></control-messages>
+		 <input formControlName="id" id="id" [ngModel] = "testsnmpmetric.ID"/>
+		 <control-messages [control]="snmpmetForm.controls.id"></control-messages>
 		<label for="FieldName">Field Name</label>
-					<input ngControl="FieldName" id="FieldName" [ngModel] = "testsnmpmetric.FieldName"/>
-		<control-messages control="FieldName"></control-messages>
+					<input formControlName="FieldName" id="FieldName" [ngModel] = "testsnmpmetric.FieldName"/>
+		<control-messages [control]="snmpmetForm.controls.FieldName"></control-messages>
 
 		<label for="Description">Description</label>
-					<input ngControl="Description" id="Description" [ngModel] = "testsnmpmetric.Description"/>
-		<control-messages control="Description"></control-messages>
+					<input formControlName="Description" id="Description" [ngModel] = "testsnmpmetric.Description"/>
+		<control-messages [control]="snmpmetForm.controls.Description"></control-messages>
 
 		<label for="BaseOID">Base OID</label>
-					<input ngControl="BaseOID" id="BaseOID" [ngModel] = "testsnmpmetric.BaseOID" />
-		<control-messages control="BaseOID"></control-messages>
+					<input formControlName="BaseOID" id="BaseOID" [ngModel] = "testsnmpmetric.BaseOID" />
+		<control-messages [control]="snmpmetForm.controls.BaseOID"></control-messages>
 
 		<label for="DataSrcType">Data source Type</label>
-		<select ngControl="DataSrcType" id="DataSrcType" [ngModel] = "testsnmpmetric.DataSrcType">
+		<select formControlName="DataSrcType" id="DataSrcType" [ngModel] = "testsnmpmetric.DataSrcType">
 			<option value="GAUGE">Gauge</option>
 			<option value="INTEGER"  selected="selected">Integer</option>
 			<option value="COUNTER32">Counter-32</option>
 			<option value="COUNTER64">Counter-64</option>
 
 		</select>
-					<!--input ngControl="SnmpVersion" id="SnmpVersion" /-->
-		<control-messages control="DataSrcType"></control-messages>
+					<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
+		<control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
 		<div *ngIf="snmpmetForm.value.DataSrcType == 'COUNTER32' || snmpmetForm.value.DataSrcType == 'COUNTER64'" >
 
 		<label for="GetRate">GetRate</label>
-		<select ngControl="GetRate" id="GetRate" [ngModel] = "testsnmpmetric.GetRate">
+		<select formControlName="GetRate" id="GetRate" [ngModel] = "testsnmpmetric.GetRate">
 			<option value="true" selected="selected">True</option>
 			<option value="false">False</option>
 		</select>
-		<control-messages control="GetRate"></control-messages>
+		<control-messages [control]="snmpmetForm.controls.GetRate"></control-messages>
 
 		</div>
 
 		<label for="Scale">Scale</label>
-					<input ngControl="Scale" id="Scale" [ngModel] = "testsnmpmetric.Scale" />
-		<control-messages control="Scale"></control-messages>
+					<input formControlName="Scale" id="Scale" [ngModel] = "testsnmpmetric.Scale" />
+		<control-messages [control]="snmpmetForm.controls.Scale"></control-messages>
 
 		<label for="Shift">Shift</label>
-					<input ngControl="Shift" id="Shift" [ngModel] = "testsnmpmetric.Shift" />
-		<control-messages control="Shift"></control-messages>
+					<input formControlName="Shift" id="Shift" [ngModel] = "testsnmpmetric.Shift" />
+		<control-messages [control]="snmpmetForm.controls.Shift"></control-messages>
 
 
 		<button type="submit" [disabled]="!snmpmetForm.valid">Submit</button>

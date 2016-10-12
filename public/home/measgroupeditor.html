@@ -1,5 +1,5 @@
 	<p [ngSwitch]="editmode">
-    <template ngSwitchWhen="list">
+    <template ngSwitchCase="list">
 	<div class="row-fluid">
       		<div class=".col-md-3">
         		<h2>Measurement Groups</h2>
@@ -14,7 +14,7 @@
 	</div>
 
 	<accordion [closeOthers]="oneAtATime">
-  		<accordion-group #group  *ngFor="#measgroup of measgroups" [heading]="measgroup.ID">
+  		<accordion-group #group  *ngFor="let measgroup of measgroups" [heading]="measgroup.ID">
    			<div accordion-heading>
     				<i style="top: -15px" class="pull-right glyphicon"
          			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
@@ -31,19 +31,19 @@
   		</accordion-group>
 	</accordion>
      </template>
-     <template ngSwitchWhen="create">
-   	<form [ngFormModel]="measgroupForm" class="ui form" (ngSubmit)="saveMeasGroup()">
+     <template ngSwitchCase="create">
+   	<form [formGroup]="measgroupForm" class="ui form" (ngSubmit)="saveMeasGroup()">
 		<label for="id">id</label>
-		 <input ngControl="id" id="id" />
-		 <control-messages control="id"></control-messages>
+		 <input formControlName="id" id="id" />
+		 <control-messages [control]="measgroupForm.controls.id"></control-messages>
 
 		<label for="Measurements">Measurements</label>
-			<select ngControl="Measurements" id="Measurements">
-				<option *ngFor="#measurement of influxmeas"
+			<select formControlName="Measurements" id="Measurements">
+				<option *ngFor="let measurement of influxmeas"
 						[value]="measurement.ID"> {{measurement.ID}}
 				</option>
 		</select>
-    <control-messages control="Measurements"></control-messages>
+    <control-messages [control]="measgroupForm.controls.Measurements"></control-messages>
 
 		<button type="submit" [disabled]="!measgroupForm.valid">Submit</button>
 		<button type="reset" [disabled]="!measgroupForm.dirty">Reset</button>
@@ -52,15 +52,15 @@
 
      </template>
 
-		 <template ngSwitchWhen="modify">
-		<form [ngFormModel]="measgroupForm" class="ui form" (ngSubmit)="updateMeasGroup(testmeasgroups.ID)">
+		 <template ngSwitchCase="modify">
+		<form [formGroup]="measgroupForm" class="ui form" (ngSubmit)="updateMeasGroup(testmeasgroups.ID)">
 			<label for="id">id</label>
-			 <input ngControl="id" id="id" [ngModel] = "testmeasgroups.ID"/>
-			 <control-messages control="id"></control-messages>
+			 <input formControlName="id" id="id" [ngModel] = "testmeasgroups.ID"/>
+			 <control-messages [control]="measgroupForm.controls.id"></control-messages>
 
 			<label for="Measurements">Measurements</label>
-				<select ngControl="Measurements" id="Measurements" [ngModel]= "testmeasgroups.Measurements">
-					<option *ngFor="#measurement of influxmeas"
+				<select formControlName="Measurements" id="Measurements" [ngModel]= "testmeasgroups.Measurements">
+					<option *ngFor="let measurement of influxmeas"
 							[value]="measurement.ID"> {{measurement.ID}}
 					</option>
 			</select>

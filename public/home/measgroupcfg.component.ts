@@ -1,26 +1,21 @@
-import { Component, Pipe, PipeTransform  } from 'angular2/core';
-import { CORE_DIRECTIVES } from 'angular2/common';
-import {FORM_DIRECTIVES, FORM_BINDINGS,FormBuilder, NgFormModel, ControlGroup, Control, Validators} from 'angular2/common';
-import { ACCORDION_DIRECTIVES } from 'ng2-bootstrap';
+import { Component, Pipe, PipeTransform  } from '@angular/core';
+import {  FormBuilder,  Validators} from '@angular/forms';
 import { MeasGroupService } from './measgroupcfg.service';
 import { InfluxMeasService } from './influxmeascfg.service';
-import {ControlMessages} from './control-messages.component';
+
 
 @Component({
   selector: 'measgroups',
   providers: [MeasGroupService, InfluxMeasService],
-  templateUrl: '/public/home/measgroupeditor.html',
+  templateUrl: 'public/home/measgroupeditor.html',
   styleUrls:['public/home/measgroupeditor.css'],
-  bindings: [MeasGroupService, InfluxMeasService],
-  viewBindings: [FORM_BINDINGS],
-  directives: [ACCORDION_DIRECTIVES,CORE_DIRECTIVES,FORM_DIRECTIVES,ControlMessages]
 })
 
 export class MeasGroupCfgComponent {
   editmode: string; //list , create, modify
   measgroups: Array<any>;
   filter: string;
-  measgroupForm: ControlGroup;
+  measgroupForm: any;
 	testmeasgroups: any;
 	influxmeas: Array<any>;
 
