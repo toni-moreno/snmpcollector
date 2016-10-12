@@ -13,8 +13,11 @@ import { Login } from './login/login';
 import { App } from './app/app';
 
 import { routes } from './app/app.routes';
-//
-import { ControlMessagesComponent } from './home/control-messages.component';
+//common
+import { ControlMessagesComponent } from './common/control-messages.component';
+import { MultiselectDropdown } from './common/multiselect-dropdown'
+//snmpcollector components
+
 import { SnmpDeviceCfgComponent } from './home/snmpdevicecfg.component';
 import { SnmpMetricCfgComponent } from './home/snmpmetriccfg.component';
 import { InfluxMeasCfgComponent } from './home/influxmeascfg.component';
@@ -41,7 +44,7 @@ import { AccordionModule } from 'ng2-bootstrap/ng2-bootstrap';
     App,
   ],
   imports: [
-    HttpModule, BrowserModule, FormsModule, ReactiveFormsModule, AccordionModule,
+    HttpModule, BrowserModule, FormsModule, ReactiveFormsModule,MultiselectDropdown, AccordionModule,
     RouterModule.forRoot(routes, {
     //  useHash: true
     })
