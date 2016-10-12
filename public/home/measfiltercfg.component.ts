@@ -1,26 +1,21 @@
-import { Component, Pipe, PipeTransform  } from 'angular2/core';
-import { CORE_DIRECTIVES } from 'angular2/common';
-import {FORM_DIRECTIVES, FORM_BINDINGS,FormBuilder, NgFormModel, ControlGroup, Control, Validators} from 'angular2/common';
-import { ACCORDION_DIRECTIVES } from 'ng2-bootstrap';
+import { Component, Pipe, PipeTransform  } from '@angular/core';
+import {  FormBuilder,  Validators} from '@angular/forms';
 import { MeasFilterService } from './measfiltercfg.service';
 import { InfluxMeasService } from './influxmeascfg.service';
-import {ControlMessages} from './control-messages.component';
+
 
 @Component({
   selector: 'measfilters',
   providers: [MeasFilterService, InfluxMeasService],
-  templateUrl: '/public/home/measfiltereditor.html',
+  templateUrl: 'public/home/measfiltereditor.html',
   styleUrls:['public/home/measfiltereditor.css'],
-  bindings: [MeasFilterService, InfluxMeasService],
-  viewBindings: [FORM_BINDINGS],
-  directives: [ACCORDION_DIRECTIVES,CORE_DIRECTIVES,FORM_DIRECTIVES,ControlMessages]
 })
 
 export class MeasFilterCfgComponent {
   editmode: string; //list , create, modify
   measfilters: Array<any>;
   filter: string;
-  measfilterForm: ControlGroup;
+  measfilterForm: any;
 	testmeasfilters: any;
 	influxmeas: Array<any>;
 

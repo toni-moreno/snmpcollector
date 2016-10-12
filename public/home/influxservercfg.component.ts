@@ -1,25 +1,19 @@
-import { Component, Pipe, PipeTransform  } from 'angular2/core';
-import { CORE_DIRECTIVES } from 'angular2/common';
-import {FORM_DIRECTIVES, FORM_BINDINGS,FormBuilder, NgFormModel, ControlGroup, Control, Validators} from 'angular2/common';
-import { ACCORDION_DIRECTIVES } from 'ng2-bootstrap';
+import { Component, Pipe, PipeTransform  } from '@angular/core';
+import {  FormBuilder,  Validators} from '@angular/forms';
 import { InfluxServerService } from './influxservercfg.service';
-import {ControlMessages} from './control-messages.component';
 
 @Component({
   selector: 'influxservers',
   providers: [InfluxServerService],
-  templateUrl: '/public/home/influxservereditor.html',
+  templateUrl: 'public/home/influxservereditor.html',
   styleUrls:['public/home/influxservereditor.css'],
-  bindings: [InfluxServerService],
-  viewBindings: [FORM_BINDINGS],
-  directives: [ACCORDION_DIRECTIVES,CORE_DIRECTIVES,FORM_DIRECTIVES,ControlMessages]
 })
 
 export class InfluxServerCfgComponent {
   editmode: string; //list , create, modify
   influxservers: Array<any>;
   filter: string;
-  influxserverForm: ControlGroup;
+  influxserverForm: any;
 	testinfluxservers: any;
 
   reloadData(){

@@ -1,5 +1,5 @@
 	<p [ngSwitch]="editmode">
-    <template ngSwitchWhen="list">
+    <template ngSwitchCase="list">
 	<div class="row-fluid">
       		<div class=".col-md-3">
         		<h2>Influx Servers</h2>
@@ -14,7 +14,7 @@
 	</div>
 
 	<accordion [closeOthers]="oneAtATime">
-  		<accordion-group #group  *ngFor="#influxserver of influxservers" [heading]="influxserver.ID">
+  		<accordion-group #group  *ngFor="let influxserver of influxservers" [heading]="influxserver.ID">
    			<div accordion-heading>
     				<i style="top: -15px" class="pull-right glyphicon"
          			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
@@ -31,36 +31,36 @@
   		</accordion-group>
 	</accordion>
      </template>
-     <template ngSwitchWhen="create">
-   	<form [ngFormModel]="influxserverForm" class="ui form" (ngSubmit)="saveInfluxServer()">
+     <template ngSwitchCase="create">
+   	<form [formGroup]="influxserverForm" class="ui form" (ngSubmit)="saveInfluxServer()">
 		<label for="id">id</label>
-		 <input ngControl="id" id="id" />
-		 <control-messages control="id"></control-messages>
+		 <input formControlName="id" id="id" />
+		 <control-messages [control]="influxserverForm.controls.id"></control-messages>
 
 		 <label for="Host">Host</label>
-			<input ngControl="Host" id="Host" />
-			<control-messages control="Host"></control-messages>
+			<input formControlName="Host" id="Host" />
+			<control-messages [control]="influxserverForm.controls.Host"></control-messages>
 
 			<label for="Port">Port</label>
-			 <input ngControl="Port" id="Port" />
-			 <control-messages control="Port"></control-messages>
+			 <input formControlName="Port" id="Port" />
+			 <control-messages [control]="influxserverForm.controls.Port"></control-messages>
 
 			 <label for="DB">DB</label>
-				<input ngControl="DB" id="DB" />
-				<control-messages control="DB"></control-messages>
+				<input formControlName="DB" id="DB" />
+				<control-messages [control]="influxserverForm.controls.DB"></control-messages>
 
 				<label for="User">User</label>
-				 <input ngControl="User" id="User" />
-				 <control-messages control="User"></control-messages>
+				 <input formControlName="User" id="User" />
+				 <control-messages [control]="influxserverForm.controls.User"></control-messages>
 
 			 <label for="Password">Password</label>
-				<input ngControl="Password" id="Password" />
-				<control-messages control="Password"></control-messages>
+				<input formControlName="Password" id="Password" />
+				<control-messages [control]="influxserverForm.controls.Password"></control-messages>
 
 
 			 <label for="Retention">Retention</label>
-				<input ngControl="Retention" id="Retention" />
-				<control-messages control="Retention"></control-messages>
+				<input formControlName="Retention" id="Retention" />
+				<control-messages [control]="influxserverForm.controls.Retention"></control-messages>
 
 		<button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
 		<button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
@@ -70,36 +70,36 @@
      </template>
 
 
-		 <template ngSwitchWhen="modify">
-   	<form [ngFormModel]="influxserverForm" class="ui form" (ngSubmit)="updateInfluxServer(testinfluxservers.ID)">
+		 <template ngSwitchCase="modify">
+   	<form [formGroup]="influxserverForm" class="ui form" (ngSubmit)="updateInfluxServer(testinfluxservers.ID)">
 		<label for="id">id</label>
-		 <input ngControl="id" id="id" [ngModel] = "testinfluxservers.ID"/>
-		 <control-messages control="id"></control-messages>
+		 <input formControlName="id" id="id" [ngModel] = "testinfluxservers.ID"/>
+		 <control-messages [control]="influxserverForm.controls.id"></control-messages>
 
 		 <label for="Host">Host</label>
-			<input ngControl="Host" id="Host" [ngModel] = "testinfluxservers.Host" />
-			<control-messages control="Host"></control-messages>
+			<input formControlName="Host" id="Host" [ngModel] = "testinfluxservers.Host" />
+			<control-messages [control]="influxserverForm.controls.Host"></control-messages>
 
 			<label for="Port">Port</label>
-			 <input ngControl="Port" id="Port" [ngModel] = "testinfluxservers.Port" />
-			 <control-messages control="Port"></control-messages>
+			 <input formControlName="Port" id="Port" [ngModel] = "testinfluxservers.Port" />
+			 <control-messages [control]="influxserverForm.controls.Port"></control-messages>
 
 			 <label for="DB">DB</label>
-				<input ngControl="DB" id="DB" [ngModel] = "testinfluxservers.DB" />
-				<control-messages control="DB"></control-messages>
+				<input formControlName="DB" id="DB" [ngModel] = "testinfluxservers.DB" />
+				<control-messages [control]="influxserverForm.controls.DB"></control-messages>
 
 				<label for="User">User</label>
-				 <input ngControl="User" id="User" [ngModel] = "testinfluxservers.User" />
-				 <control-messages control="User"></control-messages>
+				 <input formControlName="User" id="User" [ngModel] = "testinfluxservers.User" />
+				 <control-messages [control]="influxserverForm.controls.User"></control-messages>
 
 			 <label for="Password">Password</label>
-				<input ngControl="Password" id="Password" [ngModel] = "testinfluxservers.Password" />
-				<control-messages control="Password"></control-messages>
+				<input formControlName="Password" id="Password" [ngModel] = "testinfluxservers.Password" />
+				<control-messages [control]="influxserverForm.controls.Password"></control-messages>
 
 
 			 <label for="Retention">Retention</label>
-				<input ngControl="Retention" id="Retention" [ngModel] = "testinfluxservers.Retention" />
-				<control-messages control="Retention"></control-messages>
+				<input formControlName="Retention" id="Retention" [ngModel] = "testinfluxservers.Retention" />
+				<control-messages [control]="influxserverForm.controls.Retention"></control-messages>
 
 		<button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
 		<button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
