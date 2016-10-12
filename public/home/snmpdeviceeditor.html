@@ -15,7 +15,7 @@
 	</div>
 
 	<accordion [closeOthers]="oneAtATime">
-  		<accordion-group #group  *ngFor="#snmpdev of snmpdevs" [heading]="snmpdev.ID">
+  		<accordion-group #group  *ngFor="let snmpdev of snmpdevs" [heading]="snmpdev.ID">
    			<div accordion-heading>
     				<i style="top: -15px" class="pull-right glyphicon"
          			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
@@ -120,7 +120,7 @@
 
 		<label for="OutDB">Influx Server</label>
 		<select formControlName="OutDB" id="OutDB">
-			<option *ngFor="#influxserver of influxservers"
+			<option *ngFor="let influxserver of influxservers"
 					[value]="influxserver.ID"> {{influxserver.ID}}
 			</option>
 	</select>
@@ -157,7 +157,7 @@
 
 		<label for="MetricGroups">Measurement Groups</label>
 		<select formControlName="MetricGroups" id="MetricGroups">
-			<option *ngFor="#measgroup of measgroups"
+			<option *ngFor="let measgroup of measgroups"
 					[value]="measgroup.ID"> {{measgroup.ID}}
 			</option>
 	</select>
@@ -165,7 +165,7 @@
 
 		<label for="MeasFilters">Measurement Filters</label>
 		<select formControlName="MeasFilters" id="MeasFilters">
-			<option *ngFor="#measfilter of measfilters"
+			<option *ngFor="let measfilter of measfilters"
 					[value]="measfilter.ID"> {{measfilter.ID}}
 			</option>
 		</select>
@@ -268,7 +268,7 @@
 
 	 <label for="OutDB">Influx Server</label>
  	<select formControlName="OutDB" id="OutDB" [ngModel] = "testsnmpdev.OutDB">
- 		<option *ngFor="#influxserver of influxservers"
+ 		<option *ngFor="let influxserver of influxservers"
  				[value]="influxserver.ID"> {{influxserver.ID}}
  		</option>
  </select>
@@ -305,7 +305,7 @@
 
 	 <label for="MeasFilters">Measurement Filters</label>
  	<select formControlName="MeasFilters" id="MeasFilters" [ngModel] = 'testsnmpdev.MeasFilters'>
- 		<option *ngFor="#measfilter of measfilters"
+ 		<option *ngFor="let measfilter of measfilters"
  				[value]="measfilter.ID"> {{measfilter.ID}}
  		</option>
  	</select>
@@ -314,7 +314,7 @@
 
 			<label for="MetricGroups">Metric Groups</label>
 			<select formControlName="MetricGroups" id="MetricGroups" [ngModel] = 'testsnmpdev.MetricGroups'>
-				<option *ngFor="#measgroup of measgroups"
+				<option *ngFor="let measgroup of measgroups"
 						[value]="measgroup.ID"> {{measgroup.ID}}
 				</option>
 		</select>
