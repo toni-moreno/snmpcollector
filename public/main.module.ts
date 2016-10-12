@@ -15,7 +15,7 @@ import { App } from './app/app';
 import { routes } from './app/app.routes';
 //common
 import { ControlMessagesComponent } from './common/control-messages.component';
-import { MultiselectDropdown } from './common/multiselect-dropdown'
+import { MultiselectDropdownModule } from './common/multiselect-dropdown'
 //snmpcollector components
 
 import { SnmpDeviceCfgComponent } from './home/snmpdevicecfg.component';
@@ -44,7 +44,7 @@ import { AccordionModule } from 'ng2-bootstrap/ng2-bootstrap';
     App,
   ],
   imports: [
-    HttpModule, BrowserModule, FormsModule, ReactiveFormsModule,MultiselectDropdown, AccordionModule,
+    HttpModule, BrowserModule, FormsModule, ReactiveFormsModule,MultiselectDropdownModule, AccordionModule,
     RouterModule.forRoot(routes, {
     //  useHash: true
     })

@@ -16,6 +16,7 @@ gulp.task('clean-scripts', function () {
                     '!Godeps/**',
                     '!public/node_modules/**',
                     '!vendor/**',
+                    '!public/systemjs.config.js',
                     'public/**/*.js',
                     'public/**/*.js.map'], {read: false})
     .pipe(clean());
