@@ -41,3 +41,22 @@ To rebuild on source change (requires that you executed godep restore)
 ```
 go get github.com/Unknwon/bra
 bra run
+```
+### Running first time 
+To execute without any configuration you need a minimal config.toml file on the conf directory.
+
+```
+cp conf/sample.config.toml conf/config.toml
+./bin/snmpcollector
+```
+#### Online config 
+
+Now you wil be able to configure metrics/measuremnets and devices from the builting web server at  http://localhost:8090
+
+### Offline configuration.
+
+You will be able also insert data directly on the sqlite db that snmpcollector has been created at first execution on config/snmpcollector.db examples on example_config.sql
+
+```
+cat conf/example_config.sql |sqlite3 conf/snmpcollector.db
+```
