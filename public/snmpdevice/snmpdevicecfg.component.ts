@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { SnmpDeviceService } from './snmpdevicecfg.service';
-import { InfluxServerService } from './influxservercfg.service';
-import { MeasGroupService } from './measgroupcfg.service';
-import { MeasFilterService } from './measfiltercfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
+import { InfluxServerService } from '../influxserver/influxservercfg.service';
+import { MeasGroupService } from '../measgroup/measgroupcfg.service';
+import { MeasFilterService } from '../measfilter/measfiltercfg.service';
 
 @Component({
   selector: 'snmpdevs',
   providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService],
-  templateUrl: 'public/home/snmpdeviceeditor.html',
-  styleUrls:['public/home/snmpdeviceeditor.css'],
+  templateUrl: 'public/snmpdevice/snmpdeviceeditor.html',
+  styleUrls:['public/snmpdevice/snmpdeviceeditor.css'],
 })
 
 export class SnmpDeviceCfgComponent {

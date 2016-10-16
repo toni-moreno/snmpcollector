@@ -1,15 +1,14 @@
 import { Component, ChangeDetectionStrategy, Pipe, PipeTransform  } from '@angular/core';
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { InfluxMeasService } from './influxmeascfg.service';
-import { SnmpMetricService } from './snmpmetriccfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
-
+import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
 
 @Component({
   selector: 'influxmeas',
   providers: [InfluxMeasService, SnmpMetricService],
-  templateUrl: 'public/home/influxmeaseditor.html',
-  styleUrls:['public/home/influxmeaseditor.css'],
+  templateUrl: 'public/influxmeas/influxmeaseditor.html',
+  styleUrls:['public/influxmeas/influxmeaseditor.css'],
 })
 
 export class InfluxMeasCfgComponent {

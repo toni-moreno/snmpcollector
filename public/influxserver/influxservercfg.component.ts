@@ -5,8 +5,8 @@ import { InfluxServerService } from './influxservercfg.service';
 @Component({
   selector: 'influxservers',
   providers: [InfluxServerService],
-  templateUrl: 'public/home/influxservereditor.html',
-  styleUrls:['public/home/influxservereditor.css'],
+  templateUrl: 'public/influxserver/influxservereditor.html',
+  styleUrls:['public/influxserver/influxservereditor.css'],
 })
 
 export class InfluxServerCfgComponent {

@@ -1,14 +1,14 @@
 import { Component, ChangeDetectionStrategy, Pipe, PipeTransform  } from '@angular/core';
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { MeasFilterService } from './measfiltercfg.service';
-import { InfluxMeasService } from './influxmeascfg.service';
+import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 
 
 @Component({
   selector: 'measfilters',
   providers: [MeasFilterService, InfluxMeasService],
-  templateUrl: 'public/home/measfiltereditor.html',
-  styleUrls:['public/home/measfiltereditor.css'],
+  templateUrl: 'public/measfilter/measfiltereditor.html',
+  styleUrls:['public/measfilter/measfiltereditor.css'],
 })
 
 export class MeasFilterCfgComponent {

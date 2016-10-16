@@ -25,14 +25,15 @@
       '@angular/upgrade': 'npm:@angular/upgrade/bundles/upgrade.umd.js',
 
       // other libraries
-      'rxjs':                      'npm:rxjs',
+      'rxjs': 'npm:rxjs',
       'angular-in-memory-web-api': 'npm:angular-in-memory-web-api',
       'lodash': 'npm:lodash/lodash.js',
       'ng2-bootstrap': 'npm:ng2-bootstrap/ng2-bootstrap.js',
       'moment': 'npm:moment/moment.js',
       'angular2-jwt': 'npm:angular2-jwt/angular2-jwt.js',
       'js-base64' : 'npm:js-base64/base64.js',
-      'buffer' : 'npm:buffer-shims/index.js'
+      'buffer' : 'npm:buffer-shims/index.js',
+      'ng2-table': 'npm:ng2-table',
     },
     // packages tells the System loader how to load when no filename and/or no extension
     packages: {
@@ -46,7 +47,10 @@
       'angular-in-memory-web-api': {
         main: './index.js',
         defaultExtension: 'js'
-      }
+      },
+      'ng2-table': {
+          defaultExtension: 'js'
+        },
     }
   });
 })(this);

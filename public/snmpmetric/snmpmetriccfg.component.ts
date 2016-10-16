@@ -6,8 +6,8 @@ import { SnmpMetricService } from './snmpmetriccfg.service';
 @Component({
   selector: 'snmpmetrics',
   providers: [SnmpMetricService],
-  templateUrl: 'public/home/snmpmetriceditor.html',
-  styleUrls:['public/home/snmpmetriceditor.css'],
+  templateUrl: 'public/snmpmetric/snmpmetriceditor.html',
+  styleUrls:['public/snmpmetric/snmpmetriceditor.css'],
 
 })
 
