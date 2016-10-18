@@ -184,7 +184,10 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 		//loading all posible values.
 		if m.cfg.GetMode == "indexed" {
 			d.log.Infof("Loading Indexed values in : %s", m.cfg.ID)
-			m.loadIndexedLabels(d)
+			err := m.loadIndexedLabels(d)
+			if err != nil {
+				d.log.Errorf("Error while trying to load Indexed Labels on device %s for measurement %s for baseOid %s : ERROR: %s", d.cfg.ID, m.cfg.ID, m.cfg.IndexOID, err)
+			}
 		}
 		//loading filters
 		d.log.Debugf("Looking for filters set to: %s ", m.cfg.ID)
@@ -201,10 +204,13 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 							m.applyFileFilter(m.Filter.FileName,
 								m.Filter.EnableAlias)
 						case "OIDCondition":
-							m.applyOIDCondFilter(d,
+							err := m.applyOIDCondFilter(d,
 								m.Filter.OIDCond,
 								m.Filter.CondType,
 								m.Filter.CondValue)
+							if err != nil {
+								d.log.Errorf("Error while trying to apply condition Filter on device %s for measurement %s: ERROR: %s", d.cfg.ID, m.cfg.ID, err)
+							}
 						default:
 							d.log.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
 						}

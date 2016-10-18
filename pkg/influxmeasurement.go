@@ -306,12 +306,16 @@ func removeDuplicatesUnordered(elements []string) []string {
 func (m *InfluxMeasurement) loadIndexedLabels(c *SnmpDevice) error {
 	client := c.snmpClient
 	m.log.Debugf("Looking up column names for: %s  NAMES %s ", c.cfg.Host, m.cfg.IndexOID)
+
+	m.AllIndexedLabels = make(map[string]string)
+	m.numValOrig = 0
+
 	pdus, err := client.BulkWalkAll(m.cfg.IndexOID)
 	if err != nil {
 		m.log.Fatalln("SNMP bulkwalk error", err)
+		return err
 	}
-	m.AllIndexedLabels = make(map[string]string)
-	m.numValOrig = 0
+
 	for _, pdu := range pdus {
 		switch pdu.Type {
 		case gosnmp.OctetString:
@@ -384,13 +388,15 @@ func (m *InfluxMeasurement) IndexedLabels() error {
 func (m *InfluxMeasurement) applyOIDCondFilter(c *SnmpDevice, oidCond string, typeCond string, valueCond string) error {
 	client := c.snmpClient
 	m.log.Infof("Apply Condition Filter: Looking up column names in: %s Condition %s", c.cfg.Host, oidCond)
+
+	m.Filterlabels = make(map[string]string)
+	m.numValFlt = 0
+
 	pdus, err := client.BulkWalkAll(oidCond)
 	if err != nil {
 		m.log.Fatalf("SNMP bulkwalk error : %s", err)
+		return err
 	}
-	m.Filterlabels = make(map[string]string)
-
-	m.numValFlt = 0
 
 	for _, pdu := range pdus {
 		var vci int64
