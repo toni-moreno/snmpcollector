@@ -134,11 +134,10 @@ func init() {
 		os.Exit(0)
 	}
 
-	log.Printf("set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n", appdir, confDir, logDir)
-
 	// now load up config settings
 	if _, err := os.Stat(configFile); err == nil {
 		viper.SetConfigFile(configFile)
+		confDir = filepath.Dir(configFile)
 	} else {
 		viper.SetConfigName("config")
 		viper.AddConfigPath("/opt/snmpcollector/conf/")
@@ -158,12 +157,15 @@ func init() {
 
 	if len(cfg.General.LogDir) > 0 {
 		logDir = cfg.General.LogDir
+		os.Mkdir(logDir, 0755)
 	}
 	if len(cfg.General.LogLevel) > 0 {
 		l, _ := logrus.ParseLevel(cfg.General.LogLevel)
 		log.Level = l
-
 	}
+	//
+	log.Infof("Set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n", appdir, confDir, logDir)
+
 	//Init BD config
 	log.Debugf("%+v", cfg)
 	InitDB(&cfg.Database)
@@ -227,12 +229,7 @@ func init() {
 		os.Exit(0)
 	}
 
-	// re-read cmd line args to override as indicated
-	f = flags()
-	f.Parse(os.Args[1:])
-	os.Mkdir(logDir, 0755)
-
-	// now make sure each snmp device has a db
+		// now make sure each snmp device has a db
 
 	//for name, c := range cfg.SnmpDevice {
 	for name, c := range devices {
