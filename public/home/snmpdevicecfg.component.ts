@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { SnmpDeviceService } from './snmpdevicecfg.service';
 import { InfluxServerService } from './influxservercfg.service';
 import { MeasGroupService } from './measgroupcfg.service';
 import { MeasFilterService } from './measfiltercfg.service';
+import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 
 @Component({
   selector: 'snmpdevs',
@@ -22,6 +23,21 @@ export class SnmpDeviceCfgComponent {
 	influxservers: Array<any>;
   measfilters: Array<any>;
   measgroups: Array<any>;
+	filteroptions: any;
+	selectgroups: IMultiSelectOption[];
+	selectfilters: IMultiSelectOption[];
+
+	onChange(value,controlName){
+		console.log("CONTROL NAME",controlName);
+		this.snmpdevForm.controls[controlName].patchValue(value);
+	}
+
+	onChangeGroup(value){
+		this.snmpdevForm.controls['MetricGroups'].patchValue(value);
+	}
+	onChangeFilter(value){
+		this.snmpdevForm.controls['MeasFilters'].patchValue(value);
+	}
 
   reloadData(){
   // now it's a simple subscription to the observable
@@ -38,10 +54,10 @@ export class SnmpDeviceCfgComponent {
 	  this.reloadData();
 	  this.snmpdevForm = builder.group({
 		id: ['',Validators.compose([Validators.required, Validators.minLength(4)])],
-      		Host: ['', Validators.required],
+		Host: ['', Validators.required],
 		Port: [161,Validators.required],
-		Retries: [],
-		Timeout: [],
+		Retries: [5],
+		Timeout: [20],
 		SnmpVersion:['2c',Validators.required],
 		Community: ['public'],
 		V3SecLevel:[''],
@@ -52,12 +68,10 @@ export class SnmpDeviceCfgComponent {
 		V3PrivProt:[''],
 		Freq:[60,Validators.required],
 		OutDB: ['',Validators.required],
-		Config:[''],
 		LogLevel:['info',Validators.required],
-		LogFile:[''],
 		SnmpDebug:['false',Validators.required],
-		DeviceTagMame: ['tagname',Validators.required],
-		DeviceTagValue: [''],
+		DeviceTagName: ['',Validators.required],
+		DeviceTagValue: ['id'],
 		Extratags:[''],
 		MetricGroups: [''],
 		MeasFilters: ['']
@@ -96,7 +110,7 @@ export class SnmpDeviceCfgComponent {
 	 this.getMeasFiltersforDevices();
 
 	 this.snmpDeviceService.getDevicesById(id)
- 		 .subscribe(data => { this.testsnmpdev = data },
+ 		 .subscribe(data => { this.testsnmpdev = data; console.log("testsnmpdev", data) },
  		 err => console.error(err),
  		 () =>  this.editmode = "modify"
  				 );
@@ -106,6 +120,7 @@ export class SnmpDeviceCfgComponent {
  }
  saveSnmpDev(){
 	 if(this.snmpdevForm.dirty && this.snmpdevForm.valid) {
+		 console.log("FORM", this.snmpdevForm);
 		 this.snmpDeviceService.addDevice(this.snmpdevForm.value)
 		 .subscribe(data => { console.log(data) },
       err => console.error(err),
@@ -117,6 +132,7 @@ export class SnmpDeviceCfgComponent {
  updateSnmpDev(oldId){
 	 console.log(oldId);
 	 console.log(this.snmpdevForm.value.id);
+	 console.log("FORM", this.snmpdevForm.value);
 	 if(this.snmpdevForm.dirty && this.snmpdevForm.valid) {
 		 var r = true;
 		 if (this.snmpdevForm.value.id != oldId) {
@@ -135,7 +151,15 @@ export class SnmpDeviceCfgComponent {
  getMeasGroupsforDevices(){
  this.measgroupsDeviceService.getMeasGroup(null)
  .subscribe(
-	 data => { this.measgroups = data },
+	 data => {
+		 this.measgroups = data
+		 this.selectgroups = [];
+		 this.snmpdevForm.controls['MetricGroups'].reset();
+		 for (let entry of data) {
+		 	console.log(entry)
+		 	this.selectgroups.push({'id' : entry.ID , 'name' : entry.ID});
+		 }
+	  },
 	 err => console.error(err),
 	 () => console.log('DONE')
  	);
@@ -153,7 +177,15 @@ export class SnmpDeviceCfgComponent {
  getMeasFiltersforDevices(){
  this.measfiltersDeviceService.getMeasFilter(null)
  .subscribe(
-	data => { this.measfilters = data },
+	data => {
+		this.measfilters = data
+		this.selectfilters = [];
+		this.snmpdevForm.controls['MeasFilters'].reset();
+		for (let entry of data) {
+			console.log(entry)
+			this.selectfilters.push({'id' : entry.ID , 'name' : entry.ID});
+		}
+	 },
 	err => console.error(err),
 	() => console.log('DONE')
 	 );

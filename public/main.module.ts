@@ -26,7 +26,9 @@ import { MeasFilterCfgComponent } from './home/measfiltercfg.component';
 import { InfluxServerCfgComponent } from './home/influxservercfg.component';
 
 
+
 import { AccordionModule } from 'ng2-bootstrap/ng2-bootstrap';
+import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
 
 
 @NgModule({
@@ -44,7 +46,7 @@ import { AccordionModule } from 'ng2-bootstrap/ng2-bootstrap';
     App,
   ],
   imports: [
-    HttpModule, BrowserModule, FormsModule, ReactiveFormsModule,MultiselectDropdownModule, AccordionModule,
+    HttpModule, BrowserModule, FormsModule, ReactiveFormsModule,MultiselectDropdownModule, AccordionModule, TooltipModule,
     RouterModule.forRoot(routes, {
     //  useHash: true
     })

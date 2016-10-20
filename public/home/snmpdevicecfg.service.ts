@@ -13,7 +13,7 @@ export class SnmpDeviceService {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
         return this.http.post('/snmpdevice',JSON.stringify(dev,function (key,value) {
-            console.log("KEY:"+key+" Value"+value);
+            console.log("KEY: "+key+" Value: "+value);
             if (	key == 'Port' ||
             key == 'Retries' ||
             key == 'Timeout' ||
@@ -24,8 +24,16 @@ export class SnmpDeviceService {
             if ( key == 'SnmpDebug' ) return ( value === "true");
             if ( key == 'Extratags' ) return  String(value).split(',');
             //TODO Actualizar en Angular2 Final con Multiselect
-            if ( key == 'MeasFilters') return value.split(',');
-            if ( key == 'MetricGroups') return value.split(',');
+
+            if ( key == 'MeasFilters') {
+                if (value != null) return String(value).split(',');
+                else return null;
+
+            }
+            if ( key == 'MetricGroups') {
+                if (value != null) return String(value).split(',');
+                else return null;
+            }
             return value;
 
         }), { headers: headers })
@@ -47,6 +55,15 @@ export class SnmpDeviceService {
             }
             if ( key == 'SnmpDebug' ) return ( value === "true");
             if ( key == 'Extratags' ) return  String(value).split(',');
+            if ( key == 'MeasFilters') {
+                if (value != null) return String(value).split(',');
+                else return null;
+
+            }
+            if ( key == 'MetricGroups') {
+                if (value != null) return String(value).split(',');
+                else return null;
+            }
             return value;
 
         }), {  headers: headers   })

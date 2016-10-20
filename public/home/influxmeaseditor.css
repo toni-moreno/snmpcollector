@@ -2,7 +2,12 @@ html {
   font-family: sans-serif;
 }
 
-form {
+.info-mode {
+  border-left: 5px solid #1b809e;
+  padding-left: 5px;
+}
+
+/*form {
   padding: 10px;
   max-width: 320px;
 }
@@ -10,7 +15,14 @@ form {
 label {
   margin-top: 16px;
 //  float: left;
-//  display: block;
+  display: block;
+}*/
+
+
+.info {
+  color: #337ab7;
+  float: left;
+  padding-left: 10px;
 }
 
 input, button {
@@ -19,8 +31,8 @@ input, button {
 
 select,input {
  //  float: right;
-  //  display: block;
-    width: 100%;
+    display: inline;
+    width: 320px;
     height: 27px;
     padding: 2px 12px;
     font-size: 14px;
@@ -42,6 +54,14 @@ button {
   font-weight: 300;
 }
 
+.ng-invalid:not(form)  {
+  border-left: 5px solid #a94442; /* red */
+}
+
+.ng-valid:not(form) {
+  border-left: 5px solid #42A948; /* green */
+}
+
 button[disabled] {
   background-color: #337ab7;
   border-color: #2e6da4;
@@ -49,7 +69,8 @@ button[disabled] {
   cursor: not-allowed;
 }
 
-control-messages div {
+control-messages {
   color: #E82C0C;
+
   margin: 6px 0;
 }
