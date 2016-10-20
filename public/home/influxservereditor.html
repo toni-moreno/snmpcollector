@@ -1,18 +1,16 @@
+<h2>Influx Servers</h2>
+<h4 class="info-mode">{{ editmode | uppercase}} </h4>
+<hr>
 	<p [ngSwitch]="editmode">
     <template ngSwitchCase="list">
-	<div class="row-fluid">
-      		<div class=".col-md-3">
-        		<h2>Influx Servers</h2>
-        	</div>
-						<hr>
+  		<div class="row-fluid">
 						<h4>{{ errorhandler }} </h4>
-      		<div  class=".col-md-3">
-			<input type="text"  class="form-control" required [(ngModel)]="filter" >
+      		<div  class="col-md-9">
+			<input type="text"  class="form-control" [(ngModel)]="filter" >
       <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
 	 		<button type="button" (click)="newInfluxServer()" class="btn btn-primary">New</button>
-     		</div>
-	</div>
-
+   		</div>
+  		<div  class="col-md-9">
 	<accordion [closeOthers]="oneAtATime">
   		<accordion-group #group  *ngFor="let influxserver of influxservers" [heading]="influxserver.ID">
    			<div accordion-heading>
@@ -30,80 +28,175 @@
 
   		</accordion-group>
 	</accordion>
+</div>
+</div>
+
      </template>
      <template ngSwitchCase="create">
-   	<form [formGroup]="influxserverForm" class="ui form" (ngSubmit)="saveInfluxServer()">
-		<label for="id">id</label>
+   	<form [formGroup]="influxserverForm" class="form-horizontal" (ngSubmit)="saveInfluxServer()">
+
+	<div class="form-group">
+  <label class="control-label col-sm-2" for="id">id</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Unique identifier of InfluxDB server"></i>
+	 <div class="col-sm-9">
 		 <input formControlName="id" id="id" />
 		 <control-messages [control]="influxserverForm.controls.id"></control-messages>
+	 </div>
+ </div>
 
-		 <label for="Host">Host</label>
-			<input formControlName="Host" id="Host" />
+	 <div class="form-group">
+  <label class="control-label col-sm-2" for="Host">Host</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Address of InfluxServer"></i>
+	 <div class="col-sm-9">
+			<input formControlName="Host" id="Host" placeholder="127.0.0.1 or localhost"/>
 			<control-messages [control]="influxserverForm.controls.Host"></control-messages>
+		</div>
+	</div>
 
-			<label for="Port">Port</label>
+
+			<div class="form-group">
+  <label class="control-label col-sm-2" for="Port">Port</label>
+
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Connection port to InfluxDB server {{influxserverForm.value.Host}}"></i>
+	 <div class="col-sm-9">
 			 <input formControlName="Port" id="Port" />
 			 <control-messages [control]="influxserverForm.controls.Port"></control-messages>
+		 </div>
+	 </div>
 
-			 <label for="DB">DB</label>
+			 <div class="form-group">
+  <label class="control-label col-sm-2" for="DB">DB</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="InfluxDB Database name"></i>
+	 <div class="col-sm-9">
 				<input formControlName="DB" id="DB" />
 				<control-messages [control]="influxserverForm.controls.DB"></control-messages>
+			</div>
+		</div>
 
-				<label for="User">User</label>
+				<div class="form-group">
+  <label class="control-label col-sm-2" for="User">User</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Authentification user to the DB"></i>
+	 <div class="col-sm-9">
 				 <input formControlName="User" id="User" />
 				 <control-messages [control]="influxserverForm.controls.User"></control-messages>
+			 </div>
+		 </div>
 
-			 <label for="Password">Password</label>
-				<input formControlName="Password" id="Password" />
+			 <div class="form-group">
+  <label class="control-label col-sm-2" for="Password">Password</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Authentification password to the DB of the user {{influxserverForm.value.User}}"></i>
+	 <div class="col-sm-9">
+				<input formControlName="Password" id="Password"/>
 				<control-messages [control]="influxserverForm.controls.Password"></control-messages>
+			</div>
+		</div>
 
 
-			 <label for="Retention">Retention</label>
+			 <div class="form-group">
+  <label class="control-label col-sm-2" for="Retention">Retention</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Retention policy name to write on. RP must exist on the DB {{influxserverForm.value.DB}}"></i>
+	 <div class="col-sm-9">
 				<input formControlName="Retention" id="Retention" />
 				<control-messages [control]="influxserverForm.controls.Retention"></control-messages>
+			</div>
+		</div>
+		<div class="col-sm-offset-4 col-sm-6">
+			<button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
+			<button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
+			<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+	 	</div>
 
-		<button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
-		<button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
-		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
     	</form>
 
      </template>
 
 
 		 <template ngSwitchCase="modify">
-   	<form [formGroup]="influxserverForm" class="ui form" (ngSubmit)="updateInfluxServer(testinfluxservers.ID)">
-		<label for="id">id</label>
+   	<form [formGroup]="influxserverForm" class="form-horizontal" (ngSubmit)="updateInfluxServer(testinfluxservers.ID)">
+		<div class="form-group">
+  <label class="control-label col-sm-2" for="id">id</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="Unique identifier of InfluxDB server"></i>
+	 <div class="col-sm-9">
 		 <input formControlName="id" id="id" [ngModel] = "testinfluxservers.ID"/>
 		 <control-messages [control]="influxserverForm.controls.id"></control-messages>
+	 </div>
+ </div>
 
-		 <label for="Host">Host</label>
+		 <div class="form-group">
+  <label class="control-label col-sm-2" for="Host">Host</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="Address of InfluxServer"></i>
+	 <div class="col-sm-9">
 			<input formControlName="Host" id="Host" [ngModel] = "testinfluxservers.Host" />
 			<control-messages [control]="influxserverForm.controls.Host"></control-messages>
+		</div>
+	</div>
 
-			<label for="Port">Port</label>
+			<div class="form-group">
+  <label class="control-label col-sm-2" for="Port">Port</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="Connection port to InfluxDB server {{influxserverForm.value.Host}}"></i>
+	 <div class="col-sm-9">
 			 <input formControlName="Port" id="Port" [ngModel] = "testinfluxservers.Port" />
 			 <control-messages [control]="influxserverForm.controls.Port"></control-messages>
+		 </div>
+	 </div>
 
-			 <label for="DB">DB</label>
+			 <div class="form-group">
+  <label class="control-label col-sm-2" for="DB">DB</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="InfluxDB Database name"></i>
+	 <div class="col-sm-9">
 				<input formControlName="DB" id="DB" [ngModel] = "testinfluxservers.DB" />
 				<control-messages [control]="influxserverForm.controls.DB"></control-messages>
+			</div>
+		</div>
 
-				<label for="User">User</label>
+				<div class="form-group">
+  <label class="control-label col-sm-2" for="User">User</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="Authentification user to the DB"></i>
+	 <div class="col-sm-9">
 				 <input formControlName="User" id="User" [ngModel] = "testinfluxservers.User" />
 				 <control-messages [control]="influxserverForm.controls.User"></control-messages>
+			 </div>
+		 </div>
 
-			 <label for="Password">Password</label>
+			 <div class="form-group">
+  <label class="control-label col-sm-2" for="Password">Password</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="Authentification password to the DB of the user {{influxserverForm.value.User}}"></i>
+	 <div class="col-sm-9">
 				<input formControlName="Password" id="Password" [ngModel] = "testinfluxservers.Password" />
 				<control-messages [control]="influxserverForm.controls.Password"></control-messages>
+			</div>
+		</div>
 
 
-			 <label for="Retention">Retention</label>
+			 <div class="form-group">
+  <label class="control-label col-sm-2" for="Retention">Retention Policy</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="Retention policy name to write on. RP must exist on the DB {{influxserverForm.value.DB}}"></i>
+	 <div class="col-sm-9">
 				<input formControlName="Retention" id="Retention" [ngModel] = "testinfluxservers.Retention" />
 				<control-messages [control]="influxserverForm.controls.Retention"></control-messages>
+			</div>
+		</div>
 
+		<div class="col-sm-offset-4 col-sm-6">
 		<button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
 		<button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
 		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+		</div>
+
     	</form>
 
      </template>

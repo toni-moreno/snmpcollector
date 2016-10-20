@@ -1,18 +1,16 @@
+<h2>Measurement Filters</h2>
+<h4 class="info-mode">{{ editmode | uppercase}} </h4>
+<hr>
 	<p [ngSwitch]="editmode">
     <template ngSwitchCase="list">
 	<div class="row-fluid">
-      		<div class=".col-md-3">
-        		<h2>Measurement Filters</h2>
-        	</div>
-						<hr>
 						<h4>{{ errorhandler }} </h4>
-      		<div  class=".col-md-3">
-			<input type="text"  class="form-control" required [(ngModel)]="filter" >
+      		<div  class="col-md-9">
+			<input type="text"  class="form-control" [(ngModel)]="filter" >
       <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
 	 		<button type="button" (click)="newMeasFilter()" class="btn btn-primary">New</button>
      		</div>
-	</div>
-
+				<div  class="col-md-9">
 	<accordion [closeOthers]="oneAtATime">
   		<accordion-group #group  *ngFor="let measfilter of measfilters" [heading]="measfilter.ID">
    			<div accordion-heading>
@@ -30,53 +28,91 @@
 
   		</accordion-group>
 	</accordion>
+</div>
+</div>
      </template>
+
      <template ngSwitchCase="create">
-   	<form [formGroup]="measfilterForm" class="ui form" (ngSubmit)="saveMeasFilter()">
-		<label for="id">id</label>
+   	<form [formGroup]="measfilterForm" class="form-horizontal" (ngSubmit)="saveMeasFilter()">
+	<div class="form-group">
+  	<label class="control-label col-sm-2"  for="id">id</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="Unique identifier of Measurement Filters "></i>
+		 <div class="col-sm-9">
 		 <input formControlName="id" id="id" />
 		 <control-messages [control]="measfilterForm.controls.id"></control-messages>
+	 </div>
+	</div>
 
-		<label for="IDMeasurementCfg">Measurements</label>
+	<div class="form-group">
+  	<label class="control-label col-sm-2"  for="IDMeasurementCfg">Measurements</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="List of Measurements to attach the filter"></i>
+		 <div class="col-sm-9">
 			<select formControlName="IDMeasurementCfg" id="IDMeasurementCfg">
 				<option *ngFor="let measurement of influxmeas"
 						[value]="measurement.ID"> {{measurement.ID}}
 				</option>
 		</select>
 		<control-messages [control]="measfilterForm.controls.IDMeasurementCfg"></control-messages>
+	</div>
+</div>
 
-		<label for="FType">GetMode</label>
+	<div class="form-group">
+  	<label class="control-label col-sm-2"  for="FType">Filter type</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="Filter input source: file or condiction OID"></i>
+		 <div class="col-sm-9">
 		<select formControlName="FType" id="FType">
 			<option value="file">File</option>
 			<option value="OIDCondition">OID Condition</option>
 		</select>
 					<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
 		<control-messages [control]="measfilterForm.controls.FType"></control-messages>
+	</div>
+</div>
 
 		<div *ngIf="measfilterForm.value.FType == 'file'">
-		<ul><li>
-		<label for="FileName">File Name</label>
+		<div class="form-group">
+  	<label class="control-label col-sm-2"  for="FileName">File Name</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="A valid filename cointained in the conf/ directory"></i>
+		 <div class="col-sm-9">
 			<input formControlName="FileName" id="FileName" />
 		<control-messages [control]="measfilterForm.controls.FileName"></control-messages>
-	</li>
-	<li>
-			<label for="EnableAlias">Enable alias</label>
+		</div>
+	</div>
+					<div class="form-group">
+  	<label class="control-label col-sm-2"  for="EnableAlias">Enable alias</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="Allow get measurement tag from alias in the file"></i>
+		 <div class="col-sm-9">
 		<select formControlName="EnableAlias" id="EnableAlias">
 		  <option value="true">Enable</option>
 			<option value="false">Disable</option>
 		</select>
 		<control-messages [control]="measfilterForm.controls.EnableAlias"></control-messages>
-			</li></ul>
-		</div>
+	</div>
+	</div>
+</div>
 
 		<div *ngIf="measfilterForm.value.FType == 'OIDCondition'">
-		<ul><li>
-		<label for="OIDCond">OID</label>
+				<div class="form-group">
+  	<label class="control-label col-sm-2"  for="OIDCond">OID</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="A valid OID to filter by"></i>
+		 <div class="col-sm-9">
 			<input formControlName="OIDCond" id="OIDCond" />
 		<control-messages [control]="measfilterForm.controls.OIDCond"></control-messages>
-	</li></ul>
 		</div>
-		<label for="CondValue">Condition type</label>
+	</div>
+</div>
+
+	<div class="form-group">
+  	<label class="control-label col-sm-2"  for="CondValue">Condition type</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="Possible condition type to apply on the filter"></i>
+		 <div class="col-sm-9">
 		<select formControlName="CondType" id="CondType">
 			<option value="neq">Equal than</option>
 			<option value="nlt">Less than</option>
@@ -86,65 +122,110 @@
 			<option value="match">Match string</option>
 		</select>
 		<control-messages [control]="measfilterForm.controls.CondType"></control-messages>
-		<label for="CondValue">Value</label>
+	</div>
+</div>
+
+	<div class="form-group">
+  	<label class="control-label col-sm-2"  for="CondValue">Value</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="The value to match the condition"></i>
+		 <div class="col-sm-9">
 			<input formControlName="CondValue" id="CondValue" />
 		<control-messages [control]="measfilterForm.controls.CondValue"></control-messages>
+	</div>
+	</div>
 
+		<div class="col-sm-offset-4 col-sm-6">
 		<button type="submit" [disabled]="!measfilterForm.valid">Submit</button>
 		<button type="reset" [disabled]="!measfilterForm.dirty">Reset</button>
 		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+		</div>
+
     	</form>
 
      </template>
 
-
-
 		 <template ngSwitchCase="modify">
-		<form [formGroup]="measfilterForm" class="ui form" (ngSubmit)="updateMeasFilter(testmeasfilters.ID)">
-			<label for="id">id</label>
+		<form [formGroup]="measfilterForm" class="form-horizontal" (ngSubmit)="updateMeasFilter(testmeasfilters.ID)">
+
+					<div class="form-group">
+  	<label class="control-label col-sm-2"  for="id">id</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Unique identifier of Measurement Filters "></i>
+		 <div class="col-sm-9">
 			 <input formControlName="id" id="id" [ngModel] = "testmeasfilters.ID"/>
 			 <control-messages [control]="measfilterForm.controls.id"></control-messages>
+		 </div>
+		</div>
 
-		<label for="IDMeasurementCfg">Measurements</label>
+				<div class="form-group">
+  	<label class="control-label col-sm-2"  for="IDMeasurementCfg">Measurements</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="List of Measurements to attach the filter"></i>
+		 <div class="col-sm-9">
 			<select formControlName="IDMeasurementCfg" id="IDMeasurementCfg" [ngModel] = "testmeasfilters.IDMeasurementCfg">
 				<option *ngFor="let measurement of influxmeas"
 						[value]="measurement.ID"> {{measurement.ID}}
 				</option>
 		</select>
 		<control-messages [control]="measfilterForm.controls.IDMeasurementCfg"></control-messages>
+	</div>
+</div>
 
-		<label for="FType">GetMode</label>"
+				<div class="form-group">
+  	<label class="control-label col-sm-2"  for="FType">Filter type</label>"
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Filter input source: file or condiction OID"></i>
+		 <div class="col-sm-9">
 		<select formControlName="FType" id="FType" [ngModel] = "testmeasfilters.FType">
 			<option value="file">File</option>
 			<option value="OIDCondition">OID Condition</option>
 		</select>
 					<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
 		<control-messages [control]="measfilterForm.controls.FType"></control-messages>
+	</div>
+</div>
 
 		<div *ngIf="measfilterForm.value.FType == 'file'">
-		<ul><li>
-		<label for="FileName">File Name</label>
+				<div class="form-group">
+  	<label class="control-label col-sm-2"  for="FileName">File Name</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="A valid filename cointained in the conf/ directory"></i>
+		 <div class="col-sm-9">
 			<input formControlName="FileName" id="FileName" [ngModel] = "testmeasfilters.FileName"/>
 		<control-messages [control]="measfilterForm.controls.FileName"></control-messages>
-		</li>
-		<li>
-			<label for="EnableAlias">Enable alias</label>
+	</div>
+	</div>
+					<div class="form-group">
+  	<label class="control-label col-sm-2"  for="EnableAlias">Enable alias</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Allow get measurement tag from alias in the file"></i>
+		 <div class="col-sm-9">
 		<select formControlName="EnableAlias" id="EnableAlias" [ngModel] = "testmeasfilters.EnableAlias">
 			<option value="true">Enable</option>
 			<option value="false">Disable</option>
 		</select>
 		<control-messages [control]="measfilterForm.controls.EnableAlias"></control-messages>
-			</li></ul>
 		</div>
+	</div>
+</div>
 
 		<div *ngIf="measfilterForm.value.FType == 'OIDCondition'">
-		<ul><li>
-		<label for="OIDCond">OID</label>
+				<div class="form-group">
+  	<label class="control-label col-sm-2"  for="OIDCond">OID</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="A valid OID to filter by"></i>
+		 <div class="col-sm-9">
 			<input formControlName="OIDCond" id="OIDCond" [ngModel] = "testmeasfilters.OIDCond"/>
 		<control-messages [control]="measfilterForm.controls.OIDCond"></control-messages>
-		</li></ul>
-		</div>
-		<label for="CondType">Condition type</label>
+	</div>
+	</div>
+</div>
+	<div class="form-group">
+  	<label class="control-label col-sm-2"  for="CondType">Condition type</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="Possible condition type to apply on the filter"></i>
+		 <div class="col-sm-9">
 		<select formControlName="CondType" id="CondType" [ngModel] = "testmeasfilters.CondType">
 			<option value="neq">Equal than</option>
 			<option value="nlt">Less than</option>
@@ -154,13 +235,25 @@
 			<option value="match">Match value</option>
 		</select>
 		<control-messages [control]="measfilterForm.controls.CondType"></control-messages>
-		<label for="CondValue">Value</label>
+	</div>
+</div>
+
+				<div class="form-group">
+  	<label class="control-label col-sm-2"  for="CondValue">Value</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		tooltip="The value to match the condition"></i>
+		 <div class="col-sm-9">
 			<input formControlName="CondValue" id="CondValue" [ngModel] = "testmeasfilters.CondValue"/>
 		<control-messages [control]="measfilterForm.controls.CondValue"></control-messages>
+	</div>
+</div>
 
-		<button type="submit" [disabled]="!measfilterForm.valid">Submit</button>
-		<button type="reset" [disabled]="!measfilterForm.dirty">Reset</button>
-		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+		<div class="col-sm-offset-4 col-sm-6">
+			<button type="submit" [disabled]="!measfilterForm.valid">Submit</button>
+			<button type="reset" [disabled]="!measfilterForm.dirty">Reset</button>
+			<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+	 	</div>
+
 			</form>
 
 		 </template>

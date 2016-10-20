@@ -1,7 +1,8 @@
-import { Component, Pipe, PipeTransform  } from '@angular/core';
+import { Component, Pipe, ChangeDetectionStrategy, PipeTransform  } from '@angular/core';
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { MeasGroupService } from './measgroupcfg.service';
 import { InfluxMeasService } from './influxmeascfg.service';
+import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 
 
 @Component({
@@ -18,7 +19,33 @@ export class MeasGroupCfgComponent {
   measgroupForm: any;
 	testmeasgroups: any;
 	influxmeas: Array<any>;
+  selectmeas: IMultiSelectOption[];
 
+	private mySettings: IMultiSelectSettings = {
+		pullRight: false,
+		enableSearch: true,
+		checkedStyle: 'glyphicon',
+		buttonClasses: 'btn btn-default',
+		selectionLimit: 0,
+		closeOnSelect: false,
+		showCheckAll: false,
+		showUncheckAll: false,
+		dynamicTitleMaxItems: 100,
+		maxHeight: '300px',
+	};
+
+	private myTexts: IMultiSelectTexts = {
+		checkAll: 'Check all',
+		uncheckAll: 'Uncheck all',
+		checked: 'checked',
+		checkedPlural: 'checked',
+		searchPlaceholder: 'Search...',
+		defaultTitle: 'Select',
+	};
+
+	onChange(value){
+		this.measgroupForm.controls['Measurements'].patchValue(value);
+	}
   reloadData(){
   // now it's a simple subscription to the observable
     this.measGroupService.getMeasGroup(this.filter)
@@ -28,6 +55,7 @@ export class MeasGroupCfgComponent {
 		  	() => console.log('DONE')
 		  );
   }
+
   constructor(public measGroupService: MeasGroupService, public measMeasGroupService: InfluxMeasService, builder: FormBuilder) {
 	  this.editmode='list';
 	  this.reloadData();
@@ -45,7 +73,6 @@ export class MeasGroupCfgComponent {
 	console.log('view',id);
  }
  removeItem(id){
-	console.log('remove',id);
 	var r = confirm("Deleting GROUP: "+id+". Proceed?");
  	if (r == true) {
 		 var result=this.measGroupService.deleteMeasGroup(id)
@@ -80,6 +107,7 @@ export class MeasGroupCfgComponent {
       err => console.error(err),
       () =>  {this.editmode = "list"; this.reloadData()}
 			);
+			this.measgroupForm.reset();
 		}
  }
 
@@ -104,7 +132,15 @@ export class MeasGroupCfgComponent {
  	getMeasforMeasGroups(){
 		this.measMeasGroupService.getMeas(null)
 		.subscribe(
-			data => { this.influxmeas = data },
+			data => {
+				this.influxmeas = data
+				this.selectmeas = [];
+        this.measgroupForm.controls['Measurements'].reset();
+				for (let entry of data) {
+					console.log(entry)
+					this.selectmeas.push({'id' : entry.ID , 'name' : entry.ID});
+				}
+			},
 			err => console.error(err),
 			() => console.log('DONE')
 		);

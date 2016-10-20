@@ -12,7 +12,7 @@
 		              <a class="btn btn-primary btn-lg" role="button" (click)="logout()">Logout</a>
                 </li>
                 <li>
-		             <a  (click)="SNMPDevices()">SNMP Devices</a>
+                    <a (click)="InfluxServers()">Influx Servers</a>
                 </li>
                 <li>
                     <a (click)="SNMPMetrics()">SNMP Metrics</a>
@@ -20,16 +20,14 @@
                 <li>
                     <a (click)="InfluxMeasurements()">Influx Measurements</a>
                 </li>
-                <ul>
-                    <li>
-                      <a (click)="MeasGroups()">Measurement Groups</a>
-                    </li>
-                    <li>
-                      <a (click)="MeasFilters()">Measurement Filters</a>
-                    </li>
-                  </ul>
                 <li>
-              		  <a (click)="InfluxServers()">Influx Servers</a>
+                    <a (click)="MeasGroups()">Measurement Groups</a>
+                </li>
+                <li>
+                    <a (click)="MeasFilters()">Measurement Filters</a>
+                </li>
+                <li>
+		             <a  (click)="SNMPDevices()">SNMP Devices</a>
                 </li>
                 <li>
                     <a href="#">About</a>
@@ -43,38 +41,32 @@
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-lg-12">
-			   <p [ngSwitch]="item_type">
-			      <template ngSwitchCase="snmpdevice">
-			      	<h1>SNMP Devices</h1>
-			      	<snmpdevs></snmpdevs>
-			      </template>
-			      <template ngSwitchCase="snmpmetric">
-              <h1> SNMP Metrics</h1>
-              <snmpmetrics></snmpmetrics>
-			      </template>
-			      <template ngSwitchCase="influxmeas">
-  			      <h1>Influx Measurements</h1>
-                  <influxmeas></influxmeas>
-			      </template>
-			      <template ngSwitchCase="measgroup">
-  			      <h1>Meas Group</h1>
-                  <measgroups></measgroups>
-			      </template>
-                  <template ngSwitchCase="measfilter">
-                    <h1>Meas Filters</h1>
-                  <measfilters></measfilters>
-                </template>
-                <template ngSwitchCase="influxserver">
-                  <h1>Influx Servers</h1>
-                <influxservers></influxservers>
-              </template>
-			      <template ngSwitchDefault>DEFAULT</template>
-			    </p>
+    			        <p [ngSwitch]="item_type">
+                               <template ngSwitchCase="influxserver">
+                                 <influxservers></influxservers>
+                             </template>
+                             <template ngSwitchCase="snmpmetric">
+                                <snmpmetrics></snmpmetrics>
+                             </template>
+                             <template ngSwitchCase="influxmeas">
+                                <influxmeas></influxmeas>
+                             </template>
+                             <template ngSwitchCase="measgroup">
+                                <measgroups></measgroups>
+                            </template>
+                            <template ngSwitchCase="measfilter">
+                                <measfilters></measfilters>
+                            </template>
+    			             <template ngSwitchCase="snmpdevice">
+    			                <snmpdevs></snmpdevs>
+    			             </template>
+
+                            <template ngSwitchDefault>DEFAULT</template>
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
         <!-- /#page-content-wrapper -->
-
     </div>
     <!-- /#wrapper -->

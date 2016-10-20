@@ -25,7 +25,6 @@ export class Home {
     console.log('creating home!! id_token:'+this.jwt);
     this.decodedJwt = this.jwt ;
     this.item_type= "snmpdevice";
-
   }
 
   logout() {
@@ -33,8 +32,8 @@ export class Home {
     this.router.navigate(['']);
   }
 
-  SNMPDevices() {
-	  this.item_type = "snmpdevice";
+  InfluxServers() {
+	  this.item_type = "influxserver";
   }
 
   SNMPMetrics () {
@@ -42,18 +41,18 @@ export class Home {
   }
 
   InfluxMeasurements() {
-	  this.item_type = "influxmeas";
+    this.item_type = "influxmeas";
   }
+
   MeasGroups() {
-	  this.item_type = "measgroup";
+    this.item_type = "measgroup";
   }
 
   MeasFilters() {
     this.item_type = "measfilter";
   }
-  
-  InfluxServers() {
-	  this.item_type = "influxserver";
-  }
 
+  SNMPDevices() {
+	  this.item_type = "snmpdevice";
+  }
 }

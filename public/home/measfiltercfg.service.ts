@@ -17,6 +17,9 @@ export class MeasFilterService {
                   if (value == "true") return true;
                   else return false;
                 }
+                if ( key == 'IDMeasurementCfg') {
+                    if ( value == "" ) return null
+                }
                 return value;
         }), { headers: headers })
         .map( (responseData) => responseData.json());
@@ -31,6 +34,10 @@ export class MeasFilterService {
             if ( key == 'EnableAlias' ) {
               if (value == "true") return true;
               else return false;
+            }
+            if ( key == 'IDMeasurementCfg') {
+                if ( !value || value == "" ) return null
+                else return String(value).split(',');
             }
             return value;
 

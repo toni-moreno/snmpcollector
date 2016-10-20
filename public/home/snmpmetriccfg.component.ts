@@ -1,4 +1,4 @@
-import { Component, Pipe, PipeTransform  } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Pipe, PipeTransform  } from '@angular/core';
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { SnmpMetricService } from './snmpmetriccfg.service';
 

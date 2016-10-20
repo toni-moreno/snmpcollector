@@ -1,7 +1,8 @@
-import { Component, Pipe, PipeTransform  } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Pipe, PipeTransform  } from '@angular/core';
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { InfluxMeasService } from './influxmeascfg.service';
 import { SnmpMetricService } from './snmpmetriccfg.service';
+import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 
 
 @Component({
@@ -18,6 +19,34 @@ export class InfluxMeasCfgComponent {
   influxmeasForm: any;
 	testinfluxmeas: any;
 	snmpmetrics: Array<any>;
+ 	selectmetrics: IMultiSelectOption[];
+
+
+	private mySettings: IMultiSelectSettings = {
+    pullRight: false,
+    enableSearch: false,
+    checkedStyle: 'glyphicon',
+    buttonClasses: 'btn btn-default',
+    selectionLimit: 0,
+    closeOnSelect: false,
+    showCheckAll: false,
+    showUncheckAll: false,
+    dynamicTitleMaxItems: 100,
+    maxHeight: '300px',
+};
+
+private myTexts: IMultiSelectTexts = {
+    checkAll: 'Check all',
+    uncheckAll: 'Uncheck all',
+    checked: 'checked',
+    checkedPlural: 'checked',
+    searchPlaceholder: 'Search...',
+    defaultTitle: 'Select',
+};
+
+	onChange(value){
+		this.influxmeasForm.controls['Fields'].patchValue(value);
+	}
 
   reloadData(){
   // now it's a simple subscription to the observable
@@ -49,8 +78,8 @@ export class InfluxMeasCfgComponent {
  viewItem(id,event){
 	console.log('view',id);
  }
+
  removeItem(id){
-	console.log('remove',id);
 	var r = confirm("Deleting MEASUREMENT: "+id+". Proceed?");
  	if (r == true) {
 		 var result=this.influxMeasService.deleteMeas(id)
@@ -75,9 +104,11 @@ export class InfluxMeasCfgComponent {
  		 () =>  this.editmode = "modify"
  		);
  	}
+
  cancelEdit(){
 	 this.editmode = "list";
  }
+
  saveInfluxMeas(){
 	 if(this.influxmeasForm.dirty && this.influxmeasForm.valid) {
 		 this.influxMeasService.addMeas(this.influxmeasForm.value)
@@ -85,6 +116,7 @@ export class InfluxMeasCfgComponent {
       err => console.error(err),
       () =>  {this.editmode = "list"; this.reloadData()}
 			);
+      this.influxmeasForm.reset();
 		}
  }
 
@@ -109,7 +141,15 @@ export class InfluxMeasCfgComponent {
  	getMetricsforMeas(){
 		this.metricMeasService.getMetrics(null)
 		.subscribe(
-			data => { this.snmpmetrics = data },
+			data => {
+        this.snmpmetrics = data;
+				this.selectmetrics = [];
+        this.influxmeasForm.controls['Fields'].reset();
+				for (let entry of data) {
+					console.log(entry)
+					this.selectmetrics.push({'id' : entry.ID , 'name' : entry.ID});
+				}
+			},
 			err => console.error(err),
 			() => console.log('DONE')
 		);
