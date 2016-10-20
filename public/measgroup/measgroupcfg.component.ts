@@ -1,15 +1,15 @@
 import { Component, Pipe, ChangeDetectionStrategy, PipeTransform  } from '@angular/core';
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { MeasGroupService } from './measgroupcfg.service';
-import { InfluxMeasService } from './influxmeascfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
+import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 
 
 @Component({
   selector: 'measgroups',
   providers: [MeasGroupService, InfluxMeasService],
-  templateUrl: 'public/home/measgroupeditor.html',
-  styleUrls:['public/home/measgroupeditor.css'],
+  templateUrl: 'public/measgroup/measgroupeditor.html',
+  styleUrls:['public/measgroup/measgroupeditor.css'],
 })
 
 export class MeasGroupCfgComponent {
