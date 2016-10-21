@@ -7,7 +7,7 @@ PID=/var/run/snmpcollector.pid
 case "$1" in
    start)
      echo "Starting snmpcollector"
-	 export PWD=$APPDIR
+	   export PWD=$APPDIR
      start-stop-daemon --start --quiet --make-pidfile --pidfile $PID --chdir $APPDIR --background --exec ./snmpcollector -- -config $APPDIR/conf/config.toml -logs $APPDIR/log
      ;;
    stop)
