@@ -52,7 +52,7 @@ type SnmpDeviceCfg struct {
 	ExtraTags      []string `xorm:"extra-tags"`
 
 	//Filters for measurements
-	MetricGroups []string `xorm:"-"`
+	MeasurementGroups []string `xorm:"-"`
 	MeasFilters  []string `xorm:"-"`
 }
 
@@ -1002,7 +1002,7 @@ func (dbc *DatabaseCfg) GetSnmpDeviceCfgArray(filter string) ([]*SnmpDeviceCfg, 
 	for _, mVal := range devices {
 		for _, mg := range snmpdevmgroups {
 			if mg.IDSnmpDev == mVal.ID {
-				mVal.MetricGroups = append(mVal.MetricGroups, mg.IDMGroupCfg)
+				mVal.MeasurementGroups = append(mVal.MeasurementGroups, mg.IDMGroupCfg)
 			}
 		}
 	}
@@ -1039,7 +1039,7 @@ func (dbc *DatabaseCfg) AddSnmpDeviceCfg(dev SnmpDeviceCfg) (int64, error) {
 		return 0, err
 	}
 	//Measurement Groups
-	for _, mg := range dev.MetricGroups {
+	for _, mg := range dev.MeasurementGroups {
 
 		mgstruct := SnmpDevMGroups{
 			IDSnmpDev:   dev.ID,
@@ -1126,7 +1126,7 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 	}
 
 	//Measurement Groups
-	for _, mg := range dev.MetricGroups {
+	for _, mg := range dev.MeasurementGroups {
 		mgstruct := SnmpDevMGroups{
 			IDSnmpDev:   dev.ID,
 			IDMGroupCfg: mg,

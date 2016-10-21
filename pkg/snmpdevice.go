@@ -29,6 +29,8 @@ type SysInfo struct {
 type SnmpDevice struct {
 	cfg *SnmpDeviceCfg
 	log *logrus.Logger
+	//basic sistem info
+	sysInfo SysInfo
 	//runtime built TagMap
 	TagMap map[string]string
 	//Measurments array
@@ -46,13 +48,11 @@ type SnmpDevice struct {
 	//runtime controls
 	/*debugging chan bool
 	enabled   chan chan bool*/
-
-	chDebug      chan bool
-	chEnabled    chan bool
 	deviceActive bool
 	stateDebug   bool
-	//basic sistem info
-	sysInfo SysInfo
+
+	chDebug   chan bool
+	chEnabled chan bool
 }
 
 // GetSysInfo got system basic info from a snmp client
@@ -126,12 +126,12 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 	//Alloc array
 	d.InfmeasArray = make([]*InfluxMeasurement, 0, 0)
 	d.log.Debugf("-----------------Init device %s------------------", d.cfg.Host)
-	//for this device get MetricGroups and search all measurements
+	//for this device get MeasurementGroups and search all measurements
 
 	//log.Printf("SNMPDEV: %+v", c)
-	for _, devMeas := range d.cfg.MetricGroups {
+	for _, devMeas := range d.cfg.MeasurementGroups {
 
-		//Selecting all Metric Groups that matches with device.MetricGroups
+		//Selecting all Metric Groups that matches with device.MeasurementGroups
 
 		selGroups := make(map[string]*MGroupsCfg, 0)
 		var RegExp = regexp.MustCompile(devMeas)
@@ -284,7 +284,6 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 			}
 		}
 		//		log.Printf("DEBUG oid map %+v", m.oidSnmpMap)
-
 	}
 	//get data first time
 	// useful to inicialize counter all value and test device snmp availability
@@ -301,7 +300,6 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 			}
 
 		}
-
 	}
 
 }

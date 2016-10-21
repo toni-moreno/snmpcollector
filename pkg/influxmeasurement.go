@@ -90,6 +90,7 @@ type MeasFilterCfg struct {
 //InfluxMeasurement the runtime measurement config
 type InfluxMeasurement struct {
 	cfg              *InfluxMeasurementCfg
+	ID               string
 	values           map[string]map[string]*SnmpMetric //snmpMetric mapped with metric_names and Index
 	snmpOids         []string
 	oidSnmpMap       map[string]*SnmpMetric //snmpMetric mapped with real OID's

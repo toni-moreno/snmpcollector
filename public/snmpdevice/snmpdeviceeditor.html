@@ -263,12 +263,12 @@
 </div>
 
 	<div class="form-group">
-		<label class="control-label col-sm-2" for="MetricGroups">Measurement Groups</label>
+		<label class="control-label col-sm-2" for="MeasurementGroups">Measurement Groups</label>
 		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
 			tooltip="Selection of Measurent Groups associated with the device {{snmpdevForm.value.id}}"></i>
 	<div class="col-sm-9">
 			<ss-multiselect-dropdown [options]="selectgroups" [texts]="myTexts" [settings]="mySettings" [ngModel] [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeGroup($event)"></ss-multiselect-dropdown>
-			<control-messages [control]="snmpdevForm.controls.MetricGroups"></control-messages>
+			<control-messages [control]="snmpdevForm.controls.MeasurementGroups"></control-messages>
 		</div>
 	</div>
 
@@ -538,12 +538,12 @@
 	</div>
 
 	 <div class="form-group">
-		  <label class="control-label col-sm-2" for="MetricGroups">Measurement Groups</label>
+		  <label class="control-label col-sm-2" for="MeasurementGroups">Measurement Groups</label>
 			<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
 			tooltip="Selection of Measurent Groups associated with the device {{snmpdevForm.value.id}}"></i>
 		<div class="col-sm-9">
-		 <ss-multiselect-dropdown [options]="selectgroups" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="testsnmpdev.MetricGroups" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeGroup($event)"></ss-multiselect-dropdown>
-		 <control-messages [control]="snmpdevForm.controls.MetricGroups"></control-messages>
+		 <ss-multiselect-dropdown [options]="selectgroups" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="testsnmpdev.MeasurementGroups" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeGroup($event)"></ss-multiselect-dropdown>
+		 <control-messages [control]="snmpdevForm.controls.MeasurementGroups"></control-messages>
 	 </div>
  </div>
 

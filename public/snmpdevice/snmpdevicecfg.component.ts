@@ -33,7 +33,7 @@ export class SnmpDeviceCfgComponent {
 	}
 
 	onChangeGroup(value){
-		this.snmpdevForm.controls['MetricGroups'].patchValue(value);
+		this.snmpdevForm.controls['MeasurementGroups'].patchValue(value);
 	}
 	onChangeFilter(value){
 		this.snmpdevForm.controls['MeasFilters'].patchValue(value);
@@ -73,7 +73,7 @@ export class SnmpDeviceCfgComponent {
 		DeviceTagName: ['',Validators.required],
 		DeviceTagValue: ['id'],
 		Extratags:[''],
-		MetricGroups: [''],
+		MeasurementGroups: [''],
 		MeasFilters: ['']
 	});
     }
@@ -154,7 +154,7 @@ export class SnmpDeviceCfgComponent {
 	 data => {
 		 this.measgroups = data
 		 this.selectgroups = [];
-		 this.snmpdevForm.controls['MetricGroups'].reset();
+		 this.snmpdevForm.controls['MeasurementGroups'].reset();
 		 for (let entry of data) {
 		 	console.log(entry)
 		 	this.selectgroups.push({'id' : entry.ID , 'name' : entry.ID});
