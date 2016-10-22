@@ -229,7 +229,7 @@ func init() {
 		os.Exit(0)
 	}
 
-		// now make sure each snmp device has a db
+	// now make sure each snmp device has a db
 
 	//for name, c := range cfg.SnmpDevice {
 	for name, c := range devices {
@@ -259,7 +259,7 @@ func init() {
 			cfg.Selfmon.Enabled = false
 		}
 	} else {
-		fmt.Printf("SELFMON disabled %+vn\n", cfg.Selfmon)
+		log.Printf("SELFMON disabled %+vn\n", cfg.Selfmon)
 	}
 
 }

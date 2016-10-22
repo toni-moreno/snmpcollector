@@ -107,7 +107,8 @@ func (db *InfluxDB) Init() {
 	if err := db.Connect(); err != nil {
 		log.Errorln("failed connecting to: ", db.cfg.Host)
 		log.Errorln("error: ", err)
-		log.Fatal(err)
+		//if no connection done started = false and it will try to test again later??
+		return
 	}
 	if verbose {
 		log.Infoln("Connected to: ", db.cfg.Host)
