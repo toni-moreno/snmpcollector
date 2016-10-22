@@ -189,7 +189,7 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 
 	/*For each  measurement look for filters and Initialize Measurement with this Filter 	*/
 
-	for i, m := range d.InfmeasArray {
+	for _, m := range d.InfmeasArray {
 		//check for filters asociated with this measurement
 		var mfilter *MeasFilterCfg
 		for _, f := range d.cfg.MeasFilters {
@@ -209,22 +209,24 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 		}
 		err := m.Init(mfilter)
 		if err != nil {
-			log.Errorf("Error on initialize Measurement %s , Error:%s (Deleting from Device List of Valid Measurements)", m.cfg.ID, err)
-			d.InfmeasArray = append(d.InfmeasArray[:i], d.InfmeasArray[i+1:]...)
+			log.Errorf("Error on initialize Measurement %s , Error:%s no data will be gathered for this measurement", m.cfg.ID, err)
+			//d.InfmeasArray = append(d.InfmeasArray[:i], d.InfmeasArray[i+1:]...)
 		}
 
 	}
 	//Initialize all snmpMetrics  objects and OID array
 	//get data first time
 	// useful to inicialize counter all value and test device snmp availability
+	d.log.Debugf("SNMP Info: %+v", d.snmpClient)
 	for _, m := range d.InfmeasArray {
-		if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
-			_, _, err := m.SnmpGetData(d.snmpClient)
+		//if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
+		if m.cfg.GetMode == "value" {
+			_, _, err := m.SnmpGetData()
 			if err != nil {
 				d.log.Errorf("SNMP First Get Data error for host: %s", d.cfg.Host)
 			}
 		} else {
-			_, _, err := m.SnmpBulkData(d.snmpClient)
+			_, _, err := m.SnmpWalkData()
 			if err != nil {
 				d.log.Errorf("SNMP First Get Data error for host: %s", d.cfg.Host)
 			}
@@ -384,10 +386,11 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 				for _, m := range d.InfmeasArray {
 					d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
 					var nGets, nErrors int64
-					if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
-						nGets, nErrors, _ = m.SnmpGetData(d.snmpClient)
+					//if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
+					if m.cfg.GetMode == "value" {
+						nGets, nErrors, _ = m.SnmpGetData()
 					} else {
-						nGets, nErrors, _ = m.SnmpBulkData(d.snmpClient)
+						nGets, nErrors, _ = m.SnmpWalkData()
 					}
 					if nGets > 0 {
 						d.addGets(nGets)
