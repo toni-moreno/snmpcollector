@@ -33,7 +33,7 @@ type SnmpDevice struct {
 	sysInfo SysInfo
 	//runtime built TagMap
 	TagMap map[string]string
-	//Measurments array
+	//Measurements array
 
 	InfmeasArray []*InfluxMeasurement
 
@@ -120,6 +120,22 @@ func (d *SnmpDevice) GetSysInfo(client *gosnmp.GoSNMP) (SysInfo, error) {
 	return info, nil
 }
 
+func removeDuplicatesUnordered(elements []string) []string {
+	encountered := map[string]bool{}
+
+	// Create a map of all unique elements.
+	for v := range elements {
+		encountered[elements[v]] = true
+	}
+
+	// Place all keys from the map into a slice.
+	result := []string{}
+	for key, _ := range encountered {
+		result = append(result, key)
+	}
+	return result
+}
+
 //InitDevSnmpInfo generte all internal structs from SNMP device
 func (d *SnmpDevice) InitDevSnmpInfo() {
 
@@ -128,11 +144,9 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 	d.log.Debugf("-----------------Init device %s------------------", d.cfg.Host)
 	//for this device get MeasurementGroups and search all measurements
 
-	//log.Printf("SNMPDEV: %+v", c)
 	for _, devMeas := range d.cfg.MeasurementGroups {
 
 		//Selecting all Metric Groups that matches with device.MeasurementGroups
-
 		selGroups := make(map[string]*MGroupsCfg, 0)
 		var RegExp = regexp.MustCompile(devMeas)
 		for key, val := range cfg.GetGroups {
@@ -166,139 +180,54 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 				d.log.Warnln("no measurement configured with name ", val, "in host :", d.cfg.Host)
 			} else {
 				d.log.Debugln("MEASUREMENT CFG KEY:", val, " VALUE ", mVal.Name)
-				imeas := &InfluxMeasurement{
-					cfg: mVal,
-					log: d.log,
-				}
-				d.InfmeasArray = append(d.InfmeasArray, imeas)
+
+				//creating a new measurement runtime object and asigning to array
+				d.InfmeasArray = append(d.InfmeasArray, &InfluxMeasurement{ID: mVal.ID, cfg: mVal, log: d.log, snmpClient: d.snmpClient})
 			}
 		}
 	}
 
-	/*For each Indexed measurement
-	a) LoadLabels for all device available tags
-	b) apply filters , and get list of names Indexed tames for add to IndexTAG
-	*/
+	/*For each  measurement look for filters and Initialize Measurement with this Filter 	*/
 
-	for _, m := range d.InfmeasArray {
-		//loading all posible values.
-		if m.cfg.GetMode == "indexed" {
-			d.log.Infof("Loading Indexed values in : %s", m.cfg.ID)
-			err := m.loadIndexedLabels(d)
-			if err != nil {
-				d.log.Errorf("Error while trying to load Indexed Labels on device %s for measurement %s for baseOid %s : ERROR: %s", d.cfg.ID, m.cfg.ID, m.cfg.IndexOID, err)
+	for i, m := range d.InfmeasArray {
+		//check for filters asociated with this measurement
+		var mfilter *MeasFilterCfg
+		for _, f := range d.cfg.MeasFilters {
+			//we seach if exist in the filter Database
+			if filter, ok := cfg.MFilters[f]; ok {
+				if filter.IDMeasurementCfg == m.ID {
+					mfilter = filter
+					break
+				}
 			}
 		}
-		//loading filters
-		d.log.Debugf("Looking for filters set to: %s ", m.cfg.ID)
-		var ftype string
-		for _, f := range d.cfg.MeasFilters {
-			if filter, ok := cfg.MFilters[f]; ok {
-				if filter.IDMeasurementCfg == m.cfg.ID {
-					m.Filter = filter
-					d.log.Debugf("filter Found  %s for measurement %s  (type %s)", f, m.cfg.ID, m.Filter.FType)
-					if m.cfg.GetMode == "indexed" {
-						ftype = m.Filter.FType
-						switch m.Filter.FType {
-						case "file":
-							m.applyFileFilter(m.Filter.FileName,
-								m.Filter.EnableAlias)
-						case "OIDCondition":
-							err := m.applyOIDCondFilter(d,
-								m.Filter.OIDCond,
-								m.Filter.CondType,
-								m.Filter.CondValue)
-							if err != nil {
-								d.log.Errorf("Error while trying to apply condition Filter on device %s for measurement %s: ERROR: %s", d.cfg.ID, m.cfg.ID, err)
-							}
-						default:
-							d.log.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
-						}
-					} else {
-						//no filters enabled  on not indexed measurements
-						d.log.Debugf("Filters %s not match with indexed measurements: %s", f, m.cfg.ID)
-					}
-				} //if filter.IDMeasurementCfg == m.cfg.ID
-			} else {
-				d.log.Debugf("Filters %s  found in device but not in configured filters", f)
-			} //ok
-		} //for
-		//Loading final Values to query with snmp
+		if mfilter != nil {
+			log.Debugf("filters %s found for device %s and measurment %s ", mfilter.ID, d.cfg.ID, m.cfg.ID)
 
-		if len(d.cfg.MeasFilters) > 0 {
-			//FIXME: this final indexation is done only with the last type !!! even if more than one filter exist with different type
-			m.filterIndexedLabels(ftype)
 		} else {
-			log.Debugf("no filters found for device %s", d.cfg.ID)
-			m.IndexedLabels()
+			log.Debugf("no filters found for device %s and measurment %s", d.cfg.ID, m.cfg.ID)
 		}
-		d.log.Debugf("MEASUREMENT HOST:%s | %s | %+v\n", d.cfg.Host, m.cfg.ID, m)
+		err := m.Init(mfilter)
+		if err != nil {
+			log.Errorf("Error on initialize Measurement %s , Error:%s (Deleting from Device List of Valid Measurements)", m.cfg.ID, err)
+			d.InfmeasArray = append(d.InfmeasArray[:i], d.InfmeasArray[i+1:]...)
+		}
+
 	}
 	//Initialize all snmpMetrics  objects and OID array
-	for _, m := range d.InfmeasArray {
-		d.log.Debug("Initialize OID array")
-		m.values = make(map[string]map[string]*SnmpMetric)
-
-		//create metrics.
-		switch m.cfg.GetMode {
-		case "value":
-			//for each field
-			idx := make(map[string]*SnmpMetric)
-			for _, smcfg := range m.cfg.fieldMetric {
-				d.log.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
-				metric := &SnmpMetric{cfg: smcfg, realOID: smcfg.BaseOID}
-				metric.Init()
-				idx[smcfg.ID] = metric
-			}
-			m.values["0"] = idx
-
-		case "indexed":
-			//for each field an each index (previously initialized)
-			for key, label := range m.CurIndexedLabels {
-				idx := make(map[string]*SnmpMetric)
-				d.log.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
-				for _, smcfg := range m.cfg.fieldMetric {
-					metric := &SnmpMetric{cfg: smcfg, realOID: smcfg.BaseOID + "." + key}
-					metric.Init()
-					idx[smcfg.ID] = metric
-				}
-				m.values[label] = idx
-			}
-
-		default:
-			d.log.Errorf("Unknown Measurement GetMode Config :%s", m.cfg.GetMode)
-		}
-		d.log.Debugf("ARRAY VALUES for host %s :%s : %+v", d.cfg.Host, m.cfg.Name, m.values)
-		//building real OID array for SNMPWALK and OID=> snmpMetric map to asign results to each object
-		m.snmpOids = []string{}
-		m.oidSnmpMap = make(map[string]*SnmpMetric)
-		//metric level
-		for kIdx, vIdx := range m.values {
-			d.log.Debugf("KEY iDX %s", kIdx)
-			//index level
-			for kM, vM := range vIdx {
-				d.log.Debugf("KEY METRIC %s OID %s", kM, vM.realOID)
-				m.snmpOids = append(m.snmpOids, vM.realOID)
-				m.oidSnmpMap[vM.realOID] = vM
-
-			}
-		}
-		//		log.Printf("DEBUG oid map %+v", m.oidSnmpMap)
-	}
 	//get data first time
 	// useful to inicialize counter all value and test device snmp availability
 	for _, m := range d.InfmeasArray {
 		if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
 			_, _, err := m.SnmpGetData(d.snmpClient)
 			if err != nil {
-				d.log.Fatalf("SNMP First Get Data error for host: %s", d.cfg.Host)
+				d.log.Errorf("SNMP First Get Data error for host: %s", d.cfg.Host)
 			}
 		} else {
 			_, _, err := m.SnmpBulkData(d.snmpClient)
 			if err != nil {
-				d.log.Fatalf("SNMP First Get Data error for host: %s", d.cfg.Host)
+				d.log.Errorf("SNMP First Get Data error for host: %s", d.cfg.Host)
 			}
-
 		}
 	}
 
