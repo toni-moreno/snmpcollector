@@ -220,7 +220,12 @@ func (m *InfluxMeasurement) printConfig() {
 
 	}
 	for _, v := range m.cfg.fieldMetric {
-		fmt.Printf("\t*Metric[%s]\tName[%s]\tOID:%s\t(%s) \n", v.ID, v.FieldName, v.BaseOID, v.DataSrcType)
+		if v.IsTag == true {
+			fmt.Printf("\t*TAG[%s]\tTagName[%s]\tOID:%s\t(%s) \n", v.ID, v.FieldName, v.BaseOID, v.DataSrcType)
+		} else {
+			fmt.Printf("\t*Metric[%s]\tName[%s]\tOID:%s\t(%s) \n", v.ID, v.FieldName, v.BaseOID, v.DataSrcType)
+		}
+
 	}
 	if m.cfg.GetMode == "indexed" {
 		fmt.Printf(" ---------------------------------------------------------\n")
@@ -410,22 +415,25 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 			m.log.Warnf("no value retured by pdu :%+v", pdu)
 			return nil //if error return the bulk process will stop
 		}
+		i := strings.LastIndex(pdu.Name, ".")
+		suffix := pdu.Name[i+1:]
+
+		if m.cfg.IndexAsValue == true {
+			allindex[suffix] = suffix
+			return nil
+		}
+		var name string
 		switch pdu.Type {
 		case gosnmp.OctetString:
-			i := strings.LastIndex(pdu.Name, ".")
-			suffix := pdu.Name[i+1:]
-			name := string(pdu.Value.([]byte))
-			allindex[suffix] = name
+			name = string(pdu.Value.([]byte))
 			m.log.Debugf("Got the following OctetString index for [%s/%s]", suffix, name)
 		case gosnmp.Integer, gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
-			i := strings.LastIndex(pdu.Name, ".")
-			suffix := pdu.Name[i+1:]
-			name := strconv.FormatInt(pduVal2Int64(pdu), 10)
-			allindex[suffix] = name
+			name = strconv.FormatInt(pduVal2Int64(pdu), 10)
 			m.log.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
 		default:
 			m.log.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric Value", m.cfg.IndexOID)
 		}
+		allindex[suffix] = name
 		return nil
 	}
 	switch m.snmpClient.Version {

@@ -60,8 +60,8 @@
 		tooltip="Different mode to get the values. On 'value' the measurement collects many values as fields have. On 'indexed' the measurement collects many values as many fields finds on the indexOID request"></i>
 	 	<div class="col-sm-9">
 			<select formControlName="GetMode" id="GetMode">
-				<option value="value">Value</option>
-				<option value="indexed">Indexed</option>
+				<option value="value">Value(snmp scalar)</option>
+				<option value="indexed">Indexed (snmp table)</option>
 			</select>
 			<control-messages [control]="influxmeasForm.controls.GetMode"></control-messages>
 		  </div>
@@ -88,6 +88,20 @@
 				<control-messages [control]="influxmeasForm.controls.IndexTag"></control-messages>
 		</div>
 		</div>
+
+    <div class="form-group">
+  	<label class="control-label col-sm-2" for="IndexAsValue">IndexAsValue</label>
+			<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="If set to true the value for the TAG will be the indexnum , else will be the value , remember in SNMP Indexed Tables we will get data on this form snmpget(IndexOID.Indexnum) = value "></i>
+		 <div class="col-sm-9">
+			 <select formControlName="IndexAsValue" id="IndexAsValue" >
+				 <option value="false">false</option>
+				 <option value="true">true</option>
+			 </select>
+		<control-messages [control]="influxmeasForm.controls.IndexAsValue"></control-messages>
+		</div>
+		</div>
+
 	</div>
 
 		<div class="form-group">
@@ -179,6 +193,21 @@
 		<control-messages [control]="influxmeasForm.controls.IndexTag"></control-messages>
 		</div>
 	</div>
+
+
+  <div class="form-group">
+  <label class="control-label col-sm-2" for="IndexAsValue">IndexAsValue</label>
+    <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+    tooltip="If set to true the value for the TAG will be the indexnum , else will be the value , remember in SNMP Indexed Tables we will get data on this form snmpget(IndexOID.Indexnum) = value "></i>
+   <div class="col-sm-9">
+		 <select formControlName="IndexAsValue" id="IndexAsValue" [ngModel] = "testinfluxmeas.IndexAsValue">
+			 <option value="false">false</option>
+			 <option value="true">true</option>
+		 </select>
+  <control-messages [control]="influxmeasForm.controls.IndexAsValue"></control-messages>
+  </div>
+  </div>
+
 	</div>
 
 

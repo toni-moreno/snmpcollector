@@ -17,6 +17,7 @@ export class InfluxMeasService {
               if (!value) return null
               else return String(value).split(',');
             }
+            if ( key == 'IndexAsValue' ) return ( value === "true");
             return value;
         }), { headers: headers })
         .map( (responseData) => responseData.json());
@@ -32,6 +33,7 @@ export class InfluxMeasService {
                     if (!value) return null
                     else return String(value).split(',');
                   }
+          if ( key == 'IndexAsValue' ) return ( value === "true");
                   return value;
 
         }), {  headers: headers   })

@@ -66,7 +66,7 @@ type SnmpMetricCfg struct {
 	GetRate     bool    `xorm:"getrate"` //ony Valid with COUNTERS
 	Scale       float64 `xorm:"scale"`   //only valid with gauge/integer
 	Shift       float64 `xorm:"shift"`
-	IsTag       bool    `xorm:"istag"`
+	IsTag       bool    `xorm:"'istag' default 0"`
 }
 
 //InfluxMeasurementCfg the measurement configuration
@@ -74,11 +74,12 @@ type InfluxMeasurementCfg struct {
 	ID   string `xorm:"'id' unique"`
 	Name string `xorm:"name"`
 
-	GetMode     string           `xorm:"getmode"` //0=value 1=indexed
-	IndexOID    string           `xorm:"indexoid"`
-	IndexTag    string           `xorm:"indextag"`
-	Fields      []string         `xorm:"-"` //Got from MeasurementFieldCfg table
-	fieldMetric []*SnmpMetricCfg `xorm:"-"`
+	GetMode      string           `xorm:"getmode"` //0=value 1=indexed
+	IndexOID     string           `xorm:"indexoid"`
+	IndexTag     string           `xorm:"indextag"`
+	IndexAsValue bool             `xorm:"'indexasvalue' default 0"`
+	Fields       []string         `xorm:"-"` //Got from MeasurementFieldCfg table
+	fieldMetric  []*SnmpMetricCfg `xorm:"-"`
 }
 
 //MeasurementFieldCfg the metrics contained on each measurement (to initialize on the fieldMetric array)
