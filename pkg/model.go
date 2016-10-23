@@ -283,7 +283,7 @@ func (dbc *DatabaseCfg) AddSnmpMetricCfg(dev SnmpMetricCfg) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Info("Added new Snmp Metric Successfully with id %s ", dev.ID)
+	log.Infof("Added new Snmp Metric Successfully with id %s ", dev.ID)
 	return affected, nil
 }
 
@@ -324,15 +324,15 @@ func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64
 	defer session.Close()
 
 	if id != dev.ID { //ID has been changed
-		affecteddev, err = session.Where("id_metric_cfg='" + id + "'").Update(&MeasurementFieldCfg{IDMetricCfg: dev.ID})
+		affecteddev, err = session.Where("id_metric_cfg='" + id + "'").UseBool().Update(&MeasurementFieldCfg{IDMetricCfg: dev.ID})
 		if err != nil {
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Metric id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Info("Updated SnmpMetric Config to %s devices ", affecteddev)
+		log.Infof("Updated SnmpMetric Config to %s devices ", affecteddev)
 	}
 
-	affected, err = session.Where("id='" + id + "'").Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -342,7 +342,7 @@ func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64
 		return 0, err
 	}
 
-	log.Info("Updated SnmpMetric Config Successfully with id %s and data:%+v, affected", id, dev)
+	log.Infof("Updated SnmpMetric Config Successfully with id %s and data:%+v, affected", id, dev)
 	return affected, nil
 }
 
@@ -509,13 +509,13 @@ func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurem
 	defer session.Close()
 
 	if id != dev.ID { //ID has been changed
-		log.Info("Updated Measurement Config to %s devices ", affecteddev)
-		affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").Update(&MGroupsMeasurements{IDMeasurementCfg: dev.ID})
+		log.Infof("Updated Measurement Config to %s devices ", affecteddev)
+		affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").UseBool().Update(&MGroupsMeasurements{IDMeasurementCfg: dev.ID})
 		if err != nil {
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Info("Updated Measurement config to %s devices ", affecteddev)
+		log.Infof("Updated Measurement config to %s devices ", affecteddev)
 	}
 	//delete all previous values
 	affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").Delete(&MeasurementFieldCfg{})
@@ -538,7 +538,7 @@ func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurem
 		}
 	}
 	//update data
-	affected, err = session.Where("id='" + id + "'").Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -548,7 +548,7 @@ func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurem
 		return 0, err
 	}
 
-	log.Info("Updated Influx Measurement Config Successfully with id %s and  (%d previous / %d new Fields), affected", id, affecteddev, newmf)
+	log.Infof("Updated Influx Measurement Config Successfully with id %s and  (%d previous / %d new Fields), affected", id, affecteddev, newmf)
 	return affected, nil
 }
 
@@ -695,16 +695,16 @@ func (dbc *DatabaseCfg) UpdateMeasFilterCfg(id string, dev MeasFilterCfg) (int64
 	defer session.Close()
 
 	if id != dev.ID { //ID has been changed only need change id's in snsmpdev
-		affecteddev, err = session.Where("id_filter='" + id + "'").Update(&SnmpDevFilters{IDFilter: dev.ID})
+		affecteddev, err = session.Where("id_filter='" + id + "'").UseBool().Update(&SnmpDevFilters{IDFilter: dev.ID})
 		if err != nil {
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Filter id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Info("Updated Measurement Filter Config to %s devices ", affecteddev)
+		log.Infof("Updated Measurement Filter Config to %s devices ", affecteddev)
 	}
 
 	//update data
-	affected, err = session.Where("id='" + id + "'").Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -714,7 +714,7 @@ func (dbc *DatabaseCfg) UpdateMeasFilterCfg(id string, dev MeasFilterCfg) (int64
 		return 0, err
 	}
 
-	log.Info("Updated Measurement Filter Config Successfully with id %s and  (%d previous / %d new Fields), affected", id, affecteddev, newmf)
+	log.Infof("Updated Measurement Filter Config Successfully with id %s and  (%d previous / %d new Fields), affected", id, affecteddev, newmf)
 	return affected, nil
 }
 
@@ -833,7 +833,7 @@ func (dbc *DatabaseCfg) AddMGroupsCfg(dev MGroupsCfg) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Info("Added new Measurement Group Successfully with id %s  [%d Measurements]", dev.ID, newmf)
+	log.Infof("Added new Measurement Group Successfully with id %s  [%d Measurements]", dev.ID, newmf)
 	return affected, nil
 }
 
@@ -885,7 +885,7 @@ func (dbc *DatabaseCfg) UpdateMGroupsCfg(id string, dev MGroupsCfg) (int64, erro
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Metric id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Info("Updated Measurement Group Config to %s devices ", affecteddev)
+		log.Infof("Updated Measurement Group Config to %s devices ", affecteddev)
 	}
 	//Remove all measurements in group.
 	_, err = session.Where("id_mgroup_cfg='" + id + "'").Delete(&MGroupsMeasurements{})
@@ -907,7 +907,7 @@ func (dbc *DatabaseCfg) UpdateMGroupsCfg(id string, dev MGroupsCfg) (int64, erro
 		}
 	}
 
-	affected, err = session.Where("id='" + id + "'").Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -917,7 +917,7 @@ func (dbc *DatabaseCfg) UpdateMGroupsCfg(id string, dev MGroupsCfg) (int64, erro
 		return 0, err
 	}
 
-	log.Info("Updated Measurement Group Successfully with id %s [%d measurements], affected", dev.ID, newmg)
+	log.Infof("Updated Measurement Group Successfully with id %s [%d measurements], affected", dev.ID, newmg)
 	return affected, nil
 }
 
@@ -1068,7 +1068,7 @@ func (dbc *DatabaseCfg) AddSnmpDeviceCfg(dev SnmpDeviceCfg) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Info("Added new Device Successfully with id %s [%d Measurment Groups | %d filters]", dev.ID, newmg, newft)
+	log.Infof("Added new Device Successfully with id %s [%d Measurment Groups | %d filters]", dev.ID, newmg, newft)
 	return affected, nil
 }
 
@@ -1142,7 +1142,7 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 		}
 		newft, err = session.Insert(&mfstruct)
 	}
-	affected, err = session.Where("id='" + id + "'").Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
 
 	if err != nil {
 		session.Rollback()
@@ -1152,9 +1152,9 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 	if err != nil {
 		return 0, err
 	}
-	log.Info("Updated device constrains (old %d / new %d ) Measurement Groups", deletemg, newmg)
-	log.Info("Updated device constrains (old %d / new %d ) MFilters", deleteft, newft)
-	log.Info("Updated new Device Successfully with id %s and data:%+v", id, dev)
+	log.Infof("Updated device constrains (old %d / new %d ) Measurement Groups", deletemg, newmg)
+	log.Infof("Updated device constrains (old %d / new %d ) MFilters", deleteft, newft)
+	log.Infof("Updated new Device Successfully with id %s and data:%+v", id, dev)
 	return affected, nil
 }
 
@@ -1227,7 +1227,7 @@ func (dbc *DatabaseCfg) AddInfluxCfg(dev InfluxCfg) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Info("Added new influx backend Successfully with id %s ", dev.ID)
+	log.Infof("Added new influx backend Successfully with id %s ", dev.ID)
 	return affected, nil
 }
 
@@ -1267,15 +1267,15 @@ func (dbc *DatabaseCfg) UpdateInfluxCfg(id string, dev InfluxCfg) (int64, error)
 	session := dbc.x.NewSession()
 	defer session.Close()
 	if id != dev.ID { //ID has been changed
-		affecteddev, err = session.Where("outdb='" + id + "'").Update(&SnmpDeviceCfg{OutDB: dev.ID})
+		affecteddev, err = session.Where("outdb='" + id + "'").UseBool().Update(&SnmpDeviceCfg{OutDB: dev.ID})
 		if err != nil {
 			session.Rollback()
 			return 0, fmt.Errorf("Error on Delete InfluxConfig on uopdate id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Info("Updated Influx Config to %s devices ", affecteddev)
+		log.Infof("Updated Influx Config to %s devices ", affecteddev)
 	}
 
-	affected, err = session.Where("id='" + id + "'").Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -1285,7 +1285,7 @@ func (dbc *DatabaseCfg) UpdateInfluxCfg(id string, dev InfluxCfg) (int64, error)
 		return 0, err
 	}
 
-	log.Info("Updated Influx Config Successfully with id %s and data:%+v, affected", id, dev)
+	log.Infof("Updated Influx Config Successfully with id %s and data:%+v, affected", id, dev)
 	return affected, nil
 }
 
