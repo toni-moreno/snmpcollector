@@ -39,7 +39,8 @@ export class SnmpMetricCfgComponent {
 			//Depending on datasrctype
 			GetRate:[''],
 			Scale: [''],
-			Shift: ['']
+			Shift: [''],
+      IsTag:['false',Validators.required]
 		});
   }
 

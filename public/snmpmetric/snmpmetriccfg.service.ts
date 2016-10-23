@@ -20,6 +20,10 @@ export class SnmpMetricService {
                 if (value === 'true')   return true;
                 else return false;
             }
+            if ( key == 'IsTag' ) {
+                if ( value === "true") return true;
+                else return false;
+            }
             return value;
 
         }), { headers: headers })
@@ -36,7 +40,12 @@ export class SnmpMetricService {
                 return parseFloat(value);
             }
             if (key == 'GetRate'){
-                return Boolean(value);
+                if (value === 'true')   return true;
+                else return false;
+            }
+            if ( key == 'IsTag' ) {
+                if ( value === "true") return true;
+                else return false;
             }
             return value;
 
