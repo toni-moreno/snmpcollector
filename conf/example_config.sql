@@ -35,17 +35,19 @@ metrics
   description = "percentage of user CPU time"
   baseOID = ".1.3.6.1.4.1.2021.11.9.0"
   Datasrctype = "INTEGER"
+  IsTag = false
 */
 
-INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,description)  VALUES ('Linux_user_CPU_percent','user','.1.3.6.1.4.1.2021.11.9.0','INTEGER',0,0.0,0.0,'percentage of user CPU time');
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('Linux_user_CPU_percent','user','.1.3.6.1.4.1.2021.11.9.0','INTEGER',0,0.0,0.0,0,'percentage of user CPU time');
 /*
 [metrics."Linux_system_CPU_percent"]
   fieldname = "system"
   description = "percentage of System CPU time"
   baseOID = ".1.3.6.1.4.1.2021.11.10.0"
   Datasrctype = "INTEGER"
+  IsTag = false
 */
-INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,description)  VALUES ('Linux_system_CPU_percent','system','.1.3.6.1.4.1.2021.11.10.0','INTEGER',0,0.0,0.0,'percentage of system CPU time');
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('Linux_system_CPU_percent','system','.1.3.6.1.4.1.2021.11.10.0','INTEGER',0,0.0,0.0,0,'percentage of system CPU time');
 
 /*
 [metrics."Linux_idle_CPU_percent"]
@@ -53,9 +55,10 @@ INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, sca
   description = "percentage of System CPU time"
   baseOID = ".1.3.6.1.4.1.2021.11.11.0"
   Datasrctype = "INTEGER"
+  IsTag = false
   */
 
-INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,description)  VALUES ('Linux_idle_CPU_percent','idle','.1.3.6.1.4.1.2021.11.11.0','INTEGER',0,0.0,0.0,'percentage of Idle CPU time');
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('Linux_idle_CPU_percent','idle','.1.3.6.1.4.1.2021.11.11.0','INTEGER',0,0.0,0.0,0,'percentage of Idle CPU time');
 
 /*
 [metrics."ifHCInOctets"]
@@ -64,9 +67,10 @@ INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, sca
   baseOID = ".1.3.6.1.2.1.31.1.1.1.6"
   DatasrcType = "COUNTER64"
   getrate = false
+  IsTag = false
 */
 
-INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,description)  VALUES ('ifHCInOctets','In.bytes','.1.3.6.1.2.1.31.1.1.1.6','COUNTER64',0,0.0,0.0,'Bytes In - 64-bit Counters');
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('ifHCInOctets','In.bytes','.1.3.6.1.2.1.31.1.1.1.6','COUNTER64',0,0.0,0.0,0,'Bytes In - 64-bit Counters');
 
 /*
 
@@ -76,8 +80,9 @@ INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, sca
   baseOID = ".1.3.6.1.2.1.31.1.1.1.10"
   DatasrcType = "COUNTER64"
   getRate = false
+  IsTag = false
 */
-INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,description)  VALUES ('ifHCOutOctets','Out.bytes','.1.3.6.1.2.1.31.1.1.1.10','COUNTER64',0,0.0,0.0,'Bytes Out - 64-bit Counters');
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('ifHCOutOctets','Out.bytes','.1.3.6.1.2.1.31.1.1.1.10','COUNTER64',0,0.0,0.0,0,'Bytes Out - 64-bit Counters');
 
 /*
 [metrics."ifHCInUcastPkts"]
@@ -86,8 +91,10 @@ INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, sca
   baseOID = ".1.3.6.1.2.1.31.1.1.1.7"
   DatasrcType = "COUNTER64"
   getRate = false
+  IsTag = false
+
 */
-INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,description)  VALUES ('ifHCInUcastPkts','In.packets','.1.3.6.1.2.1.31.1.1.1.7','COUNTER64',0,0.0,0.0,'Packets In - 64-bit Counters');
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,istag, description)  VALUES ('ifHCInUcastPkts','In.packets','.1.3.6.1.2.1.31.1.1.1.7','COUNTER64',0,0.0,0.0,0,'Packets In - 64-bit Counters');
 /*
 [metrics."ifHCOutUcastPkts"]
   fieldname = "Out.packets"
@@ -95,8 +102,9 @@ INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, sca
   baseOID = ".1.3.6.1.2.1.31.1.1.1.11"
   DatasrcType = "COUNTER64"
   getRate = false
+  IsTag = false
 */
-INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,description)  VALUES ('ifHCOutUcastPkts','Out.packets','.1.3.6.1.2.1.31.1.1.1.11','COUNTER64',0,0.0,0.0,'Packets Out - 64-bit Counters');
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('ifHCOutUcastPkts','Out.packets','.1.3.6.1.2.1.31.1.1.1.11','COUNTER64',0,0.0,0.0,0,'Packets Out - 64-bit Counters');
 /*
 [metrics."ifInOctets"]
   fieldname = "In.bytes"
@@ -104,10 +112,10 @@ INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, sca
   baseOID = ".1.3.6.1.2.1.2.2.1.10"
   DatasrcType = "COUNTER32"
   getRate = false
-
+  IsTag = false
   */
 
-INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,description)  VALUES ('ifInOctets','In.bytes','.1.3.6.1.2.1.2.2.1.10','COUNTER32',0,0.0,0.0,'Bytes In - 32-bit Counters');
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('ifInOctets','In.bytes','.1.3.6.1.2.1.2.2.1.10','COUNTER32',0,0.0,0.0,0,'Bytes In - 32-bit Counters');
 
 /*
 [metrics."ifOutOctets"]
@@ -116,10 +124,23 @@ INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, sca
   baseOID = ".1.3.6.1.2.1.2.2.1.16"
   DatasrcType = "COUNTER32"
   getRate = false
-
+  IsTag = false
 */
 
-INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift,description)  VALUES ('ifOutOctets','Out.bytes','.1.3.6.1.2.1.2.2.1.16','COUNTER32',0,0.0,0.0,'Bytes Out - 32-bit Counters');
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('ifOutOctets','Out.bytes','.1.3.6.1.2.1.2.2.1.16','COUNTER32',0,0.0,0.0,0,'Bytes Out - 32-bit Counters');
+
+/*
+[metrics."ifName"]
+  fieldname = "IfName"
+  description = "Tag for Name "
+  baseOID = ".1.3.6.1.2.1.31.1.1.1.1"
+  DatasrcType = "STRING"
+  getRate = false
+  IsTag = true 
+*/
+
+INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('ifName','IfName','.1.3.6.1.2.1.31.1.1.1.1','STRING',0,0.0,0.0,1,'Tags');
+
 
 /*
 ===========================
@@ -170,6 +191,9 @@ INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('li
  INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports','ifHCOutOctets');
  INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports','ifHCInUcastPkts');
  INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports','ifHCOutUcastPkts');
+ INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports','ifName');
+
+
 
 /*Test to check issue */
 INSERT INTO influx_measurement_cfg (id, name, getmode, indexoid, indextag) VALUES ('linux_ports_by_index','linux.ports','indexed','.1.3.6.1.2.1.2.2.1.1','ifindex');

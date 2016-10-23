@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/soniah/gosnmp"
 	"math"
 	"strings"
 	"time"
@@ -14,7 +15,9 @@ const (
 	INTEGER
 	COUNTER32
 	COUNTER64
-	ABSOLUTE //It is intended for counters which are reset upon reading. In effect, the type is very similar to GAUGE except that the value is an (unsigned) integer
+	STRING
+	HWADDR
+	IPADDR
 )
 
 /*
@@ -37,7 +40,9 @@ func (m *SnmpMetricCfg) Init(name string) error {
 	case "INTEGER":
 	case "COUNTER32":
 	case "COUNTER64":
-	case "ABSOLUTE":
+	case "STRING":
+	case "HWADDR":
+	case "IPADDR":
 	default:
 		return errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
 	}
@@ -51,34 +56,37 @@ func (m *SnmpMetricCfg) Init(name string) error {
 //SnmpMetric type to metric runtime
 type SnmpMetric struct {
 	cfg         *SnmpMetricCfg
-	cookedValue float64
-	curValue    int64
-	lastValue   int64
-	curTime     time.Time
-	lastTime    time.Time
-	Compute     func()
-	setRawData  func(val int64, now time.Time)
-	realOID     string
+	cookedValue interface{}
+	//cookedValue float64
+	curValue   int64
+	lastValue  int64
+	curTime    time.Time
+	lastTime   time.Time
+	Compute    func()
+	setRawData func(pdu gosnmp.SnmpPDU, now time.Time)
+	realOID    string
 }
 
 func (s *SnmpMetric) Init() error {
 	switch s.cfg.DataSrcType {
-	case "GAUGE":
-		s.setRawData = func(val int64, now time.Time) {
+	case "GAUGE", "INTEGER":
+		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			val := pduVal2Int64(pdu)
 			s.cookedValue = float64(val)
 			s.curTime = now
+			s.Compute()
 		}
-		s.Compute = func() {
-		}
-	case "INTEGER":
-		s.setRawData = func(val int64, now time.Time) {
-			s.cookedValue = float64(val)
-			s.curTime = now
-		}
-		s.Compute = func() {
+		if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
+			s.Compute = func() {
+				s.cookedValue = (s.cfg.Scale * float64(s.cookedValue.(float64))) + s.cfg.Shift
+			}
+		} else {
+			s.Compute = func() {
+			}
 		}
 	case "COUNTER32":
-		s.setRawData = func(val int64, now time.Time) {
+		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			val := pduVal2Int64(pdu)
 			s.lastTime = s.curTime
 			s.lastValue = s.curValue
 			s.curValue = val
@@ -105,7 +113,8 @@ func (s *SnmpMetric) Init() error {
 
 		}
 	case "COUNTER64":
-		s.setRawData = func(val int64, now time.Time) {
+		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			val := pduVal2Int64(pdu)
 			s.lastTime = s.curTime
 			s.lastValue = s.curValue
 			s.curValue = val
@@ -131,9 +140,21 @@ func (s *SnmpMetric) Init() error {
 			}
 
 		}
-
-	case "ABSOLUTE":
-		//TODO
+	case "STRING":
+		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			s.cookedValue = pduVal2str(pdu)
+			s.curTime = now
+		}
+	case "IPADDR":
+		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			s.cookedValue, _ = pduVal2IPaddr(pdu)
+			s.curTime = now
+		}
+	case "HWADDR":
+		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			s.cookedValue, _ = pduVal2IPaddr(pdu)
+			s.curTime = now
+		}
 	}
 	return nil
 }

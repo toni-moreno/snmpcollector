@@ -53,7 +53,7 @@ type SnmpDeviceCfg struct {
 
 	//Filters for measurements
 	MeasurementGroups []string `xorm:"-"`
-	MeasFilters  []string `xorm:"-"`
+	MeasFilters       []string `xorm:"-"`
 }
 
 //SnmpMetricCfg Metric config
@@ -63,9 +63,10 @@ type SnmpMetricCfg struct {
 	Description string  `xorm:"description"`
 	BaseOID     string  `xorm:"baseoid"`
 	DataSrcType string  `xorm:"datasrctype"`
-	GetRate     bool    `xorm:"getrate"` //ony Valid with COUNTERS/ABSOLUTE
-	Scale       float64 `xorm:"scale"`
+	GetRate     bool    `xorm:"getrate"` //ony Valid with COUNTERS
+	Scale       float64 `xorm:"scale"`   //only valid with gauge/integer
 	Shift       float64 `xorm:"shift"`
+	IsTag       bool    `xorm:"istag"`
 }
 
 //InfluxMeasurementCfg the measurement configuration

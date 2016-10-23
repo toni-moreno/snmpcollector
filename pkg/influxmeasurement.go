@@ -274,8 +274,14 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 			Fields := make(map[string]interface{})
 			for _, v_mtr := range v_idx {
 				m.log.Debugf("DEBUG METRIC %+v", v_mtr.cfg)
-				m.log.Debugf("generating field for Metric: %s", v_mtr.cfg.FieldName)
-				Fields[v_mtr.cfg.FieldName] = v_mtr.cookedValue
+				if v_mtr.cfg.IsTag == true {
+					m.log.Debugf("generating Tag for Metric: %s", v_mtr.cfg.FieldName)
+					Tags[v_mtr.cfg.FieldName] = string(v_mtr.cookedValue.(string))
+				} else {
+					m.log.Debugf("generating field for Metric: %s", v_mtr.cfg.FieldName)
+					Fields[v_mtr.cfg.FieldName] = v_mtr.cookedValue
+				}
+
 				t = v_mtr.curTime
 			}
 			m.log.Debugf("FIELDS:%+v", Fields)
@@ -318,7 +324,7 @@ func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
 		}
 		if metric, ok := m.oidSnmpMap[pdu.Name]; ok {
 			m.log.Debugln("OK measurement ", m.cfg.ID, "SNMP RESULT OID", pdu.Name, "MetricFound", pdu.Value)
-			metric.setRawData(pduVal2Int64(pdu), now)
+			metric.setRawData(pdu, now)
 		} else {
 			m.log.Debugf("returned OID from device: %s  Not Found in measurement /metric list: %+v", pdu.Name, m.cfg.ID)
 		}
@@ -382,7 +388,7 @@ func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
 			val := pdu.Value
 			if metric, ok := m.oidSnmpMap[oid]; ok {
 				m.log.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %s ", m.cfg.ID, oid, val)
-				metric.setRawData(pduVal2Int64(pdu), now)
+				metric.setRawData(pdu, now)
 			} else {
 				m.log.Errorln("OID", oid, "Not Found in measurement", m.cfg.ID)
 			}

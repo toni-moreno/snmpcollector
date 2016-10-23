@@ -1,3 +1,15 @@
+
+# v 0.5.1
+### New features.
+* Define field metric as Tag (IsTag = true) => type STRING,HWADDR,IP  
+
+
+### fixes
+
+
+### breaking changes
+$db snmp_metri_cfg
+
 # v 0.5.0
 ### New features.
 * new WebIU with all forms to insert , update , delete objects.

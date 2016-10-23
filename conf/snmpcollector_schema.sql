@@ -2,7 +2,7 @@ CREATE TABLE `influx_cfg` (`id` TEXT NULL, `host` TEXT NULL, `port` INTEGER NULL
 CREATE UNIQUE INDEX `UQE_influx_cfg_id` ON `influx_cfg` (`id`);
 CREATE TABLE `snmp_device_cfg` (`id` TEXT NULL, `host` TEXT NULL, `port` INTEGER NULL, `retries` INTEGER NULL, `timeout` INTEGER NULL, `repeat` INTEGER NULL, `snmpversion` TEXT NULL, `community` TEXT NULL, `v3seclevel` TEXT NULL, `v3authuser` TEXT NULL, `v3authpass` TEXT NULL, `v3authprot` TEXT NULL, `v3privpass` TEXT NULL, `v3privprot` TEXT NULL, `freq` INTEGER NULL, `outdb` TEXT NULL, `loglevel` TEXT NULL, `logfile` TEXT NULL, `snmpdebug` INTEGER NULL, `devicetagname` TEXT NULL, `devicetagvalue` TEXT NULL, `extra-tags` TEXT NULL);
 CREATE UNIQUE INDEX `UQE_snmp_device_cfg_id` ON `snmp_device_cfg` (`id`);
-CREATE TABLE `snmp_metric_cfg` (`id` TEXT NULL, `field_name` TEXT NULL, `description` TEXT NULL, `baseoid` TEXT NULL, `datasrctype` TEXT NULL, `getrate` INTEGER NULL, `scale` REAL NULL, `shift` REAL NULL);
+CREATE TABLE `snmp_metric_cfg` (`id` TEXT NULL, `field_name` TEXT NULL, `description` TEXT NULL, `baseoid` TEXT NULL, `datasrctype` TEXT NULL, `getrate` INTEGER NULL, `scale` REAL NULL, `shift` REAL NULL, `istag` INTEGER NULL);
 CREATE UNIQUE INDEX `UQE_snmp_metric_cfg_id` ON `snmp_metric_cfg` (`id`);
 CREATE TABLE `influx_measurement_cfg` (`id` TEXT NULL, `name` TEXT NULL, `getmode` TEXT NULL, `indexoid` TEXT NULL, `indextag` TEXT NULL);
 CREATE UNIQUE INDEX `UQE_influx_measurement_cfg_id` ON `influx_measurement_cfg` (`id`);
