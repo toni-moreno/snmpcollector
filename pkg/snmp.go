@@ -3,6 +3,7 @@ package main
 import (
 	ers "errors"
 	//	"log"
+	"fmt"
 	"net"
 	//"strings"
 	"time"
@@ -11,18 +12,10 @@ import (
 	"strconv"
 )
 
-func B2S(bs []uint8) string {
-	b := make([]byte, len(bs))
-	for i, v := range bs {
-		b[i] = byte(v)
-	}
-	return string(b)
-}
-
 func pduVal2str(pdu gosnmp.SnmpPDU) string {
 	value := pdu.Value
 	if pdu.Type == gosnmp.OctetString {
-		return B2S(value.([]uint8))
+		return string(value.([]byte))
 	} else {
 		return ""
 	}
@@ -63,6 +56,41 @@ func pduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 		return 0
 	}
 	return val
+}
+
+func pduVal2Hwaddr(pdu gosnmp.SnmpPDU) (string, error) {
+	value := pdu.Value
+	switch vt := value.(type) {
+	case string:
+		value = net.HardwareAddr(vt).String()
+	case []byte:
+		value = net.HardwareAddr(vt).String()
+	default:
+		return "", fmt.Errorf("invalid type (%T) for hwaddr conversion", value)
+	}
+	return string(value.([]byte)), nil
+}
+
+func pduVal2IPaddr(pdu gosnmp.SnmpPDU) (string, error) {
+	var ipbs []byte
+	value := pdu.Value
+	switch vt := value.(type) {
+	case string:
+		ipbs = []byte(vt)
+	case []byte:
+		ipbs = vt
+	default:
+		return "", fmt.Errorf("invalid type (%T) for ipaddr conversion", value)
+	}
+
+	switch len(ipbs) {
+	case 4, 16:
+		value = net.IP(ipbs).String()
+	default:
+		return "", fmt.Errorf("invalid length (%d) for ipaddr conversion", len(ipbs))
+	}
+
+	return string(value.([]byte)), nil
 }
 
 const (

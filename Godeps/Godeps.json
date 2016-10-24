@@ -13,8 +13,8 @@
 		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.10.0-19-gf3cfb45",
-			"Rev": "f3cfb454f4c209e6668c95216c4744b8fddb2356"
+			"Comment": "v0.10.0-38-g3ec0642",
+			"Rev": "3ec0642a7fb6488f65b06f9040adc67e3990296a"
 		},
 		{
 			"ImportPath": "github.com/Unknwon/com",
@@ -38,11 +38,6 @@
 			"Rev": "d8a0b8677191f4380287cfebd08e462217bac7ad"
 		},
 		{
-			"ImportPath": "github.com/go-macaron/macaron",
-			"Comment": "v1.1.8-1-g826ddf1",
-			"Rev": "826ddf13862c544525338a2deda6f57ffd1a9083"
-		},
-		{
 			"ImportPath": "github.com/go-macaron/session",
 			"Rev": "66031fcb37a0fff002a1f028eb0b3a815c78306b"
 		},
@@ -52,14 +47,18 @@
 			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"
 		},
 		{
+			"ImportPath": "github.com/go-xorm/builder",
+			"Rev": "cd42e8337f3031e737c3f415b6354793cf30f1c9"
+		},
+		{
 			"ImportPath": "github.com/go-xorm/core",
-			"Comment": "v0.5.4",
-			"Rev": "bc1b7f81f0e369289078424064634a5ee7d21051"
+			"Comment": "v0.5.4-1-g5bf745d",
+			"Rev": "5bf745d7d163f4380e6c2bba8c4afa60534dd087"
 		},
 		{
 			"ImportPath": "github.com/go-xorm/xorm",
-			"Comment": "v0.5.4-14-g01a03a3",
-			"Rev": "01a03a3092e1bce8f704afac2790052c1aef3069"
+			"Comment": "v0.5.6-33-g6e4cb71",
+			"Rev": "6e4cb7136aa1e9d9cf41bcfa35d36281eee9bcb1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl",
@@ -99,18 +98,18 @@
 		},
 		{
 			"ImportPath": "github.com/influxdata/influxdb/client/v2",
-			"Comment": "v0.13.0-249-g573d7ed",
-			"Rev": "573d7ed4e443573839057769f825761dcb16b3f4"
+			"Comment": "v0.13.0-768-gaeb84b3",
+			"Rev": "aeb84b37379a7f73bfd6872649b81e59e461d9bf"
 		},
 		{
 			"ImportPath": "github.com/influxdata/influxdb/models",
-			"Comment": "v0.13.0-249-g573d7ed",
-			"Rev": "573d7ed4e443573839057769f825761dcb16b3f4"
+			"Comment": "v0.13.0-768-gaeb84b3",
+			"Rev": "aeb84b37379a7f73bfd6872649b81e59e461d9bf"
 		},
 		{
 			"ImportPath": "github.com/influxdata/influxdb/pkg/escape",
-			"Comment": "v0.13.0-249-g573d7ed",
-			"Rev": "573d7ed4e443573839057769f825761dcb16b3f4"
+			"Comment": "v0.13.0-768-gaeb84b3",
+			"Rev": "aeb84b37379a7f73bfd6872649b81e59e461d9bf"
 		},
 		{
 			"ImportPath": "github.com/magiconair/properties",
@@ -128,8 +127,8 @@
 		},
 		{
 			"ImportPath": "github.com/soniah/gosnmp",
-			"Comment": "v1.9-memory-39-gf6904fd",
-			"Rev": "f6904fd235070fe56e2c2d799ac5f5862fc32543"
+			"Comment": "v1.9-memory-103-g3fe3beb",
+			"Rev": "3fe3beb30fa9700988893c56a63b1df8e1b68c26"
 		},
 		{
 			"ImportPath": "github.com/spf13/cast",

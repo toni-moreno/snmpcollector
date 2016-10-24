@@ -55,6 +55,20 @@
 	</div>
 </div>
 
+<div class="form-group">
+		<label class="control-label col-sm-2" for="IsTag">IsTag</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+			tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
+		<div class="col-sm-9">
+	<select formControlName="IsTag" id="IsTag">
+		<option value="true">(true) Use data as Tag</option>
+		<option value="false">(false) Use data as Field --default-- </option>
+	</select>
+		<control-messages [control]="snmpmetForm.controls.IsTag"></control-messages>
+	</div>
+</div>
+
+
 		<div class="form-group">
   <label class="control-label col-sm-2" for="Description">Description</label>
 	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
@@ -85,6 +99,9 @@
 			<option value="INTEGER">Integer</option>
 			<option value="COUNTER32">Counter-32</option>
 			<option value="COUNTER64">Counter-64</option>
+			<option value="STRING">Character String</option>
+			<option value="HWADDR">Hardware Address (MAC)</option>
+			<option value="IPADDR">IP Address</option>
 		</select>
 				<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
 	<control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
@@ -155,6 +172,20 @@
 	</div>
 </div>
 
+
+<div class="form-group">
+    <label class="control-label col-sm-2" for="IsTag">IsTag</label>
+    <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+    tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
+    <div class="col-sm-9">
+  <select formControlName="IsTag" id="IsTag" [ngModel]="testsnmpmetric.IsTag">
+    <option value="true">(true) Use data as Tag</option>
+    <option value="false">(false) Use data as Field --default-- </option>
+  </select>
+    <control-messages [control]="snmpmetForm.controls.IsTag"></control-messages>
+  </div>
+</div>
+
 		<div class="form-group">
   <label class="control-label col-sm-2" for="Description">Description</label>
 	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
@@ -186,6 +217,9 @@
 			<option value="INTEGER">Integer</option>
 			<option value="COUNTER32">Counter-32</option>
 			<option value="COUNTER64">Counter-64</option>
+			<option value="STRING">Character String</option>
+			<option value="HWADDR">Hardware Address (MAC)</option>
+			<option value="IPADDR">IP Address</option>
 		</select>
 				<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
 	<control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>

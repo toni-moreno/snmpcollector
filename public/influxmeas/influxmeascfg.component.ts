@@ -66,6 +66,7 @@ private myTexts: IMultiSelectTexts = {
 			GetMode: [''],
 			IndexOID: [''],
 			IndexTag: [''],
+      IndexAsValue: ['false'],
 			Fields: [''],
 		});
   }
