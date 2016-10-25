@@ -202,14 +202,14 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 			}
 		}
 		if mfilter != nil {
-			log.Debugf("filters %s found for device %s and measurment %s ", mfilter.ID, d.cfg.ID, m.cfg.ID)
+			d.log.Debugf("filters %s found for device %s and measurment %s ", mfilter.ID, d.cfg.ID, m.cfg.ID)
 
 		} else {
-			log.Debugf("no filters found for device %s and measurment %s", d.cfg.ID, m.cfg.ID)
+			d.log.Debugf("no filters found for device %s and measurment %s", d.cfg.ID, m.cfg.ID)
 		}
 		err := m.Init(mfilter)
 		if err != nil {
-			log.Errorf("Error on initialize Measurement %s , Error:%s no data will be gathered for this measurement", m.cfg.ID, err)
+			d.log.Errorf("Error on initialize Measurement %s , Error:%s no data will be gathered for this measurement", m.cfg.ID, err)
 			//d.InfmeasArray = append(d.InfmeasArray[:i], d.InfmeasArray[i+1:]...)
 		}
 
@@ -266,7 +266,7 @@ func (d *SnmpDevice) Init(name string) {
 	//Init channels
 	d.chDebug = make(chan bool)
 	d.chEnabled = make(chan bool)
-	d.deviceActive = true
+	d.deviceActive = d.cfg.Active
 
 	//Init Device Tags
 
@@ -308,11 +308,12 @@ func (d *SnmpDevice) Init(name string) {
 		return
 	}
 	d.snmpClient = client
-	d.InitDevSnmpInfo()
+	//d.InitDevSnmpInfo()
 }
 
 func (d *SnmpDevice) printConfig() {
 
+	d.InitDevSnmpInfo()
 	fmt.Printf("Host: %s Port: %d Version: %s\n", d.cfg.Host, d.cfg.Port, d.cfg.SnmpVersion)
 	fmt.Printf("----------------------------------------------\n")
 	for _, vM := range d.InfmeasArray {
@@ -359,6 +360,13 @@ func (d *SnmpDevice) DebugLog() *olog.Logger {
 func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 	//client := d.snmpClient
 	//debug := false
+	if d.deviceActive {
+		d.log.Infof("Begin first InidevInfo")
+		startSnmp := time.Now()
+		d.InitDevSnmpInfo()
+		elapsedSnmp := time.Since(startSnmp)
+		d.log.Infof("snmpdevice [%s] snmp INIT runtime measurments/filters took [%s] ", d.cfg.ID, elapsedSnmp)
+	}
 
 	d.log.Infof("Beginning gather process for device %s (%s)", d.cfg.ID, d.cfg.Host)
 
@@ -373,8 +381,11 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 					d.log.Errorf("Client connect error to device: %s  error :%s", d.cfg.ID, err)
 				} else {
 					d.snmpClient = client
-					d.log.Infof("SNMP connection stablishedm initializing SnmpDevice")
+					d.log.Infof("SNMP connection stablished initializing SnmpDevice")
+					startSnmp := time.Now()
 					d.InitDevSnmpInfo()
+					elapsedSnmp := time.Since(startSnmp)
+					d.log.Infof("snmpdevice [%s] snmp INIT runtime measurments/filters took [%s] ", d.cfg.ID, elapsedSnmp)
 					//device not initialized
 				}
 			} else {
@@ -398,19 +409,21 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 					if nErrors > 0 {
 						d.addErrors(nErrors)
 					}
-					//prepare batchpoint and
+					//prepare batchpoint andl
 					points := m.GetInfluxPoint( /*d.cfg.Host,*/ d.TagMap)
 					(*bpts).AddPoints(points)
 
 				}
 				elapsedSnmp := time.Since(startSnmp)
-				d.log.Infof("snmpdevice [%s] snmp poolling took [%s] ", d.cfg.ID, elapsedSnmp)
+				d.log.Infof("snmpdevice [%s] snmp polling took [%s] ", d.cfg.ID, elapsedSnmp)
 				startInflux := time.Now()
 				d.Influx.Send(bpts)
 				elapsedInflux := time.Since(startInflux)
 				d.log.Infof("snmpdevice [%s] influx send took [%s]", d.cfg.ID, elapsedInflux)
 				// pause for interval period and have optional debug toggling
 			}
+		} else {
+			d.log.Infof("snmpdevice [%s] Gather process is dissabled", d.cfg.ID)
 		}
 	LOOP:
 		for {

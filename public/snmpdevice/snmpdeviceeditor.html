@@ -86,6 +86,19 @@
 	</div>
 	</div>
 
+  <div class="form-group">
+  		<label class="control-label col-sm-2" for="SnmpDebug">Active</label>
+  		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+  			tooltip="Active on Collector reboot"></i>
+  		<div class="col-sm-9">
+  	<select formControlName="Active" id="Active">
+  		<option value="true">True</option>
+  		<option value="false">False</option>
+  	</select>
+  		<control-messages [control]="snmpdevForm.controls.Active"></control-messages>
+  	</div>
+  </div>
+
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="SnmpVersion">SnmpVersion</label>
 		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
@@ -238,6 +251,7 @@
 	</div>
 </div>
 
+
 <div class="form-group">
 		<label class="control-label col-sm-2" for="DeviceTagName">Device Tag Name</label>
 		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
@@ -260,6 +274,16 @@
 
 		<control-messages [control]="snmpdevForm.controls.DeviceTagValue"></control-messages>
 	</div>
+</div>
+
+<div class="form-group">
+	 <label class="control-label col-sm-2" for="Extratags">Extratags</label>
+	 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	 tooltip="Tag's value to identify the device in InfluxDB"></i>
+		 <div class="col-sm-9">
+<control-messages [control]="snmpdevForm.controls.Extratags"></control-messages>
+<input formControlName="Extratags" id="Extratags" />
+ </div>
 </div>
 
 	<div class="form-group">
@@ -341,6 +365,18 @@
  </div>
  </div>
 
+ <div class="form-group">
+ 		<label class="control-label col-sm-2" for="SnmpDebug">Active</label>
+ 		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+ 			tooltip="Active on Collector reboot"></i>
+ 		<div class="col-sm-9">
+ 	<select formControlName="Active" id="Active" [ngModel] = "testsnmpdev.Active" >
+ 		<option value="true">True</option>
+ 		<option value="false">False</option>
+ 	</select>
+ 		<control-messages [control]="snmpdevForm.controls.Active"></control-messages>
+ 	</div>
+ </div>
 
 
 	 <div class="form-group">
@@ -460,11 +496,11 @@
  </div>
 
 	 <div class="form-group">
-		  <label class="control-label col-sm-2" for="OutDB">Influx Server</label>
+		  <label class="control-label col-sm-2" for="OutDB">InfluxDB Server</label>
 			<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
 			tooltip="InfluxDB server"></i>
 			 <div class="col-sm-9">
- 	<select formControlName="OutDB" id="OutDB" [ngModel] = "testsnmpdev.OutDB">
+ 	<select formControlName="OutDB" id="OutDB" [ngModel] = "testsnmpdev.OutDB" >
  		<option *ngFor="let influxserver of influxservers"
  				[value]="influxserver.ID"> {{influxserver.ID}}
  		</option>
@@ -509,7 +545,7 @@
 			<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
 			tooltip="Tag's value to identify type of device in InfluxDB"></i>
 				<div class="col-sm-9">
-				 <input formControlName="DeviceTagName" id="DeviceTagName" />
+				 <input formControlName="DeviceTagName" id="DeviceTagName"  [ngModel]="testsnmpdev.DeviceTagName" />
 	 <control-messages [control]="snmpdevForm.controls.DeviceTagName"></control-messages>
  			</div>
 	  </div>

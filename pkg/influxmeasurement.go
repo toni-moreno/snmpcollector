@@ -54,10 +54,10 @@ func (mc *InfluxMeasurementCfg) Init(name string, MetricCfg *map[string]*SnmpMet
 		return errors.New("Unknown GetMode" + mc.GetMode + " in measurement Config " + mc.ID)
 	}
 
-	log.Info("processing measurement key: ", name)
-	log.Debug("%+v", mc)
+	log.Infof("processing measurement key: %s ", name)
+	log.Debugf("%+v", mc)
 	for _, f_val := range mc.Fields {
-		log.Debug("looking for measure ", mc.Name, " fields: ", f_val)
+		log.Debug("looking for measurement %s : fields: %s ", mc.Name, f_val)
 		if val, ok := (*MetricCfg)[f_val]; ok {
 			log.Debug("Found ok!")
 			//map is correct

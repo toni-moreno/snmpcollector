@@ -22,6 +22,7 @@ export class SnmpDeviceService {
                 return parseInt(value);
             }
             if ( key == 'SnmpDebug' ) return ( value === "true");
+            if ( key == 'Active' ) return ( value === "true");
             if ( key == 'Extratags' ) return  String(value).split(',');
             //TODO Actualizar en Angular2 Final con Multiselect
 
@@ -54,6 +55,7 @@ export class SnmpDeviceService {
                 return parseInt(value);
             }
             if ( key == 'SnmpDebug' ) return ( value === "true");
+            if ( key == 'Active' ) return ( value === "true");
             if ( key == 'Extratags' ) return  String(value).split(',');
             if ( key == 'MeasFilters') {
                 if (value != null) return String(value).split(',');

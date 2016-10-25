@@ -58,6 +58,7 @@ export class SnmpDeviceCfgComponent {
 		Port: [161,Validators.required],
 		Retries: [5],
 		Timeout: [20],
+    Active: ['true',Validators.required],
 		SnmpVersion:['2c',Validators.required],
 		Community: ['public'],
 		V3SecLevel:[''],

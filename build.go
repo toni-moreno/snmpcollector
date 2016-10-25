@@ -29,12 +29,12 @@ var (
 	// deb & rpm does not support semver so have to handle their version a little differently
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
-	race                  bool
+	race                  bool   = false
 	workingDir            string
 	serverBinaryName      string = "snmpcollector"
 )
 
-const minGoVersion = 1.3
+const minGoVersion = 1.6
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -234,9 +234,9 @@ func createPackage(options linuxPackageOptions) {
 
 	args := []string{
 		"-s", "dir",
-		"--description", "Influxnsmp",
+		"--description", "snmpcollector",
 		"-C", packageRoot,
-		"--vendor", "Influxsnmp",
+		"--vendor", "snmpcollector",
 		"--url", "http://github.org/toni-moreno/snmpcollector",
 		"--license", "Apache 2.0",
 		"--maintainer", "toni.moreno@gmail.com",

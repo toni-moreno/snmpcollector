@@ -1,14 +1,18 @@
 
 # v 0.5.1
 ### New features.
-* Define field metric as Tag (IsTag = true) => type STRING,HWADDR,IP  
+* Define field metric as Tag (IsTag = true) => type STRING,HWADDR,IP
+* Defined measurment Indexed  "index" as value on special devices with no special Index OID.
+* Device initialization  is now faster. It is done  concurrently.
+* Added Active device option to disable / enable runtime Initializacion and gather data.
 
 
 ### fixes
-
+* device logs now in its own log filepath
+* Added missing extra-tags input on the device add form
 
 ### breaking changes
-$db snmp_metri_cfg
+* none
 
 # v 0.5.0
 ### New features.
