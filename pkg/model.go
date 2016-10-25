@@ -172,7 +172,7 @@ func InitDB(dbc *DatabaseCfg) {
 
 	if len(dbc.SQLLogFile) != 0 {
 		dbc.x.ShowSQL(true)
-		f, error := os.Create(appdir + "/log/" + dbc.SQLLogFile)
+		f, error := os.Create(logDir + "/" + dbc.SQLLogFile)
 		if err != nil {
 			log.Errorln("Fail to create log file  ", error)
 		}
