@@ -57,13 +57,12 @@ func (mc *InfluxMeasurementCfg) Init(name string, MetricCfg *map[string]*SnmpMet
 	log.Infof("processing measurement key: %s ", name)
 	log.Debugf("%+v", mc)
 	for _, f_val := range mc.Fields {
-		log.Debug("looking for measurement %s : fields: %s ", mc.Name, f_val)
+		log.Debugf("looking for measurement %s : fields: %s ", mc.Name, f_val)
 		if val, ok := (*MetricCfg)[f_val]; ok {
-			log.Debug("Found ok!")
 			//map is correct
 			mc.fieldMetric = append(mc.fieldMetric, val)
 		} else {
-			log.Warn("measurement field ", f_val, " NOT FOUND in Metrics Database !")
+			log.Warnf("measurement field  %s NOT FOUND in Metrics Database !", f_val)
 		}
 	}
 	//check if fieldMetric
