@@ -308,7 +308,7 @@ func (d *SnmpDevice) Init(name string) {
 		return
 	}
 	d.snmpClient = client
-	//d.InitDevSnmpInfo()
+
 }
 
 func (d *SnmpDevice) printConfig() {
@@ -360,12 +360,14 @@ func (d *SnmpDevice) DebugLog() *olog.Logger {
 func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 	//client := d.snmpClient
 	//debug := false
-	if d.deviceActive {
+	if d.deviceActive && d.snmpClient != nil {
 		d.log.Infof("Begin first InidevInfo")
 		startSnmp := time.Now()
 		d.InitDevSnmpInfo()
 		elapsedSnmp := time.Since(startSnmp)
 		d.log.Infof("snmpdevice [%s] snmp INIT runtime measurments/filters took [%s] ", d.cfg.ID, elapsedSnmp)
+	} else {
+		d.log.Infof("Can not initialize this device: Is Active: %b  |  Conection Active: %b ", d.deviceActive, d.snmpClient != nil)
 	}
 
 	d.log.Infof("Beginning gather process for device %s (%s)", d.cfg.ID, d.cfg.Host)
