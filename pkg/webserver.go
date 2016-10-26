@@ -60,7 +60,7 @@ func webServer(port int) {
 		// Provider configuration, it's corresponding to provider.
 		ProviderConfig: "",
 		// Cookie name to save session ID. Default is "MacaronSession".
-		CookieName: "MacaronSession",
+		CookieName: "snmpcollector-session",
 		// Cookie path to store. Default is "/".
 		CookiePath: "/",
 		// GC interval time in seconds. Default is 3600.
@@ -90,7 +90,7 @@ func webServer(port int) {
 				return "snmpcollector"
 			},
 			"AppVer": func() string {
-				return "0.1.0"
+				return "0.5.1"
 			},
 		}},
 		// Delims sets the action delimiters to the specified strings. Defaults are ["{{", "}}"].
@@ -120,17 +120,6 @@ func webServer(port int) {
 	}))
 
 	m.Post("/session/create", bind(UserLogin{}), myLoginHandler)
-
-	// Data sources
-	m.Get("/runtimeinfo", GetRuntimeInfo)
-
-	m.Group("/snmpdevice", func() {
-		m.Get("/", GetSNMPDevices)
-		m.Post("/", bind(SnmpDeviceCfg{}), AddSNMPDevice)
-		m.Put("/:id", bind(SnmpDeviceCfg{}), UpdateSNMPDevice)
-		m.Delete("/:id", DeleteSNMPDevice)
-		m.Get("/:id", GetSNMPDeviceByID)
-	})
 
 	m.Group("/metric", func() {
 		m.Get("/", GetMetrics)
@@ -173,6 +162,16 @@ func webServer(port int) {
 		m.Get("/ckeckondel/:id", GetInfluxAffectOnDel)
 	})
 
+	m.Group("/runtimeinfo", func() {
+		m.Get("/", GetRuntimeInfo)
+		m.Get("/:id", GetRuntimeInfo)
+	})
+
+	m.Group("/runtimeinfo", func() {
+		m.Get("/", GetRuntimeInfo)
+		m.Get("/:id", GetRuntimeInfo)
+	})
+
 	log.Printf("Server is running on localhost:%d...", port)
 	httpServer := fmt.Sprintf("0.0.0.0:%d", port)
 	log.Println(http.ListenAndServe(httpServer, m))
@@ -183,8 +182,20 @@ func webServer(port int) {
 /****************/
 
 func GetRuntimeInfo(ctx *macaron.Context) {
-	log.Debugf("Got device runtime info s %+v", &devices)
-	ctx.JSON(200, &devices)
+	id := ctx.Params(":id")
+	if len(id) > 0 {
+		if dev, ok := devices[id]; !ok {
+			ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+			return
+		} else {
+			log.Infof("get runtime data from id %s", id)
+			ctx.JSON(200, dev)
+		}
+		//get only one device info
+	} else {
+		ctx.JSON(200, &devices)
+	}
+	return
 }
 
 /****************/

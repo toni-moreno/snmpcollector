@@ -18,11 +18,11 @@ import (
 
 // SysInfo basic information for any SNMP device
 type SysInfo struct {
-	sysDescr    string
-	sysUptime   time.Duration
-	sysContact  string
-	sysName     string
-	sysLocation string
+	SysDescr    string
+	SysUptime   time.Duration
+	SysContact  string
+	SysName     string
+	SysLocation string
 }
 
 // SnmpDevice contains all runtime device related device configu ns and state
@@ -30,12 +30,12 @@ type SnmpDevice struct {
 	cfg *SnmpDeviceCfg
 	log *logrus.Logger
 	//basic sistem info
-	sysInfo SysInfo
+	SysInfo SysInfo
 	//runtime built TagMap
 	TagMap map[string]string
 	//Measurements array
 
-	InfmeasArray []*InfluxMeasurement
+	Measurements []*InfluxMeasurement
 
 	//SNMP and Influx Clients config
 	snmpClient *gosnmp.GoSNMP
@@ -48,8 +48,8 @@ type SnmpDevice struct {
 	//runtime controls
 	/*debugging chan bool
 	enabled   chan chan bool*/
-	deviceActive bool
-	stateDebug   bool
+	DeviceActive bool
+	StateDebug   bool
 
 	chDebug   chan bool
 	chEnabled chan bool
@@ -58,11 +58,11 @@ type SnmpDevice struct {
 // GetSysInfo got system basic info from a snmp client
 func (d *SnmpDevice) GetSysInfo(client *gosnmp.GoSNMP) (SysInfo, error) {
 	//Get Basic System Info
-	// sysDescr     .1.3.6.1.2.1.1.1.0
+	// SysDescr     .1.3.6.1.2.1.1.1.0
 	// sysUpTime    .1.3.6.1.2.1.1.3.0
-	// sysContact   .1.3.6.1.2.1.1.4.0
-	// sysName      .1.3.6.1.2.1.1.5.0
-	// sysLocation  .1.3.6.1.2.1.1.6.0
+	// SysContact   .1.3.6.1.2.1.1.4.0
+	// SysName      .1.3.6.1.2.1.1.5.0
+	// SysLocation  .1.3.6.1.2.1.1.6.0
 	sysOids := []string{
 		".1.3.6.1.2.1.1.1.0",
 		".1.3.6.1.2.1.1.3.0",
@@ -70,7 +70,7 @@ func (d *SnmpDevice) GetSysInfo(client *gosnmp.GoSNMP) (SysInfo, error) {
 		".1.3.6.1.2.1.1.5.0",
 		".1.3.6.1.2.1.1.6.0"}
 
-	info := SysInfo{sysDescr: "", sysUptime: time.Duration(0), sysContact: "", sysName: "", sysLocation: ""}
+	info := SysInfo{SysDescr: "", SysUptime: time.Duration(0), SysContact: "", SysName: "", SysLocation: ""}
 	pkt, err := client.Get(sysOids)
 
 	if err != nil {
@@ -84,36 +84,36 @@ func (d *SnmpDevice) GetSysInfo(client *gosnmp.GoSNMP) (SysInfo, error) {
 			continue
 		}
 		switch idx {
-		case 0: // sysDescr     .1.3.6.1.2.1.1.1.0
+		case 0: // SysDescr     .1.3.6.1.2.1.1.1.0
 			if pdu.Type == gosnmp.OctetString {
-				info.sysDescr = string(pdu.Value.([]byte))
+				info.SysDescr = string(pdu.Value.([]byte))
 			} else {
-				d.log.Warnf("Error on getting system %s sysDescr return data of type %v", d.cfg.Host, pdu.Type)
+				d.log.Warnf("Error on getting system %s SysDescr return data of type %v", d.cfg.Host, pdu.Type)
 			}
 		case 1: // sysUpTime    .1.3.6.1.2.1.1.3.0
 			if pdu.Type == gosnmp.TimeTicks {
 				seconds := uint32(pdu.Value.(int)) / 100
-				info.sysUptime = time.Duration(seconds) * time.Second
+				info.SysUptime = time.Duration(seconds) * time.Second
 			} else {
-				d.log.Warnf("Error on getting system %s sysDescr return data of type %v", d.cfg.Host, pdu.Type)
+				d.log.Warnf("Error on getting system %s SysDescr return data of type %v", d.cfg.Host, pdu.Type)
 			}
-		case 2: // sysContact   .1.3.6.1.2.1.1.4.0
+		case 2: // SysContact   .1.3.6.1.2.1.1.4.0
 			if pdu.Type == gosnmp.OctetString {
-				info.sysContact = string(pdu.Value.([]byte))
+				info.SysContact = string(pdu.Value.([]byte))
 			} else {
-				d.log.Warnf("Error on getting system %s sysContact return data of type %v", d.cfg.Host, pdu.Type)
+				d.log.Warnf("Error on getting system %s SysContact return data of type %v", d.cfg.Host, pdu.Type)
 			}
-		case 3: // sysName      .1.3.6.1.2.1.1.5.0
+		case 3: // SysName      .1.3.6.1.2.1.1.5.0
 			if pdu.Type == gosnmp.OctetString {
-				info.sysName = string(pdu.Value.([]byte))
+				info.SysName = string(pdu.Value.([]byte))
 			} else {
-				d.log.Warnf("Error on getting system %s sysName return data of type %v", d.cfg.Host, pdu.Type)
+				d.log.Warnf("Error on getting system %s SysName return data of type %v", d.cfg.Host, pdu.Type)
 			}
-		case 4: // sysLocation  .1.3.6.1.2.1.1.6.0
+		case 4: // SysLocation  .1.3.6.1.2.1.1.6.0
 			if pdu.Type == gosnmp.OctetString {
-				info.sysDescr = string(pdu.Value.([]byte))
+				info.SysLocation = string(pdu.Value.([]byte))
 			} else {
-				d.log.Warnf("Error on getting system %s sysLocation return data of type %v", d.cfg.Host, pdu.Type)
+				d.log.Warnf("Error on getting system %s SysLocation return data of type %v", d.cfg.Host, pdu.Type)
 			}
 		}
 	}
@@ -140,7 +140,7 @@ func removeDuplicatesUnordered(elements []string) []string {
 func (d *SnmpDevice) InitDevSnmpInfo() {
 
 	//Alloc array
-	d.InfmeasArray = make([]*InfluxMeasurement, 0, 0)
+	d.Measurements = make([]*InfluxMeasurement, 0, 0)
 	d.log.Debugf("-----------------Init device %s------------------", d.cfg.Host)
 	//for this device get MeasurementGroups and search all measurements
 
@@ -182,14 +182,14 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 				d.log.Debugln("MEASUREMENT CFG KEY:", val, " VALUE ", mVal.Name)
 
 				//creating a new measurement runtime object and asigning to array
-				d.InfmeasArray = append(d.InfmeasArray, &InfluxMeasurement{ID: mVal.ID, cfg: mVal, log: d.log, snmpClient: d.snmpClient})
+				d.Measurements = append(d.Measurements, &InfluxMeasurement{ID: mVal.ID, cfg: mVal, log: d.log, snmpClient: d.snmpClient})
 			}
 		}
 	}
 
 	/*For each  measurement look for filters and Initialize Measurement with this Filter 	*/
 
-	for _, m := range d.InfmeasArray {
+	for _, m := range d.Measurements {
 		//check for filters asociated with this measurement
 		var mfilter *MeasFilterCfg
 		for _, f := range d.cfg.MeasFilters {
@@ -210,7 +210,7 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 		err := m.Init(mfilter)
 		if err != nil {
 			d.log.Errorf("Error on initialize Measurement %s , Error:%s no data will be gathered for this measurement", m.cfg.ID, err)
-			//d.InfmeasArray = append(d.InfmeasArray[:i], d.InfmeasArray[i+1:]...)
+			//d.Measurements = append(d.Measurements[:i], d.Measurements[i+1:]...)
 		}
 
 	}
@@ -218,7 +218,7 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 	//get data first time
 	// useful to inicialize counter all value and test device snmp availability
 	d.log.Debugf("SNMP Info: %+v", d.snmpClient)
-	for _, m := range d.InfmeasArray {
+	for _, m := range d.Measurements {
 		//if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
 		if m.cfg.GetMode == "value" {
 			_, _, err := m.SnmpGetData()
@@ -266,7 +266,7 @@ func (d *SnmpDevice) Init(name string) {
 	//Init channels
 	d.chDebug = make(chan bool)
 	d.chEnabled = make(chan bool)
-	d.deviceActive = d.cfg.Active
+	d.DeviceActive = d.cfg.Active
 
 	//Init Device Tags
 
@@ -316,7 +316,7 @@ func (d *SnmpDevice) printConfig() {
 	d.InitDevSnmpInfo()
 	fmt.Printf("Host: %s Port: %d Version: %s\n", d.cfg.Host, d.cfg.Port, d.cfg.SnmpVersion)
 	fmt.Printf("----------------------------------------------\n")
-	for _, vM := range d.InfmeasArray {
+	for _, vM := range d.Measurements {
 		fmt.Printf(" Measurement : %s\n", vM.cfg.ID)
 		fmt.Printf(" ----------------------------------------------------------\n")
 		vM.printConfig()
@@ -360,14 +360,14 @@ func (d *SnmpDevice) DebugLog() *olog.Logger {
 func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 	//client := d.snmpClient
 	//debug := false
-	if d.deviceActive && d.snmpClient != nil {
+	if d.DeviceActive && d.snmpClient != nil {
 		d.log.Infof("Begin first InidevInfo")
 		startSnmp := time.Now()
 		d.InitDevSnmpInfo()
 		elapsedSnmp := time.Since(startSnmp)
 		d.log.Infof("snmpdevice [%s] snmp INIT runtime measurments/filters took [%s] ", d.cfg.ID, elapsedSnmp)
 	} else {
-		d.log.Infof("Can not initialize this device: Is Active: %b  |  Conection Active: %b ", d.deviceActive, d.snmpClient != nil)
+		d.log.Infof("Can not initialize this device: Is Active: %t  |  Conection Active: %t ", d.DeviceActive, d.snmpClient != nil)
 	}
 
 	d.log.Infof("Beginning gather process for device %s (%s)", d.cfg.ID, d.cfg.Host)
@@ -375,7 +375,7 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 	s := time.Tick(time.Duration(d.cfg.Freq) * time.Second)
 	for {
 		//if active
-		if d.deviceActive {
+		if d.DeviceActive {
 			//check if device is online
 			if d.snmpClient == nil {
 				client, err := snmpClient(d)
@@ -396,7 +396,7 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 
 				bpts := d.Influx.BP()
 				startSnmp := time.Now()
-				for _, m := range d.InfmeasArray {
+				for _, m := range d.Measurements {
 					d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
 					var nGets, nErrors int64
 					//if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
@@ -433,7 +433,7 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 			case <-s:
 				break LOOP
 			case debug := <-d.chDebug:
-				d.stateDebug = debug
+				d.StateDebug = debug
 				d.log.Infof("DEBUG  ACTIVE %s [%t] ", d.cfg.ID, debug)
 				if debug && d.snmpClient.Logger == nil {
 					d.snmpClient.Logger = d.DebugLog()
@@ -441,7 +441,7 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 					d.snmpClient.Logger = nil
 				}
 			case status := <-d.chEnabled:
-				d.deviceActive = status
+				d.DeviceActive = status
 				d.log.Printf("STATUS  ACTIVE %s [%t] ", d.cfg.ID, status)
 			}
 		}

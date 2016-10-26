@@ -56,29 +56,31 @@ func (m *SnmpMetricCfg) Init(name string) error {
 //SnmpMetric type to metric runtime
 type SnmpMetric struct {
 	cfg         *SnmpMetricCfg
-	cookedValue interface{}
-	//cookedValue float64
+	ID          string
+	CookedValue interface{}
+	//CookedValue float64
 	curValue   int64
 	lastValue  int64
-	curTime    time.Time
+	CurTime    time.Time
 	lastTime   time.Time
-	Compute    func()
+	Compute    func() `json:"-"`
 	setRawData func(pdu gosnmp.SnmpPDU, now time.Time)
-	realOID    string
+	RealOID    string
 }
 
 func (s *SnmpMetric) Init() error {
+	s.ID = s.cfg.ID
 	switch s.cfg.DataSrcType {
 	case "GAUGE", "INTEGER":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := pduVal2Int64(pdu)
-			s.cookedValue = float64(val)
-			s.curTime = now
+			s.CookedValue = float64(val)
+			s.CurTime = now
 			s.Compute()
 		}
 		if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
 			s.Compute = func() {
-				s.cookedValue = (s.cfg.Scale * float64(s.cookedValue.(float64))) + s.cfg.Shift
+				s.CookedValue = (s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift
 			}
 		} else {
 			s.Compute = func() {
@@ -87,27 +89,27 @@ func (s *SnmpMetric) Init() error {
 	case "COUNTER32":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := pduVal2Int64(pdu)
-			s.lastTime = s.curTime
+			s.lastTime = s.CurTime
 			s.lastValue = s.curValue
 			s.curValue = val
-			s.curTime = now
+			s.CurTime = now
 			s.Compute()
 		}
 		if s.cfg.GetRate == true {
 			s.Compute = func() {
-				duration := s.curTime.Sub(s.lastTime)
+				duration := s.CurTime.Sub(s.lastTime)
 				if s.curValue < s.lastValue {
-					s.cookedValue = float64(math.MaxInt32-s.lastValue+s.curValue) / duration.Seconds()
+					s.CookedValue = float64(math.MaxInt32-s.lastValue+s.curValue) / duration.Seconds()
 				} else {
-					s.cookedValue = float64(s.curValue-s.lastValue) / duration.Seconds()
+					s.CookedValue = float64(s.curValue-s.lastValue) / duration.Seconds()
 				}
 			}
 		} else {
 			s.Compute = func() {
 				if s.curValue < s.lastValue {
-					s.cookedValue = float64(math.MaxInt32 - s.lastValue + s.curValue)
+					s.CookedValue = float64(math.MaxInt32 - s.lastValue + s.curValue)
 				} else {
-					s.cookedValue = float64(s.curValue - s.lastValue)
+					s.CookedValue = float64(s.curValue - s.lastValue)
 				}
 			}
 
@@ -115,45 +117,45 @@ func (s *SnmpMetric) Init() error {
 	case "COUNTER64":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := pduVal2Int64(pdu)
-			s.lastTime = s.curTime
+			s.lastTime = s.CurTime
 			s.lastValue = s.curValue
 			s.curValue = val
-			s.curTime = now
+			s.CurTime = now
 			s.Compute()
 		}
 		if s.cfg.GetRate == true {
 			s.Compute = func() {
-				duration := s.curTime.Sub(s.lastTime)
+				duration := s.CurTime.Sub(s.lastTime)
 				if s.curValue < s.lastValue {
-					s.cookedValue = float64(math.MaxInt64-s.lastValue+s.curValue) / duration.Seconds()
+					s.CookedValue = float64(math.MaxInt64-s.lastValue+s.curValue) / duration.Seconds()
 				} else {
-					s.cookedValue = float64(s.curValue-s.lastValue) / duration.Seconds()
+					s.CookedValue = float64(s.curValue-s.lastValue) / duration.Seconds()
 				}
 			}
 		} else {
 			s.Compute = func() {
 				if s.curValue < s.lastValue {
-					s.cookedValue = float64(math.MaxInt64 - s.lastValue + s.curValue)
+					s.CookedValue = float64(math.MaxInt64 - s.lastValue + s.curValue)
 				} else {
-					s.cookedValue = float64(s.curValue - s.lastValue)
+					s.CookedValue = float64(s.curValue - s.lastValue)
 				}
 			}
 
 		}
 	case "STRING":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.cookedValue = pduVal2str(pdu)
-			s.curTime = now
+			s.CookedValue = pduVal2str(pdu)
+			s.CurTime = now
 		}
 	case "IPADDR":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.cookedValue, _ = pduVal2IPaddr(pdu)
-			s.curTime = now
+			s.CookedValue, _ = pduVal2IPaddr(pdu)
+			s.CurTime = now
 		}
 	case "HWADDR":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.cookedValue, _ = pduVal2IPaddr(pdu)
-			s.curTime = now
+			s.CookedValue, _ = pduVal2IPaddr(pdu)
+			s.CurTime = now
 		}
 	}
 	return nil

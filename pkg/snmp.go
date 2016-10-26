@@ -250,11 +250,11 @@ func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
 		d.log.Infof("First SNMP connection to host  %s stablished", s.Host)
 	}
 	//first snmp query
-	d.sysInfo, err = d.GetSysInfo(client)
+	d.SysInfo, err = d.GetSysInfo(client)
 	if err != nil {
 		d.log.Errorf("error on get System Info %s", err)
 	} else {
-		d.log.Infof("Got basic system info %#v ", d.sysInfo)
+		d.log.Infof("Got basic system info %#v ", d.SysInfo)
 	}
 	return client, err
 }

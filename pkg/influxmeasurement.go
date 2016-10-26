@@ -90,12 +90,12 @@ type MeasFilterCfg struct {
 type InfluxMeasurement struct {
 	cfg              *InfluxMeasurementCfg
 	ID               string
-	values           map[string]map[string]*SnmpMetric //snmpMetric mapped with metric_names and Index
+	MetricTable      map[string]map[string]*SnmpMetric //snmpMetric mapped with metric_names and Index
 	snmpOids         []string
-	oidSnmpMap       map[string]*SnmpMetric //snmpMetric mapped with real OID's
-	Filterlabels     map[string]string
-	AllIndexedLabels map[string]string //all available values on the remote device
-	CurIndexedLabels map[string]string
+	OidSnmpMap       map[string]*SnmpMetric //snmpMetric mapped with real OID's
+	Filterlabels     map[string]string      `json:"-"`
+	AllIndexedLabels map[string]string      `json:"-"` //all available values on the remote device
+	CurIndexedLabels map[string]string      `json:"-"`
 	Filter           *MeasFilterCfg
 	log              *logrus.Logger
 	snmpClient       *gosnmp.GoSNMP
@@ -150,7 +150,7 @@ func (m *InfluxMeasurement) Init(filter *MeasFilterCfg) error {
 	 *
 	 * ******************************/
 	m.log.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the snmpBulk device] | OID=>Metric MAP")
-	m.values = make(map[string]map[string]*SnmpMetric)
+	m.MetricTable = make(map[string]map[string]*SnmpMetric)
 
 	//create metrics.
 	switch m.cfg.GetMode {
@@ -159,11 +159,11 @@ func (m *InfluxMeasurement) Init(filter *MeasFilterCfg) error {
 		idx := make(map[string]*SnmpMetric)
 		for _, smcfg := range m.cfg.fieldMetric {
 			m.log.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
-			metric := &SnmpMetric{cfg: smcfg, realOID: smcfg.BaseOID}
+			metric := &SnmpMetric{cfg: smcfg, RealOID: smcfg.BaseOID}
 			metric.Init()
 			idx[smcfg.ID] = metric
 		}
-		m.values["0"] = idx
+		m.MetricTable["0"] = idx
 
 	case "indexed":
 		//for each field an each index (previously initialized)
@@ -171,28 +171,29 @@ func (m *InfluxMeasurement) Init(filter *MeasFilterCfg) error {
 			idx := make(map[string]*SnmpMetric)
 			m.log.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
 			for _, smcfg := range m.cfg.fieldMetric {
-				metric := &SnmpMetric{cfg: smcfg, realOID: smcfg.BaseOID + "." + key}
+				metric := &SnmpMetric{cfg: smcfg, RealOID: smcfg.BaseOID + "." + key}
 				metric.Init()
 				idx[smcfg.ID] = metric
 			}
-			m.values[label] = idx
+			m.MetricTable[label] = idx
+
 		}
 
 	default:
 		m.log.Errorf("Unknown Measurement GetMode Config :%s", m.cfg.GetMode)
 	}
-	m.log.Debugf("ARRAY VALUES for %s : %+v", m.cfg.Name, m.values)
+	m.log.Debugf("ARRAY VALUES for %s : %+v", m.cfg.Name, m.MetricTable)
 	//building real OID array for SNMPWALK and OID=> snmpMetric map to asign results to each object
 	m.snmpOids = []string{}
-	m.oidSnmpMap = make(map[string]*SnmpMetric)
+	m.OidSnmpMap = make(map[string]*SnmpMetric)
 	//metric level
-	for kIdx, vIdx := range m.values {
+	for kIdx, vIdx := range m.MetricTable {
 		m.log.Debugf("KEY iDX %s", kIdx)
 		//index level
 		for kM, vM := range vIdx {
-			m.log.Debugf("KEY METRIC %s OID %s", kM, vM.realOID)
-			m.snmpOids = append(m.snmpOids, vM.realOID)
-			m.oidSnmpMap[vM.realOID] = vM
+			m.log.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
+			m.snmpOids = append(m.snmpOids, vM.RealOID)
+			m.OidSnmpMap[vM.RealOID] = vM
 		}
 	}
 	return nil
@@ -240,14 +241,14 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 
 	switch m.cfg.GetMode {
 	case "value":
-		k := m.values["0"]
+		k := m.MetricTable["0"]
 		var t time.Time
 		Fields := make(map[string]interface{})
 		for _, v_mtr := range k {
-			m.log.Debugf("generating field for %s value %s ", v_mtr.cfg.FieldName, v_mtr.cookedValue)
+			m.log.Debugf("generating field for %s value %s ", v_mtr.cfg.FieldName, v_mtr.CookedValue)
 			m.log.Debugf("DEBUG METRIC %+v", v_mtr)
-			Fields[v_mtr.cfg.FieldName] = v_mtr.cookedValue
-			t = v_mtr.curTime
+			Fields[v_mtr.cfg.FieldName] = v_mtr.CookedValue
+			t = v_mtr.CurTime
 		}
 		m.log.Debug("FIELDS:%+v", Fields)
 
@@ -266,7 +267,7 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 
 	case "indexed":
 		var t time.Time
-		for k_idx, v_idx := range m.values {
+		for k_idx, v_idx := range m.MetricTable {
 			m.log.Debugf("generating influx point for indexed %s", k_idx)
 			//copy tags and add index tag
 			Tags := make(map[string]string)
@@ -280,13 +281,13 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 				m.log.Debugf("DEBUG METRIC %+v", v_mtr.cfg)
 				if v_mtr.cfg.IsTag == true {
 					m.log.Debugf("generating Tag for Metric: %s", v_mtr.cfg.FieldName)
-					Tags[v_mtr.cfg.FieldName] = string(v_mtr.cookedValue.(string))
+					Tags[v_mtr.cfg.FieldName] = string(v_mtr.CookedValue.(string))
 				} else {
 					m.log.Debugf("generating field for Metric: %s", v_mtr.cfg.FieldName)
-					Fields[v_mtr.cfg.FieldName] = v_mtr.cookedValue
+					Fields[v_mtr.cfg.FieldName] = v_mtr.CookedValue
 				}
 
-				t = v_mtr.curTime
+				t = v_mtr.CurTime
 			}
 			m.log.Debugf("FIELDS:%+v", Fields)
 			m.log.Debugf("TAGS:%+v", Tags)
@@ -326,7 +327,7 @@ func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
 			m.log.Warnf("no value retured by pdu :%+v", pdu)
 			return nil //if error return the bulk process will stop
 		}
-		if metric, ok := m.oidSnmpMap[pdu.Name]; ok {
+		if metric, ok := m.OidSnmpMap[pdu.Name]; ok {
 			m.log.Debugln("OK measurement ", m.cfg.ID, "SNMP RESULT OID", pdu.Name, "MetricFound", pdu.Value)
 			metric.setRawData(pdu, now)
 		} else {
@@ -373,7 +374,7 @@ func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
 		}
 		m.log.Debugf("Getting snmp data from %d to %d", i, end)
 		//	log.Printf("DEBUG oids:%+v", m.snmpOids)
-		//	log.Printf("DEBUG oidmap:%+v", m.oidSnmpMap)
+		//	log.Printf("DEBUG oidmap:%+v", m.OidSnmpMap)
 		pkt, err := m.snmpClient.Get(m.snmpOids[i:end])
 		if err != nil {
 			m.log.Debugf("selected OIDS %+v", m.snmpOids[i:end])
@@ -390,7 +391,7 @@ func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
 			}
 			oid := pdu.Name
 			val := pdu.Value
-			if metric, ok := m.oidSnmpMap[oid]; ok {
+			if metric, ok := m.OidSnmpMap[oid]; ok {
 				m.log.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %s ", m.cfg.ID, oid, val)
 				metric.setRawData(pdu, now)
 			} else {
@@ -536,7 +537,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 			if err != nil {
 				m.log.Debugf("match condition error : %s on PDI +%v", err, pdu)
 			}
-			m.log.Debugf("Evaluated condition  value: %s | filter: %s | result : %b", str, valueCond, matched)
+			m.log.Debugf("Evaluated condition  value: %s | filter: %s | result : %t", str, valueCond, matched)
 			cond = matched
 		default:
 			m.log.Errorf("Error in Condition filter OidCondition: %s Type: %s ValCond: %s ", oidCond, typeCond, valueCond)
