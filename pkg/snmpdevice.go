@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	//"io/ioutil"
+	"io/ioutil"
 	olog "log"
 	"os"
 	"path/filepath"
@@ -51,8 +52,24 @@ type SnmpDevice struct {
 	DeviceActive bool
 	StateDebug   bool
 
-	chDebug   chan bool
-	chEnabled chan bool
+	chDebug    chan bool
+	chEnabled  chan bool
+	chLogLevel chan string
+}
+
+//RTActivate change activatio state in runtime
+func (d *SnmpDevice) RTActivate(activate bool) {
+	d.chEnabled <- activate
+}
+
+//RTActSnmpDebug change snmp debug runtime
+func (d *SnmpDevice) RTActSnmpDebug(activate bool) {
+	d.chDebug <- activate
+}
+
+//RTSetLogLevel
+func (d *SnmpDevice) RTSetLogLevel(level string) {
+	d.chLogLevel <- level
 }
 
 // GetSysInfo got system basic info from a snmp client
@@ -266,6 +283,7 @@ func (d *SnmpDevice) Init(name string) {
 	//Init channels
 	d.chDebug = make(chan bool)
 	d.chEnabled = make(chan bool)
+	d.chLogLevel = make(chan string)
 	d.DeviceActive = d.cfg.Active
 
 	//Init Device Tags
@@ -435,14 +453,23 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 			case debug := <-d.chDebug:
 				d.StateDebug = debug
 				d.log.Infof("DEBUG  ACTIVE %s [%t] ", d.cfg.ID, debug)
-				if debug && d.snmpClient.Logger == nil {
+				if debug {
+					d.log.Info("Activating snmp debug for this device")
 					d.snmpClient.Logger = d.DebugLog()
 				} else {
-					d.snmpClient.Logger = nil
+					d.log.Info("De Activating snmp debug for this device")
+					d.snmpClient.Logger = olog.New(ioutil.Discard, "", 0)
 				}
 			case status := <-d.chEnabled:
 				d.DeviceActive = status
-				d.log.Printf("STATUS  ACTIVE %s [%t] ", d.cfg.ID, status)
+				d.log.Infof("STATUS  ACTIVE %s [%t] ", d.cfg.ID, status)
+			case level := <-d.chLogLevel:
+				l, err := logrus.ParseLevel(level)
+				if err != nil {
+					d.log.Warnf("ERROR on Changing LOGLEVEL in %s to [%t] ", d.cfg.ID, level)
+				}
+				d.log.Level = l
+				d.log.Infof("CHANGED LOGLEVEL %s [%s] ", d.cfg.ID, level)
 			}
 		}
 	}

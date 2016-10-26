@@ -162,14 +162,14 @@ func webServer(port int) {
 		m.Get("/ckeckondel/:id", GetInfluxAffectOnDel)
 	})
 
-	m.Group("/runtimeinfo", func() {
-		m.Get("/", GetRuntimeInfo)
-		m.Get("/:id", GetRuntimeInfo)
-	})
-
-	m.Group("/runtimeinfo", func() {
-		m.Get("/", GetRuntimeInfo)
-		m.Get("/:id", GetRuntimeInfo)
+	m.Group("/runtime", func() {
+		m.Get("/info/", RTGetInfo)
+		m.Get("/info/:id", RTGetInfo)
+		m.Put("/activatedev/:id", RTActivateDev)
+		m.Put("/deactivatedev/:id", RTDeactivateDev)
+		m.Put("/actsnmpdbg/:id", RTActSnmpDebugDev)
+		m.Put("/deactsnmpdbg/:id", RTDeactSnmpDebugDev)
+		m.Put("/setloglevel/:id/:level", RTSetLogLevelDev)
 	})
 
 	log.Printf("Server is running on localhost:%d...", port)
@@ -180,8 +180,74 @@ func webServer(port int) {
 /****************/
 /*Runtime Info
 /****************/
+//RTActivateDev xx
+func RTSetLogLevelDev(ctx *macaron.Context) {
+	id := ctx.Params(":id")
+	level := ctx.Params(":level")
+	if dev, ok := devices[id]; !ok {
+		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+		return
+	} else {
+		log.Infof("set runtime log level from device id %s : %s", id, level)
+		dev.RTSetLogLevel(level)
+		ctx.JSON(200, dev)
+	}
+}
 
-func GetRuntimeInfo(ctx *macaron.Context) {
+//RTActivateDev xx
+func RTActivateDev(ctx *macaron.Context) {
+	id := ctx.Params(":id")
+	if dev, ok := devices[id]; !ok {
+		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+		return
+	} else {
+		log.Infof("activating runtime on device %s", id)
+		dev.RTActivate(true)
+		ctx.JSON(200, dev)
+	}
+}
+
+//RTDeactivateDev xx
+func RTDeactivateDev(ctx *macaron.Context) {
+	id := ctx.Params(":id")
+	if dev, ok := devices[id]; !ok {
+		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+		return
+	} else {
+		log.Infof("deactivating runtime on device  %s", id)
+		dev.RTActivate(false)
+		ctx.JSON(200, dev)
+	}
+}
+
+//RTActSnmpDebugDev xx
+func RTActSnmpDebugDev(ctx *macaron.Context) {
+	id := ctx.Params(":id")
+	if dev, ok := devices[id]; !ok {
+		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+		return
+	} else {
+		log.Infof("activating snmpdebug  %s", id)
+		dev.RTActSnmpDebug(true)
+		ctx.JSON(200, dev)
+	}
+}
+
+//RTDeactSnmpDebugDev xx
+func RTDeactSnmpDebugDev(ctx *macaron.Context) {
+	id := ctx.Params(":id")
+	if dev, ok := devices[id]; !ok {
+		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+		return
+	} else {
+		log.Infof("deactivating snmpdebug  %s", id)
+		dev.RTActSnmpDebug(false)
+		ctx.JSON(200, dev)
+	}
+}
+
+//RTGetInfo xx
+func RTGetInfo(ctx *macaron.Context) {
 	id := ctx.Params(":id")
 	if len(id) > 0 {
 		if dev, ok := devices[id]; !ok {
