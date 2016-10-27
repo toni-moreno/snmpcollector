@@ -21,28 +21,6 @@ export class MeasGroupCfgComponent {
 	influxmeas: Array<any>;
   selectmeas: IMultiSelectOption[];
 
-	private mySettings: IMultiSelectSettings = {
-		pullRight: false,
-		enableSearch: true,
-		checkedStyle: 'glyphicon',
-		buttonClasses: 'btn btn-default',
-		selectionLimit: 0,
-		closeOnSelect: false,
-		showCheckAll: false,
-		showUncheckAll: false,
-		dynamicTitleMaxItems: 100,
-		maxHeight: '300px',
-	};
-
-	private myTexts: IMultiSelectTexts = {
-		checkAll: 'Check all',
-		uncheckAll: 'Uncheck all',
-		checked: 'checked',
-		checkedPlural: 'checked',
-		searchPlaceholder: 'Search...',
-		defaultTitle: 'Select',
-	};
-
 	onChange(value){
 		this.measgroupForm.controls['Measurements'].patchValue(value);
 	}
@@ -60,8 +38,8 @@ export class MeasGroupCfgComponent {
 	  this.editmode='list';
 	  this.reloadData();
 	  this.measgroupForm = builder.group({
-			id: ['',Validators.compose([Validators.required, Validators.minLength(4)])],
-			Measurements: ['']
+			id: ['',Validators.required],
+			Measurements: ['', Validators.compose([Validators.required,Validators.minLength(1)])]
 		});
   }
 
@@ -92,7 +70,11 @@ export class MeasGroupCfgComponent {
  editMeasGroup(id){
 	 this.getMeasforMeasGroups();
 	 this.measGroupService.getMeasGroupById(id)
- 		 .subscribe(data => { this.testmeasgroups = data },
+ 		 .subscribe(data => {
+			this.testmeasgroups = data;
+			 //Update measurements
+	 		this.measgroupForm.controls['Measurements'].patchValue(this.testmeasgroups.Measurements);
+		  },
  		 err => console.error(err),
  		 () =>  this.editmode = "modify"
  		);
@@ -107,14 +89,13 @@ export class MeasGroupCfgComponent {
       err => console.error(err),
       () =>  {this.editmode = "list"; this.reloadData()}
 			);
-			this.measgroupForm.reset();
 		}
  }
 
  updateMeasGroup(oldId){
 	 console.log(oldId);
 	 console.log(this.measgroupForm.value.id);
-	 if(this.measgroupForm.dirty && this.measgroupForm.valid) {
+	 if(this.measgroupForm.valid) {
 		 var r = true;
 		 if (this.measgroupForm.value.id != oldId) {
 			 r = confirm("Changing Measurement Group ID from "+oldId+" to " +this.measgroupForm.value.id+". Proceed?");

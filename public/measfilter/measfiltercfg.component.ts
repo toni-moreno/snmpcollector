@@ -2,6 +2,8 @@ import { Component, ChangeDetectionStrategy, Pipe, PipeTransform  } from '@angul
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { MeasFilterService } from './measfiltercfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
+import { ValidationService } from '../common/validation.service'
+
 
 
 @Component({
@@ -32,14 +34,14 @@ export class MeasFilterCfgComponent {
 	  this.editmode='list';
 	  this.reloadData();
 	  this.measfilterForm = builder.group({
-			id: ['',Validators.compose([Validators.required, Validators.minLength(4)])],
-			IDMeasurementCfg: [''],
-			FType: [''],
+			id: ['',Validators.required],
+			IDMeasurementCfg: ['', Validators.required],
+			FType: ['', Validators.required],
 			FileName: [''],
 			EnableAlias: [''],
-			OIDCond: [''],
-			CondType: [''],
-			CondValue: ['']
+			OIDCond: ['', ValidationService.OIDValidator],
+			CondType: ['', Validators.required],
+			CondValue: ['', Validators.required]
 		});
   }
 
@@ -92,7 +94,7 @@ export class MeasFilterCfgComponent {
  updateMeasFilter(oldId){
 	 console.log(oldId);
 	 console.log(this.measfilterForm.value.id);
-	 if(this.measfilterForm.dirty && this.measfilterForm.valid) {
+	 if(this.measfilterForm.valid) {
 		 var r = true;
 		 if (this.measfilterForm.value.id != oldId) {
 			 r = confirm("Changing Measurement Filter ID from "+oldId+" to " +this.measfilterForm.value.id+". Proceed?");

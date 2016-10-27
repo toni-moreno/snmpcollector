@@ -53,8 +53,8 @@ export class SnmpDeviceCfgComponent {
 	  this.editmode='list';
 	  this.reloadData();
 	  this.snmpdevForm = builder.group({
-		id: ['',Validators.compose([Validators.required, Validators.minLength(4)])],
-		Host: ['', Validators.required],
+		id: ['',Validators.required],
+		Host: ['',Validators.required],
 		Port: [161,Validators.required],
 		Retries: [5],
 		Timeout: [20],
@@ -106,12 +106,19 @@ export class SnmpDeviceCfgComponent {
 
  }
  editDevice(id){
+	 //Get select options
 	 this.getInfluxServersforDevices();
 	 this.getMeasGroupsforDevices();
 	 this.getMeasFiltersforDevices();
 
 	 this.snmpDeviceService.getDevicesById(id)
- 		 .subscribe(data => { this.testsnmpdev = data; console.log("testsnmpdev", data) },
+ 		 .subscribe(data => {
+			 //Set data on testsnmpdev
+			 this.testsnmpdev = data;
+			 //Update measgroups and filters:
+	 		this.snmpdevForm.controls['MeasurementGroups'].patchValue(this.testsnmpdev.MeasurementGroups);
+			this.snmpdevForm.controls['MeasFilters'].patchValue(this.testsnmpdev.MeasFilters);
+		  },
  		 err => console.error(err),
  		 () =>  this.editmode = "modify"
  				 );
@@ -134,7 +141,7 @@ export class SnmpDeviceCfgComponent {
 	 console.log(oldId);
 	 console.log(this.snmpdevForm.value.id);
 	 console.log("FORM", this.snmpdevForm.value);
-	 if(this.snmpdevForm.dirty && this.snmpdevForm.valid) {
+	 if(this.snmpdevForm.valid) {
 		 var r = true;
 		 if (this.snmpdevForm.value.id != oldId) {
 			r = confirm("Changing Device ID from "+oldId+" to " +this.snmpdevForm.value.id+". Proceed?");

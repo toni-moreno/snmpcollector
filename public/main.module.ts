@@ -33,6 +33,8 @@ import { InfluxServerCfgComponent } from './influxserver/influxservercfg.compone
 import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
 
+//others
+import { ValidationService } from './common/validation.service'
 
 @NgModule({
   bootstrap: [App],
@@ -65,6 +67,7 @@ import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
     })
   ],
   providers: [
+    ValidationService,
     AuthGuard, ...AUTH_PROVIDERS
   ]
 })

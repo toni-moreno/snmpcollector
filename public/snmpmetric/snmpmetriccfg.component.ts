@@ -1,6 +1,8 @@
 import { Component, ChangeDetectionStrategy, Pipe, PipeTransform  } from '@angular/core';
 import {  FormBuilder,  Validators} from '@angular/forms';
 import { SnmpMetricService } from './snmpmetriccfg.service';
+import { ControlMessagesComponent } from '../common/control-messages.component'
+import { ValidationService } from '../common/validation.service'
 
 
 @Component({
@@ -31,15 +33,15 @@ export class SnmpMetricCfgComponent {
 	  this.editmode='list';
 	  this.reloadData();
 	  this.snmpmetForm = builder.group({
-			id: ['',Validators.compose([Validators.required, Validators.minLength(4)])],
+			id: ['',Validators.required],
   		FieldName: ['', Validators.required],
 			Description: [''],
-			BaseOID: [''],
-			DataSrcType: [''],
+			BaseOID: ['', Validators.compose([Validators.required, ValidationService.OIDValidator])],
+			DataSrcType: ['', Validators.required],
 			//Depending on datasrctype
-			GetRate:[''],
-			Scale: [''],
-			Shift: [''],
+			GetRate:['false', Validators.required],
+			Scale: ['0', Validators.required],
+			Shift: ['0', Validators.required],
       IsTag:['false',Validators.required]
 		});
   }

@@ -162,6 +162,15 @@ func webServer(port int) {
 		m.Get("/ckeckondel/:id", GetInfluxAffectOnDel)
 	})
 
+	// Data sources
+	m.Group("/snmpdevice", func() {
+		m.Get("/", GetSNMPDevices)
+		m.Post("/", bind(SnmpDeviceCfg{}), AddSNMPDevice)
+		m.Put("/:id", bind(SnmpDeviceCfg{}), UpdateSNMPDevice)
+		m.Delete("/:id", DeleteSNMPDevice)
+		m.Get("/:id", GetSNMPDeviceByID)
+	})
+
 	m.Group("/runtime", func() {
 		m.Get("/info/", RTGetInfo)
 		m.Get("/info/:id", RTGetInfo)

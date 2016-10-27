@@ -217,7 +217,7 @@
 		tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
 	 <div class="col-sm-9">
 			<div>
-				<ss-multiselect-dropdown [texts]="myTexts" [settings]="mySettings" [options]="selectmetrics" [ngModel]="testinfluxmeas.Fields" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)"></ss-multiselect-dropdown>
+				<ss-multiselect-dropdown [options]="selectmetrics" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="testinfluxmeas.Fields" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)"></ss-multiselect-dropdown>
 				<control-messages [control]="influxmeasForm.controls.Fields"></control-messages>
 			</div>
 		</div>

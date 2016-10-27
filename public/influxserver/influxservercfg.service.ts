@@ -27,9 +27,8 @@ export class InfluxServerService {
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.http.put('/influxservers/'+id,JSON.stringify(dev,function (key,value) {
-            if ( key == 'EnableAlias' ) {
-              if (value == "true") return true;
-              else return false;
+            if ( key == 'Port' ) {
+              return parseInt(value);
             }
             return value;
 

@@ -14,29 +14,22 @@ export class SnmpDeviceService {
         headers.append("Content-Type", 'application/json');
         return this.http.post('/snmpdevice',JSON.stringify(dev,function (key,value) {
             console.log("KEY: "+key+" Value: "+value);
-            if (	key == 'Port' ||
+            if ( key == 'Port' ||
             key == 'Retries' ||
             key == 'Timeout' ||
             key == 'Repeat' ||
             key == 'Freq' ) {
                 return parseInt(value);
             }
-            if ( key == 'SnmpDebug' ) return ( value === "true");
-            if ( key == 'Active' ) return ( value === "true");
+            if ( key == 'Active' ||
+            key == 'SnmpDebug' ) return ( value === "true" || value === true);
             if ( key == 'Extratags' ) return  String(value).split(',');
-            //TODO Actualizar en Angular2 Final con Multiselect
-
-            if ( key == 'MeasFilters') {
-                if (value != null) return String(value).split(',');
-                else return null;
-
-            }
-            if ( key == 'MetricGroups') {
+            if ( key == 'MeasFilters' ||
+            key == 'MetricGroups') {
                 if (value != null) return String(value).split(',');
                 else return null;
             }
             return value;
-
         }), { headers: headers })
         .map( (responseData) => responseData.json());
     }
@@ -47,27 +40,22 @@ export class SnmpDeviceService {
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.http.put('/snmpdevice/'+id,JSON.stringify(dev,function (key,value) {
-            if (key == 'Port' ||
+            if ( key == 'Port' ||
             key == 'Retries' ||
             key == 'Timeout' ||
             key == 'Repeat' ||
             key == 'Freq' ) {
                 return parseInt(value);
             }
-            if ( key == 'SnmpDebug' ) return ( value === "true");
-            if ( key == 'Active' ) return ( value === "true");
+            if ( key == 'Active' ||
+            key == 'SnmpDebug' ) return ( value === "true" || value === true);
             if ( key == 'Extratags' ) return  String(value).split(',');
-            if ( key == 'MeasFilters') {
-                if (value != null) return String(value).split(',');
-                else return null;
-
-            }
-            if ( key == 'MetricGroups') {
+            if ( key == 'MeasFilters' ||
+            key == 'MetricGroups') {
                 if (value != null) return String(value).split(',');
                 else return null;
             }
             return value;
-
         }), {  headers: headers   })
         .map( (responseData) => responseData.json());
     }
