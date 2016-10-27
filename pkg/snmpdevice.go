@@ -434,8 +434,8 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 					if nErrors > 0 {
 						d.addErrors(nErrors)
 					}
-					//prepare batchpoint andl
-					points := m.GetInfluxPoint( /*d.cfg.Host,*/ d.TagMap)
+					//prepare batchpoint
+					points := m.GetInfluxPoint(d.TagMap)
 					(*bpts).AddPoints(points)
 
 				}

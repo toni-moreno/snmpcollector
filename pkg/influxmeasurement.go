@@ -280,17 +280,16 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 			for _, v_mtr := range v_idx {
 				m.log.Debugf("DEBUG METRIC %+v", v_mtr.cfg)
 				if v_mtr.cfg.IsTag == true {
-					m.log.Debugf("generating Tag for Metric: %s", v_mtr.cfg.FieldName)
+					m.log.Debugf("generating Tag for Metric: %s : tagname: %s", v_mtr.cfg.FieldName, v_mtr.CookedValue.(string))
 					Tags[v_mtr.cfg.FieldName] = string(v_mtr.CookedValue.(string))
 				} else {
-					m.log.Debugf("generating field for Metric: %s", v_mtr.cfg.FieldName)
-					Fields[v_mtr.cfg.FieldName] = v_mtr.CookedValue
+					m.log.Debugf("generating field for Metric: %s : value %f", v_mtr.cfg.FieldName, v_mtr.CookedValue.(float64))
+					Fields[v_mtr.cfg.FieldName] = float64(v_mtr.CookedValue.(float64))
 				}
 
 				t = v_mtr.CurTime
 			}
-			m.log.Debugf("FIELDS:%+v", Fields)
-			m.log.Debugf("TAGS:%+v", Tags)
+			m.log.Debugf("FIELDS:%+v TAGS:%+v", Fields, Tags)
 			pt, err := client.NewPoint(
 				m.cfg.Name,
 				Tags,
