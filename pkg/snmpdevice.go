@@ -279,6 +279,11 @@ func (d *SnmpDevice) Init(name string) {
 	d.log.Out = f
 	l, _ := logrus.ParseLevel(d.cfg.LogLevel)
 	d.log.Level = l
+	//Formatter for time
+	customFormatter := new(logrus.TextFormatter)
+	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
+	d.log.Formatter = customFormatter
+	customFormatter.FullTimestamp = true
 
 	//Init channels
 	d.chDebug = make(chan bool)
