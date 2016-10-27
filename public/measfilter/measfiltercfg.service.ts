@@ -13,10 +13,7 @@ export class MeasFilterService {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
         return this.http.post('/measfilters',JSON.stringify(dev,function (key,value) {
-                if ( key == 'EnableAlias' ) {
-                  if (value == "true") return true;
-                  else return false;
-                }
+                if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
                 if ( key == 'IDMeasurementCfg') {
                     if ( value == "" ) return null
                 }
@@ -29,15 +26,10 @@ export class MeasFilterService {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
         console.log("DEV: ",dev);
-        //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.http.put('/measfilters/'+id,JSON.stringify(dev,function (key,value) {
-            if ( key == 'EnableAlias' ) {
-              if (value == "true") return true;
-              else return false;
-            }
+            if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
             if ( key == 'IDMeasurementCfg') {
-                if ( !value || value == "" ) return null
-                else return String(value).split(',');
+                if ( value == "" ) return null
             }
             return value;
 

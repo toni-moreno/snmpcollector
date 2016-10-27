@@ -14,10 +14,10 @@ export class InfluxMeasService {
         headers.append("Content-Type", 'application/json');
         return this.http.post('/measurement',JSON.stringify(dev,function (key,value) {
             if ( key == 'Fields' ) {
-              if (!value) return null
+              if (value == null || value == "")  return null;
               else return String(value).split(',');
             }
-            if ( key == 'IndexAsValue' ) return ( value === "true");
+            if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
             return value;
         }), { headers: headers })
         .map( (responseData) => responseData.json());
@@ -27,14 +27,13 @@ export class InfluxMeasService {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
         console.log("DEV: ",dev);
-        //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.http.put('/measurement/'+id,JSON.stringify(dev,function (key,value) {
           if ( key == 'Fields' ) {
-                    if (!value) return null
-                    else return String(value).split(',');
-                  }
-          if ( key == 'IndexAsValue' ) return ( value === "true");
-                  return value;
+            if (value == null || value == "")  return null;
+            else return String(value).split(',');
+          }
+          if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
+          return value;
 
         }), {  headers: headers   })
         .map( (responseData) => responseData.json());

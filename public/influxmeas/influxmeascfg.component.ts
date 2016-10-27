@@ -20,29 +20,6 @@ export class InfluxMeasCfgComponent {
 	snmpmetrics: Array<any>;
  	selectmetrics: IMultiSelectOption[];
 
-
-	private mySettings: IMultiSelectSettings = {
-    pullRight: false,
-    enableSearch: false,
-    checkedStyle: 'glyphicon',
-    buttonClasses: 'btn btn-default',
-    selectionLimit: 0,
-    closeOnSelect: false,
-    showCheckAll: false,
-    showUncheckAll: false,
-    dynamicTitleMaxItems: 100,
-    maxHeight: '300px',
-};
-
-private myTexts: IMultiSelectTexts = {
-    checkAll: 'Check all',
-    uncheckAll: 'Uncheck all',
-    checked: 'checked',
-    checkedPlural: 'checked',
-    searchPlaceholder: 'Search...',
-    defaultTitle: 'Select',
-};
-
 	onChange(value){
 		this.influxmeasForm.controls['Fields'].patchValue(value);
 	}
@@ -61,13 +38,13 @@ private myTexts: IMultiSelectTexts = {
 
 	  this.reloadData();
 	  this.influxmeasForm = builder.group({
-			id: ['',Validators.compose([Validators.required, Validators.minLength(4)])],
+			id: ['',Validators.required],
   		Name: ['', Validators.required],
-			GetMode: [''],
+			GetMode: ['', Validators.required],
 			IndexOID: [''],
 			IndexTag: [''],
       IndexAsValue: ['false'],
-			Fields: [''],
+			Fields: ['', Validators.required]
 		});
   }
 
@@ -99,7 +76,11 @@ private myTexts: IMultiSelectTexts = {
  editMeas(id){
 	 this.getMetricsforMeas();
 	 this.influxMeasService.getMeasById(id)
- 		 .subscribe(data => { this.testinfluxmeas = data },
+ 		 .subscribe(data => {
+       this.testinfluxmeas = data
+       //Update metrics fields
+	 		this.influxmeasForm.controls['Fields'].patchValue(this.testinfluxmeas.Fields);
+      },
  		 err => console.error(err),
  		 () =>  this.editmode = "modify"
  		);
@@ -123,7 +104,7 @@ private myTexts: IMultiSelectTexts = {
  updateInfluxMeas(oldId){
 	 console.log(oldId);
 	 console.log(this.influxmeasForm.value.id);
-	 if(this.influxmeasForm.dirty && this.influxmeasForm.valid) {
+	 if(this.influxmeasForm.valid) {
 		 var r = true;
 		 if (this.influxmeasForm.value.id != oldId) {
 			 r = confirm("Changing Measurement ID from "+oldId+" to " +this.influxmeasForm.value.id+". Proceed?");

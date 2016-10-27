@@ -4,7 +4,8 @@ export class ValidationService {
             'required': 'Required',
             'invalidCreditCard': 'Is invalid credit card number',
             'invalidEmailAddress': 'Invalid email address',
-            'invalidPassword': 'Invalid password. Password must be at least 6 characters long, and contain a number.'
+            'invalidPassword': 'Invalid password. Password must be at least 6 characters long, and contain a number.',
+            'invalidOID': 'Invalid OID. OID must start with a dot'
         };
 
         return config[validatorName];
@@ -35,6 +36,16 @@ export class ValidationService {
             return null;
         } else {
             return { 'invalidPassword': true };
+        }
+    }
+
+    static OIDValidator(control) {
+        // {6,100}           - Assert password is between 6 and 100 characters
+        // (?=.*[0-9])       - Assert a string has at least one number
+        if (control.value.match(/^\./) || control.value == "") {
+            return null;
+        } else {
+            return { 'invalidOID': true };
         }
     }
 }

@@ -13,10 +13,10 @@ export class MeasGroupService {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
         return this.http.post('/measgroups',JSON.stringify(dev,function (key,value) {
-                if ( key == 'Measurements' ) {
-                    if (!value) return null
-                  else return String(value).split(',');
-                }
+            if ( key == 'Measurements' ) {
+              if (value != null) return String(value).split(',');
+              else return null;
+            }
                 return value;
         }), { headers: headers })
         .map( (responseData) => responseData.json());
@@ -29,8 +29,8 @@ export class MeasGroupService {
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.http.put('/measgroups/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'Measurements' ) {
-              if (!value) return null
-              else return String(value).split(',');
+              if (value != null) return String(value).split(',');
+              else return null;
             }
             return value;
         }), {  headers: headers   })

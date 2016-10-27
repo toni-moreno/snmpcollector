@@ -13,17 +13,12 @@ export class SnmpMetricService {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
         return this.http.post('/metric',JSON.stringify(dev,function (key,value) {
-            if (key == 'Scale' || key == 'Shift') {
+            if (key == 'Scale' ||
+            key == 'Shift') {
                 return parseFloat(value);
             };
-            if (key == 'GetRate'){
-                if (value === 'true')   return true;
-                else return false;
-            }
-            if ( key == 'IsTag' ) {
-                if ( value === "true") return true;
-                else return false;
-            }
+            if (key == 'GetRate' ||
+            key == 'IsTag' ) return ( value === "true" || value === true);
             return value;
 
         }), { headers: headers })
@@ -34,19 +29,13 @@ export class SnmpMetricService {
         var headers = new Headers();
         headers.append("Content-Type", 'application/json');
         console.log("DEV: ",dev);
-        //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.http.put('/metric/'+id,JSON.stringify(dev,function (key,value) {
-            if (key == 'Scale' || key == 'Shift') {
+            if (key == 'Scale' ||
+            key == 'Shift') {
                 return parseFloat(value);
-            }
-            if (key == 'GetRate'){
-                if (value === 'true')   return true;
-                else return false;
-            }
-            if ( key == 'IsTag' ) {
-                if ( value === "true") return true;
-                else return false;
-            }
+            };
+            if (key == 'GetRate' ||
+            key == 'IsTag' ) return ( value === "true" || value === true);
             return value;
 
         }), {  headers: headers   })

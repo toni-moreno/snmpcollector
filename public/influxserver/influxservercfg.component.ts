@@ -29,13 +29,13 @@ export class InfluxServerCfgComponent {
 	  this.editmode='list';
 	  this.reloadData();
 	  this.influxserverForm = builder.group({
-			id: ['',Validators.compose([Validators.required, Validators.minLength(4)])],
-			Host: [''],
-			Port: [''],
-			DB: [''],
-			User: [''],
-			Password: [''],
-			Retention: [''],
+			id: ['',Validators.required],
+			Host: ['', Validators.required],
+			Port: ['', Validators.required],
+			DB: ['', Validators.required],
+			User: ['', Validators.required],
+			Password: ['', Validators.required],
+			Retention: ['autogen', Validators.required],
 		});
   }
 
