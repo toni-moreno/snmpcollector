@@ -245,6 +245,10 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 		var t time.Time
 		Fields := make(map[string]interface{})
 		for _, v_mtr := range k {
+			if v_mtr.CookedValue == nil {
+				m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, hostTags, v_mtr)
+				continue
+			}
 			m.log.Debugf("generating field for %s value %s ", v_mtr.cfg.FieldName, v_mtr.CookedValue)
 			m.log.Debugf("DEBUG METRIC %+v", v_mtr)
 			Fields[v_mtr.cfg.FieldName] = v_mtr.CookedValue
@@ -280,11 +284,29 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 			for _, v_mtr := range v_idx {
 				m.log.Debugf("DEBUG METRIC %+v", v_mtr.cfg)
 				if v_mtr.cfg.IsTag == true {
-					m.log.Debugf("generating Tag for Metric: %s : tagname: %s", v_mtr.cfg.FieldName, v_mtr.CookedValue.(string))
-					Tags[v_mtr.cfg.FieldName] = string(v_mtr.CookedValue.(string))
+					if v_mtr.CookedValue == nil {
+						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, Tags, v_mtr)
+						continue
+					}
+
+					var tag string
+					switch v := v_mtr.CookedValue.(type) {
+					case float64:
+						//most of times these will be integers
+						tag = strconv.FormatInt(int64(v), 10)
+					default:
+						//assume string
+						tag = v.(string)
+					}
+					m.log.Debugf("generating Tag for Metric: %s : tagname: %s", v_mtr.cfg.FieldName, tag)
+					Tags[v_mtr.cfg.FieldName] = tag
 				} else {
+					if v_mtr.CookedValue == nil {
+						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, Tags, v_mtr)
+						continue
+					}
 					m.log.Debugf("generating field for Metric: %s : value %f", v_mtr.cfg.FieldName, v_mtr.CookedValue.(float64))
-					Fields[v_mtr.cfg.FieldName] = float64(v_mtr.CookedValue.(float64))
+					Fields[v_mtr.cfg.FieldName] = v_mtr.CookedValue
 				}
 
 				t = v_mtr.CurTime
