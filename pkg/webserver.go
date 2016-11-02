@@ -172,6 +172,7 @@ func webServer(port int) {
 	})
 
 	m.Group("/runtime", func() {
+		m.Get("/version/", RTGetVersion)
 		m.Get("/info/", RTGetInfo)
 		m.Get("/info/:id", RTGetInfo)
 		m.Put("/activatedev/:id", RTActivateDev)
@@ -271,6 +272,26 @@ func RTGetInfo(ctx *macaron.Context) {
 		ctx.JSON(200, &devices)
 	}
 	return
+}
+
+type RInfo struct {
+	InstanceID string
+	Version    string
+	Commit     string
+	Branch     string
+	BuildStamp string
+}
+
+//RTGetVersion xx
+func RTGetVersion(ctx *macaron.Context) {
+	info := &RInfo{
+		InstanceID: cfg.General.InstanceID,
+		Version:    version,
+		Commit:     commit,
+		Branch:     branch,
+		BuildStamp: buildstamp,
+	}
+	ctx.JSON(200, &info)
 }
 
 /****************/

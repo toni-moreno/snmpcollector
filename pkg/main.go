@@ -15,8 +15,9 @@ import (
 
 // GeneralConfig has miscelaneous configuration options
 type GeneralConfig struct {
-	LogDir   string `toml:"logdir"`
-	LogLevel string `toml:"loglevel"`
+	InstanceID string `toml:"instanceID"`
+	LogDir     string `toml:"logdir"`
+	LogLevel   string `toml:"loglevel"`
 }
 
 var (

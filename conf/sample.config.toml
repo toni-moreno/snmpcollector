@@ -4,6 +4,9 @@
 ############################
 
 [general]
+ #InstanceID will be a string identifiing the collector , It will be usefull when
+ # more than one running on the same server, this ID will be shown in the WebUI.
+ instanceID = "WAN Communicactions"
  #there are as many logs as devices configured and
  #logdir set the Directory path for each device individual log
  logdir = "./log"
