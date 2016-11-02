@@ -11,15 +11,16 @@ import (
 
 // InfluxCfg is the main configuration for any InfluxDB TSDB
 type InfluxCfg struct {
-	ID        string `xorm:"'id' unique"`
-	Host      string `xorm:"host"`
-	Port      int    `xorm:"port"`
-	DB        string `xorm:"db"`
-	User      string `xorm:"user"`
-	Password  string `xorm:"password"`
-	Retention string `xorm:"retention"`
-	Timeout   int    `xorm:"'timeout' default 30"`
-	UserAgent string `xorm:"useragent"`
+	ID          string `xorm:"'id' unique"`
+	Host        string `xorm:"host"`
+	Port        int    `xorm:"port"`
+	DB          string `xorm:"db"`
+	User        string `xorm:"user"`
+	Password    string `xorm:"password"`
+	Retention   string `xorm:"retention"`
+	Timeout     int    `xorm:"'timeout' default 30"`
+	UserAgent   string `xorm:"useragent"`
+	Description string `xorm:"description"`
 }
 
 // SnmpDeviceCfg contains all snmp related device definitions
@@ -53,6 +54,7 @@ type SnmpDeviceCfg struct {
 	DeviceTagName  string   `xorm:"devicetagname"`
 	DeviceTagValue string   `xorm:"devicetagvalue"`
 	ExtraTags      []string `xorm:"extra-tags"`
+	Description    string   `xorm:"description"`
 
 	//Filters for measurements
 	MeasurementGroups []string `xorm:"-"`
@@ -83,6 +85,7 @@ type InfluxMeasurementCfg struct {
 	IndexAsValue bool             `xorm:"'indexasvalue' default 0"`
 	Fields       []string         `xorm:"-"` //Got from MeasurementFieldCfg table
 	fieldMetric  []*SnmpMetricCfg `xorm:"-"`
+	Description  string           `xorm:"description"`
 }
 
 //MeasurementFieldCfg the metrics contained on each measurement (to initialize on the fieldMetric array)
@@ -101,6 +104,7 @@ type MeasFilterCfg struct {
 	OIDCond          string `xorm:"cond_oid"`
 	CondType         string `xorm:"cond_type"`
 	CondValue        string `xorm:"cond_value"`
+	Description      string `xorm:"description"`
 }
 
 //SnmpDevFilters filters to use with indexed measurement
