@@ -36,6 +36,8 @@ export class InfluxServerCfgComponent {
 			User: ['', Validators.required],
 			Password: ['', Validators.required],
 			Retention: ['autogen', Validators.required],
+      Timeout: [30],
+      UserAgent: [],
 		});
   }
 

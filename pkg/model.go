@@ -18,6 +18,8 @@ type InfluxCfg struct {
 	User      string `xorm:"user"`
 	Password  string `xorm:"password"`
 	Retention string `xorm:"retention"`
+	Timeout   int    `xorm:"'timeout' default 30"`
+	UserAgent string `xorm:"useragent"`
 }
 
 // SnmpDeviceCfg contains all snmp related device definitions

@@ -106,7 +106,28 @@
 				<input formControlName="Retention" id="Retention" />
 				<control-messages [control]="influxserverForm.controls.Retention"></control-messages>
 			</div>
+
 		</div>
+    <div class="form-group">
+<label class="control-label col-sm-2" for="Timeout">Timeout</label>
+<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+ tooltip="Time in second that client will wait to a complete write transaction to be complete"></i>
+<div class="col-sm-9">
+     <input formControlName="Timeout" id="Timeout" />
+     <control-messages [control]="influxserverForm.controls.Timeout"></control-messages>
+   </div>
+ </div>
+
+ <div class="form-group">
+<label class="control-label col-sm-2" for="UserAgent">User Agent</label>
+<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+tooltip="UserAgent is the http User Agent, defaults to \"InfluxDBClient\"(useful for debugin data write in the server site)"></i>
+<div class="col-sm-9">
+  <input formControlName="UserAgent" id="UserAgent" />
+  <control-messages [control]="influxserverForm.controls.UserAgent"></control-messages>
+</div>
+</div>
+
 		<div class="col-sm-offset-4 col-sm-6">
 			<button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
 			<button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
@@ -191,6 +212,25 @@
 			</div>
 		</div>
 
+    <div class="form-group">
+<label class="control-label col-sm-2" for="Timeout">Timeout</label>
+<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+ tooltip="Time in second that client will wait to a complete write transaction to be complete"></i>
+<div class="col-sm-9">
+     <input formControlName="Timeout" id="Timeout" [ngModel] = "testinfluxservers.Timeout"/>
+     <control-messages [control]="influxserverForm.controls.Timeout"></control-messages>
+   </div>
+ </div>
+
+ <div class="form-group">
+<label class="control-label col-sm-2" for="UserAgent">User Agent</label>
+<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+tooltip="UserAgent is the http User Agent, defaults to \"InfluxDBClient\"(useful for debugin data write in the server site)"></i>
+<div class="col-sm-9">
+  <input formControlName="UserAgent" id="UserAgent" [ngModel] = "testinfluxservers.UserAgent" />
+  <control-messages [control]="influxserverForm.controls.UserAgent"></control-messages>
+</div>
+</div>
 		<div class="col-sm-offset-4 col-sm-6">
 		<button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
 		<button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>

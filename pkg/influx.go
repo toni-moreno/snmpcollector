@@ -74,9 +74,11 @@ func (db *InfluxDB) Connect() error {
 		return nil
 	}
 	conf := client.HTTPConfig{
-		Addr:     fmt.Sprintf("http://%s:%d", db.cfg.Host, db.cfg.Port),
-		Username: db.cfg.User,
-		Password: db.cfg.Password,
+		Addr:      fmt.Sprintf("http://%s:%d", db.cfg.Host, db.cfg.Port),
+		Username:  db.cfg.User,
+		Password:  db.cfg.Password,
+		UserAgent: db.cfg.UserAgent,
+		Timeout:   time.Duration(db.cfg.Timeout) * time.Second,
 	}
 	cli, err := client.NewHTTPClient(conf)
 	db.client = cli
@@ -96,6 +98,10 @@ func (db *InfluxDB) Init() {
 	if db.started == true {
 		log.Infof("Emitter thread to : %s  already started (skipping Initialization)", db.cfg.ID)
 		return
+	}
+
+	if len(db.cfg.UserAgent) == 0 {
+		db.cfg.UserAgent = "snmpCollector-" + db.cfg.ID
 	}
 
 	log.Infof("Initializing influxdb with id = %s", db.cfg.ID)
