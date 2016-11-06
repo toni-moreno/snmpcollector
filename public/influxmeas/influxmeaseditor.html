@@ -3,34 +3,40 @@
 <hr>
 	<p [ngSwitch]="editmode">
     <template ngSwitchCase="list">
-	<div class="row-fluid">
+			<test-modal #viewModal titleName='Measurements' [countFields]="['Fields']"></test-modal>
 
-						<h4>{{ errorhandler }} </h4>
-      		<div  class="col-md-9">
-			<input type="text"  class="form-control" [(ngModel)]="filter" >
- 			<button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
-	 		<button type="button" (click)="newMeas()" class="btn btn-primary">New</button>
-     		</div>
-        <div  class="col-md-9">
-  	<accordion [closeOthers]="oneAtATime">
-  		<accordion-group #group  *ngFor="let influxmea of influxmeas" [heading]="influxmea.ID">
-				<div accordion-heading>
-    				<i style="top: -15px" class="pull-right glyphicon"
-         			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
-   			</div>
-		<!--content-->
-					<i class="pull-right glyphicon glyphicon glyphicon-eye-open" (click)="viewItem(group,$event)"></i>
-					<i class="pull-right glyphicon glyphicon glyphicon glyphicon-edit"  (click)="editMeas(influxmea.ID)"></i>
-    			<i class="pull-right glyphicon glyphicon glyphicon glyphicon-remove"  (click)="removeItem(influxmea.ID)"></i>
+		    <div class="row">
+		  <div class="col-md-6">
+		    <input *ngIf="config.filtering" placeholder="Filter all columns"
+		           [ngTableFiltering]="config.filtering"
+		           class="form-control"
+		           (tableChanged)="onChangeTable(config)"/>
+		    <button type="button" (click)="newMeas()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+		  </div>
+		</div>
+		<br>
+		<ng-table [config]="config"
+		          (tableChanged)="onChangeTable(config)"
+		          (cellClicked)="onCellClick($event)"
+		          (viewedItem)="viewItem($event)"
+		          (editedItem)="editMeas($event)"
+		          (removedItem)="removeItem($event)"
+		          [showCustom]="true"
+		          [rows]="rows" [columns]="columns">
+		</ng-table>
 
-    		 {{ influxmea.Name }}
-				 <hr>
-				 {{ influxmea | json }}
-
-  		</accordion-group>
-	</accordion>
-</div>
-</div>
+		<pagination *ngIf="config.paging"
+		            class="pagination-sm"
+		            [(ngModel)]="page"
+		            [totalItems]="length"
+		            [itemsPerPage]="itemsPerPage"
+		            [maxSize]="maxSize"
+		            [boundaryLinks]="true"
+		            [rotate]="false"
+		            (pageChanged)="onChangeTable(config, $event)"
+		            (numPages)="numPages = $event">
+		</pagination>
+		<pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
      </template>
      <template ngSwitchCase="create">
    	<form [formGroup]="influxmeasForm" class="form-horizontal" (ngSubmit)="saveInfluxMeas()">

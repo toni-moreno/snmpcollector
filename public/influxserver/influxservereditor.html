@@ -3,33 +3,41 @@
 <hr>
 	<p [ngSwitch]="editmode">
     <template ngSwitchCase="list">
-  		<div class="row-fluid">
-						<h4>{{ errorhandler }} </h4>
-      		<div  class="col-md-9">
-			<input type="text"  class="form-control" [(ngModel)]="filter" >
-      <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
-	 		<button type="button" (click)="newInfluxServer()" class="btn btn-primary">New</button>
-   		</div>
-  		<div  class="col-md-9">
-	<accordion [closeOthers]="oneAtATime">
-  		<accordion-group #group  *ngFor="let influxserver of influxservers" [heading]="influxserver.ID">
-   			<div accordion-heading>
-    				<i style="top: -15px" class="pull-right glyphicon"
-         			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
-   			</div>
-		<!--content-->
-					<i class="pull-right glyphicon glyphicon glyphicon-eye-open" (click)="viewItem(group,$event)"></i>
-					<i class="pull-right glyphicon glyphicon glyphicon glyphicon-edit"  (click)="editInfluxServer(influxserver.ID)"></i>
-    			<i class="pull-right glyphicon glyphicon glyphicon glyphicon-remove"  (click)="removeItem(influxserver.ID)"></i>
 
-    		 {{ influxserver.Host }}
-				 <hr>
-				 {{ influxserver | json }}
+			<test-modal #viewModal titleName='InfluxDB Servers'></test-modal>
 
-  		</accordion-group>
-	</accordion>
-</div>
-</div>
+		    <div class="row">
+		  <div class="col-md-6">
+		    <input *ngIf="config.filtering" placeholder="Filter all columns"
+		           [ngTableFiltering]="config.filtering"
+		           class="form-control"
+		           (tableChanged)="onChangeTable(config)"/>
+		    <button type="button" (click)="newInfluxServer()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+		  </div>
+		</div>
+		<br>
+		<ng-table [config]="config"
+		          (tableChanged)="onChangeTable(config)"
+		          (cellClicked)="onCellClick($event)"
+		          (viewedItem)="viewItem($event)"
+		          (editedItem)="editInfluxServer($event)"
+		          (removedItem)="removeItem($event)"
+		          [showCustom]="true"
+		          [rows]="rows" [columns]="columns">
+		</ng-table>
+
+		<pagination *ngIf="config.paging"
+		            class="pagination-sm"
+		            [(ngModel)]="page"
+		            [totalItems]="length"
+		            [itemsPerPage]="itemsPerPage"
+		            [maxSize]="maxSize"
+		            [boundaryLinks]="true"
+		            [rotate]="false"
+		            (pageChanged)="onChangeTable(config, $event)"
+		            (numPages)="numPages = $event">
+		</pagination>
+		<pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
 
      </template>
      <template ngSwitchCase="create">
@@ -121,7 +129,7 @@
  <div class="form-group">
 <label class="control-label col-sm-2" for="UserAgent">User Agent</label>
 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-tooltip="UserAgent is the http User Agent, defaults to \"InfluxDBClient\"(useful for debugin data write in the server site)"></i>
+tooltip="UserAgent is the http User Agent, defaults to &quot;InfluxDBClient&quot; (useful for debugin data write in the server site)"></i>
 <div class="col-sm-9">
   <input formControlName="UserAgent" id="UserAgent" />
   <control-messages [control]="influxserverForm.controls.UserAgent"></control-messages>
@@ -225,7 +233,7 @@ tooltip="UserAgent is the http User Agent, defaults to \"InfluxDBClient\"(useful
  <div class="form-group">
 <label class="control-label col-sm-2" for="UserAgent">User Agent</label>
 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-tooltip="UserAgent is the http User Agent, defaults to \"InfluxDBClient\"(useful for debugin data write in the server site)"></i>
+tooltip="UserAgent is the http User Agent, defaults to &quot;InfluxDBClient&quot; (useful for debugin data write in the server site)"></i>
 <div class="col-sm-9">
   <input formControlName="UserAgent" id="UserAgent" [ngModel] = "testinfluxservers.UserAgent" />
   <control-messages [control]="influxserverForm.controls.UserAgent"></control-messages>

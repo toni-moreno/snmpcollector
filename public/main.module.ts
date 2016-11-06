@@ -9,7 +9,7 @@ import { AUTH_PROVIDERS } from 'angular2-jwt';
 // external libs
 //
 
-import { Ng2TableModule } from 'ng2-table/ng2-table';
+import { Ng2TableModule } from './common/ng-table/ng2-table';
 
 import { AuthGuard } from './common/auth.guard';
 import { Home } from './home/home';
@@ -23,30 +23,32 @@ import { MultiselectDropdownModule } from './common/multiselect-dropdown'
 //snmpcollector components
 
 import { SnmpDeviceCfgComponent } from './snmpdevice/snmpdevicecfg.component';
-import { SnmpDeviceTableComponent } from './snmpdevice/snmpdevicetable.component';
 import { SnmpMetricCfgComponent } from './snmpmetric/snmpmetriccfg.component';
 import { InfluxMeasCfgComponent } from './influxmeas/influxmeascfg.component';
 import { MeasGroupCfgComponent } from './measgroup/measgroupcfg.component';
 import { MeasFilterCfgComponent } from './measfilter/measfiltercfg.component';
 import { InfluxServerCfgComponent } from './influxserver/influxservercfg.component';
-
 import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
-
+import { ModalModule } from 'ng2-bootstrap/ng2-bootstrap';
+import { GenericModal } from './common/generic-modal'
 //others
-import { ValidationService } from './common/validation.service'
+import { ValidationService } from './common/validation.service';
+//pipes
+import { ObjectParserPipe } from './common/custom_pipe'
 
 @NgModule({
   bootstrap: [App],
   declarations: [
+    ObjectParserPipe,
     ControlMessagesComponent,
     SnmpDeviceCfgComponent,
-    SnmpDeviceTableComponent,
     SnmpMetricCfgComponent,
     InfluxMeasCfgComponent,
     MeasGroupCfgComponent,
     MeasFilterCfgComponent,
     InfluxServerCfgComponent,
+    GenericModal,
     Home,
     Login,
     App,
@@ -59,6 +61,7 @@ import { ValidationService } from './common/validation.service'
     MultiselectDropdownModule,
     AccordionModule,
     TooltipModule,
+    ModalModule,
     PaginationModule,
     TabsModule,
     Ng2TableModule,
