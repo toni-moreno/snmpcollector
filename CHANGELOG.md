@@ -1,4 +1,22 @@
 
+# v 0.5.3
+### New features.
+* WebUI now shows data in tables and can be filtered.
+
+
+# v 0.5.2
+### New features.
+* Added Runtime Version to the snmpcollector API
+* Estandarized Description for all objects.
+* Added timeout/ UserAgent to the influxclient
+
+### fixes
+* fix for issue #22
+
+### breaking changes
+* none
+
+
 # v 0.5.1
 ### New features.
 * Define field metric as Tag (IsTag = true) => type STRING,HWADDR,IP

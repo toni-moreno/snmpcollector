@@ -440,7 +440,7 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 
 				}
 				elapsedSnmp := time.Since(startSnmp)
-				d.log.Infof("snmpdevice [%s] snmp polling took [%s] ", d.cfg.ID, elapsedSnmp)
+				d.log.Infof("snmpdevice [%s] snmp pooling took [%s] ", d.cfg.ID, elapsedSnmp)
 				startInflux := time.Now()
 				d.Influx.Send(bpts)
 				elapsedInflux := time.Since(startInflux)
