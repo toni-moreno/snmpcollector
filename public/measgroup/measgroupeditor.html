@@ -1,37 +1,44 @@
 <h2>Measurement Groups</h2>
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <hr>
-	<p [ngSwitch]="editmode">
-    <template ngSwitchCase="list">
-	<div class="row-fluid">
-						<h4>{{ errorhandler }} </h4>
-      		<div  class="col-md-9">
-			<input type="text"  class="form-control" [(ngModel)]="filter" >
-      <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
-	 		<button type="button" (click)="newMeasGroup()" class="btn btn-primary">New</button>
-     		</div>
-				<div  class="col-md-9">
+<p [ngSwitch]="editmode">
+  <template ngSwitchCase="list">
+  <test-modal #viewModal titleName='Measurements Groups' [countFields]="['Measurements']"></test-modal>
 
-	<accordion [closeOthers]="oneAtATime">
-  		<accordion-group #group  *ngFor="let measgroup of measgroups" [heading]="measgroup.ID">
-   			<div accordion-heading>
-    				<i style="top: -15px" class="pull-right glyphicon"
-         			[ngClass]="{'glyphicon-chevron-down': group?.isOpen, 'glyphicon-chevron-right': !group?.isOpen}"></i>
-   			</div>
-		<!--content-->
-					<i class="pull-right glyphicon glyphicon glyphicon-eye-open" (click)="viewItem(group,$event)"></i>
-					<i class="pull-right glyphicon glyphicon glyphicon glyphicon-edit"  (click)="editMeasGroup(measgroup.ID)"></i>
-    			<i class="pull-right glyphicon glyphicon glyphicon glyphicon-remove"  (click)="removeItem(measgroup.ID)"></i>
-
-    		 Measurements:<br> {{ measgroup.Measurements }}
-				 <hr>
-				 {{ measgroup | json }}
-
-  		</accordion-group>
-	</accordion>
+    <div class="row">
+  <div class="col-md-6">
+    <input *ngIf="config.filtering" placeholder="Filter all columns"
+           [ngTableFiltering]="config.filtering"
+           class="form-control"
+           (tableChanged)="onChangeTable(config)"/>
+    <button type="button" (click)="newMeasGroup()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+  </div>
 </div>
-</div>
-     </template>
+<br>
+<ng-table [config]="config"
+          (tableChanged)="onChangeTable(config)"
+          (cellClicked)="onCellClick($event)"
+          (viewedItem)="viewItem($event)"
+          (editedItem)="editMeasGroup($event)"
+          (removedItem)="removeItem($event)"
+          [showCustom]="true"
+          [rows]="rows" [columns]="columns">
+</ng-table>
+
+<pagination *ngIf="config.paging"
+            class="pagination-sm"
+            [(ngModel)]="page"
+            [totalItems]="length"
+            [itemsPerPage]="itemsPerPage"
+            [maxSize]="maxSize"
+            [boundaryLinks]="true"
+            [rotate]="false"
+            (pageChanged)="onChangeTable(config, $event)"
+            (numPages)="numPages = $event">
+</pagination>
+<pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+</template>
+
      <template ngSwitchCase="create">
    	<form [formGroup]="measgroupForm" class="form-horizontal" (ngSubmit)="saveMeasGroup()">
 				<div class="form-group">

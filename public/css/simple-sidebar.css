@@ -96,9 +96,11 @@
     background: none;
 }
 
+
+
 @media(min-width:768px) {
     #wrapper {
-        padding-left: 250px;
+        padding-left: 125px;
     }
 
     #wrapper.toggled {
@@ -121,5 +123,12 @@
     #wrapper.toggled #page-content-wrapper {
         position: relative;
         margin-right: 0;
+    }
+}
+
+
+@media(min-width: 1400px) {
+    #wrapper {
+    padding-left: 0px;
     }
 }

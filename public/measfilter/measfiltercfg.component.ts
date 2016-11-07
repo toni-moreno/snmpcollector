@@ -1,10 +1,10 @@
-import { Component, ChangeDetectionStrategy, Pipe, PipeTransform  } from '@angular/core';
-import {  FormBuilder,  Validators} from '@angular/forms';
+import { Component, ChangeDetectionStrategy, ViewChild  } from '@angular/core';
+import { FormBuilder,  Validators} from '@angular/forms';
 import { MeasFilterService } from './measfiltercfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 import { ValidationService } from '../common/validation.service'
 
-
+import { GenericModal } from '../common/generic-modal';
 
 @Component({
   selector: 'measfilters',
@@ -14,6 +14,8 @@ import { ValidationService } from '../common/validation.service'
 })
 
 export class MeasFilterCfgComponent {
+	@ViewChild('viewModal') public viewModal: GenericModal;
+
   editmode: string; //list , create, modify
   measfilters: Array<any>;
   filter: string;
@@ -21,15 +23,34 @@ export class MeasFilterCfgComponent {
 	testmeasfilters: any;
 	influxmeas: Array<any>;
 
-  reloadData(){
-  // now it's a simple subscription to the observable
-    this.measFilterService.getMeasFilter(this.filter)
-      .subscribe(
-				data => { this.measfilters = data },
-		  	err => console.error(err),
-		  	() => console.log('DONE')
-		  );
-  }
+	//Initialization data, rows, colunms for Table
+	private data:Array<any> = [];
+	public rows:Array<any> = [];
+	public columns:Array<any> = [
+	{title: 'ID', name: 'ID'},
+	{title: 'Measurement ID', name: 'IDMeasurementCfg'},
+	{title: 'Filter Type', name: 'FType'},
+	{title: 'FileName', name: 'FileName'},
+	{title: 'EnableAlias', name: 'EnableAlias'},
+	{title: 'OID Condition', name: 'OIDCond'},
+	{title: 'Condition Type', name: 'CondType'},
+	{title: 'Condition Value', name: 'CondValue'}
+ 	];
+
+	public page:number = 1;
+	public itemsPerPage:number = 10;
+	public maxSize:number = 5;
+	public numPages:number = 1;
+	public length:number = 0;
+
+	//Set config
+	public config:any = {
+		paging: true,
+		sorting: {columns: this.columns},
+		filtering: {filterString: ''},
+		className: ['table-striped', 'table-bordered']
+	};
+
   constructor(public measFilterService: MeasFilterService, public measMeasFilterService: InfluxMeasService, builder: FormBuilder) {
 	  this.editmode='list';
 	  this.reloadData();
@@ -45,14 +66,125 @@ export class MeasFilterCfgComponent {
 		});
   }
 
+	public changePage(page:any, data:Array<any> = this.data):Array<any> {
+		let start = (page.page - 1) * page.itemsPerPage;
+		let end = page.itemsPerPage > -1 ? (start + page.itemsPerPage) : data.length;
+		return data.slice(start, end);
+	}
+
+	public changeSort(data:any, config:any):any {
+		if (!config.sorting) {
+			return data;
+		}
+
+		let columns = this.config.sorting.columns || [];
+		let columnName:string = void 0;
+		let sort:string = void 0;
+
+		for (let i = 0; i < columns.length; i++) {
+			if (columns[i].sort !== '' && columns[i].sort !== false) {
+				columnName = columns[i].name;
+				sort = columns[i].sort;
+			}
+		}
+
+		if (!columnName) {
+			return data;
+		}
+
+		// simple sorting
+		return data.sort((previous:any, current:any) => {
+			if (previous[columnName] > current[columnName]) {
+				return sort === 'desc' ? -1 : 1;
+			} else if (previous[columnName] < current[columnName]) {
+				return sort === 'asc' ? -1 : 1;
+			}
+			return 0;
+		});
+	}
+
+	public changeFilter(data:any, config:any):any {
+		let filteredData:Array<any> = data;
+		this.columns.forEach((column:any) => {
+			if (column.filtering) {
+				filteredData = filteredData.filter((item:any) => {
+					return item[column.name].match(column.filtering.filterString);
+				});
+			}
+		});
+
+		if (!config.filtering) {
+			return filteredData;
+		}
+
+		if (config.filtering.columnName) {
+			return filteredData.filter((item:any) =>
+				item[config.filtering.columnName].match(this.config.filtering.filterString));
+		}
+
+		let tempArray:Array<any> = [];
+		filteredData.forEach((item:any) => {
+			let flag = false;
+			this.columns.forEach((column:any) => {
+				if(!item[column.name]){
+					item[column.name] = '--'
+				}
+					if (item[column.name].toString().match(this.config.filtering.filterString)) {
+						flag = true;
+					}
+
+			});
+			if (flag) {
+				tempArray.push(item);
+			}
+		});
+		filteredData = tempArray;
+
+		return filteredData;
+	}
+
+	public onChangeTable(config:any, page:any = {page: this.page, itemsPerPage: this.itemsPerPage}):any {
+		if (config.filtering) {
+			Object.assign(this.config.filtering, config.filtering);
+		}
+		if (config.sorting) {
+			Object.assign(this.config.sorting, config.sorting);
+		}
+		let filteredData = this.changeFilter(this.data, this.config);
+		let sortedData = this.changeSort(filteredData, this.config);
+		this.rows = page && config.paging ? this.changePage(page, sortedData) : sortedData;
+		this.length = sortedData.length;
+	}
+
+	public onCellClick(data: any): any {
+		console.log(data);
+	}
+
+	reloadData(){
+	// now it's a simple subscription to the observable
+		this.measFilterService.getMeasFilter(this.filter)
+			.subscribe(
+				data => {
+					this.measfilters = data;
+					this.data = data;
+					this.onChangeTable(this.config);
+				},
+				err => console.error(err),
+				() => console.log('DONE')
+			);
+	}
+
   onFilter(){
 	this.reloadData();
   }
 
  viewItem(id,event){
 	console.log('view',id);
+	this.viewModal.parseObject(id);
  }
- removeItem(id){
+
+ removeItem(row){
+	let id = row.ID;
 	console.log('remove',id);
 	var r = confirm("Deleting FILTER: "+id+". Proceed?");
  	if (r == true) {
@@ -70,7 +202,8 @@ export class MeasFilterCfgComponent {
 	 this.getMeasforMeasFilters();
  }
 
- editMeasFilter(id){
+ editMeasFilter(row){
+	 let id = row.ID;
 	 this.getMeasforMeasFilters();
 	 this.measFilterService.getMeasFilterById(id)
  		 .subscribe(data => { this.testmeasfilters = data },
