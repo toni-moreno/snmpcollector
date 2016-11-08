@@ -172,6 +172,7 @@ func webServer(port int) {
 	})
 
 	m.Group("/runtime", func() {
+		m.Post("/snmpping/", bind(SnmpDeviceCfg{}), PingSNMPDevice)
 		m.Get("/version/", RTGetVersion)
 		m.Get("/info/", RTGetInfo)
 		m.Get("/info/:id", RTGetInfo)
@@ -190,6 +191,22 @@ func webServer(port int) {
 /****************/
 /*Runtime Info
 /****************/
+
+func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
+	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
+
+	dev := SnmpDevice{}
+	dev.cfg = &cfg
+	err := dev.Init(cfg.ID)
+	if err != nil {
+		log.Debugf("ERROR: DEVICE RETURNED %+v, ERROR: %s", dev, err)
+		ctx.JSON(400, err.Error())
+	} else {
+		log.Debugf("OK DEVICE RETURNED %+v", dev)
+		ctx.JSON(200, &dev.SysInfo)
+	}
+}
+
 //RTActivateDev xx
 func RTSetLogLevelDev(ctx *macaron.Context) {
 	id := ctx.Params(":id")

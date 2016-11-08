@@ -259,7 +259,7 @@ Init  does the following
 - for each indexed measurement  load device labels from IndexedOID and fiter them if defined measurement filters.
 - Initialice each SnmpMetric from each measuremet.
 */
-func (d *SnmpDevice) Init(name string) {
+func (d *SnmpDevice) Init(name string) error {
 	log.Infof("Initializing device %s\n", name)
 	//Init id
 	d.cfg.ID = name
@@ -328,10 +328,10 @@ func (d *SnmpDevice) Init(name string) {
 	if err != nil {
 		d.log.Errorf("Client connect error to device: %s  error :%s", d.cfg.ID, err)
 		d.snmpClient = nil
-		return
+		return err
 	}
 	d.snmpClient = client
-
+	return nil
 }
 
 func (d *SnmpDevice) printConfig() {
