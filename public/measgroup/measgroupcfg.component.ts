@@ -51,7 +51,8 @@ export class MeasGroupCfgComponent {
 		this.reloadData();
 		this.measgroupForm = builder.group({
 			id: ['',Validators.required],
-			Measurements: ['', Validators.compose([Validators.required,Validators.minLength(1)])]
+			Measurements: ['', Validators.compose([Validators.required,Validators.minLength(1)])],
+			Description: ['']
 		});
 	}
 
@@ -190,7 +191,7 @@ export class MeasGroupCfgComponent {
 		 console.log(result);
  	}
  }
- 
+
  newMeasGroup(){
 	 this.editmode = "create";
 	 this.getMeasforMeasGroups();

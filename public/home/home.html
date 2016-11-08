@@ -72,7 +72,8 @@
 <nav class="navbar navbar-inverse navbar-fixed-bottom">
   <div class="container-fluid">
   <!-- Brand and toggle get grouped for better mobile display -->
-    <p class="navbar-text pull-right" *ngIf="version">SNMPCollector - {{version.Version}} - {{version.Commit}} ({{version.BuildStamp*1000 | date}}) </p>
+    <span class="navbar-text pull-left" *ngIf="version"> Instance - <b>{{version.InstanceID}}</b></span>
+    <span class="navbar-text pull-right" *ngIf="version">SNMPCollector - {{version.Version}} - {{version.Commit}} ({{version.BuildStamp*1000 | date}}) </span>
   </div><!-- /.container-fluid -->
 </nav>
 <div class="col-md-12" style="top 0px;padding-bottom: 50px">

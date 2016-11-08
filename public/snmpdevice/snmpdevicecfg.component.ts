@@ -39,18 +39,15 @@ export class SnmpDeviceCfgComponent {
     {title: 'ID', name: 'ID'},
     {title: 'Host', name: 'Host'},
     {title: 'Port', name: 'Port'},
-    {title: 'Retries', name: 'Retries'},
-    {title: 'Timeout', name: 'Timeout'},
-    {title: 'Port', name: 'Port'},
     {title: 'Active', name: 'Active'},
-    {title: 'SnmpVersion', name: 'SnmpVersion'},
+    {title: 'Snmp Version', name: 'SnmpVersion'},
     {title: 'Freq', name: 'Freq'},
     {title: 'Influx DB', name: 'OutDB'},
     {title: 'Log Level', name: 'LogLevel'},
-    {title: 'SnmpDebug', name: 'SnmpDebug'},
-    {title: 'TagName', name: 'LogLevel'},
-    {title: 'TagValue', name: 'LogLevel'},
-    {title: 'Extra Tags', name: 'LogLevel'},
+    {title: 'Snmp Debug', name: 'SnmpDebug'},
+    {title: 'Tag Name', name: 'DeviceTagName'},
+    {title: 'Tag Value', name: 'DeviceTagValue'},
+    {title: 'Extra Tags', name: 'ExtraTags'},
     {title: 'Measurement Groups', name: 'MeasurementGroups'},
     {title: 'Measurement Filters', name: 'MeasFilters'}
     ];
@@ -97,7 +94,8 @@ export class SnmpDeviceCfgComponent {
     DeviceTagValue: ['id'],
     Extratags:[''],
     MeasurementGroups: [''],
-    MeasFilters: ['']
+    MeasFilters: [''],
+    Description: ['']
   });
     }
 
@@ -175,7 +173,7 @@ export class SnmpDeviceCfgComponent {
       filteredData.forEach((item:any) => {
         let flag = false;
         this.columns.forEach((column:any) => {
-          if(!item[column.name]){
+          if(item[column.name] == null){
             item[column.name] = '--'
           }
             if (item[column.name].toString().match(this.config.filtering.filterString)) {

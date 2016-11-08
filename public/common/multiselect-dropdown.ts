@@ -1,11 +1,11 @@
 /*
  * Angular 2 Dropdown Multiselect for Bootstrap
  * Current version: 0.2.0
- * 
+ *
  * Simon Lindh
  * https://github.com/softsimon/angular-2-dropdown-multiselect
  */
- 
+
 import { NgModule, Component, Pipe, OnInit, DoCheck, HostListener, Input, ElementRef, Output, EventEmitter, forwardRef, IterableDiffers } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs/Rx';
@@ -127,8 +127,8 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
     protected searchFilterText: string = '';
     protected defaultSettings: IMultiSelectSettings = {
         pullRight: false,
-        enableSearch: false,
-        checkedStyle: 'checkboxes',
+        enableSearch: true,
+        checkedStyle: 'glyphicon',
         buttonClasses: 'btn btn-default',
         selectionLimit: 0,
         closeOnSelect: false,
@@ -194,7 +194,7 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
     }
 
     setSelected(event: Event, option: IMultiSelectOption) {
-        if (!this.model) this.model = [];    
+        if (!this.model) this.model = [];
         var index = this.model.indexOf(option.id);
         if (index > -1) {
             this.model.splice(index, 1);

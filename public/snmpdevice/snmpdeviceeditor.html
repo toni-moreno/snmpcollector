@@ -313,6 +313,17 @@ tooltip="Tag's value to identify the device in InfluxDB"></i>
  <control-messages [control]="snmpdevForm.controls.MeasFilters"></control-messages>
 </div>
 </div>
+
+<div class="form-group">
+ <label class="control-label col-sm-2" for="Description">Description</label>
+ <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+   tooltip="Description of the SNMP Device"></i>
+  <div class="col-sm-9">
+    <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
+    <control-messages [control]="snmpdevForm.controls.Description"></control-messages>
+ </div>
+</div>
+
 <div class="col-sm-offset-4 col-sm-6">
 <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
 <button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
@@ -429,7 +440,7 @@ tooltip="Community for authentication"></i>
 </div>
 </div>
 
-<div class="form-group" *ngIf="snmpdevForm.value.V3SecLevel == 'AuthNoPriv' || snmpdevForm.value.V3SecLevel == 'AuthPriv'">
+<div class="form-group">
 <label class="control-label col-sm-2" for="V3AuthUser">V3AuthUser</label>
 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
 tooltip="Authentication user"></i>
@@ -597,6 +608,15 @@ tooltip="Severity log level"></i>
 <ss-multiselect-dropdown [options]="selectfilters" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="testsnmpdev.MeasFilters" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeFilter($event)"></ss-multiselect-dropdown>
 <control-messages [control]="snmpdevForm.controls.MeasFilters"></control-messages>
 </div>
+</div>
+<div class="form-group">
+ <label class="control-label col-sm-2" for="Description">Description</label>
+ <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+   tooltip="Description of the SNMP Device"></i>
+  <div class="col-sm-9">
+    <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel] = 'testsnmpdev.Description'> </textarea>
+    <control-messages [control]="snmpdevForm.controls.Description"></control-messages>
+ </div>
 </div>
 
 <div class="col-sm-offset-4 col-sm-6">

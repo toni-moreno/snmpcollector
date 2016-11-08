@@ -141,6 +141,16 @@
 		<control-messages [control]="measfilterForm.controls.CondValue"></control-messages>
 	</div>
 	</div>
+	<div class="form-group">
+	 <label class="control-label col-sm-2" for="Description">Description</label>
+	 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		 tooltip="Description of the SNMP Device"></i>
+		<div class="col-sm-9">
+			<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
+			<control-messages [control]="measfilterForm.controls.Description"></control-messages>
+	 </div>
+	</div>
+
 
 		<div class="col-sm-offset-4 col-sm-6">
 		<button type="submit" [disabled]="!measfilterForm.valid">Submit</button>
@@ -177,7 +187,7 @@
 		</select>
 		<control-messages [control]="measfilterForm.controls.IDMeasurementCfg"></control-messages>
 	</div>
-</div>
+	</div>
 
 				<div class="form-group">
   	<label class="control-label col-sm-2"  for="FType">Filter type</label>"
@@ -188,7 +198,6 @@
 			<option value="file">File</option>
 			<option value="OIDCondition">OID Condition</option>
 		</select>
-					<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
 		<control-messages [control]="measfilterForm.controls.FType"></control-messages>
 	</div>
 </div>
@@ -228,6 +237,7 @@
 	</div>
 	</div>
 </div>
+
 	<div class="form-group">
   	<label class="control-label col-sm-2"  for="CondType">Condition type</label>
 		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
@@ -253,6 +263,16 @@
 			<input formControlName="CondValue" id="CondValue" [ngModel] = "testmeasfilters.CondValue"/>
 		<control-messages [control]="measfilterForm.controls.CondValue"></control-messages>
 	</div>
+</div>
+
+<div class="form-group">
+ <label class="control-label col-sm-2" for="Description">Description</label>
+ <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	 tooltip="Description of the Measurement Filter"></i>
+	<div class="col-sm-9">
+		<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='testmeasfilters.Description'> </textarea>
+		<control-messages [control]="measfilterForm.controls.Description"></control-messages>
+ </div>
 </div>
 
 		<div class="col-sm-offset-4 col-sm-6">

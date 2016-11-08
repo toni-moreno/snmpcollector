@@ -62,7 +62,8 @@ export class InfluxMeasCfgComponent {
 			IndexOID: [''],
 			IndexTag: [''],
       IndexAsValue: ['false'],
-			Fields: ['', Validators.required]
+			Fields: ['', Validators.required],
+			Description: ['']
 		});
   }
 
