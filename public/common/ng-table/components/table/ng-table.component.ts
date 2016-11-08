@@ -101,7 +101,11 @@ export class NgTableComponent {
       }
       test+="</ul>"
       return test;
-    } else {
+    } else if (typeof html === 'boolean') {
+        if (html) return '<i class="glyphicon glyphicon-ok"></i>'
+        else return '<i class="glyphicon glyphicon-remove"></i>'
+    }
+    else {
     return this.sanitizer.bypassSecurityTrustHtml(html);
   }
   }
