@@ -63,6 +63,7 @@ export class InfluxServerCfgComponent {
 			Retention: ['autogen', Validators.required],
       Timeout: [30],
       UserAgent: [],
+			Description: ['']
 		});
   }
 

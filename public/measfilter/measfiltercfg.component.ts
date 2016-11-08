@@ -62,7 +62,8 @@ export class MeasFilterCfgComponent {
 			EnableAlias: [''],
 			OIDCond: ['', ValidationService.OIDValidator],
 			CondType: ['', Validators.required],
-			CondValue: ['', Validators.required]
+			CondValue: ['', Validators.required],
+			Description: ['']
 		});
   }
 

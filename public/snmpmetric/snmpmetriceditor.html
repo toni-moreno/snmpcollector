@@ -74,17 +74,6 @@
 	</div>
 </div>
 
-
-		<div class="form-group">
-  <label class="control-label col-sm-2" for="Description">Description</label>
-	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-		tooltip="Description of the metric"></i>
-	 <div class="col-sm-9">
-      		<input formControlName="Description" id="Description" />
-		<control-messages [control]="snmpmetForm.controls.Description"></control-messages>
-	</div>
-</div>
-
 	<div class="form-group">
   <label class="control-label col-sm-2" for="BaseOID">Base OID</label>
 	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
@@ -147,6 +136,17 @@
 		<control-messages [control]="snmpmetForm.controls.Shift"></control-messages>
 	</div>
 </div>
+
+<div class="form-group">
+ <label class="control-label col-sm-2" for="Description">Description</label>
+ <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	 tooltip="Description of the SNMP Metric"></i>
+	<div class="col-sm-9">
+		<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
+		<control-messages [control]="snmpmetForm.controls.Description"></control-messages>
+ </div>
+</div>
+
 <div class="col-sm-offset-4 col-sm-6">
 		<button type="submit" [disabled]="!snmpmetForm.valid">Submit</button>
 		<button type="reset" [disabled]="!snmpmetForm.dirty">Reset</button>
@@ -190,17 +190,6 @@
   </select>
     <control-messages [control]="snmpmetForm.controls.IsTag"></control-messages>
   </div>
-</div>
-
-		<div class="form-group">
-  <label class="control-label col-sm-2" for="Description">Description</label>
-	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-	tooltip="Description of the metric"></i>
-	 <div class="col-sm-9">
-					<input formControlName="Description" id="Description" [ngModel] = "testsnmpmetric.Description"/>
-		<control-messages [control]="snmpmetForm.controls.Description"></control-messages>
-
-	</div>
 </div>
 
 		<div class="form-group">
@@ -266,6 +255,16 @@
 					<input formControlName="Shift" id="Shift" [ngModel] = "testsnmpmetric.Shift" />
 		<control-messages [control]="snmpmetForm.controls.Shift"></control-messages>
 	</div>
+</div>
+
+<div class="form-group">
+ <label class="control-label col-sm-2" for="Description">Description</label>
+ <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	 tooltip="Description of the SNMP Metric"></i>
+	<div class="col-sm-9">
+		<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='testsnmpmetric.Description'> </textarea>
+		<control-messages [control]="snmpmetForm.controls.Description"></control-messages>
+ </div>
 </div>
 
 <div class="col-sm-offset-4 col-sm-6">

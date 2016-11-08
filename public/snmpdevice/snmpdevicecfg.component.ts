@@ -94,7 +94,8 @@ export class SnmpDeviceCfgComponent {
     DeviceTagValue: ['id'],
     Extratags:[''],
     MeasurementGroups: [''],
-    MeasFilters: ['']
+    MeasFilters: [''],
+    Description: ['']
   });
     }
 

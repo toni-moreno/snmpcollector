@@ -122,13 +122,16 @@
     </div>
 	</div>
 
-		<!--label for="Fields">Metrics Associated</label>
-			<select formControlName="Fields" id="Fields">
-				<option *ngFor="let metric of snmpmetrics"
-						[value]="metric.ID"> {{metric.ID}}
-				</option>
-		</select>
-		<control-messages [control]="influxmeasForm.controls.Fields"></control-messages-->
+	<div class="form-group">
+	 <label class="control-label col-sm-2" for="Description">Description</label>
+	 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		 tooltip="Description of the Measurement Group"></i>
+		<div class="col-sm-9">
+			<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
+			<control-messages [control]="influxmeasForm.controls.Description"></control-messages>
+	 </div>
+	</div>
+
 		<div class="col-sm-offset-4 col-sm-6">
 		<button type="submit" [disabled]="!influxmeasForm.valid">Submit</button>
 		<button type="reset" [disabled]="!influxmeasForm.dirty">Reset</button>
@@ -229,13 +232,16 @@
 		</div>
 	</div>
 
-		<!--label for="Fields">Fields</label>
-			<select formControlName="Fields" id="Fields" [ngModel] = "testinfluxmeas.Fields">
-				<option *ngFor="let metric of snmpmetrics"
-						[value]="metric.ID"> {{metric.ID}}
-				</option>
-		</select>
-		<control-messages [control]="influxmeasForm.controls.Fields"></control-messages-->
+	<div class="form-group">
+	 <label class="control-label col-sm-2" for="Description">Description</label>
+	 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+		 tooltip="Description of the Measurement Group"></i>
+		<div class="col-sm-9">
+			<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='testinfluxmeas.Description'> </textarea>
+			<control-messages [control]="influxmeasForm.controls.Description"></control-messages>
+	 </div>
+	</div>
+
 		<div class="col-sm-offset-4 col-sm-6">
 		<button type="submit" [disabled]="!influxmeasForm.valid">Submit</button>
 		<button type="reset" [disabled]="!influxmeasForm.dirty">Reset</button>
