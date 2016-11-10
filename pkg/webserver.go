@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/go-macaron/binding"
-	"github.com/go-macaron/cache"
+	//"github.com/go-macaron/cache"
 	"github.com/go-macaron/session"
 	"gopkg.in/macaron.v1"
 	"html/template"
@@ -108,16 +108,17 @@ func webServer(port int) {
 		// Allows changing of output to XHTML instead of HTML. Default is "text/html".
 		HTMLContentType: "text/html",
 	}))
-	m.Use(cache.Cacher(cache.Options{
-		// Name of adapter. Default is "memory".
-		Adapter: "memory",
-		// Adapter configuration, it's corresponding to adapter.
-		AdapterConfig: "",
-		// GC interval time in seconds. Default is 60.
-		Interval: 60,
-		// Configuration section name. Default is "cache".
-		Section: "cache",
-	}))
+	/*
+		m.Use(cache.Cacher(cache.Options{
+			// Name of adapter. Default is "memory".
+			Adapter: "memory",
+			// Adapter configuration, it's corresponding to adapter.
+			AdapterConfig: "",
+			// GC interval time in seconds. Default is 60.
+			Interval: 60,
+			// Configuration section name. Default is "cache".
+			Section: "cache",
+		}))*/
 
 	m.Post("/session/create", bind(UserLogin{}), myLoginHandler)
 
