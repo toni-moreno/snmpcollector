@@ -554,10 +554,8 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 		case typeCond == "match":
 			//m.log.Debugf("PDU: %+v", pdu)
 			str := pduVal2str(pdu)
-			matched, err := regexp.MatchString(valueCond, str)
-			if err != nil {
-				m.log.Debugf("match condition error : %s on PDI +%v", err, pdu)
-			}
+			var re = regexp.MustCompile(valueCond)
+			matched := re.MatchString(str)
 			m.log.Debugf("Evaluated condition  value: %s | filter: %s | result : %t", str, valueCond, matched)
 			cond = matched
 		default:
