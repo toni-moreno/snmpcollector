@@ -315,8 +315,12 @@ func (d *SnmpDevice) Init(name string) error {
 	if len(d.cfg.ExtraTags) > 0 {
 		for _, tag := range d.cfg.ExtraTags {
 			s := strings.Split(tag, "=")
-			key, value := s[0], s[1]
-			d.TagMap[key] = value
+			if len(s) == 2 {
+				key, value := s[0], s[1]
+				d.TagMap[key] = value
+			} else {
+				d.log.Errorf("Error on tag definition TAG=VALUE [ %s ]", tag)
+			}
 		}
 	} else {
 		d.log.Warnf("No map detected in device %s\n", name)
