@@ -6,7 +6,7 @@ import (
 	//"github.com/go-macaron/cache"
 	"github.com/go-macaron/session"
 	"gopkg.in/macaron.v1"
-	"html/template"
+	//	"html/template"
 	"net/http"
 )
 
@@ -40,6 +40,7 @@ func webServer(port int) {
 	m := macaron.Classic()
 
 	// register middleware
+	m.Use(GetContextHandler())
 	m.Use(macaron.Recovery())
 	//	m.Use(gzip.Gziper())
 	m.Use(macaron.Static("public",
@@ -54,7 +55,7 @@ func webServer(port int) {
 			// https://developers.google.com/speed/docs/insights/LeverageBrowserCaching
 			Expires: func() string { return "max-age=0" },
 		}))
-	m.Use(session.Sessioner(session.Options{
+	m.Use(Sessioner(session.Options{
 		// Name of provider. Default is "memory".
 		Provider: "memory",
 		// Provider configuration, it's corresponding to provider.
@@ -85,14 +86,14 @@ func webServer(port int) {
 		// Extensions to parse template files from. Defaults are [".tmpl", ".html"].
 		Extensions: []string{".tmpl", ".html"},
 		// Funcs is a slice of FuncMaps to apply to the template upon compilation. Default is [].
-		Funcs: []template.FuncMap{map[string]interface{}{
+		/*Funcs: []template.FuncMap{map[string]interface{}{
 			"AppName": func() string {
 				return "snmpcollector"
 			},
 			"AppVer": func() string {
 				return "0.5.1"
 			},
-		}},
+		}},*/
 		// Delims sets the action delimiters to the specified strings. Defaults are ["{{", "}}"].
 		Delims: macaron.Delims{"{{", "}}"},
 		// Appends the given charset to the Content-Type header. Default is "UTF-8".
@@ -120,68 +121,69 @@ func webServer(port int) {
 			Section: "cache",
 		}))*/
 
-	m.Post("/session/create", bind(UserLogin{}), myLoginHandler)
+	m.Post("/login", bind(UserLogin{}), myLoginHandler)
+	m.Post("/logout", reqSignedIn, myLogoutHandler)
 
 	m.Group("/metric", func() {
-		m.Get("/", GetMetrics)
-		m.Post("/", bind(SnmpMetricCfg{}), AddMetric)
-		m.Put("/:id", bind(SnmpMetricCfg{}), UpdateMetric)
-		m.Delete("/:id", DeleteMetric)
-		m.Get("/:id", GetMetricByID)
+		m.Get("/", reqSignedIn, GetMetrics)
+		m.Post("/", reqSignedIn, bind(SnmpMetricCfg{}), AddMetric)
+		m.Put("/:id", reqSignedIn, bind(SnmpMetricCfg{}), UpdateMetric)
+		m.Delete("/:id", reqSignedIn, DeleteMetric)
+		m.Get("/:id", reqSignedIn, GetMetricByID)
 	})
 
 	m.Group("/measurement", func() {
-		m.Get("/", GetMeas)
-		m.Post("/", bind(InfluxMeasurementCfg{}), AddMeas)
-		m.Put("/:id", bind(InfluxMeasurementCfg{}), UpdateMeas)
-		m.Delete("/:id", DeleteMeas)
-		m.Get("/:id", GetMeasByID)
+		m.Get("/", reqSignedIn, GetMeas)
+		m.Post("/", reqSignedIn, bind(InfluxMeasurementCfg{}), AddMeas)
+		m.Put("/:id", reqSignedIn, bind(InfluxMeasurementCfg{}), UpdateMeas)
+		m.Delete("/:id", reqSignedIn, DeleteMeas)
+		m.Get("/:id", reqSignedIn, GetMeasByID)
 	})
 
 	m.Group("/measgroups", func() {
-		m.Get("/", GetMeasGroup)
-		m.Post("/", bind(MGroupsCfg{}), AddMeasGroup)
-		m.Put("/:id", bind(MGroupsCfg{}), UpdateMeasGroup)
-		m.Delete("/:id", DeleteMeasGroup)
-		m.Get("/:id", GetMeasGroupByID)
+		m.Get("/", reqSignedIn, GetMeasGroup)
+		m.Post("/", reqSignedIn, bind(MGroupsCfg{}), AddMeasGroup)
+		m.Put("/:id", reqSignedIn, bind(MGroupsCfg{}), UpdateMeasGroup)
+		m.Delete("/:id", reqSignedIn, DeleteMeasGroup)
+		m.Get("/:id", reqSignedIn, GetMeasGroupByID)
 	})
 
 	m.Group("/measfilters", func() {
-		m.Get("/", GetMeasFilter)
-		m.Post("/", bind(MeasFilterCfg{}), AddMeasFilter)
-		m.Put("/:id", bind(MeasFilterCfg{}), UpdateMeasFilter)
-		m.Delete("/:id", DeleteMeasFilter)
-		m.Get("/:id", GetMeasFilterByID)
+		m.Get("/", reqSignedIn, GetMeasFilter)
+		m.Post("/", reqSignedIn, bind(MeasFilterCfg{}), AddMeasFilter)
+		m.Put("/:id", reqSignedIn, bind(MeasFilterCfg{}), UpdateMeasFilter)
+		m.Delete("/:id", reqSignedIn, DeleteMeasFilter)
+		m.Get("/:id", reqSignedIn, GetMeasFilterByID)
 	})
 
 	m.Group("/influxservers", func() {
-		m.Get("/", GetInfluxServer)
-		m.Post("/", bind(InfluxCfg{}), AddInfluxServer)
-		m.Put("/:id", bind(InfluxCfg{}), UpdateInfluxServer)
-		m.Delete("/:id", DeleteInfluxServer)
-		m.Get("/:id", GetInfluxServerByID)
-		m.Get("/ckeckondel/:id", GetInfluxAffectOnDel)
+		m.Get("/", reqSignedIn, GetInfluxServer)
+		m.Post("/", reqSignedIn, bind(InfluxCfg{}), AddInfluxServer)
+		m.Put("/:id", reqSignedIn, bind(InfluxCfg{}), UpdateInfluxServer)
+		m.Delete("/:id", reqSignedIn, DeleteInfluxServer)
+		m.Get("/:id", reqSignedIn, GetInfluxServerByID)
+		m.Get("/ckeckondel/:id", reqSignedIn, GetInfluxAffectOnDel)
 	})
 
 	// Data sources
 	m.Group("/snmpdevice", func() {
-		m.Get("/", GetSNMPDevices)
-		m.Post("/", bind(SnmpDeviceCfg{}), AddSNMPDevice)
-		m.Put("/:id", bind(SnmpDeviceCfg{}), UpdateSNMPDevice)
-		m.Delete("/:id", DeleteSNMPDevice)
-		m.Get("/:id", GetSNMPDeviceByID)
+		m.Get("/", reqSignedIn, GetSNMPDevices)
+		m.Post("/", reqSignedIn, bind(SnmpDeviceCfg{}), AddSNMPDevice)
+		m.Put("/:id", reqSignedIn, bind(SnmpDeviceCfg{}), UpdateSNMPDevice)
+		m.Delete("/:id", reqSignedIn, DeleteSNMPDevice)
+		m.Get("/:id", reqSignedIn, GetSNMPDeviceByID)
 	})
 
 	m.Group("/runtime", func() {
-		m.Post("/snmpping/", bind(SnmpDeviceCfg{}), PingSNMPDevice)
-		m.Get("/version/", RTGetVersion)
-		m.Get("/info/", RTGetInfo)
-		m.Get("/info/:id", RTGetInfo)
-		m.Put("/activatedev/:id", RTActivateDev)
-		m.Put("/deactivatedev/:id", RTDeactivateDev)
-		m.Put("/actsnmpdbg/:id", RTActSnmpDebugDev)
-		m.Put("/deactsnmpdbg/:id", RTDeactSnmpDebugDev)
-		m.Put("/setloglevel/:id/:level", RTSetLogLevelDev)
+		m.Post("/snmpping/", reqSignedIn, bind(SnmpDeviceCfg{}), PingSNMPDevice)
+		m.Get("/version/", reqSignedIn, RTGetVersion)
+		m.Get("/info/", reqSignedIn, RTGetInfo)
+		m.Get("/info/:id", reqSignedIn, RTGetInfo)
+		m.Put("/activatedev/:id", reqSignedIn, RTActivateDev)
+		m.Put("/deactivatedev/:id", reqSignedIn, RTDeactivateDev)
+		m.Put("/actsnmpdbg/:id", reqSignedIn, RTActSnmpDebugDev)
+		m.Put("/deactsnmpdbg/:id", reqSignedIn, RTDeactSnmpDebugDev)
+		m.Put("/setloglevel/:id/:level", reqSignedIn, RTSetLogLevelDev)
 	})
 
 	log.Printf("Server is running on localhost:%d...", port)
@@ -209,7 +211,7 @@ func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
 }
 
 //RTActivateDev xx
-func RTSetLogLevelDev(ctx *macaron.Context) {
+func RTSetLogLevelDev(ctx *Context) {
 	id := ctx.Params(":id")
 	level := ctx.Params(":level")
 	if dev, ok := devices[id]; !ok {
@@ -223,7 +225,7 @@ func RTSetLogLevelDev(ctx *macaron.Context) {
 }
 
 //RTActivateDev xx
-func RTActivateDev(ctx *macaron.Context) {
+func RTActivateDev(ctx *Context) {
 	id := ctx.Params(":id")
 	if dev, ok := devices[id]; !ok {
 		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
@@ -236,7 +238,7 @@ func RTActivateDev(ctx *macaron.Context) {
 }
 
 //RTDeactivateDev xx
-func RTDeactivateDev(ctx *macaron.Context) {
+func RTDeactivateDev(ctx *Context) {
 	id := ctx.Params(":id")
 	if dev, ok := devices[id]; !ok {
 		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
@@ -249,7 +251,7 @@ func RTDeactivateDev(ctx *macaron.Context) {
 }
 
 //RTActSnmpDebugDev xx
-func RTActSnmpDebugDev(ctx *macaron.Context) {
+func RTActSnmpDebugDev(ctx *Context) {
 	id := ctx.Params(":id")
 	if dev, ok := devices[id]; !ok {
 		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
@@ -262,7 +264,7 @@ func RTActSnmpDebugDev(ctx *macaron.Context) {
 }
 
 //RTDeactSnmpDebugDev xx
-func RTDeactSnmpDebugDev(ctx *macaron.Context) {
+func RTDeactSnmpDebugDev(ctx *Context) {
 	id := ctx.Params(":id")
 	if dev, ok := devices[id]; !ok {
 		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
@@ -275,7 +277,7 @@ func RTDeactSnmpDebugDev(ctx *macaron.Context) {
 }
 
 //RTGetInfo xx
-func RTGetInfo(ctx *macaron.Context) {
+func RTGetInfo(ctx *Context) {
 	id := ctx.Params(":id")
 	if len(id) > 0 {
 		if dev, ok := devices[id]; !ok {
@@ -301,7 +303,7 @@ type RInfo struct {
 }
 
 //RTGetVersion xx
-func RTGetVersion(ctx *macaron.Context) {
+func RTGetVersion(ctx *Context) {
 	info := &RInfo{
 		InstanceID: cfg.General.InstanceID,
 		Version:    version,
@@ -317,7 +319,7 @@ func RTGetVersion(ctx *macaron.Context) {
 /****************/
 
 // GetSNMPDevices Return snmpdevice list to frontend
-func GetSNMPDevices(ctx *macaron.Context) {
+func GetSNMPDevices(ctx *Context) {
 	devcfgarray, err := cfg.Database.GetSnmpDeviceCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err)
@@ -329,7 +331,7 @@ func GetSNMPDevices(ctx *macaron.Context) {
 }
 
 // AddSNMPDevice Insert new snmpdevice to de internal BBDD --pending--
-func AddSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
+func AddSNMPDevice(ctx *Context, dev SnmpDeviceCfg) {
 	log.Printf("ADDING DEVICE %+v", dev)
 	affected, err := cfg.Database.AddSnmpDeviceCfg(dev)
 	if err != nil {
@@ -342,7 +344,7 @@ func AddSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
 }
 
 // UpdateSNMPDevice --pending--
-func UpdateSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
+func UpdateSNMPDevice(ctx *Context, dev SnmpDeviceCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
 	affected, err := cfg.Database.UpdateSnmpDeviceCfg(id, dev)
@@ -356,7 +358,7 @@ func UpdateSNMPDevice(ctx *macaron.Context, dev SnmpDeviceCfg) {
 }
 
 //DeleteSNMPDevice --pending--
-func DeleteSNMPDevice(ctx *macaron.Context) {
+func DeleteSNMPDevice(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
 	affected, err := cfg.Database.DelSnmpDeviceCfg(id)
@@ -369,7 +371,7 @@ func DeleteSNMPDevice(ctx *macaron.Context) {
 }
 
 //GetSNMPDeviceByID --pending--
-func GetSNMPDeviceByID(ctx *macaron.Context) {
+func GetSNMPDeviceByID(ctx *Context) {
 	id := ctx.Params(":id")
 	dev, err := cfg.Database.GetSnmpDeviceCfgByID(id)
 	if err != nil {
@@ -385,7 +387,7 @@ func GetSNMPDeviceByID(ctx *macaron.Context) {
 /****************/
 
 // GetMetrics Return metrics list to frontend
-func GetMetrics(ctx *macaron.Context) {
+func GetMetrics(ctx *Context) {
 	cfgarray, err := cfg.Database.GetSnmpMetricCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err)
@@ -397,7 +399,7 @@ func GetMetrics(ctx *macaron.Context) {
 }
 
 // AddMetric Insert new metric to de internal BBDD --pending--
-func AddMetric(ctx *macaron.Context, dev SnmpMetricCfg) {
+func AddMetric(ctx *Context, dev SnmpMetricCfg) {
 	log.Printf("ADDING Metric %+v", dev)
 	affected, err := cfg.Database.AddSnmpMetricCfg(dev)
 	if err != nil {
@@ -410,7 +412,7 @@ func AddMetric(ctx *macaron.Context, dev SnmpMetricCfg) {
 }
 
 // UpdateMetric --pending--
-func UpdateMetric(ctx *macaron.Context, dev SnmpMetricCfg) {
+func UpdateMetric(ctx *Context, dev SnmpMetricCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
 	affected, err := cfg.Database.UpdateSnmpMetricCfg(id, dev)
@@ -424,7 +426,7 @@ func UpdateMetric(ctx *macaron.Context, dev SnmpMetricCfg) {
 }
 
 //DeleteMetric --pending--
-func DeleteMetric(ctx *macaron.Context) {
+func DeleteMetric(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
 	affected, err := cfg.Database.DelSnmpMetricCfg(id)
@@ -437,7 +439,7 @@ func DeleteMetric(ctx *macaron.Context) {
 }
 
 //GetMetricByID --pending--
-func GetMetricByID(ctx *macaron.Context) {
+func GetMetricByID(ctx *Context) {
 	id := ctx.Params(":id")
 	dev, err := cfg.Database.GetSnmpMetricCfgByID(id)
 	if err != nil {
@@ -453,7 +455,7 @@ func GetMetricByID(ctx *macaron.Context) {
 /****************/
 
 // GetMeas Return measurements list to frontend
-func GetMeas(ctx *macaron.Context) {
+func GetMeas(ctx *Context) {
 	cfgarray, err := cfg.Database.GetInfluxMeasurementCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err)
@@ -465,7 +467,7 @@ func GetMeas(ctx *macaron.Context) {
 }
 
 // AddMeas Insert new measurement to de internal BBDD --pending--
-func AddMeas(ctx *macaron.Context, dev InfluxMeasurementCfg) {
+func AddMeas(ctx *Context, dev InfluxMeasurementCfg) {
 	log.Printf("ADDING Measurement %+v", dev)
 	affected, err := cfg.Database.AddInfluxMeasurementCfg(dev)
 	if err != nil {
@@ -478,7 +480,7 @@ func AddMeas(ctx *macaron.Context, dev InfluxMeasurementCfg) {
 }
 
 // UpdateMeas --pending--
-func UpdateMeas(ctx *macaron.Context, dev InfluxMeasurementCfg) {
+func UpdateMeas(ctx *Context, dev InfluxMeasurementCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
 	affected, err := cfg.Database.UpdateInfluxMeasurementCfg(id, dev)
@@ -492,7 +494,7 @@ func UpdateMeas(ctx *macaron.Context, dev InfluxMeasurementCfg) {
 }
 
 //DeleteMeas --pending--
-func DeleteMeas(ctx *macaron.Context) {
+func DeleteMeas(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
 	affected, err := cfg.Database.DelInfluxMeasurementCfg(id)
@@ -505,7 +507,7 @@ func DeleteMeas(ctx *macaron.Context) {
 }
 
 //GetMeasByID --pending--
-func GetMeasByID(ctx *macaron.Context) {
+func GetMeasByID(ctx *Context) {
 	id := ctx.Params(":id")
 	dev, err := cfg.Database.GetInfluxMeasurementCfgByID(id)
 	if err != nil {
@@ -521,7 +523,7 @@ func GetMeasByID(ctx *macaron.Context) {
 /****************/
 
 // GetMeasGroup Return measurements groups list to frontend
-func GetMeasGroup(ctx *macaron.Context) {
+func GetMeasGroup(ctx *Context) {
 	cfgarray, err := cfg.Database.GetMGroupsCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err)
@@ -533,7 +535,7 @@ func GetMeasGroup(ctx *macaron.Context) {
 }
 
 // AddMeasGroup Insert new measurement groups to de internal BBDD --pending--
-func AddMeasGroup(ctx *macaron.Context, dev MGroupsCfg) {
+func AddMeasGroup(ctx *Context, dev MGroupsCfg) {
 	log.Printf("ADDING Measurement Group %+v", dev)
 	affected, err := cfg.Database.AddMGroupsCfg(dev)
 	if err != nil {
@@ -546,7 +548,7 @@ func AddMeasGroup(ctx *macaron.Context, dev MGroupsCfg) {
 }
 
 // UpdateMeasGroup --pending--
-func UpdateMeasGroup(ctx *macaron.Context, dev MGroupsCfg) {
+func UpdateMeasGroup(ctx *Context, dev MGroupsCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
 	affected, err := cfg.Database.UpdateMGroupsCfg(id, dev)
@@ -560,7 +562,7 @@ func UpdateMeasGroup(ctx *macaron.Context, dev MGroupsCfg) {
 }
 
 //DeleteMeasGroup --pending--
-func DeleteMeasGroup(ctx *macaron.Context) {
+func DeleteMeasGroup(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
 	affected, err := cfg.Database.DelMGroupsCfg(id)
@@ -573,7 +575,7 @@ func DeleteMeasGroup(ctx *macaron.Context) {
 }
 
 //GetMeasGroupByID --pending--
-func GetMeasGroupByID(ctx *macaron.Context) {
+func GetMeasGroupByID(ctx *Context) {
 	id := ctx.Params(":id")
 	dev, err := cfg.Database.GetMGroupsCfgByID(id)
 	if err != nil {
@@ -589,7 +591,7 @@ func GetMeasGroupByID(ctx *macaron.Context) {
 /********************/
 
 // GetMeasFilter Return measurements groups list to frontend
-func GetMeasFilter(ctx *macaron.Context) {
+func GetMeasFilter(ctx *Context) {
 	cfgarray, err := cfg.Database.GetMeasFilterCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err)
@@ -601,7 +603,7 @@ func GetMeasFilter(ctx *macaron.Context) {
 }
 
 // AddMeasFilter Insert new measurement groups to de internal BBDD --pending--
-func AddMeasFilter(ctx *macaron.Context, dev MeasFilterCfg) {
+func AddMeasFilter(ctx *Context, dev MeasFilterCfg) {
 	log.Printf("ADDING measurement Filter %+v", dev)
 	affected, err := cfg.Database.AddMeasFilterCfg(dev)
 	if err != nil {
@@ -614,7 +616,7 @@ func AddMeasFilter(ctx *macaron.Context, dev MeasFilterCfg) {
 }
 
 // UpdateMeasFilter --pending--
-func UpdateMeasFilter(ctx *macaron.Context, dev MeasFilterCfg) {
+func UpdateMeasFilter(ctx *Context, dev MeasFilterCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
 	affected, err := cfg.Database.UpdateMeasFilterCfg(id, dev)
@@ -628,7 +630,7 @@ func UpdateMeasFilter(ctx *macaron.Context, dev MeasFilterCfg) {
 }
 
 //DeleteMeasFilter --pending--
-func DeleteMeasFilter(ctx *macaron.Context) {
+func DeleteMeasFilter(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
 	affected, err := cfg.Database.DelMeasFilterCfg(id)
@@ -641,7 +643,7 @@ func DeleteMeasFilter(ctx *macaron.Context) {
 }
 
 //GetMeasFilterByID --pending--
-func GetMeasFilterByID(ctx *macaron.Context) {
+func GetMeasFilterByID(ctx *Context) {
 	id := ctx.Params(":id")
 	dev, err := cfg.Database.GetMeasFilterCfgByID(id)
 	if err != nil {
@@ -657,7 +659,7 @@ func GetMeasFilterByID(ctx *macaron.Context) {
 /****************/
 
 // GetInfluxServer Return Server Array
-func GetInfluxServer(ctx *macaron.Context) {
+func GetInfluxServer(ctx *Context) {
 	cfgarray, err := cfg.Database.GetInfluxCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err)
@@ -669,7 +671,7 @@ func GetInfluxServer(ctx *macaron.Context) {
 }
 
 // AddInfluxServer Insert new measurement groups to de internal BBDD --pending--
-func AddInfluxServer(ctx *macaron.Context, dev InfluxCfg) {
+func AddInfluxServer(ctx *Context, dev InfluxCfg) {
 	log.Printf("ADDING Influx Backend %+v", dev)
 	affected, err := cfg.Database.AddInfluxCfg(dev)
 	if err != nil {
@@ -682,7 +684,7 @@ func AddInfluxServer(ctx *macaron.Context, dev InfluxCfg) {
 }
 
 // UpdateInfluxServer --pending--
-func UpdateInfluxServer(ctx *macaron.Context, dev InfluxCfg) {
+func UpdateInfluxServer(ctx *Context, dev InfluxCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
 	affected, err := cfg.Database.UpdateInfluxCfg(id, dev)
@@ -695,7 +697,7 @@ func UpdateInfluxServer(ctx *macaron.Context, dev InfluxCfg) {
 }
 
 //DeleteInfluxServer --pending--
-func DeleteInfluxServer(ctx *macaron.Context) {
+func DeleteInfluxServer(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
 	affected, err := cfg.Database.DelInfluxCfg(id)
@@ -708,7 +710,7 @@ func DeleteInfluxServer(ctx *macaron.Context) {
 }
 
 //GetInfluxServerByID --pending--
-func GetInfluxServerByID(ctx *macaron.Context) {
+func GetInfluxServerByID(ctx *Context) {
 	id := ctx.Params(":id")
 	dev, err := cfg.Database.GetInfluxCfgByID(id)
 	if err != nil {
@@ -720,7 +722,7 @@ func GetInfluxServerByID(ctx *macaron.Context) {
 }
 
 //GetInfluxAffectOnDel --pending--
-func GetInfluxAffectOnDel(ctx *macaron.Context) {
+func GetInfluxAffectOnDel(ctx *Context) {
 	id := ctx.Params(":id")
 	obarray, err := cfg.Database.GetInfluxCfgAffectOnDel(id)
 	if err != nil {
@@ -735,13 +737,22 @@ func GetInfluxAffectOnDel(ctx *macaron.Context) {
 /*LOGIN
 /****************/
 
-func myLoginHandler(ctx *macaron.Context, user UserLogin) {
+func myLoginHandler(ctx *Context, user UserLogin) {
 	fmt.Printf("USER LOGIN: USER: +%#v (Config: %#v)", user, cfg.HTTP)
 	if user.UserName == cfg.HTTP.AdminUser && user.Password == cfg.HTTP.AdminPassword {
+		ctx.SignedInUser = user.UserName
+		ctx.IsSignedIn = true
+		ctx.Session.Set(SESS_KEY_USERID, user.UserName)
 		fmt.Println("OK")
 		ctx.JSON(200, "OK")
 	} else {
 		fmt.Println("ERROR")
 		ctx.JSON(404, "ERROR")
 	}
+}
+
+func myLogoutHandler(ctx *Context) {
+	log.Printf("USER LOGOUT: USER: +%#v ", ctx.SignedInUser)
+	ctx.Session.Destory(ctx)
+	//ctx.Redirect("/login")
 }

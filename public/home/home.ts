@@ -4,6 +4,7 @@ import { Http, Headers } from '@angular/http';
 import { AuthHttp,JwtHelper } from 'angular2-jwt';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
+import { contentHeaders } from '../common/headers';
 
 
 
@@ -34,9 +35,18 @@ export class Home {
   }
 
   logout() {
-    localStorage.removeItem('username');
-    localStorage.removeItem('id_token');
-    this.router.navigate(['']);
+    this.http.post('/logout', { headers: contentHeaders })
+      .subscribe(
+        response => {
+          localStorage.removeItem('username');
+          localStorage.removeItem('id_token');
+          this.router.navigate(['/login']);
+        },
+        error => {
+          alert(error.text());
+          console.log(error.text());
+        }
+      );
   }
 
   InfluxServers() {
