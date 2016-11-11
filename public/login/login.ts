@@ -17,7 +17,7 @@ export class Login {
   login(event, username, password) {
     event.preventDefault();
     let body = JSON.stringify({ username, password });
-    this.http.post('/session/create', body, { headers: contentHeaders })
+    this.http.post('/login', body, { headers: contentHeaders })
       .subscribe(
         response => {
           console.log('id_token: '+response.json())
