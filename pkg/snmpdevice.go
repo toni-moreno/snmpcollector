@@ -49,8 +49,9 @@ type SnmpDevice struct {
 	//runtime controls
 	/*debugging chan bool
 	enabled   chan chan bool*/
-	DeviceActive bool
-	StateDebug   bool
+	DeviceActive    bool
+	DeviceConnected bool
+	StateDebug      bool
 
 	chDebug    chan bool
 	chEnabled  chan bool
@@ -157,16 +158,22 @@ func removeDuplicatesUnordered(elements []string) []string {
 	return result
 }
 
+/*
+InitDevSnmpInfo  does the following
+- look for all defined measurments from the template grups
+- allocate and fill array for all measurements defined for this device
+- for each indexed measurement  load device labels from IndexedOID and fiter them if defined measurement filters.
+- Initialice each SnmpMetric from each measuremet.
+*/
 //InitDevSnmpInfo generte all internal structs from SNMP device
 func (d *SnmpDevice) InitDevSnmpInfo() {
 
 	//Alloc array
 	d.Measurements = make([]*InfluxMeasurement, 0, 0)
-	d.log.Debugf("-----------------Init device %s------------------", d.cfg.Host)
+	d.log.Debugf("-----------------Init device measurements from groups %s------------------", d.cfg.Host)
 	//for this device get MeasurementGroups and search all measurements
 
 	for _, devMeas := range d.cfg.MeasurementGroups {
-
 		//Selecting all Metric Groups that matches with device.MeasurementGroups
 		selGroups := make(map[string]*MGroupsCfg, 0)
 		var RegExp = regexp.MustCompile(devMeas)
@@ -174,13 +181,9 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 			if RegExp.MatchString(key) {
 				selGroups[key] = val
 			}
-
 		}
-
 		d.log.Debugf("SNMP device %s has this SELECTED GROUPS: %+v", d.cfg.ID, selGroups)
-
 		//Only For selected Groups we will get all selected measurements and we will remove repeated values
-
 		var selMeas []string
 		for key, val := range selGroups {
 			d.log.Debugln("Selecting from group", key)
@@ -189,9 +192,8 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 				selMeas = append(selMeas, item)
 			}
 		}
-
+		//remove duplicated measurements if needed
 		selMeasUniq := removeDuplicatesUnordered(selMeas)
-
 		//Now we know what measurements names  will send influx from this device
 
 		d.log.Debugln("DEVICE MEASUREMENT: ", devMeas, "HOST: ", d.cfg.Host)
@@ -259,26 +261,28 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 /*
 Init  does the following
 
-- allocate and fill array for all measurements defined for this device
-- for each indexed measurement  load device labels from IndexedOID and fiter them if defined measurement filters.
-- Initialice each SnmpMetric from each measuremet.
+- Initialize not set variables to some defaults
+- Initialize logfile for this device
+- Initialize comunication channels and initial device state
 */
-func (d *SnmpDevice) Init(name string) error {
-	log.Infof("Initializing device %s\n", name)
-	//Init id
-	d.cfg.ID = name
+func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
+	if c == nil {
+		return fmt.Errorf("Error on initialice device, configuration struct is nil")
+	}
+	d.cfg = c
+	log.Infof("Initializing device %s\n", d.cfg.ID)
 
 	//Init Logger
 
 	if len(d.cfg.LogFile) == 0 {
-		d.cfg.LogFile = cfg.General.LogDir + "/" + name + ".log"
+		d.cfg.LogFile = cfg.General.LogDir + "/" + d.cfg.ID + ".log"
 
 	}
 	if len(d.cfg.LogLevel) == 0 {
 		d.cfg.LogLevel = "info"
 	}
 
-	f, err := os.OpenFile(d.cfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	f, _ := os.OpenFile(d.cfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	d.log = logrus.New()
 	d.log.Out = f
 	l, _ := logrus.ParseLevel(d.cfg.LogLevel)
@@ -327,18 +331,25 @@ func (d *SnmpDevice) Init(name string) error {
 			}
 		}
 	} else {
-		d.log.Warnf("No map detected in device %s\n", name)
+		d.log.Warnf("No map detected in device %s\n", d.cfg.ID)
 	}
 
-	//Init SNMP client device
+	return nil
+}
 
+//InitSnmpConnect does the  SNMP client conection and retrieve system info
+
+func (d *SnmpDevice) InitSnmpConnect() error {
 	client, err := snmpClient(d)
 	if err != nil {
+		d.DeviceConnected = false
 		d.log.Errorf("Client connect error to device: %s  error :%s", d.cfg.ID, err)
 		d.snmpClient = nil
 		return err
 	}
+	d.log.Infof("SNMP connection stablished Successfully")
 	d.snmpClient = client
+	d.DeviceConnected = true
 	return nil
 }
 
@@ -389,9 +400,8 @@ func (d *SnmpDevice) DebugLog() *olog.Logger {
 
 //Gather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
-	//client := d.snmpClient
-	//debug := false
-	if d.DeviceActive && d.snmpClient != nil {
+
+	if d.DeviceActive && d.DeviceConnected {
 		d.log.Infof("Begin first InidevInfo")
 		startSnmp := time.Now()
 		d.InitDevSnmpInfo()
@@ -408,13 +418,9 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 		//if active
 		if d.DeviceActive {
 			//check if device is online
-			if d.snmpClient == nil {
-				client, err := snmpClient(d)
-				if err != nil {
-					d.log.Errorf("Client connect error to device: %s  error :%s", d.cfg.ID, err)
-				} else {
-					d.snmpClient = client
-					d.log.Infof("SNMP connection stablished initializing SnmpDevice")
+			if d.DeviceConnected == false {
+				err := d.InitSnmpConnect()
+				if err == nil {
 					startSnmp := time.Now()
 					d.InitDevSnmpInfo()
 					elapsedSnmp := time.Since(startSnmp)
@@ -422,11 +428,10 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 					//device not initialized
 				}
 			} else {
-				//TODO: review if necesary this Sleep and what is the exact goal for the Timeout
-				//time.Sleep(time.Duration(d.cfg.Timeout) * time.Second)
+				//device actie and connected
 
 				bpts := d.Influx.BP()
-				startSnmp := time.Now()
+				startSnmpStats := time.Now()
 				for _, m := range d.Measurements {
 					d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
 					var nGets, nErrors int64
@@ -447,12 +452,12 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 					(*bpts).AddPoints(points)
 
 				}
-				elapsedSnmp := time.Since(startSnmp)
-				d.log.Infof("snmpdevice [%s] snmp pooling took [%s] ", d.cfg.ID, elapsedSnmp)
-				startInflux := time.Now()
+				elapsedSnmpStats := time.Since(startSnmpStats)
+				d.log.Infof("snmpdevice [%s] snmp pooling took [%s] ", d.cfg.ID, elapsedSnmpStats)
+				startInfluxStats := time.Now()
 				d.Influx.Send(bpts)
-				elapsedInflux := time.Since(startInflux)
-				d.log.Infof("snmpdevice [%s] influx send took [%s]", d.cfg.ID, elapsedInflux)
+				elapsedInfluxStats := time.Since(startInfluxStats)
+				d.log.Infof("snmpdevice [%s] influx send took [%s]", d.cfg.ID, elapsedInfluxStats)
 				// pause for interval period and have optional debug toggling
 			}
 		} else {

@@ -199,8 +199,8 @@ func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
 	dev := SnmpDevice{}
-	dev.cfg = &cfg
-	err := dev.Init(cfg.ID)
+	dev.Init(&cfg)
+	err := dev.InitSnmpConnect()
 	if err != nil {
 		log.Debugf("ERROR: DEVICE RETURNED %+v, ERROR: %s", dev, err)
 		ctx.JSON(400, err.Error())

@@ -212,8 +212,7 @@ func init() {
 	for k, c := range cfg.SnmpDevice {
 		//Inticialize each SNMP device
 		dev := SnmpDevice{}
-		dev.cfg = c
-		dev.Init(k)
+		dev.Init(c)
 		if dev.cfg.Freq == 0 {
 			dev.cfg.Freq = freq
 		}
