@@ -35,20 +35,22 @@
  debug = false
 
 
+
 ############################
 # Self Monitorig Config
 ############################
 #config for sending self monitoring metrics to our default influx db
-# Sent Measurements will be
-# <prefix>.goroutines
-# <prefix>.memory.allocated
-# <prefix>.memory.mallocs
-# <prefix>.memory.frees
-# <prefix>.memory.gc.total_pause
-# <prefix>.memory.heap
-# <prefix>.memory.gc.pause_per_second
-# <prefix>.memory.gc.pause_per_interval
-# <prefix>.memory.gc.gc_per_second
+# Sent Measurements will be <prefix>selfmon_gvm with the following fields
+# runtime_goroutines
+# *mem.alloc
+# *mem.mallocs
+# *mem.frees
+# *gc.total_pause_ns
+# *memory.heap
+# *gc.pause_per_second
+# *gc.pause_per_interval
+# *gc.gc_per_second
+# *gc.gc_per_interval
 
 [selfmon]
  #enable true/false enable/disable self monitoring
@@ -56,7 +58,7 @@
  #send data Frequency
  freq = 60
  #prefix for measurement naming
- prefix = "gvm"
+ prefix = ""
  #adds extra tags to the measurement sent
  extratags = [ "instance=snmpcollector01" ]
 
