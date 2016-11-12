@@ -134,6 +134,10 @@ func (d *SnmpDevice) GetSysInfo(client *gosnmp.GoSNMP) (SysInfo, error) {
 			}
 		}
 	}
+	//sometimes (authenticacion error on v3) client.get doesn't return error but the connection is not still available
+	if len(info.SysDescr) == 0 && info.SysUptime == 0 {
+		return info, fmt.Errorf("Some Error happened while getting system info for device %s", d.cfg.ID)
+	}
 	return info, nil
 }
 
