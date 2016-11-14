@@ -40,9 +40,15 @@
 <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
 </template>
 
-
-
 <template ngSwitchCase="create">
+  <div class="col-sm-12" *ngIf="alertHandler.length > 0">
+  <div>
+      <alert *ngFor="let alert of alertHandler; let i = index" style="position: fixed; top: 0; right: 0" [type]="alert.type" dismissible="true">
+        {{ alert?.msg }}
+      </alert>
+  </div>
+  </div>
+
 <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="saveSnmpDev()">
 
 <div class="form-group">
@@ -324,16 +330,26 @@ tooltip="Tag's value to identify the device in InfluxDB"></i>
  </div>
 </div>
 
-<div class="col-sm-offset-4 col-sm-6">
-<button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
-<button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
-<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+<div class="col-sm-2">
+  <button type="button" [disabled]="!snmpdevForm.valid" (click)="pingSnmpDev()">Test Connection</button>
+</div>
+
+<div class="col-sm-offset-2 col-sm-3">
+  <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
+  <button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
+  <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
 </div>
  </form>
-
 </template>
 
 <template ngSwitchCase="modify">
+  <div class="col-sm-12" *ngIf="alertHandler.length > 0">
+  <div>
+      <alert *ngFor="let alert of alertHandler; let i = index" style="position: fixed; top: 0; right: 0" [type]="alert.type" dismissible="true">
+        {{ alert?.msg }}
+      </alert>
+  </div>
+  </div>
 <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="updateSnmpDev(testsnmpdev.ID)">
 <div class="form-group">
 <label class="control-label col-sm-2" for="id">ID</label>
@@ -619,12 +635,15 @@ tooltip="Severity log level"></i>
  </div>
 </div>
 
-<div class="col-sm-offset-4 col-sm-6">
-<button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
-<button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
-<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+<div class="col-sm-2">
+  <button type="button" [disabled]="!snmpdevForm.valid" (click)="pingSnmpDev()">Test Connection</button>
 </div>
 
-</form>
+<div class="col-sm-offset-2 col-sm-3">
+  <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
+  <button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
+  <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+</div>
+ </form>
 </template>
 </p>

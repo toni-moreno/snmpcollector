@@ -5,7 +5,7 @@ import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 import { InfluxServerService } from '../influxserver/influxservercfg.service';
 import { MeasGroupService } from '../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
-
+import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { GenericModal } from '../common/generic-modal';
 
 @Component({
@@ -31,6 +31,7 @@ export class SnmpDeviceCfgComponent {
   	filteroptions: any;
     selectgroups: IMultiSelectOption[];
   	selectfilters: IMultiSelectOption[];
+    alertHandler : any = [];
 
     //Initialization data, rows, colunms for Table
     private data:Array<any> = [];
@@ -104,6 +105,7 @@ export class SnmpDeviceCfgComponent {
       this.snmpDeviceService.getDevices(null)
         .subscribe(
   				data => {
+            this.alertHandler = [];
             this.snmpdevs = data;
             this.data = data;
             this.onChangeTable(this.config);
@@ -207,14 +209,6 @@ export class SnmpDeviceCfgComponent {
       console.log(data);
     }
 
-
-    //ADDED:
-    //
-    onChange(value,controlName){
-  		console.log("CONTROL NAME",controlName);
-  		this.snmpdevForm.controls[controlName].patchValue(value);
-  	}
-
   	onChangeGroup(value){
   		this.snmpdevForm.controls['MeasurementGroups'].patchValue(value);
   	}
@@ -230,6 +224,7 @@ export class SnmpDeviceCfgComponent {
      console.log("id: ",id);
     this.viewModal.parseObject(id);
    }
+
    removeItem(row){
     let id = row.ID;
   	console.log('remove',id);
@@ -271,11 +266,11 @@ export class SnmpDeviceCfgComponent {
    				 );
    }
    cancelEdit(){
+     this.reloadData();
   	 this.editmode = "list";
    }
    saveSnmpDev(){
   	 if(this.snmpdevForm.dirty && this.snmpdevForm.valid) {
-  		 console.log("FORM", this.snmpdevForm);
   		 this.snmpDeviceService.addDevice(this.snmpdevForm.value)
   		 .subscribe(data => { console.log(data) },
         err => console.error(err),
@@ -285,9 +280,6 @@ export class SnmpDeviceCfgComponent {
    }
 
    updateSnmpDev(oldId){
-  	 console.log(oldId);
-  	 console.log(this.snmpdevForm.value.id);
-  	 console.log("FORM", this.snmpdevForm.value);
   	 if(this.snmpdevForm.valid) {
   		 var r = true;
   		 if (this.snmpdevForm.value.id != oldId) {
@@ -302,6 +294,25 @@ export class SnmpDeviceCfgComponent {
   		}
   	}
    }
+
+   pingSnmpDev(){
+    if(this.snmpdevForm.valid) {
+      this.snmpDeviceService.pingDevice(this.snmpdevForm.value)
+      .subscribe(data => {
+        console.log("data:",data);
+        this.alertHandler = [];
+        this.alertHandler.push({msg: 'Test succesfull '+data['SysDescr'], type: 'success', closable: true});
+       },
+        err => {
+        console.error(err);
+        this.alertHandler = [];
+        this.alertHandler.push({msg: 'Test failed! '+err['_body'], type: 'danger', closable: true});
+        },
+        () =>  {console.log("OK")}
+       );
+     }
+   }
+
 
    getMeasGroupsforDevices(){
    this.measgroupsDeviceService.getMeasGroup(null)
