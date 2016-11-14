@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/soniah/gosnmp"
 	"math"
 	"strings"
@@ -68,7 +69,18 @@ type SnmpMetric struct {
 	RealOID    string
 }
 
-func (s *SnmpMetric) Init() error {
+func NewSnmpMetric(c *SnmpMetricCfg) (*SnmpMetric, error) {
+	metric := &SnmpMetric{}
+	err := metric.Init(c)
+	return metric, err
+}
+
+func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
+	if c == nil {
+		return fmt.Errorf("Error on initialice device, configuration struct is nil")
+	}
+	s.cfg = c
+	s.RealOID = c.BaseOID
 	s.ID = s.cfg.ID
 	switch s.cfg.DataSrcType {
 	case "GAUGE", "INTEGER":

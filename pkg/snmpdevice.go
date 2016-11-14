@@ -142,22 +142,6 @@ func (d *SnmpDevice) GetSysInfo(client *gosnmp.GoSNMP) (SysInfo, error) {
 	return info, nil
 }
 
-func removeDuplicatesUnordered(elements []string) []string {
-	encountered := map[string]bool{}
-
-	// Create a map of all unique elements.
-	for v := range elements {
-		encountered[elements[v]] = true
-	}
-
-	// Place all keys from the map into a slice.
-	result := []string{}
-	for key, _ := range encountered {
-		result = append(result, key)
-	}
-	return result
-}
-
 /*
 InitDevSnmpInfo  does the following
 - look for all defined measurments from the template grups
@@ -205,12 +189,17 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 				d.log.Debugln("MEASUREMENT CFG KEY:", val, " VALUE ", mVal.Name)
 
 				//creating a new measurement runtime object and asigning to array
-				d.Measurements = append(d.Measurements, &InfluxMeasurement{ID: mVal.ID, cfg: mVal, log: d.log, snmpClient: d.snmpClient})
+				imeas, err := NewInfluxMeasurement(mVal, d.log, d.snmpClient)
+				if err != nil {
+					d.log.Errorf("Error on measurement initialization on host %s: Error: %s", d.cfg.ID, err)
+					continue
+				}
+				d.Measurements = append(d.Measurements, imeas)
 			}
 		}
 	}
 
-	/*For each  measurement look for filters and Initialize Measurement with this Filter 	*/
+	/*For each  measurement look for filters and  Add to the measurment with this Filter after it initializes the runtime for the measurment  	*/
 
 	for _, m := range d.Measurements {
 		//check for filters asociated with this measurement
@@ -226,35 +215,21 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 		}
 		if mfilter != nil {
 			d.log.Debugf("filters %s found for device %s and measurment %s ", mfilter.ID, d.cfg.ID, m.cfg.ID)
-
+			err := m.AddFilter(mfilter)
+			if err != nil {
+				d.log.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.cfg.ID, err)
+			}
 		} else {
 			d.log.Debugf("no filters found for device %s and measurment %s", d.cfg.ID, m.cfg.ID)
 		}
-		err := m.Init(mfilter)
-		if err != nil {
-			d.log.Errorf("Error on initialize Measurement %s , Error:%s no data will be gathered for this measurement", m.cfg.ID, err)
-			//d.Measurements = append(d.Measurements[:i], d.Measurements[i+1:]...)
-		}
-
+		//Initialize internal structs after
+		m.InitBuildRuntime()
+		//Get Data First Time ( usefull for counters)
+		m.GetData()
 	}
 	//Initialize all snmpMetrics  objects and OID array
 	//get data first time
 	// useful to inicialize counter all value and test device snmp availability
-	d.log.Debugf("SNMP Info: %+v", d.snmpClient)
-	for _, m := range d.Measurements {
-		//if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
-		if m.cfg.GetMode == "value" {
-			_, _, err := m.SnmpGetData()
-			if err != nil {
-				d.log.Errorf("SNMP First Get Data error for host: %s", d.cfg.Host)
-			}
-		} else {
-			_, _, err := m.SnmpWalkData()
-			if err != nil {
-				d.log.Errorf("SNMP First Get Data error for host: %s", d.cfg.Host)
-			}
-		}
-	}
 
 }
 
@@ -434,13 +409,9 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 				startSnmpStats := time.Now()
 				for _, m := range d.Measurements {
 					d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
-					var nGets, nErrors int64
-					//if m.cfg.GetMode == "value" || d.cfg.SnmpVersion == "1" {
-					if m.cfg.GetMode == "value" {
-						nGets, nErrors, _ = m.SnmpGetData()
-					} else {
-						nGets, nErrors, _ = m.SnmpWalkData()
-					}
+
+					nGets, nErrors, _ := m.GetData()
+
 					if nGets > 0 {
 						d.addGets(nGets)
 					}
