@@ -104,4 +104,30 @@ export class SnmpDeviceService {
          responseData.json()
         );
     };
+
+    pingDevice(dev) {
+        var headers = new Headers();
+        headers.append("Content-Type", 'application/json');
+        return this.http.post('/runtime/snmpping/',JSON.stringify(dev,function (key,value) {
+            if ( key == 'Port' ||
+            key == 'Retries' ||
+            key == 'Timeout' ||
+            key == 'Repeat' ||
+            key == 'Freq' ) {
+                return parseInt(value);
+            }
+            if ( key == 'Active' ||
+            key == 'SnmpDebug' ) return ( value === "true" || value === true);
+            if ( key == 'Extratags' ) return  String(value).split(',');
+            if ( key == 'MeasFilters' ||
+            key == 'MetricGroups') {
+                if (value != null) return String(value).split(',');
+                else return null;
+            }
+            return value;
+        }), { headers: headers })
+        .map( (responseData) => responseData.json());
+    }
+
+
 }

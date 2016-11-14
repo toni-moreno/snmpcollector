@@ -31,6 +31,7 @@ import { InfluxServerCfgComponent } from './influxserver/influxservercfg.compone
 import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ModalModule } from 'ng2-bootstrap/ng2-bootstrap';
+import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { GenericModal } from './common/generic-modal'
 //others
 import { ValidationService } from './common/validation.service';
@@ -62,6 +63,7 @@ import { ObjectParserPipe } from './common/custom_pipe'
     AccordionModule,
     TooltipModule,
     ModalModule,
+    AlertModule,
     PaginationModule,
     TabsModule,
     Ng2TableModule,
