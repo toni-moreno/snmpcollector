@@ -38,3 +38,35 @@ func diffSlice(X, Y []string) []string {
 
 	return diff
 }
+
+func diffKeysInMap(X, Y map[string]string) map[string]string {
+
+	diff := map[string]string{}
+
+	for k, vK := range X {
+		if _, ok := Y[k]; !ok {
+			diff[k] = vK
+		}
+	}
+
+	return diff
+}
+
+func diffKeyValuesInMap(X, Y map[string]string) map[string]string {
+
+	diff := map[string]string{}
+
+	for kX, vX := range X {
+		if vY, ok := Y[kX]; !ok {
+			//not exist
+			diff[kX] = vX
+		} else {
+			//exist
+			if vX != vY {
+				//but value is diferent
+				diff[kX] = vX
+			}
+		}
+	}
+	return diff
+}
