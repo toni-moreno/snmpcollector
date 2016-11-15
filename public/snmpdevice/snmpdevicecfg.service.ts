@@ -18,9 +18,11 @@ export class SnmpDeviceService {
             key == 'Retries' ||
             key == 'Timeout' ||
             key == 'Repeat' ||
-            key == 'Freq' ) {
+            key == 'Freq'  ||
+            key == 'UpdateFltFreq' ) {
                 return parseInt(value);
             }
+
             if ( key == 'Active' ||
             key == 'SnmpDebug' ) return ( value === "true" || value === true);
             if ( key == 'Extratags' ) return  String(value).split(',');
@@ -44,7 +46,8 @@ export class SnmpDeviceService {
             key == 'Retries' ||
             key == 'Timeout' ||
             key == 'Repeat' ||
-            key == 'Freq' ) {
+            key == 'Freq'  ||
+            key == 'UpdateFltFreq') {
                 return parseInt(value);
             }
             if ( key == 'Active' ||
