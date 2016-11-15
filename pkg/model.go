@@ -519,7 +519,13 @@ func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurem
 
 	if id != dev.ID { //ID has been changed
 		log.Infof("Updated Measurement Config to %s devices ", affecteddev)
+
 		affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").UseBool().Update(&MGroupsMeasurements{IDMeasurementCfg: dev.ID})
+		if err != nil {
+			session.Rollback()
+			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
+		}
+		affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").UseBool().Update(&MeasFilterCfg{IDMeasurementCfg: dev.ID})
 		if err != nil {
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
