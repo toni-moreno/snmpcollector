@@ -93,7 +93,7 @@ type InfluxMeasurement struct {
 	MetricTable      map[string]map[string]*SnmpMetric //snmpMetric mapped with metric_names and Index
 	snmpOids         []string
 	OidSnmpMap       map[string]*SnmpMetric //snmpMetric mapped with real OID's
-	Filterlabels     map[string]string      `json:"-"`
+	Filterlabels     map[string]string      // `json:"-"`
 	AllIndexedLabels map[string]string      //`json:"-"` //all available values on the remote device
 	CurIndexedLabels map[string]string      //`json:"-"`
 	Filter           *MeasFilterCfg
@@ -135,6 +135,38 @@ func (m *InfluxMeasurement) Init() error {
 	 * ******************************/
 	m.log.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the snmpBulk device] | OID=>Metric MAP")
 	m.InitMetricTable()
+	return nil
+}
+
+func (m *InfluxMeasurement) PushMetricTable(p map[string]string) error {
+	if m.cfg.GetMode == "value" {
+		return fmt.Errorf("Can not push new values in a measurement type value : %s", m.cfg.ID)
+	}
+	for key, label := range p {
+		idx := make(map[string]*SnmpMetric)
+		m.log.Infof("initializing [indexed] metric cfg for [%s/%s]", key, label)
+		for k, smcfg := range m.cfg.fieldMetric {
+			metric, err := NewSnmpMetric(smcfg)
+			if err != nil {
+				m.log.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
+				continue
+			}
+			metric.RealOID += "." + key
+			idx[smcfg.ID] = metric
+		}
+		m.MetricTable[label] = idx
+	}
+	return nil
+}
+
+func (m *InfluxMeasurement) PopMetricTable(p map[string]string) error {
+	if m.cfg.GetMode == "value" {
+		return fmt.Errorf("Can not pop values in a measurement type value : %s", m.cfg.ID)
+	}
+	for key, label := range p {
+		m.log.Infof("removing [indexed] metric cfg for [%s/%s]", key, label)
+		delete(m.MetricTable, label)
+	}
 	return nil
 }
 
@@ -200,33 +232,95 @@ func (m *InfluxMeasurement) InitBuildRuntime() {
 
 func (m *InfluxMeasurement) AddFilter(filter *MeasFilterCfg) error {
 	var err error
+	if m.cfg.GetMode == "value" {
+		return fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
+	}
 	if filter == nil {
 		return fmt.Errorf("Error invalid  NIL  filter on measurment %s ", m.cfg.ID)
 	}
-	if m.cfg.GetMode == "indexed" {
-		m.Filter = filter
-		switch m.Filter.FType {
-		case "file":
-			m.Filterlabels, err = m.applyFileFilter(m.Filter.FileName, m.Filter.EnableAlias)
-			if err != nil {
-				m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
-			}
-		case "OIDCondition":
-			m.Filterlabels, err = m.applyOIDCondFilter(m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue)
-			if err != nil {
-				m.log.Errorf("Error while trying to apply condition Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
-			}
-		default:
-			m.log.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
+
+	m.Filter = filter
+	switch m.Filter.FType {
+	case "file":
+		m.Filterlabels, err = m.applyFileFilter(m.Filter.FileName, m.Filter.EnableAlias)
+		if err != nil {
+			m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
 		}
-		//now we have the 	m.Filterlabels array initialized with only those values which we will need
-		//Loading final Values to query with snmp
-		m.CurIndexedLabels = m.filterIndexedLabels(m.Filter.FType)
-	} else {
-		return fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
+	case "OIDCondition":
+		m.Filterlabels, err = m.applyOIDCondFilter(m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue)
+		if err != nil {
+			m.log.Errorf("Error while trying to apply condition Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
+		}
+	default:
+		return fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
 	}
+	//now we have the 	m.Filterlabels array initialized with only those values which we will need
+	//Loading final Values to query with snmp
+	m.CurIndexedLabels = m.filterIndexedLabels(m.Filter.FType, m.Filterlabels)
+
 	m.InitMetricTable()
 	return err
+}
+
+func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
+	var err error
+	var newfilterlabels map[string]string
+
+	if m.cfg.GetMode == "value" {
+		return false, fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
+	}
+
+	//fist update  all indexed--------
+	m.log.Infof("Re Loading Indexed values in : %s", m.cfg.ID)
+	m.AllIndexedLabels, err = m.loadIndexedLabels()
+	if err != nil {
+		m.log.Errorf("Error while trying to reload Indexed Labels on for measurement %s for baseOid %s : ERROR: %s", m.cfg.ID, m.cfg.IndexOID, err)
+		return false, err
+	}
+	//----------------
+	switch m.Filter.FType {
+	case "file":
+		newfilterlabels, err = m.applyFileFilter(m.Filter.FileName, m.Filter.EnableAlias)
+		if err != nil {
+			m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
+		}
+	case "OIDCondition":
+		newfilterlabels, err = m.applyOIDCondFilter(m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue)
+		if err != nil {
+			m.log.Errorf("Error while trying to apply condition Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
+		}
+	default:
+		return false, fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
+	}
+	//check if newfilterlabels are diferent than previous.
+
+	//now we have the 	m.Filter,m.ls array initialized with only those values which we will need
+	//Loading final Values to query with snmp
+	newIndexedLabels := m.filterIndexedLabels(m.Filter.FType, newfilterlabels)
+
+	delIndexes := diffKeyValuesInMap(m.CurIndexedLabels, newIndexedLabels)
+	newIndexes := diffKeyValuesInMap(newIndexedLabels, m.CurIndexedLabels)
+
+	if len(newIndexes) == 0 && len(delIndexes) == 0 {
+		//no changes on the Filter
+		m.log.Infof("No changes on the filter %s for measurement: %s", m.Filter.FType, m.cfg.ID)
+		return false, nil
+	}
+
+	m.log.Debug("NEW INDEXES: %+v", newIndexes)
+	m.log.Debug("DELETED INDEXES: %+v", delIndexes)
+
+	m.Filterlabels = newfilterlabels
+	m.CurIndexedLabels = newIndexedLabels
+
+	if len(delIndexes) > 0 {
+		m.PopMetricTable(delIndexes)
+	}
+	if len(newIndexes) > 0 {
+		m.PushMetricTable(newIndexes)
+	}
+
+	return true, nil
 }
 
 func (m *InfluxMeasurement) GetData() (int64, int64, error) {
@@ -244,113 +338,6 @@ func (m *InfluxMeasurement) GetData() (int64, int64, error) {
 		}
 	}
 	return nGets, nErrors, err
-}
-
-func (m *InfluxMeasurement) InitOrig(filter *MeasFilterCfg) error {
-
-	var err error
-	/*For each Indexed measurement
-	  a) LoadLabels for all device available tags
-	  b) apply filters , and get list of names Indexed tames for add to IndexTAG
-	*/
-	//loading all posible values in 	m.AllIndexedLabels
-	if m.cfg.GetMode == "indexed" {
-		m.log.Infof("Loading Indexed values in : %s", m.cfg.ID)
-		m.AllIndexedLabels, err = m.loadIndexedLabels()
-		if err != nil {
-			m.log.Errorf("Error while trying to load Indexed Labels on for measurement %s for baseOid %s : ERROR: %s", m.cfg.ID, m.cfg.IndexOID, err)
-		}
-	}
-	//loading filtersh
-
-	if m.cfg.GetMode == "indexed" && filter != nil && err == nil {
-		m.Filter = filter
-		switch m.Filter.FType {
-		case "file":
-			m.Filterlabels, err = m.applyFileFilter(m.Filter.FileName, m.Filter.EnableAlias)
-			if err != nil {
-				m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
-			}
-		case "OIDCondition":
-			m.Filterlabels, err = m.applyOIDCondFilter(m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue)
-			if err != nil {
-				m.log.Errorf("Error while trying to apply condition Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
-			}
-		default:
-			m.log.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
-		}
-		//now we have the 	m.Filterlabels array initialized with only those values which we will need
-		//Loading final Values to query with snmp
-		m.CurIndexedLabels = m.filterIndexedLabels(m.Filter.FType)
-	} else {
-		//Final Selected Indexes are All Indexed
-		m.CurIndexedLabels = m.AllIndexedLabels
-
-	}
-
-	//now we have all indexed values full or filtered if needed.
-	/********************************
-	 *
-	 * Initialize Metric Runtime data in one array m-values
-	 *
-	 * ******************************/
-	m.log.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the snmpBulk device] | OID=>Metric MAP")
-	m.MetricTable = make(map[string]map[string]*SnmpMetric)
-
-	//create metrics.
-	switch m.cfg.GetMode {
-	case "value":
-		//for each field
-		idx := make(map[string]*SnmpMetric)
-		for k, smcfg := range m.cfg.fieldMetric {
-			m.log.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
-			//metric := &SnmpMetric{cfg: smcfg, RealOID: smcfg.BaseOID}
-			metric, err := NewSnmpMetric(smcfg)
-			if err != nil {
-				m.log.Errorf("ERROR on create new [value] field metric %s : Error: %s ", k, err)
-				continue
-			}
-			idx[smcfg.ID] = metric
-		}
-		m.MetricTable["0"] = idx
-
-	case "indexed":
-		//for each field an each index (previously initialized)
-		for key, label := range m.CurIndexedLabels {
-			idx := make(map[string]*SnmpMetric)
-			m.log.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
-			for k, smcfg := range m.cfg.fieldMetric {
-				//metric := &SnmpMetric{cfg: smcfg, RealOID: smcfg.BaseOID + "." + key
-				metric, err := NewSnmpMetric(smcfg)
-				if err != nil {
-					m.log.Errorf("ERROR on create new [indexed] fields metric  %s:Error: %s ", k, err)
-					continue
-				}
-				metric.RealOID += key
-				idx[smcfg.ID] = metric
-			}
-			m.MetricTable[label] = idx
-
-		}
-
-	default:
-		m.log.Errorf("Unknown Measurement GetMode Config :%s", m.cfg.GetMode)
-	}
-	m.log.Debugf("ARRAY VALUES for %s : %+v", m.cfg.Name, m.MetricTable)
-	//building real OID array for SNMPWALK and OID=> snmpMetric map to asign results to each object
-	m.snmpOids = []string{}
-	m.OidSnmpMap = make(map[string]*SnmpMetric)
-	//metric level
-	for kIdx, vIdx := range m.MetricTable {
-		m.log.Debugf("KEY iDX %s", kIdx)
-		//index level
-		for kM, vM := range vIdx {
-			m.log.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
-			m.snmpOids = append(m.snmpOids, vM.RealOID)
-			m.OidSnmpMap[vM.RealOID] = vM
-		}
-	}
-	return nil
 }
 
 func (m *InfluxMeasurement) printConfig() {
@@ -632,13 +619,13 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 /*
  filterIndexedLabels construct the final index array from all index and filters
 */
-func (m *InfluxMeasurement) filterIndexedLabels(f_mode string) map[string]string {
+func (m *InfluxMeasurement) filterIndexedLabels(f_mode string, L map[string]string) map[string]string {
 	curIndexedLabels := make(map[string]string, len(m.Filterlabels))
 
 	switch f_mode {
 	case "file":
 		//file filter should compare with all indexed labels with the value (name)
-		for k_f, v_f := range m.Filterlabels {
+		for k_f, v_f := range L {
 			for k_l, v_l := range m.AllIndexedLabels {
 				if k_f == v_l {
 					if len(v_f) > 0 {
@@ -654,7 +641,7 @@ func (m *InfluxMeasurement) filterIndexedLabels(f_mode string) map[string]string
 		}
 
 	case "OIDCondition":
-		for k_f, _ := range m.Filterlabels {
+		for k_f, _ := range L {
 			for k_l, v_l := range m.AllIndexedLabels {
 				if k_f == k_l {
 					curIndexedLabels[k_l] = v_l
@@ -744,7 +731,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 }
 
 func (m *InfluxMeasurement) applyFileFilter(file string, enableAlias bool) (map[string]string, error) {
-	m.log.Infof("apply File filter : %s Enable Alias: %s", file, enableAlias)
+	m.log.Infof("apply File filter : %s Enable Alias: %t", file, enableAlias)
 	filterlabels := make(map[string]string)
 	if len(file) == 0 {
 		return filterlabels, errors.New("No file configured error ")

@@ -47,8 +47,9 @@ type SnmpDevice struct {
 	Gets     int64
 	Errors   int64
 	//runtime controls
-	/*debugging chan bool
-	enabled   chan chan bool*/
+
+	ReloadLoopsPending int
+
 	DeviceActive    bool
 	DeviceConnected bool
 	StateDebug      bool
@@ -268,6 +269,8 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 	d.log.Formatter = customFormatter
 	customFormatter.FullTimestamp = true
 
+	d.ReloadLoopsPending = d.cfg.UpdateFltFreq
+
 	//Init channels
 	d.chDebug = make(chan bool)
 	d.chEnabled = make(chan bool)
@@ -392,6 +395,7 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 	for {
 		//if active
 		if d.DeviceActive {
+
 			//check if device is online
 			if d.DeviceConnected == false {
 				err := d.InitSnmpConnect()
@@ -404,32 +408,71 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 				}
 			} else {
 				//device actie and connected
-
-				bpts := d.Influx.BP()
-				startSnmpStats := time.Now()
-				for _, m := range d.Measurements {
-					d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
-
-					nGets, nErrors, _ := m.GetData()
-
-					if nGets > 0 {
-						d.addGets(nGets)
+				/*******************************************
+				 *
+				 * Reload Indexes/Filters process(if needed)
+				 *
+				 *******************************************/
+				//Check if reload needed with d.ReloadLoopsPending if a posivive value on negative this will disabled
+				if d.ReloadLoopsPending > 0 {
+					d.ReloadLoopsPending--
+				}
+				if d.ReloadLoopsPending == 0 {
+					startIdxUpdateStats := time.Now()
+					for _, m := range d.Measurements {
+						if m.cfg.GetMode == "value" {
+							continue
+						}
+						changed, err := m.UpdateFilter()
+						if err != nil {
+							d.log.Errorf("Error on update Indexes/filter : ERR: %s", err)
+							continue
+						}
+						if changed {
+							m.InitBuildRuntime()
+						}
 					}
-					if nErrors > 0 {
-						d.addErrors(nErrors)
+					d.ReloadLoopsPending = d.cfg.UpdateFltFreq
+					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
+					d.log.Infof("snmpdevice [%s] Index reload took [%s]", d.cfg.ID, elapsedIdxUpdateStats)
+					/*************************
+					 *
+					 * SNMP Gather data process
+					 *
+					 ***************************/
+
+					bpts := d.Influx.BP()
+					startSnmpStats := time.Now()
+					for _, m := range d.Measurements {
+						d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
+
+						nGets, nErrors, _ := m.GetData()
+
+						if nGets > 0 {
+							d.addGets(nGets)
+						}
+						if nErrors > 0 {
+							d.addErrors(nErrors)
+						}
+						//prepare batchpoint
+						points := m.GetInfluxPoint(d.TagMap)
+						(*bpts).AddPoints(points)
 					}
-					//prepare batchpoint
-					points := m.GetInfluxPoint(d.TagMap)
-					(*bpts).AddPoints(points)
+
+					elapsedSnmpStats := time.Since(startSnmpStats)
+					d.log.Infof("snmpdevice [%s] snmp pooling took [%s] ", d.cfg.ID, elapsedSnmpStats)
+					/*************************
+					 *
+					 * Send data to InfluxDB process
+					 *
+					 ***************************/
+
+					startInfluxStats := time.Now()
+					d.Influx.Send(bpts)
+					elapsedInfluxStats := time.Since(startInfluxStats)
+					d.log.Infof("snmpdevice [%s] influx send took [%s]", d.cfg.ID, elapsedInfluxStats)
 
 				}
-				elapsedSnmpStats := time.Since(startSnmpStats)
-				d.log.Infof("snmpdevice [%s] snmp pooling took [%s] ", d.cfg.ID, elapsedSnmpStats)
-				startInfluxStats := time.Now()
-				d.Influx.Send(bpts)
-				elapsedInfluxStats := time.Since(startInfluxStats)
-				d.log.Infof("snmpdevice [%s] influx send took [%s]", d.cfg.ID, elapsedInfluxStats)
-				// pause for interval period and have optional debug toggling
 			}
 		} else {
 			d.log.Infof("snmpdevice [%s] Gather process is dissabled", d.cfg.ID)

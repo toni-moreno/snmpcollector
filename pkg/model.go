@@ -43,7 +43,8 @@ type SnmpDeviceCfg struct {
 	V3PrivPass  string `xorm:"v3privpass"`
 	V3PrivProt  string `xorm:"v3privprot"`
 	//snmp runtime config
-	Freq int `xorm:"freq"`
+	Freq          int `xorm:"'freq' default 60"`
+	UpdateFltFreq int `xorm:"'update_flt_freq' default 60"`
 
 	OutDB    string `xorm:"outdb"`
 	LogLevel string `xorm:"loglevel"`
