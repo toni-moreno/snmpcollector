@@ -213,10 +213,21 @@
 <div class="form-group">
 <label class="control-label col-sm-2" for="Freq">Freq</label>
 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
- tooltip="Frequency of polling (in seconds)"></i>
+ tooltip="Frequency of snmp data polling (in seconds)"></i>
  <div class="col-sm-9">
      <input formControlName="Freq" id="Freq" />
 <control-messages [control]="snmpdevForm.controls.Freq"></control-messages>
+</div>
+</div>
+
+
+<div class="form-group">
+<label class="control-label col-sm-2" for="UpdateFltFreq">UpdateFltFreq</label>
+<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+ tooltip="Number of snmp data gather cicles the collector will take to update  indexes and filters on (indexed/snmptable) measurements of snmp data polling (time will be this number*freq seconds) <br> Set this valie to -1 to disable indexes and filters updates "></i>
+ <div class="col-sm-9">
+     <input formControlName="UpdateFltFreq" id="UpdateFltFreq" />
+<control-messages [control]="snmpdevForm.controls.UpdateFltFreq"></control-messages>
 </div>
 </div>
 
@@ -525,6 +536,17 @@ tooltip="Frequency of polling (in seconds)"></i>
  <div class="col-sm-9">
     <input formControlName="Freq" id="Freq" [ngModel] = "testsnmpdev.Freq"/>
 <control-messages [control]="snmpdevForm.controls.Freq"></control-messages>
+</div>
+</div>
+
+
+<div class="form-group">
+<label class="control-label col-sm-2" for="UpdateFltFreq">UpdateFltFreq</label>
+<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+ tooltip="Number of snmp data gather cicles the collector will take to update  indexes and filters on (indexed/snmptable) measurements of snmp data polling (time will be this number*freq seconds) <br> Set this valie to -1 to disable indexes and filters updates "></i>
+ <div class="col-sm-9">
+     <input formControlName="UpdateFltFreq" id="UpdateFltFreq" [ngModel] = "testsnmpdev.UpdateFltFreq" />
+<control-messages [control]="snmpdevForm.controls.UpdateFltFreq"></control-messages>
 </div>
 </div>
 

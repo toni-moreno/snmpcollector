@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/soniah/gosnmp"
 	"math"
 	"strings"
@@ -64,36 +65,56 @@ type SnmpMetric struct {
 	CurTime    time.Time
 	lastTime   time.Time
 	Compute    func() `json:"-"`
+	Scale      func() `json:"-"`
 	setRawData func(pdu gosnmp.SnmpPDU, now time.Time)
 	RealOID    string
 }
 
-func (s *SnmpMetric) Init() error {
+func NewSnmpMetric(c *SnmpMetricCfg) (*SnmpMetric, error) {
+	metric := &SnmpMetric{}
+	err := metric.Init(c)
+	return metric, err
+}
+
+func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
+	if c == nil {
+		return fmt.Errorf("Error on initialice device, configuration struct is nil")
+	}
+	s.cfg = c
+	s.RealOID = c.BaseOID
 	s.ID = s.cfg.ID
+	if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
+		s.Scale = func() {
+			s.CookedValue = (s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift
+		}
+	} else {
+		s.Scale = func() {
+		}
+	}
 	switch s.cfg.DataSrcType {
 	case "GAUGE", "INTEGER":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := pduVal2Int64(pdu)
 			s.CookedValue = float64(val)
 			s.CurTime = now
-			s.Compute()
-		}
-		if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
-			s.Compute = func() {
-				s.CookedValue = (s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift
-			}
-		} else {
-			s.Compute = func() {
-			}
+			//s.Compute()
+			s.Scale()
 		}
 	case "COUNTER32":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			//first time only set values and reassign itself to the complete method this will avoi to send invalid data
 			val := pduVal2Int64(pdu)
-			s.lastTime = s.CurTime
-			s.lastValue = s.curValue
 			s.curValue = val
 			s.CurTime = now
-			s.Compute()
+			s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+				val := pduVal2Int64(pdu)
+				s.lastTime = s.CurTime
+				s.lastValue = s.curValue
+				s.curValue = val
+				s.CurTime = now
+				s.Compute()
+				s.Scale()
+			}
 		}
 		if s.cfg.GetRate == true {
 			s.Compute = func() {
@@ -112,16 +133,24 @@ func (s *SnmpMetric) Init() error {
 					s.CookedValue = float64(s.curValue - s.lastValue)
 				}
 			}
-
 		}
 	case "COUNTER64":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			//log.Debugf("========================================>COUNTER64: first time :%s ", s.RealOID)
+			//first time only set values and reassign itself to the complete method
 			val := pduVal2Int64(pdu)
-			s.lastTime = s.CurTime
-			s.lastValue = s.curValue
 			s.curValue = val
 			s.CurTime = now
-			s.Compute()
+			s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+				//log.Debugf("========================================>COUNTER64: the other time:%s", s.RealOID)
+				val := pduVal2Int64(pdu)
+				s.lastTime = s.CurTime
+				s.lastValue = s.curValue
+				s.curValue = val
+				s.CurTime = now
+				s.Compute()
+				s.Scale()
+			}
 		}
 		if s.cfg.GetRate == true {
 			s.Compute = func() {

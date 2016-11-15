@@ -122,7 +122,7 @@ func webServer(port int) {
 		}))*/
 
 	m.Post("/login", bind(UserLogin{}), myLoginHandler)
-	m.Post("/logout", reqSignedIn, myLogoutHandler)
+	m.Post("/logout", myLogoutHandler)
 
 	m.Group("/metric", func() {
 		m.Get("/", reqSignedIn, GetMetrics)
