@@ -435,44 +435,44 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 					d.ReloadLoopsPending = d.cfg.UpdateFltFreq
 					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
 					d.log.Infof("snmpdevice [%s] Index reload took [%s]", d.cfg.ID, elapsedIdxUpdateStats)
-					/*************************
-					 *
-					 * SNMP Gather data process
-					 *
-					 ***************************/
-
-					bpts := d.Influx.BP()
-					startSnmpStats := time.Now()
-					for _, m := range d.Measurements {
-						d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
-
-						nGets, nErrors, _ := m.GetData()
-
-						if nGets > 0 {
-							d.addGets(nGets)
-						}
-						if nErrors > 0 {
-							d.addErrors(nErrors)
-						}
-						//prepare batchpoint
-						points := m.GetInfluxPoint(d.TagMap)
-						(*bpts).AddPoints(points)
-					}
-
-					elapsedSnmpStats := time.Since(startSnmpStats)
-					d.log.Infof("snmpdevice [%s] snmp pooling took [%s] ", d.cfg.ID, elapsedSnmpStats)
-					/*************************
-					 *
-					 * Send data to InfluxDB process
-					 *
-					 ***************************/
-
-					startInfluxStats := time.Now()
-					d.Influx.Send(bpts)
-					elapsedInfluxStats := time.Since(startInfluxStats)
-					d.log.Infof("snmpdevice [%s] influx send took [%s]", d.cfg.ID, elapsedInfluxStats)
-
 				}
+				/*************************
+				 *
+				 * SNMP Gather data process
+				 *
+				 ***************************/
+
+				bpts := d.Influx.BP()
+				startSnmpStats := time.Now()
+				for _, m := range d.Measurements {
+					d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
+
+					nGets, nErrors, _ := m.GetData()
+
+					if nGets > 0 {
+						d.addGets(nGets)
+					}
+					if nErrors > 0 {
+						d.addErrors(nErrors)
+					}
+					//prepare batchpoint
+					points := m.GetInfluxPoint(d.TagMap)
+					(*bpts).AddPoints(points)
+				}
+
+				elapsedSnmpStats := time.Since(startSnmpStats)
+				d.log.Infof("snmpdevice [%s] snmp pooling took [%s] ", d.cfg.ID, elapsedSnmpStats)
+				/*************************
+				 *
+				 * Send data to InfluxDB process
+				 *
+				 ***************************/
+
+				startInfluxStats := time.Now()
+				d.Influx.Send(bpts)
+				elapsedInfluxStats := time.Since(startInfluxStats)
+				d.log.Infof("snmpdevice [%s] influx send took [%s]", d.cfg.ID, elapsedInfluxStats)
+
 			}
 		} else {
 			d.log.Infof("snmpdevice [%s] Gather process is dissabled", d.cfg.ID)
