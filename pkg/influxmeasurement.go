@@ -277,6 +277,10 @@ func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
 		m.log.Errorf("Error while trying to reload Indexed Labels on for measurement %s for baseOid %s : ERROR: %s", m.cfg.ID, m.cfg.IndexOID, err)
 		return false, err
 	}
+	if m.Filter == nil {
+		m.log.Debugf("There is no filter configured in this measurement %s", m.cfg.ID)
+		return false, nil
+	}
 	//----------------
 	switch m.Filter.FType {
 	case "file":
