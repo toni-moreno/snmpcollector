@@ -276,6 +276,17 @@ func RTDeactSnmpDebugDev(ctx *Context) {
 	}
 }
 
+type devStat struct {
+	Requests           int64
+	Gets               int64
+	Errors             int64
+	ReloadLoopsPending int
+	DeviceActive       bool
+	DeviceConnected    bool
+	NumMeasurements    int
+	NumMetrics         int
+}
+
 //RTGetInfo xx
 func RTGetInfo(ctx *Context) {
 	id := ctx.Params(":id")
@@ -289,7 +300,24 @@ func RTGetInfo(ctx *Context) {
 		}
 		//get only one device info
 	} else {
-		ctx.JSON(200, &devices)
+		devstats := make(map[string]*devStat)
+		for k, v := range devices {
+			sum := 0
+			for _, m := range v.Measurements {
+				sum += len(m.OidSnmpMap)
+			}
+			devstats[k] = &devStat{
+				Requests:           v.Requests,
+				Gets:               v.Gets,
+				Errors:             v.Errors,
+				ReloadLoopsPending: v.ReloadLoopsPending,
+				DeviceActive:       v.DeviceActive,
+				DeviceConnected:    v.DeviceConnected,
+				NumMeasurements:    len(v.Measurements),
+				NumMetrics:         sum,
+			}
+		}
+		ctx.JSON(200, &devstats)
 	}
 	return
 }
