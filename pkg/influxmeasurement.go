@@ -279,7 +279,27 @@ func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
 	}
 	if m.Filter == nil {
 		m.log.Debugf("There is no filter configured in this measurement %s", m.cfg.ID)
-		return false, nil
+		//check if curindexed different of AllIndexed
+		delIndexes := diffKeyValuesInMap(m.CurIndexedLabels, m.AllIndexedLabels)
+		newIndexes := diffKeyValuesInMap(m.AllIndexedLabels, m.CurIndexedLabels)
+
+		if len(newIndexes) == 0 && len(delIndexes) == 0 {
+			//no changes on the Filter
+			m.log.Infof("No changes on the Index for measurement: %s", m.cfg.ID)
+			return false, nil
+		}
+		m.CurIndexedLabels = m.AllIndexedLabels
+
+		m.log.Debug("NEW INDEXES: %+v", newIndexes)
+		m.log.Debug("DELETED INDEXES: %+v", delIndexes)
+
+		if len(delIndexes) > 0 {
+			m.PopMetricTable(delIndexes)
+		}
+		if len(newIndexes) > 0 {
+			m.PushMetricTable(newIndexes)
+		}
+		return true, nil
 	}
 	//----------------
 	switch m.Filter.FType {
@@ -558,7 +578,7 @@ func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
 			oid := pdu.Name
 			val := pdu.Value
 			if metric, ok := m.OidSnmpMap[oid]; ok {
-				m.log.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %s ", m.cfg.ID, oid, val)
+				m.log.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %+v ", m.cfg.ID, oid, val)
 				metric.setRawData(pdu, now)
 			} else {
 				m.log.Errorln("OID", oid, "Not Found in measurement", m.cfg.ID)
