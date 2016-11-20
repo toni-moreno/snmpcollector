@@ -288,7 +288,7 @@ func (d *SnmpDevice) printConfig() {
 	}
 	err := d.InitSnmpConnect()
 	if err != nil {
-		fmt.Printf("Host: %s [NOT SNMP CONNETION STABLISHED] Error: %s\n", err)
+		fmt.Printf("Host: %s [NOT SNMP CONNETION STABLISHED] Error: %s\n", d.cfg.Host, err)
 		fmt.Printf("----------------------------------------------\n")
 		return
 	}
