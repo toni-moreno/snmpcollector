@@ -89,14 +89,14 @@ func (d *SnmpDevice) RTSetLogLevel(level string) {
 }
 
 /*
-InitDevSnmpInfo  does the following
-- look for all defined measurments from the template grups
+InitDevMeasurements  does the following
+- look for all defined measurements from the template grups
 - allocate and fill array for all measurements defined for this device
 - for each indexed measurement  load device labels from IndexedOID and fiter them if defined measurement filters.
 - Initialice each SnmpMetric from each measuremet.
 */
-//InitDevSnmpInfo generte all internal structs from SNMP device
-func (d *SnmpDevice) InitDevSnmpInfo() {
+//InitDevMeasurements generte all internal structs from SNMP device
+func (d *SnmpDevice) InitDevMeasurements() {
 
 	//Alloc array
 	d.Measurements = make([]*InfluxMeasurement, 0, 0)
@@ -145,7 +145,7 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 		}
 	}
 
-	/*For each  measurement look for filters and  Add to the measurment with this Filter after it initializes the runtime for the measurment  	*/
+	/*For each  measurement look for filters and  Add to the measurement with this Filter after it initializes the runtime for the measurement  	*/
 
 	for _, m := range d.Measurements {
 		//check for filters asociated with this measurement
@@ -160,13 +160,13 @@ func (d *SnmpDevice) InitDevSnmpInfo() {
 			}
 		}
 		if mfilter != nil {
-			d.log.Debugf("filters %s found for device %s and measurment %s ", mfilter.ID, d.cfg.ID, m.cfg.ID)
+			d.log.Debugf("filters %s found for device %s and measurement %s ", mfilter.ID, d.cfg.ID, m.cfg.ID)
 			err := m.AddFilter(mfilter)
 			if err != nil {
 				d.log.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.cfg.ID, err)
 			}
 		} else {
-			d.log.Debugf("no filters found for device %s and measurment %s", d.cfg.ID, m.cfg.ID)
+			d.log.Debugf("no filters found for device %s and measurement %s", d.cfg.ID, m.cfg.ID)
 		}
 		//Initialize internal structs after
 		m.InitBuildRuntime()
@@ -282,7 +282,7 @@ func (d *SnmpDevice) InitSnmpConnect() error {
 
 func (d *SnmpDevice) printConfig() {
 
-	d.InitDevSnmpInfo()
+	d.InitDevMeasurements()
 	fmt.Printf("Host: %s Port: %d Version: %s\n", d.cfg.Host, d.cfg.Port, d.cfg.SnmpVersion)
 	fmt.Printf("----------------------------------------------\n")
 	for _, vM := range d.Measurements {
@@ -314,26 +314,15 @@ func (d *SnmpDevice) addErrors(n int64) {
 	atomic.AddInt64(&d.Errors, n)
 }
 
-/*/ DebugLog returns a logger handler for snmp debug data
-func (d *SnmpDevice) DebugLog() *olog.Logger {
-	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(d.cfg.ID, ".", "-", -1)+".log")
-	if l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644); err == nil {
-		return olog.New(l, "", 0)
-	} else {
-		fmt.Fprintln(os.Stderr, err)
-		return nil
-	}
-}*/
-
 //Gather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 
 	if d.DeviceActive && d.DeviceConnected {
 		d.log.Infof("Begin first InidevInfo")
 		startSnmp := time.Now()
-		d.InitDevSnmpInfo()
+		d.InitDevMeasurements()
 		elapsedSnmp := time.Since(startSnmp)
-		d.log.Infof("snmpdevice [%s] snmp INIT runtime measurments/filters took [%s] ", d.cfg.ID, elapsedSnmp)
+		d.log.Infof("snmpdevice [%s] snmp INIT runtime measurements/filters took [%s] ", d.cfg.ID, elapsedSnmp)
 	} else {
 		d.log.Infof("Can not initialize this device: Is Active: %t  |  Conection Active: %t ", d.DeviceActive, d.snmpClient != nil)
 	}
@@ -350,9 +339,9 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 				err := d.InitSnmpConnect()
 				if err == nil {
 					startSnmp := time.Now()
-					d.InitDevSnmpInfo()
+					d.InitDevMeasurements()
 					elapsedSnmp := time.Since(startSnmp)
-					d.log.Infof("snmpdevice [%s] snmp INIT runtime measurments/filters took [%s] ", d.cfg.ID, elapsedSnmp)
+					d.log.Infof("snmpdevice [%s] snmp INIT runtime measurements/filters took [%s] ", d.cfg.ID, elapsedSnmp)
 					//device not initialized
 				}
 			} else {

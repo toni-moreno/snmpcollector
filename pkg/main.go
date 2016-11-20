@@ -203,7 +203,7 @@ func init() {
 
 	if cfg.Selfmon.Enabled {
 		if val, ok := influxdb["default"]; ok {
-			//only executed if a "*" influxdb exist
+			//only executed if a "default" influxdb exist
 			cfg.Selfmon.Init()
 			cfg.Selfmon.Influx = val
 			cfg.Selfmon.Influx.Init()
