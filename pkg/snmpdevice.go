@@ -281,7 +281,17 @@ func (d *SnmpDevice) InitSnmpConnect() error {
 }
 
 func (d *SnmpDevice) printConfig() {
-
+	if !d.DeviceActive {
+		fmt.Printf("Host: %s [NOT ACTIVE] skip config show\n", d.cfg.Host)
+		fmt.Printf("----------------------------------------------\n")
+		return
+	}
+	err := d.InitSnmpConnect()
+	if err != nil {
+		fmt.Printf("Host: %s [NOT SNMP CONNETION STABLISHED] Error: %s\n", err)
+		fmt.Printf("----------------------------------------------\n")
+		return
+	}
 	d.InitDevMeasurements()
 	fmt.Printf("Host: %s Port: %d Version: %s\n", d.cfg.Host, d.cfg.Port, d.cfg.SnmpVersion)
 	fmt.Printf("----------------------------------------------\n")
