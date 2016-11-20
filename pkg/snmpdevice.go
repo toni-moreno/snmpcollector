@@ -49,6 +49,30 @@ type SnmpDevice struct {
 	chLogLevel chan string
 }
 
+func NewSnmpDevice(c *SnmpDeviceCfg) *SnmpDevice {
+	dev := SnmpDevice{}
+	dev.Init(c)
+	return &dev
+}
+
+//AttachOutDBs to get info
+func (d *SnmpDevice) AttachOutDBMap(influxdb map[string]*InfluxDB) error {
+	if len(d.cfg.OutDB) == 0 {
+		d.log.Warnf("No OutDB configured on the device: %s", d.cfg.ID)
+	}
+	var ok bool
+	name := d.cfg.OutDB
+	if d.Influx, ok = influxdb[name]; !ok {
+		//we assume there is always a default db
+		if d.Influx, ok = influxdb["default"]; !ok {
+			//but
+			return fmt.Errorf("No influx config for snmp device: %s", d.cfg.ID)
+		}
+	}
+	d.Influx.Init()
+	return nil
+}
+
 //RTActivate change activatio state in runtime
 func (d *SnmpDevice) RTActivate(activate bool) {
 	d.chEnabled <- activate
@@ -170,7 +194,9 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 	log.Infof("Initializing device %s\n", d.cfg.ID)
 
 	//Init Logger
-
+	if d.cfg.Freq == 0 {
+		d.cfg.Freq = 60
+	}
 	if len(d.cfg.LogFile) == 0 {
 		d.cfg.LogFile = cfg.General.LogDir + "/" + d.cfg.ID + ".log"
 

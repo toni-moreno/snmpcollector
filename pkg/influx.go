@@ -106,9 +106,7 @@ func (db *InfluxDB) Init() {
 
 	log.Infof("Initializing influxdb with id = %s", db.cfg.ID)
 
-	if verbose {
-		log.Infoln("Connecting to: ", db.cfg.Host)
-	}
+	log.Infof("Connecting to: %s", db.cfg.Host)
 	db.iChan = make(chan *client.BatchPoints, 65535)
 	if err := db.Connect(); err != nil {
 		log.Errorln("failed connecting to: ", db.cfg.Host)
@@ -116,9 +114,8 @@ func (db *InfluxDB) Init() {
 		//if no connection done started = false and it will try to test again later??
 		return
 	}
-	if verbose {
-		log.Infoln("Connected to: ", db.cfg.Host)
-	}
+
+	log.Infof("Connected to: %s", db.cfg.Host)
 	db.started = true
 	go influxEmitter(db, rand.Int())
 }
