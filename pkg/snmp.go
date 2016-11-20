@@ -2,15 +2,106 @@ package main
 
 import (
 	ers "errors"
-	//	"log"
 	"fmt"
-	"net"
-	//"strings"
-	"time"
-
+	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
+	olog "log"
+	"net"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
+	"time"
 )
+
+// SysInfo basic information for any SNMP device
+type SysInfo struct {
+	SysDescr    string
+	SysUptime   time.Duration
+	SysContact  string
+	SysName     string
+	SysLocation string
+}
+
+// SnmpDebugLog returns a logger handler for snmp debug data
+func SnmpDebugLog(filename string) *olog.Logger {
+	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(filename, ".", "-", -1)+".log")
+	if l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644); err == nil {
+		return olog.New(l, "", 0)
+	} else {
+		fmt.Fprintln(os.Stderr, err)
+		return nil
+	}
+}
+
+// SnmpGetSysInfo got system basic info from a snmp client
+func SnmpGetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, error) {
+	//Get Basic System Info
+	// SysDescr     .1.3.6.1.2.1.1.1.0
+	// sysUpTime    .1.3.6.1.2.1.1.3.0
+	// SysContact   .1.3.6.1.2.1.1.4.0
+	// SysName      .1.3.6.1.2.1.1.5.0
+	// SysLocation  .1.3.6.1.2.1.1.6.0
+	sysOids := []string{
+		".1.3.6.1.2.1.1.1.0",
+		".1.3.6.1.2.1.1.3.0",
+		".1.3.6.1.2.1.1.4.0",
+		".1.3.6.1.2.1.1.5.0",
+		".1.3.6.1.2.1.1.6.0"}
+
+	info := SysInfo{SysDescr: "", SysUptime: time.Duration(0), SysContact: "", SysName: "", SysLocation: ""}
+	pkt, err := client.Get(sysOids)
+
+	if err != nil {
+		l.Errorf("Error on getting initial basic system, Info to device %s: %s", id, err)
+		return info, err
+	}
+
+	for idx, pdu := range pkt.Variables {
+		l.Debugf("DEBUG pdu:%+v", pdu)
+		if pdu.Value == nil {
+			continue
+		}
+		switch idx {
+		case 0: // SysDescr     .1.3.6.1.2.1.1.1.0
+			if pdu.Type == gosnmp.OctetString {
+				info.SysDescr = string(pdu.Value.([]byte))
+			} else {
+				l.Warnf("Error on getting system %s SysDescr return data of type %v", id, pdu.Type)
+			}
+		case 1: // sysUpTime    .1.3.6.1.2.1.1.3.0
+			if pdu.Type == gosnmp.TimeTicks {
+				seconds := uint32(pdu.Value.(int)) / 100
+				info.SysUptime = time.Duration(seconds) * time.Second
+			} else {
+				l.Warnf("Error on getting system %s SysDescr return data of type %v", id, pdu.Type)
+			}
+		case 2: // SysContact   .1.3.6.1.2.1.1.4.0
+			if pdu.Type == gosnmp.OctetString {
+				info.SysContact = string(pdu.Value.([]byte))
+			} else {
+				l.Warnf("Error on getting system %s SysContact return data of type %v", id, pdu.Type)
+			}
+		case 3: // SysName      .1.3.6.1.2.1.1.5.0
+			if pdu.Type == gosnmp.OctetString {
+				info.SysName = string(pdu.Value.([]byte))
+			} else {
+				l.Warnf("Error on getting system %s SysName return data of type %v", id, pdu.Type)
+			}
+		case 4: // SysLocation  .1.3.6.1.2.1.1.6.0
+			if pdu.Type == gosnmp.OctetString {
+				info.SysLocation = string(pdu.Value.([]byte))
+			} else {
+				l.Warnf("Error on getting system %s SysLocation return data of type %v", id, pdu.Type)
+			}
+		}
+	}
+	//sometimes (authenticacion error on v3) client.get doesn't return error but the connection is not still available
+	if len(info.SysDescr) == 0 && info.SysUptime == 0 {
+		return info, fmt.Errorf("Some Error happened while getting system info for device %s", id)
+	}
+	return info, nil
+}
 
 func pduVal2str(pdu gosnmp.SnmpPDU) string {
 	value := pdu.Value
@@ -97,20 +188,19 @@ const (
 	maxOids = 60 // const in gosnmp
 )
 
-func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
-	s := d.cfg
+func SnmpClient(s *SnmpDeviceCfg, l *logrus.Logger) (*gosnmp.GoSNMP, *SysInfo, error) {
 	var client *gosnmp.GoSNMP
 	hostIPs, err := net.LookupHost(s.Host)
 	if err != nil {
-		log.Errorf("Error on Name Lookup for host: %s  ERROR: %s", s.Host, err)
-		return nil, err
+		l.Errorf("Error on Name Lookup for host: %s  ERROR: %s", s.Host, err)
+		return nil, nil, err
 	}
 	if len(hostIPs) == 0 {
-		log.Errorf("Error on Name Lookup for host: %s ", s.Host)
-		return nil, ers.New("Error on Name Lookup for host :" + s.Host)
+		l.Errorf("Error on Name Lookup for host: %s ", s.Host)
+		return nil, nil, ers.New("Error on Name Lookup for host :" + s.Host)
 	}
 	if len(hostIPs) > 1 {
-		d.log.Warnf("Lookup for %s host has more than one IP: %v => Finally used first IP %s", s.Host, hostIPs, hostIPs[0])
+		l.Warnf("Lookup for %s host has more than one IP: %v => Finally used first IP %s", s.Host, hostIPs, hostIPs[0])
 	}
 	switch s.SnmpVersion {
 	case "1":
@@ -124,8 +214,8 @@ func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
 	case "2c":
 		//validate community
 		if len(s.Community) < 1 {
-			d.log.Errorf("Error no community found %s in host %s", s.Community, s.Host)
-			return nil, ers.New("Error on snmp community")
+			l.Errorf("Error no community found %s in host %s", s.Community, s.Host)
+			return nil, nil, ers.New("Error on snmp community")
 		}
 
 		client = &gosnmp.GoSNMP{
@@ -155,8 +245,8 @@ func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
 		UsmParams := new(gosnmp.UsmSecurityParameters)
 
 		if len(s.V3AuthUser) < 1 {
-			d.log.Errorf("Error username not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
-			return nil, ers.New("Error on snmp v3 user")
+			l.Errorf("Error username not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
+			return nil, nil, ers.New("Error on snmp v3 user")
 		}
 
 		switch s.V3SecLevel {
@@ -169,15 +259,15 @@ func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
 			}
 		case "AuthNoPriv":
 			if len(s.V3AuthPass) < 1 {
-				d.log.Errorf("Error password not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
-				return nil, ers.New("Error on snmp v3 AuthPass")
+				l.Errorf("Error password not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
+				return nil, nil, ers.New("Error on snmp v3 AuthPass")
 			}
 
 			//validate correct s.authuser
 
 			if val, ok := authpmap[s.V3AuthProt]; !ok {
-				d.log.Errorf("Error in Auth Protocol %v | %v  in host %s", s.V3AuthProt, val, s.Host)
-				return nil, ers.New("Error on snmp v3 AuthProt")
+				l.Errorf("Error in Auth Protocol %v | %v  in host %s", s.V3AuthProt, val, s.Host)
+				return nil, nil, ers.New("Error on snmp v3 AuthProt")
 			}
 
 			//validate s.authpass s.authprot
@@ -191,26 +281,26 @@ func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
 			//validate s.authpass s.authprot
 
 			if len(s.V3AuthPass) < 1 {
-				d.log.Errorf("Error password not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
-				return nil, ers.New("Error on snmp v3 AuthPass")
+				l.Errorf("Error password not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
+				return nil, nil, ers.New("Error on snmp v3 AuthPass")
 			}
 
 			if val, ok := authpmap[s.V3AuthProt]; !ok {
-				d.log.Errorf("Error in Auth Protocol %v | %v  in host %s", s.V3AuthProt, val, s.Host)
-				return nil, ers.New("Error on snmp v3 AuthProt")
+				l.Errorf("Error in Auth Protocol %v | %v  in host %s", s.V3AuthProt, val, s.Host)
+				return nil, nil, ers.New("Error on snmp v3 AuthProt")
 			}
 
 			//validate s.privpass s.privprot
 
 			if len(s.V3PrivPass) < 1 {
-				d.log.Errorf("Error privPass not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
+				l.Errorf("Error privPass not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
 				//		log.Printf("DEBUG SNMP: %+v", *s)
-				return nil, ers.New("Error on snmp v3 PrivPAss")
+				return nil, nil, ers.New("Error on snmp v3 PrivPAss")
 			}
 
 			if val, ok := privpmap[s.V3PrivProt]; !ok {
-				d.log.Errorf("Error in Priv Protocol %v | %v  in host %s", s.V3PrivProt, val, s.Host)
-				return nil, ers.New("Error on snmp v3 AuthPass")
+				l.Errorf("Error in Priv Protocol %v | %v  in host %s", s.V3PrivProt, val, s.Host)
+				return nil, nil, ers.New("Error on snmp v3 AuthPass")
 			}
 
 			UsmParams = &gosnmp.UsmSecurityParameters{
@@ -221,8 +311,8 @@ func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
 				PrivacyPassphrase:        s.V3PrivPass,
 			}
 		default:
-			d.log.Errorf("Error no Security Level found %s in host %s", s.V3SecLevel, s.Host)
-			return nil, ers.New("Error on snmp Security Level")
+			l.Errorf("Error no Security Level found %s in host %s", s.V3SecLevel, s.Host)
+			return nil, nil, ers.New("Error on snmp Security Level")
 
 		}
 		client = &gosnmp.GoSNMP{
@@ -236,27 +326,27 @@ func snmpClient(d *SnmpDevice) (*gosnmp.GoSNMP, error) {
 			SecurityParameters: UsmParams,
 		}
 	default:
-		d.log.Errorf("Error no snmpversion found %s in host %s", s.SnmpVersion, s.Host)
-		return nil, ers.New("Error on snmp Version")
+		l.Errorf("Error no snmpversion found %s in host %s", s.SnmpVersion, s.Host)
+		return nil, nil, ers.New("Error on snmp Version")
 	}
 	if s.SnmpDebug {
-		client.Logger = d.DebugLog()
+		client.Logger = SnmpDebugLog(s.ID)
 	}
 	//first connect
 	err = client.Connect()
 	if err != nil {
-		d.log.Errorf("error on first connect %s", err)
-		return nil, err
+		l.Errorf("error on first connect %s", err)
+		return nil, nil, err
 	} else {
-		d.log.Infof("First SNMP connection to host  %s stablished", s.Host)
+		l.Infof("First SNMP connection to host  %s stablished", s.Host)
 	}
 	//first snmp query
-	d.SysInfo, err = d.GetSysInfo(client)
+	si, err := SnmpGetSysInfo(s.ID, client, l)
 	if err != nil {
-		d.log.Errorf("error on get System Info %s", err)
-		return nil, err
+		l.Errorf("error on get System Info %s", err)
+		return nil, nil, err
 	} else {
-		d.log.Infof("Got basic system info %#v ", d.SysInfo)
+		l.Infof("Got basic system info %#v ", si)
 	}
-	return client, err
+	return client, &si, err
 }

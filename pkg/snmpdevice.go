@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	//"io/ioutil"
 	"io/ioutil"
 	olog "log"
 	"os"
-	"path/filepath"
+
 	"regexp"
 	"strings"
 	"sync"
@@ -17,21 +16,12 @@ import (
 	"github.com/soniah/gosnmp"
 )
 
-// SysInfo basic information for any SNMP device
-type SysInfo struct {
-	SysDescr    string
-	SysUptime   time.Duration
-	SysContact  string
-	SysName     string
-	SysLocation string
-}
-
 // SnmpDevice contains all runtime device related device configu ns and state
 type SnmpDevice struct {
 	cfg *SnmpDeviceCfg
 	log *logrus.Logger
 	//basic sistem info
-	SysInfo SysInfo
+	SysInfo *SysInfo
 	//runtime built TagMap
 	TagMap map[string]string
 	//Measurements array
@@ -72,75 +62,6 @@ func (d *SnmpDevice) RTActSnmpDebug(activate bool) {
 //RTSetLogLevel
 func (d *SnmpDevice) RTSetLogLevel(level string) {
 	d.chLogLevel <- level
-}
-
-// GetSysInfo got system basic info from a snmp client
-func (d *SnmpDevice) GetSysInfo(client *gosnmp.GoSNMP) (SysInfo, error) {
-	//Get Basic System Info
-	// SysDescr     .1.3.6.1.2.1.1.1.0
-	// sysUpTime    .1.3.6.1.2.1.1.3.0
-	// SysContact   .1.3.6.1.2.1.1.4.0
-	// SysName      .1.3.6.1.2.1.1.5.0
-	// SysLocation  .1.3.6.1.2.1.1.6.0
-	sysOids := []string{
-		".1.3.6.1.2.1.1.1.0",
-		".1.3.6.1.2.1.1.3.0",
-		".1.3.6.1.2.1.1.4.0",
-		".1.3.6.1.2.1.1.5.0",
-		".1.3.6.1.2.1.1.6.0"}
-
-	info := SysInfo{SysDescr: "", SysUptime: time.Duration(0), SysContact: "", SysName: "", SysLocation: ""}
-	pkt, err := client.Get(sysOids)
-
-	if err != nil {
-		d.log.Errorf("Error on getting initial basic system, Info to device %s: %s", d.cfg.Host, err)
-		return info, err
-	}
-
-	for idx, pdu := range pkt.Variables {
-		d.log.Debugf("DEBUG pdu:%+v", pdu)
-		if pdu.Value == nil {
-			continue
-		}
-		switch idx {
-		case 0: // SysDescr     .1.3.6.1.2.1.1.1.0
-			if pdu.Type == gosnmp.OctetString {
-				info.SysDescr = string(pdu.Value.([]byte))
-			} else {
-				d.log.Warnf("Error on getting system %s SysDescr return data of type %v", d.cfg.Host, pdu.Type)
-			}
-		case 1: // sysUpTime    .1.3.6.1.2.1.1.3.0
-			if pdu.Type == gosnmp.TimeTicks {
-				seconds := uint32(pdu.Value.(int)) / 100
-				info.SysUptime = time.Duration(seconds) * time.Second
-			} else {
-				d.log.Warnf("Error on getting system %s SysDescr return data of type %v", d.cfg.Host, pdu.Type)
-			}
-		case 2: // SysContact   .1.3.6.1.2.1.1.4.0
-			if pdu.Type == gosnmp.OctetString {
-				info.SysContact = string(pdu.Value.([]byte))
-			} else {
-				d.log.Warnf("Error on getting system %s SysContact return data of type %v", d.cfg.Host, pdu.Type)
-			}
-		case 3: // SysName      .1.3.6.1.2.1.1.5.0
-			if pdu.Type == gosnmp.OctetString {
-				info.SysName = string(pdu.Value.([]byte))
-			} else {
-				d.log.Warnf("Error on getting system %s SysName return data of type %v", d.cfg.Host, pdu.Type)
-			}
-		case 4: // SysLocation  .1.3.6.1.2.1.1.6.0
-			if pdu.Type == gosnmp.OctetString {
-				info.SysLocation = string(pdu.Value.([]byte))
-			} else {
-				d.log.Warnf("Error on getting system %s SysLocation return data of type %v", d.cfg.Host, pdu.Type)
-			}
-		}
-	}
-	//sometimes (authenticacion error on v3) client.get doesn't return error but the connection is not still available
-	if len(info.SysDescr) == 0 && info.SysUptime == 0 {
-		return info, fmt.Errorf("Some Error happened while getting system info for device %s", d.cfg.ID)
-	}
-	return info, nil
 }
 
 /*
@@ -318,15 +239,17 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 //InitSnmpConnect does the  SNMP client conection and retrieve system info
 
 func (d *SnmpDevice) InitSnmpConnect() error {
-	client, err := snmpClient(d)
+	client, sysinfo, err := SnmpClient(d.cfg, d.log)
 	if err != nil {
 		d.DeviceConnected = false
 		d.log.Errorf("Client connect error to device: %s  error :%s", d.cfg.ID, err)
 		d.snmpClient = nil
 		return err
 	}
+
 	d.log.Infof("SNMP connection stablished Successfully")
 	d.snmpClient = client
+	d.SysInfo = sysinfo
 	d.DeviceConnected = true
 	return nil
 }
@@ -365,7 +288,7 @@ func (d *SnmpDevice) addErrors(n int64) {
 	atomic.AddInt64(&d.Errors, n)
 }
 
-// DebugLog returns a logger handler for snmp debug data
+/*/ DebugLog returns a logger handler for snmp debug data
 func (d *SnmpDevice) DebugLog() *olog.Logger {
 	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(d.cfg.ID, ".", "-", -1)+".log")
 	if l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644); err == nil {
@@ -374,7 +297,7 @@ func (d *SnmpDevice) DebugLog() *olog.Logger {
 		fmt.Fprintln(os.Stderr, err)
 		return nil
 	}
-}
+}*/
 
 //Gather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
@@ -487,7 +410,7 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 				d.log.Infof("DEBUG  ACTIVE %s [%t] ", d.cfg.ID, debug)
 				if debug {
 					d.log.Info("Activating snmp debug for this device")
-					d.snmpClient.Logger = d.DebugLog()
+					d.snmpClient.Logger = SnmpDebugLog(d.cfg.ID)
 				} else {
 					d.log.Info("De Activating snmp debug for this device")
 					d.snmpClient.Logger = olog.New(ioutil.Discard, "", 0)

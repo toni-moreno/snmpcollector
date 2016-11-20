@@ -198,15 +198,13 @@ func webServer(port int) {
 func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
-	dev := SnmpDevice{}
-	dev.Init(&cfg)
-	err := dev.InitSnmpConnect()
+	_, sysinfo, err := SnmpClient(&cfg, log)
 	if err != nil {
-		log.Debugf("ERROR: DEVICE RETURNED %+v, ERROR: %s", dev, err)
+		log.Debugf("ERROR  on query device : %s", err)
 		ctx.JSON(400, err.Error())
 	} else {
-		log.Debugf("OK DEVICE RETURNED %+v", dev)
-		ctx.JSON(200, &dev.SysInfo)
+		log.Debugf("OK on query device ")
+		ctx.JSON(200, sysinfo)
 	}
 }
 
