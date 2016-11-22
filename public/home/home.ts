@@ -30,7 +30,7 @@ export class Home {
     console.log('creating home!! id_token:'+this.jwt);
 
     this.decodedJwt = this.jwt ;
-    this.item_type= "snmpdevice";
+    this.item_type= "runtime";
     this.getFooterInfo();
   }
 
@@ -72,9 +72,11 @@ export class Home {
   SNMPDevices() {
 	  this.item_type = "snmpdevice";
   }
-  SNMPDevicesTable() {
-    this.item_type = "snmpdevice_table";
+
+  Runtime() {
+    this.item_type = "runtime";
   }
+
 
   getFooterInfo() {
     this.getInfo(null)
