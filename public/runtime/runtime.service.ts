@@ -17,8 +17,6 @@ export class RuntimeService {
             return responseData.json();
         })
         .map((runtime_devs) => {
-            console.log("snmpdevs: ",runtime_devs);
-            console.log("MAP SERVICE",runtime_devs);
             let result = [];
             if (runtime_devs) {
                 _.forEach(runtime_devs,function(value,key){
@@ -43,7 +41,6 @@ export class RuntimeService {
 
     getRuntimeById(id : string) {
         // return an observable
-        console.log("ID: ",id);
         return this.http.get('/runtime/info/'+id)
         .map( (responseData) =>
             responseData.json()
@@ -51,9 +48,6 @@ export class RuntimeService {
 
     changeDeviceActive(id : string, event : boolean) {
         // return an observable
-        console.log("ID: ",id);
-        console.log("RECIEVED EVENT: ", event);
-
         if (event) {
             return this.http.put('/runtime/activatedev/'+id,id)
             .map( (responseData) =>
@@ -69,9 +63,6 @@ export class RuntimeService {
 
     changeStateDebug(id : string, event : boolean) {
         // return an observable
-        console.log("ID: ",id);
-        console.log("RECIEVED EVENT: ", event);
-
         if (event) {
             return this.http.put('/runtime/actsnmpdbg/'+id,id)
             .map( (responseData) =>
@@ -83,25 +74,5 @@ export class RuntimeService {
                 responseData.json()
             )
         }
-    };
-
-
-
-    getDevicesById(id : string) {
-        // return an observable
-        console.log("ID: ",id);
-        return this.http.get('/snmpdevice/'+id)
-        .map( (responseData) =>
-            responseData.json()
-    )};
-
-    deleteDevice(id : string) {
-        // return an observable
-        console.log("ID: ",id);
-        console.log("DELETING");
-        return this.http.delete('/snmpdevice/'+id)
-        .map( (responseData) =>
-         responseData.json()
-        );
     };
 }

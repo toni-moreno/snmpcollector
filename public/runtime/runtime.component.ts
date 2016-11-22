@@ -45,8 +45,6 @@ export class RuntimeComponent {
 			 .subscribe(
 				data => {
 					this.runtime_dev = data;
-					console.log("DATA ACTIVED?", data.DeviceActive);
-					console.log("INVERTED: ",!data.DeviceActive);
 					this.runtime_dev.DeviceActive = !data.DeviceActive;
 					this.runtime_dev.ID = id;
 					this.reloadData();
