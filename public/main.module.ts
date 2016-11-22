@@ -28,6 +28,8 @@ import { InfluxMeasCfgComponent } from './influxmeas/influxmeascfg.component';
 import { MeasGroupCfgComponent } from './measgroup/measgroupcfg.component';
 import { MeasFilterCfgComponent } from './measfilter/measfiltercfg.component';
 import { InfluxServerCfgComponent } from './influxserver/influxservercfg.component';
+import { RuntimeComponent } from './runtime/runtime.component';
+
 import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ModalModule } from 'ng2-bootstrap/ng2-bootstrap';
@@ -49,6 +51,7 @@ import { ObjectParserPipe } from './common/custom_pipe'
     MeasGroupCfgComponent,
     MeasFilterCfgComponent,
     InfluxServerCfgComponent,
+    RuntimeComponent,
     GenericModal,
     Home,
     Login,

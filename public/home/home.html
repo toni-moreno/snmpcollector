@@ -30,6 +30,9 @@
              <a  (click)="SNMPDevices()">SNMP Devices</a>
             </li>
             <li>
+             <a  (click)="Runtime()">Runtime</a>
+            </li>
+            <li>
                 <a href="#">About</a>
             </li>
         </ul>
@@ -59,6 +62,9 @@
                         </template>
                    <template ngSwitchCase="snmpdevice">
                       <snmpdevs></snmpdevs>
+                   </template>
+                   <template ngSwitchCase="runtime">
+                     <runtime></runtime>
                    </template>
 
                         <template ngSwitchDefault>DEFAULT</template>
