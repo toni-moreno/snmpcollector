@@ -67,6 +67,10 @@
 ############################
 
 [http]
+ #port where webserver will listen waitting for connections
  port   = 8090
+ #Admin credentials to access to the SnmpCollector agent
  adminuser = "adm1"
  adminpassword = "adm1pass"
+ #When more than one instance you will need customize the cookie_id allowing navigate to all isntances
+ cookieid ="my_instance_cookie"

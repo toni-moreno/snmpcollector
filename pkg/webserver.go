@@ -7,6 +7,7 @@ import (
 	"github.com/go-macaron/session"
 	"gopkg.in/macaron.v1"
 	//	"html/template"
+	"crypto/md5"
 	"net/http"
 )
 
@@ -15,6 +16,7 @@ type HTTPConfig struct {
 	Port          int    `toml:"port"`
 	AdminUser     string `toml:"adminuser"`
 	AdminPassword string `toml:"adminpassword"`
+	CookieID      string `toml:"cookieid"`
 }
 
 //UserLogin for login purposes
@@ -22,6 +24,8 @@ type UserLogin struct {
 	UserName string `form:"username" binding:"Required"`
 	Password string `form:"password" binding:"Required"`
 }
+
+var cookie string
 
 func webServer(port int) {
 
@@ -55,13 +59,24 @@ func webServer(port int) {
 			// https://developers.google.com/speed/docs/insights/LeverageBrowserCaching
 			Expires: func() string { return "max-age=0" },
 		}))
+
+	//Cookie should be unique for each snmpcollector instance ,
+	//if cockie_id is not set it takes the instanceID value to generate a unique array with as a md5sum
+
+	cookie = cfg.HTTP.CookieID
+
+	if len(cfg.HTTP.CookieID) == 0 {
+		currentsum := md5.Sum([]byte(cfg.General.InstanceID))
+		cookie = fmt.Sprintf("%x", currentsum)
+	}
+
 	m.Use(Sessioner(session.Options{
 		// Name of provider. Default is "memory".
 		Provider: "memory",
 		// Provider configuration, it's corresponding to provider.
 		ProviderConfig: "",
 		// Cookie name to save session ID. Default is "MacaronSession".
-		CookieName: "snmpcollector-session",
+		CookieName: "snmpcollector-sess-" + cookie,
 		// Cookie path to store. Default is "/".
 		CookiePath: "/",
 		// GC interval time in seconds. Default is 3600.
@@ -348,7 +363,7 @@ func RTGetVersion(ctx *Context) {
 func GetSNMPDevices(ctx *Context) {
 	devcfgarray, err := cfg.Database.GetSnmpDeviceCfgArray("")
 	if err != nil {
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Devices :%+s", err)
 		return
 	}
@@ -362,7 +377,7 @@ func AddSNMPDevice(ctx *Context, dev SnmpDeviceCfg) {
 	affected, err := cfg.Database.AddSnmpDeviceCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert for device %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
@@ -376,7 +391,7 @@ func UpdateSNMPDevice(ctx *Context, dev SnmpDeviceCfg) {
 	affected, err := cfg.Database.UpdateSnmpDeviceCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update for device %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return device data
 		ctx.JSON(200, &dev)
@@ -390,7 +405,7 @@ func DeleteSNMPDevice(ctx *Context) {
 	affected, err := cfg.Database.DelSnmpDeviceCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete1 for device %s  , affected : %+v , error: %s", id, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, "deleted")
 	}
@@ -402,7 +417,7 @@ func GetSNMPDeviceByID(ctx *Context) {
 	dev, err := cfg.Database.GetSnmpDeviceCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Device  for device %s  , error: %s", id, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &dev)
 	}
@@ -416,7 +431,7 @@ func GetSNMPDeviceByID(ctx *Context) {
 func GetMetrics(ctx *Context) {
 	cfgarray, err := cfg.Database.GetSnmpMetricCfgArray("")
 	if err != nil {
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Metrics :%+s", err)
 		return
 	}
@@ -430,7 +445,7 @@ func AddMetric(ctx *Context, dev SnmpMetricCfg) {
 	affected, err := cfg.Database.AddSnmpMetricCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Metric %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
@@ -444,7 +459,7 @@ func UpdateMetric(ctx *Context, dev SnmpMetricCfg) {
 	affected, err := cfg.Database.UpdateSnmpMetricCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Metric %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return device data
 		ctx.JSON(200, &dev)
@@ -458,7 +473,7 @@ func DeleteMetric(ctx *Context) {
 	affected, err := cfg.Database.DelSnmpMetricCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete Metric %s  , affected : %+v , error: %s", id, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, "deleted")
 	}
@@ -470,7 +485,7 @@ func GetMetricByID(ctx *Context) {
 	dev, err := cfg.Database.GetSnmpMetricCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Metric  for device %s  , error: %s", id, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &dev)
 	}
@@ -484,7 +499,7 @@ func GetMetricByID(ctx *Context) {
 func GetMeas(ctx *Context) {
 	cfgarray, err := cfg.Database.GetInfluxMeasurementCfgArray("")
 	if err != nil {
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Influx Measurements :%+s", err)
 		return
 	}
@@ -498,7 +513,7 @@ func AddMeas(ctx *Context, dev InfluxMeasurementCfg) {
 	affected, err := cfg.Database.AddInfluxMeasurementCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Measurement %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
@@ -512,7 +527,7 @@ func UpdateMeas(ctx *Context, dev InfluxMeasurementCfg) {
 	affected, err := cfg.Database.UpdateInfluxMeasurementCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Measurement %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return device data
 		ctx.JSON(200, &dev)
@@ -526,7 +541,7 @@ func DeleteMeas(ctx *Context) {
 	affected, err := cfg.Database.DelInfluxMeasurementCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete Measurement %s  , affected : %+v , error: %s", id, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, "deleted")
 	}
@@ -538,7 +553,7 @@ func GetMeasByID(ctx *Context) {
 	dev, err := cfg.Database.GetInfluxMeasurementCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Measurement  for device %s  , error: %s", id, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &dev)
 	}
@@ -552,7 +567,7 @@ func GetMeasByID(ctx *Context) {
 func GetMeasGroup(ctx *Context) {
 	cfgarray, err := cfg.Database.GetMGroupsCfgArray("")
 	if err != nil {
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Measurement Group :%+s", err)
 		return
 	}
@@ -566,7 +581,7 @@ func AddMeasGroup(ctx *Context, dev MGroupsCfg) {
 	affected, err := cfg.Database.AddMGroupsCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Measurement Group %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
@@ -580,7 +595,7 @@ func UpdateMeasGroup(ctx *Context, dev MGroupsCfg) {
 	affected, err := cfg.Database.UpdateMGroupsCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Measurement Group %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return device data
 		ctx.JSON(200, &dev)
@@ -594,7 +609,7 @@ func DeleteMeasGroup(ctx *Context) {
 	affected, err := cfg.Database.DelMGroupsCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete Measurement Group %s  , affected : %+v , error: %s", id, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, "deleted")
 	}
@@ -606,7 +621,7 @@ func GetMeasGroupByID(ctx *Context) {
 	dev, err := cfg.Database.GetMGroupsCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Measurement Group for device %s  , error: %s", id, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &dev)
 	}
@@ -620,7 +635,7 @@ func GetMeasGroupByID(ctx *Context) {
 func GetMeasFilter(ctx *Context) {
 	cfgarray, err := cfg.Database.GetMeasFilterCfgArray("")
 	if err != nil {
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Measurement Filter :%+s", err)
 		return
 	}
@@ -634,7 +649,7 @@ func AddMeasFilter(ctx *Context, dev MeasFilterCfg) {
 	affected, err := cfg.Database.AddMeasFilterCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
@@ -648,7 +663,7 @@ func UpdateMeasFilter(ctx *Context, dev MeasFilterCfg) {
 	affected, err := cfg.Database.UpdateMeasFilterCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return device data
 		ctx.JSON(200, &dev)
@@ -662,7 +677,7 @@ func DeleteMeasFilter(ctx *Context) {
 	affected, err := cfg.Database.DelMeasFilterCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete Measurement Filter %s  , affected : %+v , error: %s", id, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, "deleted")
 	}
@@ -674,7 +689,7 @@ func GetMeasFilterByID(ctx *Context) {
 	dev, err := cfg.Database.GetMeasFilterCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Measurement Filter  for device %s  , error: %s", id, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &dev)
 	}
@@ -688,7 +703,7 @@ func GetMeasFilterByID(ctx *Context) {
 func GetInfluxServer(ctx *Context) {
 	cfgarray, err := cfg.Database.GetInfluxCfgArray("")
 	if err != nil {
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Influx db :%+s", err)
 		return
 	}
@@ -702,7 +717,7 @@ func AddInfluxServer(ctx *Context, dev InfluxCfg) {
 	affected, err := cfg.Database.AddInfluxCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert new Backend %s  , affected : %+v , error: %s", dev.ID, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		//TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
@@ -729,7 +744,7 @@ func DeleteInfluxServer(ctx *Context) {
 	affected, err := cfg.Database.DelInfluxCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete influx db %s  , affected : %+v , error: %s", id, affected, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, "deleted")
 	}
@@ -741,7 +756,7 @@ func GetInfluxServerByID(ctx *Context) {
 	dev, err := cfg.Database.GetInfluxCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Influx db data for device %s  , error: %s", id, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &dev)
 	}
@@ -753,7 +768,7 @@ func GetInfluxAffectOnDel(ctx *Context) {
 	obarray, err := cfg.Database.GetInfluxCfgAffectOnDel(id)
 	if err != nil {
 		log.Warningf("Error on get object array for influx device %s  , error: %s", id, err)
-		ctx.JSON(404, err)
+		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &obarray)
 	}
@@ -769,11 +784,11 @@ func myLoginHandler(ctx *Context, user UserLogin) {
 		ctx.SignedInUser = user.UserName
 		ctx.IsSignedIn = true
 		ctx.Session.Set(SESS_KEY_USERID, user.UserName)
-		fmt.Println("OK")
-		ctx.JSON(200, "OK")
+		log.Println("OK")
+		ctx.JSON(200, cookie)
 	} else {
-		fmt.Println("ERROR")
-		ctx.JSON(404, "ERROR")
+		log.Println("ERROR")
+		ctx.JSON(404, "ERROR user or password not match")
 	}
 }
 
