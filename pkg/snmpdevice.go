@@ -6,7 +6,6 @@ import (
 	olog "log"
 	"os"
 
-	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -47,6 +46,7 @@ type SnmpDevice struct {
 	chDebug    chan bool
 	chEnabled  chan bool
 	chLogLevel chan string
+	chExit     chan bool
 }
 
 func NewSnmpDevice(c *SnmpDeviceCfg) *SnmpDevice {
@@ -71,6 +71,11 @@ func (d *SnmpDevice) AttachOutDBMap(influxdb map[string]*InfluxDB) error {
 	}
 	d.Influx.Init()
 	return nil
+}
+
+//RTActivate change activatio state in runtime
+func (d *SnmpDevice) StopGather() {
+	d.chExit <- true
 }
 
 //RTActivate change activatio state in runtime
@@ -106,11 +111,14 @@ func (d *SnmpDevice) InitDevMeasurements() {
 	for _, devMeas := range d.cfg.MeasurementGroups {
 		//Selecting all Metric Groups that matches with device.MeasurementGroups
 		selGroups := make(map[string]*MGroupsCfg, 0)
-		var RegExp = regexp.MustCompile(devMeas)
+		//var RegExp = regexp.MustCompile(devMeas)
 		for key, val := range cfg.GetGroups {
-			if RegExp.MatchString(key) {
+			if key == devMeas {
 				selGroups[key] = val
 			}
+			/*if RegExp.MatchString(key) {
+				selGroups[key] = val
+			}*/
 		}
 		d.log.Debugf("SNMP device %s has this SELECTED GROUPS: %+v", d.cfg.ID, selGroups)
 		//Only For selected Groups we will get all selected measurements and we will remove repeated values
@@ -222,6 +230,7 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 	d.chDebug = make(chan bool)
 	d.chEnabled = make(chan bool)
 	d.chLogLevel = make(chan string)
+	d.chExit = make(chan bool)
 	d.DeviceActive = d.cfg.Active
 
 	//Init Device Tags
@@ -309,9 +318,11 @@ func (d *SnmpDevice) incRequests() {
 func (d *SnmpDevice) addRequests(n int64) {
 	atomic.AddInt64(&d.Requests, n)
 }
+
 func (d *SnmpDevice) incGets() {
 	atomic.AddInt64(&d.Gets, 1)
 }
+
 func (d *SnmpDevice) addGets(n int64) {
 	atomic.AddInt64(&d.Gets, 1)
 }
@@ -324,8 +335,9 @@ func (d *SnmpDevice) addErrors(n int64) {
 	atomic.AddInt64(&d.Errors, n)
 }
 
-//Gather Main GoRutine method to begin snmp data collecting
-func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
+// StartGather Main GoRutine method to begin snmp data collecting
+func (d *SnmpDevice) StartGather(wg *sync.WaitGroup) {
+	defer wg.Done()
 
 	if d.DeviceActive && d.DeviceConnected {
 		d.log.Infof("Begin first InidevInfo")
@@ -430,6 +442,9 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 			select {
 			case <-s:
 				break LOOP
+			case <-d.chExit:
+				d.log.Infof("EXIT from SNMP Gather process for device %s ", d.cfg.ID)
+				return
 			case debug := <-d.chDebug:
 				d.StateDebug = debug
 				d.log.Infof("DEBUG  ACTIVE %s [%t] ", d.cfg.ID, debug)
@@ -453,5 +468,4 @@ func (d *SnmpDevice) Gather(wg *sync.WaitGroup) {
 			}
 		}
 	}
-	wg.Done()
 }

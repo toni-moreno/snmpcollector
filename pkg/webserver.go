@@ -190,6 +190,7 @@ func webServer(port int) {
 	})
 
 	m.Group("/runtime", func() {
+		m.Get("/agent/reloadconf/", reqSignedIn, AgentReloadConf)
 		m.Post("/snmpping/", reqSignedIn, bind(SnmpDeviceCfg{}), PingSNMPDevice)
 		m.Get("/version/", reqSignedIn, RTGetVersion)
 		m.Get("/info/", reqSignedIn, RTGetInfo)
@@ -209,6 +210,13 @@ func webServer(port int) {
 /****************/
 /*Runtime Info
 /****************/
+
+/* Agent */
+func AgentReloadConf(ctx *macaron.Context) {
+	log.Info("trying to reload configuration for all devices")
+	ReloadConf()
+	ctx.JSON(200, "OK")
+}
 
 func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
