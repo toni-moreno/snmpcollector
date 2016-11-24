@@ -60,14 +60,15 @@ type SnmpMetric struct {
 	ID          string
 	CookedValue interface{}
 	//CookedValue float64
-	curValue   int64
-	lastValue  int64
-	CurTime    time.Time
-	lastTime   time.Time
-	Compute    func() `json:"-"`
-	Scale      func() `json:"-"`
-	setRawData func(pdu gosnmp.SnmpPDU, now time.Time)
-	RealOID    string
+	CurValue    int64
+	LastValue   int64
+	CurTime     time.Time
+	LastTime    time.Time
+	ElapsedTime float64
+	Compute     func() `json:"-"`
+	Scale       func() `json:"-"`
+	setRawData  func(pdu gosnmp.SnmpPDU, now time.Time)
+	RealOID     string
 }
 
 func NewSnmpMetric(c *SnmpMetricCfg) (*SnmpMetric, error) {
@@ -104,13 +105,13 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			//first time only set values and reassign itself to the complete method this will avoi to send invalid data
 			val := pduVal2Int64(pdu)
-			s.curValue = val
+			s.CurValue = val
 			s.CurTime = now
 			s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				val := pduVal2Int64(pdu)
-				s.lastTime = s.CurTime
-				s.lastValue = s.curValue
-				s.curValue = val
+				s.LastTime = s.CurTime
+				s.LastValue = s.CurValue
+				s.CurValue = val
 				s.CurTime = now
 				s.Compute()
 				s.Scale()
@@ -118,19 +119,20 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 		}
 		if s.cfg.GetRate == true {
 			s.Compute = func() {
-				duration := s.CurTime.Sub(s.lastTime)
-				if s.curValue < s.lastValue {
-					s.CookedValue = float64(math.MaxInt32-s.lastValue+s.curValue) / duration.Seconds()
+				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+				if s.CurValue < s.LastValue {
+					s.CookedValue = float64(math.MaxInt32-s.LastValue+s.CurValue) / s.ElapsedTime
 				} else {
-					s.CookedValue = float64(s.curValue-s.lastValue) / duration.Seconds()
+					s.CookedValue = float64(s.CurValue-s.LastValue) / s.ElapsedTime
 				}
 			}
 		} else {
 			s.Compute = func() {
-				if s.curValue < s.lastValue {
-					s.CookedValue = float64(math.MaxInt32 - s.lastValue + s.curValue)
+				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+				if s.CurValue < s.LastValue {
+					s.CookedValue = float64(math.MaxInt32 - s.LastValue + s.CurValue)
 				} else {
-					s.CookedValue = float64(s.curValue - s.lastValue)
+					s.CookedValue = float64(s.CurValue - s.LastValue)
 				}
 			}
 		}
@@ -139,14 +141,14 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 			//log.Debugf("========================================>COUNTER64: first time :%s ", s.RealOID)
 			//first time only set values and reassign itself to the complete method
 			val := pduVal2Int64(pdu)
-			s.curValue = val
+			s.CurValue = val
 			s.CurTime = now
 			s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				//log.Debugf("========================================>COUNTER64: the other time:%s", s.RealOID)
 				val := pduVal2Int64(pdu)
-				s.lastTime = s.CurTime
-				s.lastValue = s.curValue
-				s.curValue = val
+				s.LastTime = s.CurTime
+				s.LastValue = s.CurValue
+				s.CurValue = val
 				s.CurTime = now
 				s.Compute()
 				s.Scale()
@@ -154,19 +156,21 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 		}
 		if s.cfg.GetRate == true {
 			s.Compute = func() {
-				duration := s.CurTime.Sub(s.lastTime)
-				if s.curValue < s.lastValue {
-					s.CookedValue = float64(math.MaxInt64-s.lastValue+s.curValue) / duration.Seconds()
+				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+				//duration := s.CurTime.Sub(s.LastTime)
+				if s.CurValue < s.LastValue {
+					s.CookedValue = float64(math.MaxInt64-s.LastValue+s.CurValue) / s.ElapsedTime
 				} else {
-					s.CookedValue = float64(s.curValue-s.lastValue) / duration.Seconds()
+					s.CookedValue = float64(s.CurValue-s.LastValue) / s.ElapsedTime
 				}
 			}
 		} else {
 			s.Compute = func() {
-				if s.curValue < s.lastValue {
-					s.CookedValue = float64(math.MaxInt64 - s.lastValue + s.curValue)
+				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+				if s.CurValue < s.LastValue {
+					s.CookedValue = float64(math.MaxInt64 - s.LastValue + s.CurValue)
 				} else {
-					s.CookedValue = float64(s.curValue - s.lastValue)
+					s.CookedValue = float64(s.CurValue - s.LastValue)
 				}
 			}
 
