@@ -368,7 +368,7 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 		obj = append(obj, &DbObjAction{
 			Type:   "measurements",
 			ObID:   val.IDMeasurementCfg,
-			Action: "delete field from measurement",
+			Action: "Delete SNMPMetric field from Measurement relation",
 		})
 
 	}
@@ -587,7 +587,7 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjA
 		obj = append(obj, &DbObjAction{
 			Type:   "fields",
 			ObID:   val.IDMeasurementCfg,
-			Action: "delete field from measurement",
+			Action: "Delete SNMPMetric field from Measurement relation",
 		})
 	}
 
@@ -598,9 +598,9 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjA
 
 	for _, val := range mg {
 		obj = append(obj, &DbObjAction{
-			Type:   "measurements_group",
+			Type:   "measurement_group",
 			ObID:   val.IDMeasurementCfg,
-			Action: "delete measurements from  measurement group",
+			Action: "Delete Measurement from Measurement Group relation",
 		})
 	}
 	return obj, nil
@@ -752,7 +752,7 @@ func (dbc *DatabaseCfg) GetMeasFilterCfgAffectOnDel(id string) ([]*DbObjAction, 
 		obj = append(obj, &DbObjAction{
 			Type:   "snmpdevices",
 			ObID:   val.IDSnmpDev,
-			Action: "delete filter in device",
+			Action: "Delete Measurement Filter in SNMPDevices relation",
 		})
 	}
 	return obj, nil
@@ -953,9 +953,9 @@ func (dbc *DatabaseCfg) GetMGroupsCfgAffectOnDel(id string) ([]*DbObjAction, err
 
 	for _, val := range devices {
 		obj = append(obj, &DbObjAction{
-			Type:   "devices",
+			Type:   "snmpdevices",
 			ObID:   val.IDSnmpDev,
-			Action: "delete field from measurement group",
+			Action: "Delete SNMPDevice from Measurement Group relation",
 		})
 
 	}
@@ -1321,9 +1321,9 @@ func (dbc *DatabaseCfg) GetInfluxCfgAffectOnDel(id string) ([]*DbObjAction, erro
 
 	for _, val := range devices {
 		obj = append(obj, &DbObjAction{
-			Type:   "device",
+			Type:   "snmpdevices",
 			ObID:   val.ID,
-			Action: "reset OutDB from de device to",
+			Action: "Reset InfluxDB Server from SNMPDevice to 'default' InfluxDB Server",
 		})
 
 	}
