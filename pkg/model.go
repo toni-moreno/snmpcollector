@@ -147,8 +147,8 @@ type DatabaseCfg struct {
 //DbObjAction measurement groups to asign to devices
 type DbObjAction struct {
 	Type   string
-	obID   string
-	action string
+	ObID   string
+	Action string
 }
 
 //InitDB initialize de BD configuration
@@ -367,8 +367,8 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 	for _, val := range devices {
 		obj = append(obj, &DbObjAction{
 			Type:   "measurements",
-			obID:   val.IDMeasurementCfg,
-			action: "delete field from measurement",
+			ObID:   val.IDMeasurementCfg,
+			Action: "Delete SNMPMetric field from Measurement relation",
 		})
 
 	}
@@ -586,8 +586,8 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjA
 	for _, val := range mf {
 		obj = append(obj, &DbObjAction{
 			Type:   "fields",
-			obID:   val.IDMeasurementCfg,
-			action: "delete field from measurement",
+			ObID:   val.IDMeasurementCfg,
+			Action: "Delete SNMPMetric field from Measurement relation",
 		})
 	}
 
@@ -598,9 +598,9 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjA
 
 	for _, val := range mg {
 		obj = append(obj, &DbObjAction{
-			Type:   "measurements_group",
-			obID:   val.IDMeasurementCfg,
-			action: "delete measurements from  measurement group",
+			Type:   "measurement_group",
+			ObID:   val.IDMeasurementCfg,
+			Action: "Delete Measurement from Measurement Group relation",
 		})
 	}
 	return obj, nil
@@ -751,8 +751,8 @@ func (dbc *DatabaseCfg) GetMeasFilterCfgAffectOnDel(id string) ([]*DbObjAction, 
 	for _, val := range mf {
 		obj = append(obj, &DbObjAction{
 			Type:   "snmpdevices",
-			obID:   val.IDSnmpDev,
-			action: "delete filter in device",
+			ObID:   val.IDSnmpDev,
+			Action: "Delete Measurement Filter in SNMPDevices relation",
 		})
 	}
 	return obj, nil
@@ -953,9 +953,9 @@ func (dbc *DatabaseCfg) GetMGroupsCfgAffectOnDel(id string) ([]*DbObjAction, err
 
 	for _, val := range devices {
 		obj = append(obj, &DbObjAction{
-			Type:   "devices",
-			obID:   val.IDSnmpDev,
-			action: "delete field from measurement group",
+			Type:   "snmpdevices",
+			ObID:   val.IDSnmpDev,
+			Action: "Delete SNMPDevice from Measurement Group relation",
 		})
 
 	}
@@ -1321,9 +1321,9 @@ func (dbc *DatabaseCfg) GetInfluxCfgAffectOnDel(id string) ([]*DbObjAction, erro
 
 	for _, val := range devices {
 		obj = append(obj, &DbObjAction{
-			Type:   "device",
-			obID:   val.ID,
-			action: "reset OutDB from de device to",
+			Type:   "snmpdevices",
+			ObID:   val.ID,
+			Action: "Reset InfluxDB Server from SNMPDevice to 'default' InfluxDB Server",
 		})
 
 	}
