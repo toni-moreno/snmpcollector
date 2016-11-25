@@ -145,6 +145,7 @@ func webServer(port int) {
 		m.Put("/:id", reqSignedIn, bind(SnmpMetricCfg{}), UpdateMetric)
 		m.Delete("/:id", reqSignedIn, DeleteMetric)
 		m.Get("/:id", reqSignedIn, GetMetricByID)
+		m.Get("/checkondel/:id", reqSignedIn, GetMetricsAffectOnDel)
 	})
 
 	m.Group("/measurement", func() {
@@ -153,6 +154,7 @@ func webServer(port int) {
 		m.Put("/:id", reqSignedIn, bind(InfluxMeasurementCfg{}), UpdateMeas)
 		m.Delete("/:id", reqSignedIn, DeleteMeas)
 		m.Get("/:id", reqSignedIn, GetMeasByID)
+		m.Get("/checkondel/:id", reqSignedIn, GetMeasAffectOnDel)
 	})
 
 	m.Group("/measgroups", func() {
@@ -161,6 +163,7 @@ func webServer(port int) {
 		m.Put("/:id", reqSignedIn, bind(MGroupsCfg{}), UpdateMeasGroup)
 		m.Delete("/:id", reqSignedIn, DeleteMeasGroup)
 		m.Get("/:id", reqSignedIn, GetMeasGroupByID)
+		m.Get("/checkondel/:id", reqSignedIn, GetMeasGroupsAffectOnDel)
 	})
 
 	m.Group("/measfilters", func() {
@@ -169,6 +172,7 @@ func webServer(port int) {
 		m.Put("/:id", reqSignedIn, bind(MeasFilterCfg{}), UpdateMeasFilter)
 		m.Delete("/:id", reqSignedIn, DeleteMeasFilter)
 		m.Get("/:id", reqSignedIn, GetMeasFilterByID)
+		m.Get("/checkondel/:id", reqSignedIn, GetMeasFiltersAffectOnDel)
 	})
 
 	m.Group("/influxservers", func() {
@@ -177,7 +181,7 @@ func webServer(port int) {
 		m.Put("/:id", reqSignedIn, bind(InfluxCfg{}), UpdateInfluxServer)
 		m.Delete("/:id", reqSignedIn, DeleteInfluxServer)
 		m.Get("/:id", reqSignedIn, GetInfluxServerByID)
-		m.Get("/ckeckondel/:id", reqSignedIn, GetInfluxAffectOnDel)
+		m.Get("/checkondel/:id", reqSignedIn, GetInfluxAffectOnDel)
 	})
 
 	// Data sources
@@ -187,6 +191,7 @@ func webServer(port int) {
 		m.Put("/:id", reqSignedIn, bind(SnmpDeviceCfg{}), UpdateSNMPDevice)
 		m.Delete("/:id", reqSignedIn, DeleteSNMPDevice)
 		m.Get("/:id", reqSignedIn, GetSNMPDeviceByID)
+		m.Get("/checkondel/:id", reqSignedIn, GetSNMPDevicesAffectOnDel)
 	})
 
 	m.Group("/runtime", func() {
@@ -210,6 +215,7 @@ func webServer(port int) {
 /*Runtime Info
 /****************/
 
+//PingSNMPDevice xx
 func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
@@ -223,7 +229,7 @@ func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
 	}
 }
 
-//RTActivateDev xx
+//RTSetLogLevelDev xx
 func RTSetLogLevelDev(ctx *Context) {
 	id := ctx.Params(":id")
 	level := ctx.Params(":level")
@@ -423,6 +429,18 @@ func GetSNMPDeviceByID(ctx *Context) {
 	}
 }
 
+//GetSNMPDevicesAffectOnDel --pending--
+func GetSNMPDevicesAffectOnDel(ctx *Context) {
+	id := ctx.Params(":id")
+	obarray, err := cfg.Database.GeSnmpDeviceCfgAffectOnDel(id)
+	if err != nil {
+		log.Warningf("Error on get object array for SNMP metrics %s  , error: %s", id, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, &obarray)
+	}
+}
+
 /****************/
 /*SNMP METRICS
 /****************/
@@ -488,6 +506,18 @@ func GetMetricByID(ctx *Context) {
 		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &dev)
+	}
+}
+
+//GetMetricsAffectOnDel --pending--
+func GetMetricsAffectOnDel(ctx *Context) {
+	id := ctx.Params(":id")
+	obarray, err := cfg.Database.GetSnmpMetricCfgAffectOnDel(id)
+	if err != nil {
+		log.Warningf("Error on get object array for SNMP metrics %s  , error: %s", id, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, &obarray)
 	}
 }
 
@@ -559,6 +589,18 @@ func GetMeasByID(ctx *Context) {
 	}
 }
 
+//GetMeasAffectOnDel --pending--
+func GetMeasAffectOnDel(ctx *Context) {
+	id := ctx.Params(":id")
+	obarray, err := cfg.Database.GetInfluxMeasurementCfgAffectOnDel(id)
+	if err != nil {
+		log.Warningf("Error on get object array for Measurements %s  , error: %s", id, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, &obarray)
+	}
+}
+
 /****************/
 /*MEASUREMENT GROUPS
 /****************/
@@ -627,6 +669,18 @@ func GetMeasGroupByID(ctx *Context) {
 	}
 }
 
+//GetMeasGroupsAffectOnDel --pending--
+func GetMeasGroupsAffectOnDel(ctx *Context) {
+	id := ctx.Params(":id")
+	obarray, err := cfg.Database.GetMGroupsCfgAffectOnDel(id)
+	if err != nil {
+		log.Warningf("Error on get object array for Measurement Groups %s  , error: %s", id, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, &obarray)
+	}
+}
+
 /********************/
 /*MEASUREMENT FILTERS
 /********************/
@@ -692,6 +746,18 @@ func GetMeasFilterByID(ctx *Context) {
 		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &dev)
+	}
+}
+
+//GetMeasFiltersAffectOnDel --pending--
+func GetMeasFiltersAffectOnDel(ctx *Context) {
+	id := ctx.Params(":id")
+	obarray, err := cfg.Database.GetMeasFilterCfgAffectOnDel(id)
+	if err != nil {
+		log.Warningf("Error on get object array for Measurement filters %s  , error: %s", id, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, &obarray)
 	}
 }
 

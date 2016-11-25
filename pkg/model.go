@@ -970,6 +970,7 @@ func (dbc *DatabaseCfg) GetMGroupsCfgAffectOnDel(id string) ([]*DbObjAction, err
 	-AddSnmpDeviceCfg
 	-DelSnmpDeviceCfg
 	-UpdateSnmpDeviceCfg
+	-GeSnmpDeviceCfgAffectOnDel
 ***********************************/
 
 /*GetSnmpDeviceCfgByID get device data by id*/
@@ -1177,6 +1178,12 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 	log.Infof("Updated device constrains (old %d / new %d ) MFilters", deleteft, newft)
 	log.Infof("Updated new Device Successfully with id %s and data:%+v", id, dev)
 	return affected, nil
+}
+
+/*GeSnmpDeviceCfgAffectOnDel for deleting devices from ID*/
+func (dbc *DatabaseCfg) GeSnmpDeviceCfgAffectOnDel(id string) ([]*DbObjAction, error) {
+	var obj []*DbObjAction
+	return obj, nil
 }
 
 /***************************
