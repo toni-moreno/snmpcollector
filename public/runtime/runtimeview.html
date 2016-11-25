@@ -108,9 +108,16 @@
 					</td>
 					<td *ngFor="let values of measurement.MetricTable[metrics.key] | objectParser">
 							<!--Titulo de métrica -->
-							<span class="pull-right" [tooltipHtml]="values.value.CookedValue ? '<dt class=\'pull-left\'>Value:</dt><dd>'+values.value.CookedValue+'</dd><dt class=\'pull-left\'>Time:</dt><dd>'+values.value.CurTime+'</dt>' : '--'">
-							{{values.value.CookedValue ? values.value.CookedValue  : '--'}}
-						</span>	</td>
+						<span class="pull-right" [tooltipHtml]="values.value.CookedValue ?
+						'<dt class=\'pull-left\'>Value:</dt><dd>'+values.value.CookedValue+'</dd>'+
+                '<dt class=\'pull-left\'>Time:</dt><dd>'+ (values.value.CurTime | date:'d/M/y H:m:s') +'</dd>'+
+                '<hr>'+
+                '<dt class=\'pull-left\'>RawCurrent:</dt><dd>'+values.value.CurValue+'</dd>'+
+                '<dt class=\'pull-left\'>RawLast:</dt><dd>'+values.value.LastValue+'</dd>'+
+                '<dt class=\'pull-left\'>Elapsed(sec):</dt><dd>'+values.value.ElapsedTime+'</dd>'
+                : '--'"> {{values.value.CookedValue ? values.value.CookedValue  : '--'}}
+							</span>
+					</td>
 				</tr>
 			</thead>
 		</table>
