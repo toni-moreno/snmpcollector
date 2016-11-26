@@ -5,7 +5,7 @@
     <template ngSwitchCase="list">
 			<test-modal #viewModal titleName='InfluxDB Servers'></test-modal>
 			<test-modal #viewModalDelete titleName='Deleting:'
-									[customMessage]="['Deleting this server will affect the following components','Deleting this server will NOT affect any component. Safe delete']"
+									[customMessage]="['Deleting this InfluxDB Server will affect the following components','Deleting this server will NOT affect any component. Safe delete']"
 									[customMessageClass]="['alert alert-danger','alert alert-success']"
 									[showValidation]="true"
 									[textValidation]="'Delete'"

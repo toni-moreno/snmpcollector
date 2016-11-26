@@ -79,7 +79,6 @@ export class InfluxServerService {
           console.log("MAP SERVICE",deleteobject);
           let result : any = {'ID' : id};
           _.forEach(deleteobject,function(value,key){
-              console.log("VALUE, key",value,key);
               result[value.Type] = [];
           });
           _.forEach(deleteobject,function(value,key){
