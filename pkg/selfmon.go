@@ -154,7 +154,7 @@ func (sm *SelfMonConfig) reportRuntimeStats(wg *sync.WaitGroup) {
 		for {
 			select {
 			case <-s:
-				log.Infof("SELFMON: breaking LOOP  ")
+				//log.Infof("SELFMON: breaking LOOP  ")
 				break LOOP
 			case <-sm.chExit:
 				log.Infof("SELFMON: EXIT from SelfMonitoring Gather process ")
