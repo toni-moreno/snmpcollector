@@ -4,7 +4,14 @@
 	<p [ngSwitch]="editmode">
     <template ngSwitchCase="list">
 			<test-modal #viewModal titleName='Measurements'></test-modal>
-
+			<test-modal #viewModalDelete titleName='Deleting:'
+									[customMessage]="['Deleting this Measurement will affect the following components','Deleting this server will NOT affect any component. Safe delete']"
+									[customMessageClass]="['alert alert-danger','alert alert-success']"
+									[showValidation]="true"
+									[textValidation]="'Delete'"
+									[controlSize]="true"
+									(validationClicked)="deleteInfluxMeas($event)">
+			</test-modal>
 		    <div class="row">
 		  <div class="col-md-6">
 		    <input *ngIf="config.filtering" placeholder="Filter all columns"
