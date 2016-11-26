@@ -586,7 +586,7 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjA
 	for _, val := range mf {
 		obj = append(obj, &DbObjAction{
 			Type:   "fields",
-			ObID:   val.IDMeasurementCfg,
+			ObID:   val.IDMetricCfg,
 			Action: "Delete SNMPMetric field from Measurement relation",
 		})
 	}
