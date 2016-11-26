@@ -51,11 +51,14 @@ var (
 		Influxdb     map[string]*InfluxCfg
 		HTTP         HTTPConfig
 	}{}
+	//mutex for devices map
+	mutex sync.Mutex
 	//runtime devices
 	devices map[string]*SnmpDevice
 	//runtime output db's
 	influxdb map[string]*InfluxDB
-	wg       sync.WaitGroup
+	// for synchronize  deivce specific goroutines
+	wg sync.WaitGroup
 )
 
 func flags() *flag.FlagSet {
@@ -210,20 +213,71 @@ func init() {
 	}
 	//
 	log.Infof("Set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n", appdir, confDir, logDir)
-
 }
 
+//GetDevice is a safe method to get a Device Object
+func GetDevice(id string) (*SnmpDevice, error) {
+	var dev *SnmpDevice
+	var ok bool
+	mutex.Lock()
+	if dev, ok = devices[id]; !ok {
+		return nil, fmt.Errorf("there is not any device with id %s running", id)
+	}
+	mutex.Unlock()
+	return dev, nil
+}
+
+type devStat struct {
+	Requests           int64
+	Gets               int64
+	Errors             int64
+	ReloadLoopsPending int
+	DeviceActive       bool
+	DeviceConnected    bool
+	NumMeasurements    int
+	NumMetrics         int
+}
+
+func GetDevStats() map[string]*devStat {
+	devstats := make(map[string]*devStat)
+	mutex.Lock()
+	for k, v := range devices {
+		sum := 0
+		for _, m := range v.Measurements {
+			sum += len(m.OidSnmpMap)
+		}
+		devstats[k] = &devStat{
+			Requests:           v.Requests,
+			Gets:               v.Gets,
+			Errors:             v.Errors,
+			ReloadLoopsPending: v.ReloadLoopsPending,
+			DeviceActive:       v.DeviceActive,
+			DeviceConnected:    v.DeviceConnected,
+			NumMeasurements:    len(v.Measurements),
+			NumMetrics:         sum,
+		}
+	}
+	mutex.Unlock()
+	return devstats
+}
+
+// ProcessStop stop all device goroutines
 func ProcessStop() {
+	mutex.Lock()
 	for _, c := range devices {
 		c.StopGather()
 	}
+	mutex.Unlock()
 }
 
+// ProcessStart start all devices goroutines
 func ProcessStart() {
+	mutex.Lock()
 	for _, c := range devices {
 		wg.Add(1)
 		go c.StartGather(&wg)
 	}
+	mutex.Unlock()
 }
 
 // LoadConf call to initialize alln configurations
@@ -233,8 +287,8 @@ func LoadConf() {
 	//Prepare the InfluxDataBases Configuration
 	influxdb := PrepareInfluxDBs()
 
-	log.Debugf("INFLUXDB: %+v", influxdb)
-	log.Debugf("SelfMonitoring config : %+v", cfg.Selfmon)
+	//log.Debugf("INFLUXDB: %+v", influxdb)
+	//log.Debugf("SelfMonitoring config : %+v", cfg.Selfmon)
 
 	// beginning self monitoring process if needed.( before each other gorotines could begin)
 
@@ -255,23 +309,28 @@ func LoadConf() {
 		if !showConfig {
 			dev.AttachOutDBMap(influxdb)
 		}
+		mutex.Lock()
 		devices[k] = dev
+		mutex.Unlock()
 	}
 
 	// only run when one needs to see the interface names of the device
 	if showConfig {
+		mutex.Lock()
 		for _, c := range devices {
 			fmt.Println("\nSNMP host:", c.cfg.ID)
 			fmt.Println("=========================================")
 			c.printConfig()
 		}
+		mutex.Unlock()
 		os.Exit(0)
 	}
 	//beginning  the gather process
 }
 
 // ReloadConf call to reinitialize alln configurations
-func ReloadConf() {
+func ReloadConf() time.Duration {
+	start := time.Now()
 	log.Info("RELOADCONF: begin device processes stop...")
 	//stop all device prcesses
 	ProcessStop()
@@ -285,6 +344,7 @@ func ReloadConf() {
 	LoadConf()
 	log.Info("RELOADCONF: Starting all device processes again...")
 	ProcessStart()
+	return time.Since(start)
 }
 
 func main() {
