@@ -15,6 +15,7 @@ import { GenericModal } from '../common/generic-modal';
 
 export class MeasFilterCfgComponent {
 	@ViewChild('viewModal') public viewModal: GenericModal;
+	@ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
 
   editmode: string; //list , create, modify
   measfilters: Array<any>;
@@ -22,6 +23,7 @@ export class MeasFilterCfgComponent {
   measfilterForm: any;
 	testmeasfilters: any;
 	influxmeas: Array<any>;
+	deleteobject: Object;
 
 	//Initialization data, rows, colunms for Table
 	private data:Array<any> = [];
@@ -187,16 +189,16 @@ export class MeasFilterCfgComponent {
  removeItem(row){
 	let id = row.ID;
 	console.log('remove',id);
-	var r = confirm("Deleting FILTER: "+id+". Proceed?");
- 	if (r == true) {
-		 var result=this.measFilterService.deleteMeasFilter(id)
-		 .subscribe(
-			data => { console.log(data) },
-			err => console.error(err),
-			() =>  {this.editmode = "list"; this.reloadData()}
-			);
-		 console.log(result);
- 	}
+	this.measFilterService.checkOnDeleteMeasFilter(id)
+	.subscribe(
+	 	 data => {
+		 console.log(data);
+		 let temp = data;
+		 this.viewModalDelete.parseObject(temp)
+	 },
+	 err => console.error(err),
+	 () =>  {}
+	);
  }
  newMeasFilter(){
 	 this.editmode = "create";
@@ -212,6 +214,15 @@ export class MeasFilterCfgComponent {
  		 () =>  this.editmode = "modify"
  		);
  	}
+
+	deleteMeasFilter(id){
+		this.measFilterService.deleteMeasFilter(id)
+			.subscribe( data => {},
+			err => console.error(err),
+			() => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
+		);
+	}
+
  cancelEdit(){
 	 this.editmode = "list";
  }
