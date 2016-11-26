@@ -75,4 +75,13 @@ export class RuntimeService {
             )
         }
     };
+
+
+    downloadLogFile(id : string) {
+        // return an observable
+        return this.http.get('/runtime/getdevicelog/'+id)
+        .map( (responseData) =>
+            responseData.json()
+        )
+    };
 }

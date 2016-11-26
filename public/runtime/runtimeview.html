@@ -62,7 +62,7 @@
 			</span>
 		</div>
 
-		<div class="input-group">
+		<div class="input-group"  style="padding-bottom: 10px">
 		  <span class="input-group-addon">SNMP Debug</span>
 			<span class="input-group-addon">
 				 <span class="glyphicon glyphicon-question-sign"  tooltip="Enable or disable the SNMP Debug"></span>
@@ -72,7 +72,15 @@
 			</span>
 		</div>
 
-
+		<div class="input-group">
+			<span class="input-group-addon">Download Device Log file</span>
+			<span class="input-group-addon">
+				<span class="glyphicon glyphicon-question-sign"  tooltip="download the device related log file"></span>
+			</span>
+			<span class="input-group-btn">
+				<button type="button" (click)="downloadLogFile(runtime_dev.ID)" [ngClass]="'btn btn-success'">'Download'</button>
+			</span>
+		</div>
 		<!--div class="btn-group-vertical" role="group">
 			{{runtime_dev.DeviceActive}}
 				<select [ngModel]="runtime_dev.StateDebug" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeFilter($event)">
