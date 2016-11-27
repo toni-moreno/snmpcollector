@@ -3,19 +3,26 @@
 <hr>
 <p [ngSwitch]="editmode">
   <template ngSwitchCase="list">
-  <test-modal #viewModal titleName='Measurements Groups'></test-modal>
-
+    <test-modal #viewModal titleName='Measurements Groups'></test-modal>
+    <test-modal #viewModalDelete titleName='Deleting:'
+                [customMessage]="['Deleting this Measurement Group will affect the following components','Deleting this Measurement Group will NOT affect any component. Safe delete']"
+                [customMessageClass]="['alert alert-danger','alert alert-success']"
+                [showValidation]="true"
+                [textValidation]="'Delete'"
+                [controlSize]="true"
+                (validationClicked)="deleteMeasGroup($event)">
+    </test-modal>
     <div class="row">
-  <div class="col-md-6">
-    <input *ngIf="config.filtering" placeholder="Filter all columns"
-           [ngTableFiltering]="config.filtering"
-           class="form-control"
-           (tableChanged)="onChangeTable(config)"/>
-    <button type="button" (click)="newMeasGroup()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
-  </div>
-</div>
-<br>
-<ng-table [config]="config"
+      <div class="col-md-6">
+      <input *ngIf="config.filtering" placeholder="Filter all columns"
+             [ngTableFiltering]="config.filtering"
+             class="form-control"
+             (tableChanged)="onChangeTable(config)"/>
+      <button type="button" (click)="newMeasGroup()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+    </div>
+    </div>
+  <br>
+  <ng-table [config]="config"
           (tableChanged)="onChangeTable(config)"
           (cellClicked)="onCellClick($event)"
           (viewedItem)="viewItem($event)"
@@ -23,9 +30,9 @@
           (removedItem)="removeItem($event)"
           [showCustom]="true"
           [rows]="rows" [columns]="columns">
-</ng-table>
+  </ng-table>
 
-<pagination *ngIf="config.paging"
+  <pagination *ngIf="config.paging"
             class="pagination-sm"
             [(ngModel)]="page"
             [totalItems]="length"
@@ -35,8 +42,8 @@
             [rotate]="false"
             (pageChanged)="onChangeTable(config, $event)"
             (numPages)="numPages = $event">
-</pagination>
-<pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+  </pagination>
+  <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
 </template>
 
      <template ngSwitchCase="create">

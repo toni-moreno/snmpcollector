@@ -15,6 +15,7 @@ import { GenericModal } from '../common/generic-modal';
 
 export class MeasGroupCfgComponent {
 	@ViewChild('viewModal') public viewModal: GenericModal;
+	@ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
 
   editmode: string; //list , create, modify
   measgroups: Array<any>;
@@ -180,16 +181,16 @@ export class MeasGroupCfgComponent {
  removeItem(row){
 	let id = row.ID;
 	console.log('remove',id);
-	var r = confirm("Deleting GROUP: "+id+". Proceed?");
- 	if (r == true) {
-		 var result=this.measGroupService.deleteMeasGroup(id)
-		 .subscribe(
-			data => { console.log(data) },
-			err => console.error(err),
-			() =>  {this.editmode = "list"; this.reloadData()}
-			);
-		 console.log(result);
- 	}
+	this.measGroupService.checkOnDeleteMeasGroups(id)
+	.subscribe(
+	 	 data => {
+		 console.log(data);
+		 let temp = data;
+		 this.viewModalDelete.parseObject(temp)
+	 },
+	 err => console.error(err),
+	 () =>  {}
+	);
  }
 
  newMeasGroup(){
@@ -210,6 +211,13 @@ export class MeasGroupCfgComponent {
  		 () =>  this.editmode = "modify"
  		);
  	}
+	deleteMeasGroup(id){
+		this.measGroupService.deleteMeasGroup(id)
+			.subscribe( data => {},
+			err => console.error(err),
+			() => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
+		);
+	}
  cancelEdit(){
 	 this.editmode = "list";
  }
