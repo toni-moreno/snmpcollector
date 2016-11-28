@@ -1,4 +1,14 @@
 
+# v 0.5.5
+### New features.
+* Online Reload Configuration
+* New runtime WebUI option which enables user inspect online current gathered snmp values for all measurements on all devices, also allow interact to change logging and debug options and also deactivate device.
+
+### fixes
+* fix for issue #38, #40, #42, #46,#47
+
+### breaking changes
+* no longer needed options flags: freq, repeat, verbose ; since all this features can be changed on the WebUI
 
 # v 0.5.4
 ### New features.
