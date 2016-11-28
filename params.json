@@ -1,0 +1,6 @@
+{
+  "name": "SnmpCollector",
+  "tagline": "A full featured  Generic SNMP data collector with Web Administration Interface ",
+  "body": "### Welcome to SnmpCollector\r\n\r\nSnmpCollector is snmp data collector tool which sends data to an influxdb database. This tool is designed to be fast and easily configurable, thanks to its web User Interface.\r\n\r\n### Authors and Contributors\r\n @toni-moreno and @sbengo\r\n\r\n### Support or Contact\r\nHaving trouble with snmpcollector? Check out our [documentation](https://github.com/toni-moreno/snmpcollector/wiki) ",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
