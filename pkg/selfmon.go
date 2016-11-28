@@ -20,8 +20,10 @@ type SelfMonConfig struct {
 	TagMap              map[string]string
 	Fields              map[string]interface{}
 	bps                 *client.BatchPoints
+	chExit              chan bool
 }
 
+// Init Initialize the Object data and check for consistence
 func (sm *SelfMonConfig) Init() {
 	//Init extra tags
 	if len(sm.ExtraTags) > 0 {
@@ -50,21 +52,32 @@ func (sm *SelfMonConfig) Init() {
 		"gc.gc_per_second":      0.0,
 		"gc.gc_per_interval":    0.0,
 	}
+	sm.chExit = make(chan bool)
 }
 
-func (sm *SelfMonConfig) ReportStats(wg *sync.WaitGroup) {
+// StartGather for stopping selfmonitori goroutine
+func (sm *SelfMonConfig) StartGather(wg *sync.WaitGroup) {
 	if sm.runtimeStatsRunning {
-		log.Error("Runtime stats is already running")
+		log.Error("SELFMON:Runtime stats is already running")
 		return
 	}
 
 	sm.runtimeStatsRunning = true
-	go sm.reportRuntimeStats(time.Duration(sm.Freq*1000000000), wg)
+	wg.Add(1)
+	go sm.reportRuntimeStats(wg)
 }
 
-func (sm *SelfMonConfig) reportRuntimeStats(sleep time.Duration, wg *sync.WaitGroup) {
+// StopGather for stopping selfmonitori goroutine
+func (sm *SelfMonConfig) StopGather() {
+	if sm.Enabled {
+		sm.chExit <- true
+	}
+}
 
-	//sm.bps = sm.Influx.BP()
+func (sm *SelfMonConfig) reportRuntimeStats(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	log.Info("SELFMON: Beginning  selfmonitor process for device")
 
 	memStats := &runtime.MemStats{}
 	lastSampleTime := time.Now()
@@ -73,8 +86,8 @@ func (sm *SelfMonConfig) reportRuntimeStats(sleep time.Duration, wg *sync.WaitGr
 	prefix := sm.Prefix
 
 	nsInMs := float64(time.Millisecond)
-
-	for sm.runtimeStatsRunning {
+	s := time.Tick(time.Duration(sm.Freq) * time.Second)
+	for {
 		//BatchPoint Init
 		sm.bps = sm.Influx.BP()
 
@@ -92,7 +105,7 @@ func (sm *SelfMonConfig) reportRuntimeStats(sleep time.Duration, wg *sync.WaitGr
 
 		if lastPauseNs > 0 {
 			pauseSinceLastSample := memStats.PauseTotalNs - lastPauseNs
-			sm.Fields["gc.pause_per_second"] = float64(pauseSinceLastSample) / nsInMs / sleep.Seconds()
+			sm.Fields["gc.pause_per_second"] = float64(pauseSinceLastSample) / nsInMs / time.Duration(sm.Freq).Seconds()
 			sm.Fields["gc.pause_per_interval"] = float64(pauseSinceLastSample) / nsInMs
 		}
 		lastPauseNs = memStats.PauseTotalNs
@@ -137,7 +150,17 @@ func (sm *SelfMonConfig) reportRuntimeStats(sleep time.Duration, wg *sync.WaitGr
 		//BatchPoint Send
 		sm.Influx.Send(sm.bps)
 
-		time.Sleep(sleep)
+	LOOP:
+		for {
+			select {
+			case <-s:
+				//log.Infof("SELFMON: breaking LOOP  ")
+				break LOOP
+			case <-sm.chExit:
+				log.Infof("SELFMON: EXIT from SelfMonitoring Gather process ")
+				return
+			}
+		}
 	}
-	wg.Done()
+
 }

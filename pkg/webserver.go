@@ -195,6 +195,7 @@ func webServer(port int) {
 	})
 
 	m.Group("/runtime", func() {
+		m.Get("/agent/reloadconf/", reqSignedIn, AgentReloadConf)
 		m.Post("/snmpping/", reqSignedIn, bind(SnmpDeviceCfg{}), PingSNMPDevice)
 		m.Get("/version/", reqSignedIn, RTGetVersion)
 		m.Get("/info/", reqSignedIn, RTGetInfo)
@@ -204,6 +205,8 @@ func webServer(port int) {
 		m.Put("/actsnmpdbg/:id", reqSignedIn, RTActSnmpDebugDev)
 		m.Put("/deactsnmpdbg/:id", reqSignedIn, RTDeactSnmpDebugDev)
 		m.Put("/setloglevel/:id/:level", reqSignedIn, RTSetLogLevelDev)
+		m.Get("/getdevicelog/:id", reqSignedIn, RTGetLogFileDev)
+		m.Get("/forcefltupdate/:id", reqSignedIn, RTForceFltUpdate)
 	})
 
 	log.Printf("Server is running on localhost:%d...", port)
@@ -215,8 +218,38 @@ func webServer(port int) {
 /*Runtime Info
 /****************/
 
+/* Agent */
+
+func AgentReloadConf(ctx *Context) {
+	log.Info("trying to reload configuration for all devices")
+	time := ReloadConf()
+	ctx.JSON(200, time)
+}
+
+func RTForceFltUpdate(ctx *Context) {
+	id := ctx.Params(":id")
+	d, err := GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
+		return
+	}
+	log.Info("trying to force filter for device %s", id)
+	d.ForceFltUpdate()
+	ctx.JSON(200, "OK")
+}
+
+func RTGetLogFileDev(ctx *Context) {
+	id := ctx.Params(":id")
+	d, err := GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
+		return
+	}
+	ctx.ServeFile(d.cfg.LogFile)
+}
+
 //PingSNMPDevice xx
-func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
+func PingSNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
 	_, sysinfo, err := SnmpClient(&cfg, log)
@@ -233,109 +266,86 @@ func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
 func RTSetLogLevelDev(ctx *Context) {
 	id := ctx.Params(":id")
 	level := ctx.Params(":level")
-	if dev, ok := devices[id]; !ok {
-		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+	dev, err := GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
 		return
-	} else {
-		log.Infof("set runtime log level from device id %s : %s", id, level)
-		dev.RTSetLogLevel(level)
-		ctx.JSON(200, dev)
 	}
+	log.Infof("set runtime log level from device id %s : %s", id, level)
+	dev.RTSetLogLevel(level)
+	ctx.JSON(200, dev)
+
 }
 
 //RTActivateDev xx
 func RTActivateDev(ctx *Context) {
 	id := ctx.Params(":id")
-	if dev, ok := devices[id]; !ok {
-		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+	dev, err := GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
 		return
-	} else {
-		log.Infof("activating runtime on device %s", id)
-		dev.RTActivate(true)
-		ctx.JSON(200, dev)
 	}
+	log.Infof("activating runtime on device %s", id)
+	dev.RTActivate(true)
+	ctx.JSON(200, dev)
 }
 
 //RTDeactivateDev xx
 func RTDeactivateDev(ctx *Context) {
 	id := ctx.Params(":id")
-	if dev, ok := devices[id]; !ok {
-		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+	dev, err := GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
 		return
-	} else {
-		log.Infof("deactivating runtime on device  %s", id)
-		dev.RTActivate(false)
-		ctx.JSON(200, dev)
 	}
+	log.Infof("deactivating runtime on device  %s", id)
+	dev.RTActivate(false)
+	ctx.JSON(200, dev)
+
 }
 
 //RTActSnmpDebugDev xx
 func RTActSnmpDebugDev(ctx *Context) {
 	id := ctx.Params(":id")
-	if dev, ok := devices[id]; !ok {
-		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+	dev, err := GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
 		return
-	} else {
-		log.Infof("activating snmpdebug  %s", id)
-		dev.RTActSnmpDebug(true)
-		ctx.JSON(200, dev)
 	}
+	log.Infof("activating snmpdebug  %s", id)
+	dev.RTActSnmpDebug(true)
+	ctx.JSON(200, dev)
 }
 
 //RTDeactSnmpDebugDev xx
 func RTDeactSnmpDebugDev(ctx *Context) {
 	id := ctx.Params(":id")
-	if dev, ok := devices[id]; !ok {
-		ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+	dev, err := GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
 		return
-	} else {
-		log.Infof("deactivating snmpdebug  %s", id)
-		dev.RTActSnmpDebug(false)
-		ctx.JSON(200, dev)
 	}
-}
-
-type devStat struct {
-	Requests           int64
-	Gets               int64
-	Errors             int64
-	ReloadLoopsPending int
-	DeviceActive       bool
-	DeviceConnected    bool
-	NumMeasurements    int
-	NumMetrics         int
+	log.Infof("deactivating snmpdebug  %s", id)
+	dev.RTActSnmpDebug(false)
+	ctx.JSON(200, dev)
 }
 
 //RTGetInfo xx
 func RTGetInfo(ctx *Context) {
 	id := ctx.Params(":id")
 	if len(id) > 0 {
-		if dev, ok := devices[id]; !ok {
-			ctx.JSON(404, fmt.Errorf("there is not any device with id %s running", id))
+		dev, err := GetDevice(id)
+		if err != nil {
+			ctx.JSON(404, err.Error())
 			return
-		} else {
-			log.Infof("get runtime data from id %s", id)
-			ctx.JSON(200, dev)
 		}
+
+		log.Infof("get runtime data from id %s", id)
+		ctx.JSON(200, dev)
+
 		//get only one device info
 	} else {
-		devstats := make(map[string]*devStat)
-		for k, v := range devices {
-			sum := 0
-			for _, m := range v.Measurements {
-				sum += len(m.OidSnmpMap)
-			}
-			devstats[k] = &devStat{
-				Requests:           v.Requests,
-				Gets:               v.Gets,
-				Errors:             v.Errors,
-				ReloadLoopsPending: v.ReloadLoopsPending,
-				DeviceActive:       v.DeviceActive,
-				DeviceConnected:    v.DeviceConnected,
-				NumMeasurements:    len(v.Measurements),
-				NumMetrics:         sum,
-			}
-		}
+		devstats := GetDevStats()
 		ctx.JSON(200, &devstats)
 	}
 	return

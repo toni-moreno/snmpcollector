@@ -75,4 +75,22 @@ export class RuntimeService {
             )
         }
     };
+
+    downloadLogFile(id : string) {
+        // return an observable
+        return this.http.get('/runtime/getdevicelog/'+id)
+        .map( (res) => {
+            console.log("service_response",res)
+            //return new Blob([res.arrayBuffer()],{type: "application/octet-stream" })
+            return new Blob([res['_body']],{type: "application/octet-stream" })
+        })
+    };
+
+    forceFltUpdate(id : string) {
+        // return an observable
+        return this.http.get('/runtime/forcefltupdate/'+id)
+        .map( (responseData) =>
+            responseData.json()
+        )
+    };
 }

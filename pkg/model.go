@@ -7,6 +7,7 @@ import (
 	"github.com/go-xorm/xorm"
 	_ "github.com/mattn/go-sqlite3"
 	"os"
+	"sync/atomic"
 )
 
 // InfluxCfg is the main configuration for any InfluxDB TSDB
@@ -142,6 +143,18 @@ type DatabaseCfg struct {
 	SQLLogFile string `toml:"sqllogfile"`
 	Debug      string `toml:"debug"`
 	x          *xorm.Engine
+	numChanges int64 `toml:"-"`
+}
+
+func (d *DatabaseCfg) resetChanges() {
+	atomic.StoreInt64(&d.numChanges, 0)
+}
+
+func (d *DatabaseCfg) addChanges(n int64) {
+	atomic.AddInt64(&d.numChanges, n)
+}
+func (d *DatabaseCfg) getChanges() int64 {
+	return atomic.LoadInt64(&d.numChanges)
 }
 
 //DbObjAction measurement groups to asign to devices
@@ -293,6 +306,7 @@ func (dbc *DatabaseCfg) AddSnmpMetricCfg(dev SnmpMetricCfg) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Added new Snmp Metric Successfully with id %s ", dev.ID)
+	dbc.addChanges(affected)
 	return affected, nil
 }
 
@@ -322,6 +336,7 @@ func (dbc *DatabaseCfg) DelSnmpMetricCfg(id string) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Deleted Successfully Metricdb with ID %s [ %d Measurements Affected  ]", id, affecteddev)
+	dbc.addChanges(affecteddev)
 	return affected, nil
 }
 
@@ -352,6 +367,7 @@ func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64
 	}
 
 	log.Infof("Updated SnmpMetric Config Successfully with id %s and data:%+v, affected", id, dev)
+	dbc.addChanges(affected + affecteddev)
 	return affected, nil
 }
 
@@ -473,6 +489,7 @@ func (dbc *DatabaseCfg) AddInfluxMeasurementCfg(dev InfluxMeasurementCfg) (int64
 		return 0, err
 	}
 	log.Infof("Added new Measurement Successfully with id %s and [%d Fields] ", dev.ID, newmf)
+	dbc.addChanges(affected + newmf)
 	return affected, nil
 }
 
@@ -513,6 +530,7 @@ func (dbc *DatabaseCfg) DelInfluxMeasurementCfg(id string) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Deleted Successfully Measurement with ID %s [ %d Measurements Groups Affected / %d Fields Affected / %d Filters Afected ]", id, affectedmg, affectedfl, affectedft)
+	dbc.addChanges(affected + affectedmg + affectedfl + affectedft)
 	return affected, nil
 }
 
@@ -570,6 +588,7 @@ func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurem
 	}
 
 	log.Infof("Updated Influx Measurement Config Successfully with id %s and  (%d previous / %d new Fields), affected", id, affecteddev, newmf)
+	dbc.addChanges(affecteddev + newmf)
 	return affected, nil
 }
 
@@ -677,6 +696,7 @@ func (dbc *DatabaseCfg) AddMeasFilterCfg(dev MeasFilterCfg) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Added new Measurement Filter Successfully with id %s  ", dev.ID)
+	dbc.addChanges(affected)
 	return affected, nil
 }
 
@@ -705,6 +725,7 @@ func (dbc *DatabaseCfg) DelMeasFilterCfg(id string) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Deleted Successfully Measurement Filter with ID %s [ %d Devices Affected  ]", id, affectedfl)
+	dbc.addChanges(affected + affectedfl)
 	return affected, nil
 }
 
@@ -736,6 +757,7 @@ func (dbc *DatabaseCfg) UpdateMeasFilterCfg(id string, dev MeasFilterCfg) (int64
 	}
 
 	log.Infof("Updated Measurement Filter Config Successfully with id %s and  (%d previous / %d new Fields), affected", id, affecteddev, newmf)
+	dbc.addChanges(affected + affecteddev + newmf)
 	return affected, nil
 }
 
@@ -855,6 +877,7 @@ func (dbc *DatabaseCfg) AddMGroupsCfg(dev MGroupsCfg) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Added new Measurement Group Successfully with id %s  [%d Measurements]", dev.ID, newmf)
+	dbc.addChanges(affected + newmf)
 	return affected, nil
 }
 
@@ -890,6 +913,7 @@ func (dbc *DatabaseCfg) DelMGroupsCfg(id string) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Deleted Successfully Measurment Group with ID %s [ %d Devices Affected  ]", id, affecteddev)
+	dbc.addChanges(affected + affecteddev)
 	return affected, nil
 }
 
@@ -939,6 +963,7 @@ func (dbc *DatabaseCfg) UpdateMGroupsCfg(id string, dev MGroupsCfg) (int64, erro
 	}
 
 	log.Infof("Updated Measurement Group Successfully with id %s [%d measurements], affected", dev.ID, newmg)
+	dbc.addChanges(affected + newmg)
 	return affected, nil
 }
 
@@ -1091,6 +1116,7 @@ func (dbc *DatabaseCfg) AddSnmpDeviceCfg(dev SnmpDeviceCfg) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Added new Device Successfully with id %s [%d Measurment Groups | %d filters]", dev.ID, newmg, newft)
+	dbc.addChanges(affected + newmg + newft)
 	return affected, nil
 }
 
@@ -1126,6 +1152,7 @@ func (dbc *DatabaseCfg) DelSnmpDeviceCfg(id string) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Deleted Successfully device with ID %s [] %d Measurement Groups Affected , %d Filters Afected ]", id, affectedmg, affectedft)
+	dbc.addChanges(affected + affectedmg + affectedft)
 	return affected, nil
 }
 
@@ -1177,6 +1204,7 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 	log.Infof("Updated device constrains (old %d / new %d ) Measurement Groups", deletemg, newmg)
 	log.Infof("Updated device constrains (old %d / new %d ) MFilters", deleteft, newft)
 	log.Infof("Updated new Device Successfully with id %s and data:%+v", id, dev)
+	dbc.addChanges(affected + deletemg + newmg + deleteft + newft)
 	return affected, nil
 }
 
@@ -1256,6 +1284,7 @@ func (dbc *DatabaseCfg) AddInfluxCfg(dev InfluxCfg) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Added new influx backend Successfully with id %s ", dev.ID)
+	dbc.addChanges(affected)
 	return affected, nil
 }
 
@@ -1285,6 +1314,7 @@ func (dbc *DatabaseCfg) DelInfluxCfg(id string) (int64, error) {
 		return 0, err
 	}
 	log.Infof("Deleted Successfully influx db with ID %s [ %d Devices Affected  ]", id, affecteddev)
+	dbc.addChanges(affected + affecteddev)
 	return affected, nil
 }
 
@@ -1314,6 +1344,7 @@ func (dbc *DatabaseCfg) UpdateInfluxCfg(id string, dev InfluxCfg) (int64, error)
 	}
 
 	log.Infof("Updated Influx Config Successfully with id %s and data:%+v, affected", id, dev)
+	dbc.addChanges(affected + affecteddev)
 	return affected, nil
 }
 
@@ -1378,5 +1409,5 @@ func (dbc *DatabaseCfg) LoadConfig() {
 	if err != nil {
 		log.Warningf("Some errors on get SnmpDeviceConf :%v", err)
 	}
-
+	dbc.resetChanges()
 }

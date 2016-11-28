@@ -49,6 +49,19 @@ export class Home {
       );
   }
 
+  reloadConfig() {
+    this.http.get('/runtime/agent/reloadconf', { headers: contentHeaders })
+      .subscribe(
+        response => {
+            alert(response.json())
+        },
+        error => {
+          alert(error.text());
+          console.log(error.text());
+        }
+      );
+  }
+
   InfluxServers() {
 	  this.item_type = "influxserver";
   }
