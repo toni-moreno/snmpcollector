@@ -70,6 +70,58 @@ export class RuntimeComponent {
 		 );
 	 }
 
+		/*downloadLogFile(id) {
+		console.log("Download Log file from device",id);
+		var reader = new FileReader();
+		this.runtimeService.downloadLogFile(id)
+			.subscribe(
+			 data => {
+					reader.readAsArrayBuffer(data)
+					console.log("download done")
+			 },
+			 err => {
+					console.error(err)
+					console.log("Error downloading the file.")
+				},
+			 () => console.log('Completed file download.')
+		 );
+		 reader.onloadend = function (e) {
+				console.log("PRE",reader.result)
+				//var blob = new Blob([reader.result],{type:"text/plain;charset=utf-8"})
+				var blob = new Blob([reader.result])
+				saveAs(blob,id+".log");
+				//var file = new File([reader.result],id+".log",{type:"text/plain;charset=utf-8"});
+				//saveAs(file);
+		}
+	 }*/
+
+   downloadLogFile(id) {
+   console.log("Download Log file from device",id);
+   this.runtimeService.downloadLogFile(id)
+     .subscribe(
+      data => {
+         saveAs(data,id+".log")
+         console.log("download done")
+      },
+      err => {
+         console.error(err)
+         console.log("Error downloading the file.")
+       },
+      () => console.log('Completed file download.')
+    );
+  }
+
+   forceFltUpdate(id) {
+   console.log("ID,event",id,event);
+   this.runtimeService.forceFltUpdate(id)
+     .subscribe(
+      data => {
+         console.log("download done")
+      },
+      err => console.error(err),
+      () => console.log('DONE')
+    );
+  }
 
 	reloadData(){
   // now it's a simple subscription to the observable
