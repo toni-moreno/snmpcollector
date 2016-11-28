@@ -201,6 +201,7 @@ func webServer(port int) {
 		m.Put("/deactsnmpdbg/:id", reqSignedIn, RTDeactSnmpDebugDev)
 		m.Put("/setloglevel/:id/:level", reqSignedIn, RTSetLogLevelDev)
 		m.Get("/getdevicelog/:id", reqSignedIn, RTGetLogFileDev)
+		m.Get("/forcefltupdate/:id", reqSignedIn, RTForceFltUpdate)
 	})
 
 	log.Printf("Server is running on localhost:%d...", port)
@@ -213,13 +214,26 @@ func webServer(port int) {
 /****************/
 
 /* Agent */
-func AgentReloadConf(ctx *macaron.Context) {
+
+func AgentReloadConf(ctx *Context) {
 	log.Info("trying to reload configuration for all devices")
 	time := ReloadConf()
 	ctx.JSON(200, time)
 }
 
-func RTGetLogFileDev(ctx *macaron.Context) {
+func RTForceFltUpdate(ctx *Context) {
+	id := ctx.Params(":id")
+	d, err := GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
+		return
+	}
+	log.Info("trying to force filter for device %s", id)
+	d.ForceFltUpdate()
+	ctx.JSON(200, "OK")
+}
+
+func RTGetLogFileDev(ctx *Context) {
 	id := ctx.Params(":id")
 	d, err := GetDevice(id)
 	if err != nil {
@@ -229,7 +243,7 @@ func RTGetLogFileDev(ctx *macaron.Context) {
 	ctx.ServeFile(d.cfg.LogFile)
 }
 
-func PingSNMPDevice(ctx *macaron.Context, cfg SnmpDeviceCfg) {
+func PingSNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
 	_, sysinfo, err := SnmpClient(&cfg, log)

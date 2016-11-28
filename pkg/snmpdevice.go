@@ -43,10 +43,11 @@ type SnmpDevice struct {
 	DeviceConnected bool
 	StateDebug      bool
 
-	chDebug    chan bool
-	chEnabled  chan bool
-	chLogLevel chan string
-	chExit     chan bool
+	chDebug     chan bool
+	chEnabled   chan bool
+	chLogLevel  chan string
+	chExit      chan bool
+	chFltUpdate chan bool
 }
 
 func NewSnmpDevice(c *SnmpDeviceCfg) *SnmpDevice {
@@ -71,6 +72,11 @@ func (d *SnmpDevice) AttachOutDBMap(influxdb map[string]*InfluxDB) error {
 	}
 	d.Influx.Init()
 	return nil
+}
+
+//RTActivate change activatio state in runtime
+func (d *SnmpDevice) ForceFltUpdate() {
+	d.chFltUpdate <- true
 }
 
 //RTActivate change activatio state in runtime
@@ -231,6 +237,7 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 	d.chEnabled = make(chan bool)
 	d.chLogLevel = make(chan string)
 	d.chExit = make(chan bool)
+	d.chFltUpdate = make(chan bool)
 	d.DeviceActive = d.cfg.Active
 
 	//Init Device Tags
@@ -445,6 +452,8 @@ func (d *SnmpDevice) StartGather(wg *sync.WaitGroup) {
 			case <-d.chExit:
 				d.log.Infof("EXIT from SNMP Gather process for device %s ", d.cfg.ID)
 				return
+			case <-d.chFltUpdate:
+				d.ReloadLoopsPending = 1
 			case debug := <-d.chDebug:
 				d.StateDebug = debug
 				d.log.Infof("DEBUG  ACTIVE %s [%t] ", d.cfg.ID, debug)
