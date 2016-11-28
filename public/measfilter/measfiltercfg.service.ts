@@ -72,6 +72,24 @@ export class MeasFilterService {
             responseData.json()
     )};
 
+    checkOnDeleteMeasFilter(id : string){
+      return this.http.get('/measfilters/checkondel/'+id)
+      .map( (responseData) =>
+       responseData.json()
+      ).map((deleteobject) => {
+          console.log("MAP SERVICE",deleteobject);
+          let result : any = {'ID' : id};
+          _.forEach(deleteobject,function(value,key){
+              result[value.Type] = [];
+          });
+          _.forEach(deleteobject,function(value,key){
+              result[value.Type].Description=value.Action;
+              result[value.Type].push(value.ObID);
+          });
+          return result;
+      });
+    };
+
     deleteMeasFilter(id : string) {
         // return an observable
         console.log("ID: ",id);

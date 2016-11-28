@@ -4,8 +4,15 @@
 <hr>
 <p [ngSwitch]="editmode">
   <template ngSwitchCase="list">
-  <test-modal #viewModal titleName='Device' [countFields]="['MeasurementGroups','MeasFilters']"></test-modal>
-
+  <test-modal #viewModal titleName='Device'></test-modal>
+  <test-modal #viewModalDelete titleName='Deleting:'
+              [customMessage]="['Deleting this SNMP Device will affect the following components','Deleting this SNMP Device will NOT affect any component. Safe delete']"
+              [customMessageClass]="['alert alert-danger','alert alert-success']"
+              [showValidation]="true"
+              [textValidation]="'Delete'"
+              [controlSize]="true"
+              (validationClicked)="deleteSnmpDevice($event)">
+  </test-modal>
     <div class="row">
   <div class="col-md-6">
     <input *ngIf="config.filtering" placeholder="Filter all columns"

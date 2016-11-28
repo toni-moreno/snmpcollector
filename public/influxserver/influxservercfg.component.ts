@@ -13,12 +13,15 @@ import { GenericModal } from '../common/generic-modal';
 
 export class InfluxServerCfgComponent {
 	@ViewChild('viewModal') public viewModal: GenericModal;
+	@ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
+
 
   editmode: string; //list , create, modify
   influxservers: Array<any>;
   filter: string;
   influxserverForm: any;
 	testinfluxservers: any;
+	deleteobject: Object;
 
 	//Initialization data, rows, colunms for Table
 	private data:Array<any> = [];
@@ -183,19 +186,20 @@ export class InfluxServerCfgComponent {
 	console.log('view',id);
 	this.viewModal.parseObject(id);
  }
+
  removeItem(row){
 	let id = row.ID;
 	console.log('remove',id);
-	var r = confirm("Deleting INFLUXSERVER: "+id+". Proceed?");
- 	if (r == true) {
-		 var result=this.influxServerService.deleteInfluxServer(id)
-		 .subscribe(
-			data => { console.log(data) },
-			err => console.error(err),
-			() =>  {this.editmode = "list"; this.reloadData()}
-			);
-		 console.log(result);
- 	}
+	this.influxServerService.checkOnDeleteInfluxServer(id)
+	.subscribe(
+	 	 data => {
+		 console.log(data);
+		 let temp = data;
+		 this.viewModalDelete.parseObject(temp)
+	 },
+	 err => console.error(err),
+	 () =>  {}
+	);
  }
  newInfluxServer(){
 	 this.editmode = "create";
@@ -209,6 +213,15 @@ export class InfluxServerCfgComponent {
  		 () =>  this.editmode = "modify"
  		);
  	}
+
+	deleteInfluxServer(id){
+		this.influxServerService.deleteInfluxServer(id)
+			.subscribe( data => {},
+			err => console.error(err),
+			() => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
+		);
+	}
+
  cancelEdit(){
 	 this.editmode = "list";
  }

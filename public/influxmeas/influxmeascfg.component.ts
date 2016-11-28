@@ -15,6 +15,7 @@ import { GenericModal } from '../common/generic-modal';
 
 export class InfluxMeasCfgComponent {
 	@ViewChild('viewModal') public viewModal: GenericModal;
+	@ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
 
   editmode: string; //list , create, modify
   influxmeas: Array<any>;
@@ -23,6 +24,7 @@ export class InfluxMeasCfgComponent {
 	testinfluxmeas: any;
 	snmpmetrics: Array<any>;
  	selectmetrics: IMultiSelectOption[];
+	deleteobject: Object;
 
 	//Initialization data, rows, colunms for Table
 	private data:Array<any> = [];
@@ -190,16 +192,17 @@ export class InfluxMeasCfgComponent {
 
  removeItem(row){
 	let id = row.ID;
-	var r = confirm("Deleting MEASUREMENT: "+id+". Proceed?");
- 	if (r == true) {
-		 var result=this.influxMeasService.deleteMeas(id)
-		 .subscribe(
-			data => { console.log(data) },
-			err => console.error(err),
-			() =>  {this.editmode = "list"; this.reloadData()}
-			);
-		 console.log(result);
- 	}
+	console.log('remove',id);
+	this.influxMeasService.checkOnDeleteInfluxMeas(id)
+	.subscribe(
+	 	 data => {
+		 console.log(data);
+		 let temp = data;
+		 this.viewModalDelete.parseObject(temp)
+	 },
+	 err => console.error(err),
+	 () =>  {}
+	);
  }
 
  newMeas(){
@@ -220,6 +223,14 @@ export class InfluxMeasCfgComponent {
  		 () =>  this.editmode = "modify"
  		);
  	}
+
+	deleteInfluxMeas(id){
+		this.influxMeasService.deleteMeas(id)
+			.subscribe( data => {},
+			err => console.error(err),
+			() => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
+		);
+	}
 
  cancelEdit(){
 	 this.editmode = "list";

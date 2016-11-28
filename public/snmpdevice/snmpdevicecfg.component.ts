@@ -18,6 +18,7 @@ import { GenericModal } from '../common/generic-modal';
 export class SnmpDeviceCfgComponent {
   //TEST:
   @ViewChild('viewModal') public viewModal: GenericModal;
+  @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
 
   //ADDED
     editmode: string; //list , create, modify
@@ -228,18 +229,18 @@ export class SnmpDeviceCfgComponent {
    }
 
    removeItem(row){
-    let id = row.ID;
+  	let id = row.ID;
   	console.log('remove',id);
-  	var r = confirm("Deleting SNMPDEVICE: "+id+". Proceed?");
-   	if (r == true) {
-  		this.snmpDeviceService.deleteDevice(id)
-  		 .subscribe(
-  			data => { console.log(data) },
-  			err => console.error(err),
-  			() => {this.editmode = "list"; this.reloadData()}
-  			);
-
-   	}
+  	this.snmpDeviceService.checkOnDeleteSNMPDevice(id)
+  	.subscribe(
+  	 	 data => {
+  		 console.log(data);
+  		 let temp = data;
+  		 this.viewModalDelete.parseObject(temp)
+  	 },
+  	 err => console.error(err),
+  	 () =>  {}
+  	);
    }
    newDevice(){
   	 this.editmode = "create";
@@ -266,6 +267,13 @@ export class SnmpDeviceCfgComponent {
    		 err => console.error(err),
    		 () =>  this.editmode = "modify"
    				 );
+   }
+   deleteSnmpDevice(id){
+     this.snmpDeviceService.deleteDevice(id)
+       .subscribe( data => {},
+       err => console.error(err),
+       () => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
+     );
    }
    cancelEdit(){
      this.reloadData();
