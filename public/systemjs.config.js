@@ -33,7 +33,6 @@
       'angular2-jwt': 'npm:angular2-jwt/angular2-jwt.js',
       'js-base64' : 'npm:js-base64/base64.js',
       'buffer' : 'npm:buffer-shims/index.js',
-      'ng2-table': 'npm:ng2-table',
     },
     // packages tells the System loader how to load when no filename and/or no extension
     packages: {
@@ -48,9 +47,6 @@
         main: './index.js',
         defaultExtension: 'js'
       },
-      'ng2-table': {
-          defaultExtension: 'js'
-        },
     }
   });
 })(this);
