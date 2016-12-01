@@ -230,35 +230,11 @@ func GetDevice(id string) (*SnmpDevice, error) {
 	return dev, nil
 }
 
-type devStat struct {
-	Requests           int64
-	Gets               int64
-	Errors             int64
-	ReloadLoopsPending int
-	DeviceActive       bool
-	DeviceConnected    bool
-	NumMeasurements    int
-	NumMetrics         int
-}
-
 func GetDevStats() map[string]*devStat {
 	devstats := make(map[string]*devStat)
 	mutex.Lock()
 	for k, v := range devices {
-		sum := 0
-		for _, m := range v.Measurements {
-			sum += len(m.OidSnmpMap)
-		}
-		devstats[k] = &devStat{
-			Requests:           v.Requests,
-			Gets:               v.Gets,
-			Errors:             v.Errors,
-			ReloadLoopsPending: v.ReloadLoopsPending,
-			DeviceActive:       v.DeviceActive,
-			DeviceConnected:    v.DeviceConnected,
-			NumMeasurements:    len(v.Measurements),
-			NumMetrics:         sum,
-		}
+		devstats[k] = v.GetBasicStats()
 	}
 	mutex.Unlock()
 	return devstats

@@ -15,6 +15,17 @@ import (
 	"github.com/soniah/gosnmp"
 )
 
+type devStat struct {
+	Requests           int64
+	Gets               int64
+	Errors             int64
+	ReloadLoopsPending int
+	DeviceActive       bool
+	DeviceConnected    bool
+	NumMeasurements    int
+	NumMetrics         int
+}
+
 // SnmpDevice contains all runtime device related device configu ns and state
 type SnmpDevice struct {
 	cfg *SnmpDeviceCfg
@@ -48,12 +59,56 @@ type SnmpDevice struct {
 	chLogLevel  chan string
 	chExit      chan bool
 	chFltUpdate chan bool
+	mutex       sync.Mutex
 }
 
 func NewSnmpDevice(c *SnmpDeviceCfg) *SnmpDevice {
 	dev := SnmpDevice{}
 	dev.Init(c)
 	return &dev
+}
+
+//ReloadLoopPending needs to be mutex excluded
+
+func (d *SnmpDevice) setReloadLoopsPending(val int) {
+	d.mutex.Lock()
+	d.ReloadLoopsPending = val
+	d.mutex.Unlock()
+}
+
+func (d *SnmpDevice) getReloadLoopsPending() int {
+	d.mutex.Lock()
+	val := d.ReloadLoopsPending
+	d.mutex.Unlock()
+	return val
+}
+
+func (d *SnmpDevice) decReloadLoopsPending() {
+	d.mutex.Lock()
+	if d.ReloadLoopsPending > 0 {
+		d.ReloadLoopsPending--
+	}
+	d.mutex.Unlock()
+}
+
+func (d *SnmpDevice) GetBasicStats() *devStat {
+
+	sum := 0
+	for _, m := range d.Measurements {
+		sum += len(m.OidSnmpMap)
+	}
+
+	stat := &devStat{
+		Requests:           d.Requests,
+		Gets:               d.Gets,
+		Errors:             d.Errors,
+		ReloadLoopsPending: d.getReloadLoopsPending(),
+		DeviceActive:       d.DeviceActive,
+		DeviceConnected:    d.DeviceConnected,
+		NumMeasurements:    len(d.Measurements),
+		NumMetrics:         sum,
+	}
+	return stat
 }
 
 //AttachOutDBs to get info
@@ -230,7 +285,7 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 	d.log.Formatter = customFormatter
 	customFormatter.FullTimestamp = true
 
-	d.ReloadLoopsPending = d.cfg.UpdateFltFreq
+	d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
 
 	//Init channels
 	d.chDebug = make(chan bool)
@@ -386,10 +441,10 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				 *
 				 *******************************************/
 				//Check if reload needed with d.ReloadLoopsPending if a posivive value on negative this will disabled
-				if d.ReloadLoopsPending > 0 {
-					d.ReloadLoopsPending--
-				}
-				if d.ReloadLoopsPending == 0 {
+
+				d.decReloadLoopsPending()
+
+				if d.getReloadLoopsPending() == 0 {
 					startIdxUpdateStats := time.Now()
 					for _, m := range d.Measurements {
 						if m.cfg.GetMode == "value" {
@@ -404,7 +459,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 							m.InitBuildRuntime()
 						}
 					}
-					d.ReloadLoopsPending = d.cfg.UpdateFltFreq
+					d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
 					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
 					d.log.Infof("snmpdevice [%s] Index reload took [%s]", d.cfg.ID, elapsedIdxUpdateStats)
 				}
@@ -458,7 +513,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				d.log.Infof("EXIT from SNMP Gather process for device %s ", d.cfg.ID)
 				return
 			case <-d.chFltUpdate:
-				d.ReloadLoopsPending = 1
+				d.setReloadLoopsPending(1)
 			case debug := <-d.chDebug:
 				d.StateDebug = debug
 				d.log.Infof("DEBUG  ACTIVE %s [%t] ", d.cfg.ID, debug)
