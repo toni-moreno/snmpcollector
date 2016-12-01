@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/go-macaron/binding"
-	//"github.com/go-macaron/cache"
 	"github.com/go-macaron/session"
+	"github.com/go-macaron/toolbox"
 	"gopkg.in/macaron.v1"
+
 	//	"html/template"
 	"crypto/md5"
 	"net/http"
@@ -42,7 +43,7 @@ func webServer(port int) {
 	})*/
 	// initiate the app
 	m := macaron.Classic()
-
+	m.Use(toolbox.Toolboxer(m))
 	// register middleware
 	m.Use(GetContextHandler())
 	m.Use(macaron.Recovery())

@@ -42,6 +42,10 @@
 			"Rev": "66031fcb37a0fff002a1f028eb0b3a815c78306b"
 		},
 		{
+			"ImportPath": "github.com/go-macaron/toolbox",
+			"Rev": "99a42f20e9e88daec5c0d7beb4e7eac134680ab0"
+		},
+		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
 			"Comment": "v1.2-26-g9543750",
 			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"
