@@ -94,15 +94,28 @@ func (db *InfluxDB) Connect() error {
 	return err
 }
 
+// IsStarted check if this thread is already working
+func (db *InfluxDB) IsStarted() bool {
+	db.mutex.Lock()
+	started := db.started
+	db.mutex.Unlock()
+	return started
+}
+
+// SetStartedAs change started state
+func (db *InfluxDB) SetStartedAs(st bool) {
+	db.mutex.Lock()
+	db.started = st
+	db.mutex.Unlock()
+}
+
 //Init initialies runtime info
 func (db *InfluxDB) Init() {
 	if db.dummy == true {
 		return
 	}
-	db.mutex.Lock()
-	started := db.started
-	db.mutex.Unlock()
-	if started == true {
+
+	if db.IsStarted() == true {
 		log.Infof("Sender thread to : %s  already Initialized (skipping Initialization)", db.cfg.ID)
 		return
 	}
@@ -131,14 +144,13 @@ func (db *InfluxDB) StopSender() {
 	if db.dummy == true {
 		return
 	}
-	db.mutex.Lock()
-	started := db.started
-	db.mutex.Unlock()
-	if started == true {
+
+	if db.IsStarted() == true {
 		db.chExit <- true
+		return
 	}
 
-	log.Infof("Can not stop Sender %s becaouse of its already stopped", db.cfg.ID)
+	log.Infof("Can not stop Sender %s becaouse of it is already stopped", db.cfg.ID)
 }
 
 //Send send data
@@ -156,31 +168,26 @@ func (db *InfluxDB) Hostname() string {
 
 // StartSender begins sender loop
 func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
-	db.mutex.Lock()
-	started := db.started
-	db.mutex.Unlock()
-	if started == true {
-		log.Infof("Sender thread to : %s  already started (skipping Initialization)", db.cfg.ID)
+
+	if db.IsStarted() == true {
+		log.Infof("Sender thread to : %s  already started (skipping Goroutine creation)", db.cfg.ID)
 		return
 	}
-
+	wg.Add(1)
 	go db.startSenderGo(rand.Int(), wg)
 }
 
 func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 	defer wg.Done()
-	wg.Add(1)
-	db.mutex.Lock()
-	db.started = true
-	db.mutex.Unlock()
+
+	db.SetStartedAs(true)
+
 	log.Infof("beggining Influx Sender thread: %d", r)
 	for {
 		select {
 		case <-db.chExit:
 			log.Infof("EXIT from Influx sender process for device %s ", db.cfg.ID)
-			db.mutex.Lock()
-			db.started = false
-			db.mutex.Unlock()
+			db.SetStartedAs(false)
 			return
 		case data := <-db.iChan:
 			if data == nil {
