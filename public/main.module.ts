@@ -5,13 +5,10 @@ import { RouterModule } from '@angular/router';
 import { HttpModule } from '@angular/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { AUTH_PROVIDERS } from 'angular2-jwt';
 // external libs
-//
 
 import { Ng2TableModule } from './common/ng-table/ng2-table';
 
-import { AuthGuard } from './common/auth.guard';
 import { Home } from './home/home';
 import { Login } from './login/login';
 import { App } from './app/app';
@@ -76,7 +73,6 @@ import { ObjectParserPipe } from './common/custom_pipe'
   ],
   providers: [
     ValidationService,
-    AuthGuard, ...AUTH_PROVIDERS
   ]
 })
 export class AppModule {}

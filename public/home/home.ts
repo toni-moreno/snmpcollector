@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { Http, Headers } from '@angular/http';
-import { AuthHttp,JwtHelper } from 'angular2-jwt';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
 import { contentHeaders } from '../common/headers';
@@ -15,21 +14,15 @@ import { contentHeaders } from '../common/headers';
 })
 
 export class Home {
-  jwt: string;
-  decodedJwt: string;
+
   response: string;
   api: string;
   item_type: string;
-  username: string;
   version: any;
 
 
-  constructor(public router: Router, public http: Http, public authHttp: AuthHttp) {
-    this.jwt = localStorage.getItem('id_token');
-    this.username = localStorage.getItem('username');
-    console.log('creating home!! id_token:'+this.jwt);
+  constructor(public router: Router, public http: Http) {
 
-    this.decodedJwt = this.jwt ;
     this.item_type= "runtime";
     this.getFooterInfo();
   }
@@ -38,8 +31,6 @@ export class Home {
     this.http.post('/logout', { headers: contentHeaders })
       .subscribe(
         response => {
-          localStorage.removeItem('username');
-          localStorage.removeItem('id_token');
           this.router.navigate(['/login']);
         },
         error => {

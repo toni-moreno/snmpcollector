@@ -20,8 +20,6 @@ export class Login {
     this.http.post('/login', body, { headers: contentHeaders })
       .subscribe(
         response => {
-          console.log('id_token: '+response.json())
-          localStorage.setItem('id_token', response.json());
           this.router.navigate(['home']);
         },
         error => {

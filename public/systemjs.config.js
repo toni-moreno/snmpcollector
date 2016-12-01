@@ -30,7 +30,6 @@
       'lodash': 'npm:lodash/lodash.js',
       'ng2-bootstrap': 'npm:ng2-bootstrap/ng2-bootstrap.js',
       'moment': 'npm:moment/moment.js',
-      'angular2-jwt': 'npm:angular2-jwt/angular2-jwt.js',
       'js-base64' : 'npm:js-base64/base64.js',
       'buffer' : 'npm:buffer-shims/index.js',
     },
