@@ -5,6 +5,7 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"math/rand"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -15,9 +16,11 @@ type InfluxDB struct {
 	started bool
 	dummy   bool
 	iChan   chan *client.BatchPoints
+	chExit  chan bool
 	client  client.Client
 	Sent    int64
 	Errors  int64
+	mutex   sync.Mutex
 }
 
 var influxdbDummy = &InfluxDB{
@@ -25,6 +28,7 @@ var influxdbDummy = &InfluxDB{
 	started: false,
 	dummy:   true,
 	iChan:   nil,
+	chExit:  nil,
 	client:  nil,
 	Sent:    0,
 	Errors:  0,
@@ -95,8 +99,11 @@ func (db *InfluxDB) Init() {
 	if db.dummy == true {
 		return
 	}
-	if db.started == true {
-		log.Infof("Emitter thread to : %s  already started (skipping Initialization)", db.cfg.ID)
+	db.mutex.Lock()
+	started := db.started
+	db.mutex.Unlock()
+	if started == true {
+		log.Infof("Sender thread to : %s  already Initialized (skipping Initialization)", db.cfg.ID)
 		return
 	}
 
@@ -108,6 +115,7 @@ func (db *InfluxDB) Init() {
 
 	log.Infof("Connecting to: %s", db.cfg.Host)
 	db.iChan = make(chan *client.BatchPoints, 65535)
+	db.chExit = make(chan bool)
 	if err := db.Connect(); err != nil {
 		log.Errorln("failed connecting to: ", db.cfg.Host)
 		log.Errorln("error: ", err)
@@ -116,8 +124,21 @@ func (db *InfluxDB) Init() {
 	}
 
 	log.Infof("Connected to: %s", db.cfg.Host)
-	db.started = true
-	go influxEmitter(db, rand.Int())
+}
+
+// End finalize sender goroutines
+func (db *InfluxDB) StopSender() {
+	if db.dummy == true {
+		return
+	}
+	db.mutex.Lock()
+	started := db.started
+	db.mutex.Unlock()
+	if started == true {
+		db.chExit <- true
+	}
+
+	log.Info("Can not stop Sender %s becaouse of its already stopped", db.cfg.ID)
 }
 
 //Send send data
@@ -133,24 +154,42 @@ func (db *InfluxDB) Hostname() string {
 	return strings.Split(db.cfg.Host, ":")[0]
 }
 
-// use chan as a queue so that interupted connections to
-// influxdb server don't drop collected data
+// StartSender begins sender loop
+func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
+	db.mutex.Lock()
+	started := db.started
+	db.mutex.Unlock()
+	if started == true {
+		log.Infof("Sender thread to : %s  already started (skipping Initialization)", db.cfg.ID)
+		return
+	}
 
-func influxEmitter(db *InfluxDB, r int) {
-	log.Infof("beggining Influx Emmiter thread: %d", r)
+	go db.startSenderGo(rand.Int(), wg)
+}
+
+func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	wg.Add(1)
+	db.mutex.Lock()
+	db.started = true
+	db.mutex.Unlock()
+	log.Infof("beggining Influx Sender thread: %d", r)
 	for {
 		select {
+		case <-db.chExit:
+			log.Infof("EXIT from Influx sender process for device %s ", db.cfg.ID)
+			db.mutex.Lock()
+			db.started = false
+			db.mutex.Unlock()
+			return
 		case data := <-db.iChan:
-			/*if testing {
-				break
-			}*/
 			if data == nil {
 				log.Warn("null influx input")
 				continue
 			}
 
 			// keep trying until we get it (don't drop the data)
-			log.Debugf("sending data from Emmiter %d", r)
+			log.Debugf("sending data from Sender %d", r)
 			for {
 				if err := db.client.Write(*data); err != nil {
 					db.incErrors()

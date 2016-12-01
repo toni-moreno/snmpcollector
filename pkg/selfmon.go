@@ -57,13 +57,17 @@ func (sm *SelfMonConfig) Init() {
 
 // StartGather for stopping selfmonitori goroutine
 func (sm *SelfMonConfig) StartGather(wg *sync.WaitGroup) {
+	if !sm.Enabled {
+		log.Info("SELFMON: disabled, skipping start gather")
+		return
+	}
 	if sm.runtimeStatsRunning {
 		log.Error("SELFMON:Runtime stats is already running")
 		return
 	}
 
 	sm.runtimeStatsRunning = true
-	wg.Add(1)
+
 	go sm.reportRuntimeStats(wg)
 }
 
@@ -76,7 +80,7 @@ func (sm *SelfMonConfig) StopGather() {
 
 func (sm *SelfMonConfig) reportRuntimeStats(wg *sync.WaitGroup) {
 	defer wg.Done()
-
+	wg.Add(1)
 	log.Info("SELFMON: Beginning  selfmonitor process for device")
 
 	memStats := &runtime.MemStats{}
@@ -158,6 +162,7 @@ func (sm *SelfMonConfig) reportRuntimeStats(wg *sync.WaitGroup) {
 				break LOOP
 			case <-sm.chExit:
 				log.Infof("SELFMON: EXIT from SelfMonitoring Gather process ")
+				sm.runtimeStatsRunning = false
 				return
 			}
 		}

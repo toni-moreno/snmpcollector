@@ -57,7 +57,7 @@ func NewSnmpDevice(c *SnmpDeviceCfg) *SnmpDevice {
 }
 
 //AttachOutDBs to get info
-func (d *SnmpDevice) AttachOutDBMap(influxdb map[string]*InfluxDB) error {
+func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*InfluxDB) (*InfluxDB, error) {
 	if len(d.cfg.OutDB) == 0 {
 		d.log.Warnf("No OutDB configured on the device: %s", d.cfg.ID)
 	}
@@ -67,11 +67,11 @@ func (d *SnmpDevice) AttachOutDBMap(influxdb map[string]*InfluxDB) error {
 		//we assume there is always a default db
 		if d.Influx, ok = influxdb["default"]; !ok {
 			//but
-			return fmt.Errorf("No influx config for snmp device: %s", d.cfg.ID)
+			return nil, fmt.Errorf("No influx config for snmp device: %s", d.cfg.ID)
 		}
 	}
-	d.Influx.Init()
-	return nil
+
+	return d.Influx, nil
 }
 
 //RTActivate change activatio state in runtime
@@ -344,8 +344,13 @@ func (d *SnmpDevice) addErrors(n int64) {
 
 // StartGather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) StartGather(wg *sync.WaitGroup) {
-	defer wg.Done()
 
+	go d.startGatherGo(wg)
+}
+
+func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
+	defer wg.Done()
+	wg.Add(1)
 	if d.DeviceActive && d.DeviceConnected {
 		d.log.Infof("Begin first InidevInfo")
 		startSnmp := time.Now()

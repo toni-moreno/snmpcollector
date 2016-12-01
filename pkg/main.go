@@ -3,14 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/Sirupsen/logrus"
+	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
-
-	"github.com/Sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // GeneralConfig has miscelaneous configuration options
@@ -58,7 +57,8 @@ var (
 	//runtime output db's
 	influxdb map[string]*InfluxDB
 	// for synchronize  deivce specific goroutines
-	wg sync.WaitGroup
+	GatherWg sync.WaitGroup
+	SenderWg sync.WaitGroup
 )
 
 func flags() *flag.FlagSet {
@@ -144,20 +144,23 @@ func PrepareInfluxDBs() map[string]*InfluxDB {
 	return idb
 }
 
-func initSelfMonitoring(influxdb map[string]*InfluxDB) {
-	log.Debugf("INFLUXDB2: %+v", influxdb)
+func initSelfMonitoring(idb map[string]*InfluxDB) {
+	log.Debugf("INFLUXDB2: %+v", idb)
 	if cfg.Selfmon.Enabled && !showConfig {
-		if val, ok := influxdb["default"]; ok {
+		if val, ok := idb["default"]; ok {
 			//only executed if a "default" influxdb exist
+			val.Init()
+			val.StartSender(&SenderWg)
+
 			cfg.Selfmon.Init()
 			cfg.Selfmon.Influx = val
-			cfg.Selfmon.Influx.Init()
+
 			log.Printf("SELFMON enabled %+v", cfg.Selfmon)
 			//Begin the statistic reporting
-			cfg.Selfmon.StartGather(&wg)
+			cfg.Selfmon.StartGather(&GatherWg)
 		} else {
 			cfg.Selfmon.Enabled = false
-			log.Errorf("SELFMON disabled becaouse of no default db found !!! SELFMON[ %+v ]  INFLUXLIST[ %+v]\n", cfg.Selfmon, influxdb)
+			log.Errorf("SELFMON disabled becaouse of no default db found !!! SELFMON[ %+v ]  INFLUXLIST[ %+v]\n", cfg.Selfmon, idb)
 		}
 	} else {
 		log.Printf("SELFMON disabled %+v\n", cfg.Selfmon)
@@ -261,8 +264,15 @@ func GetDevStats() map[string]*devStat {
 	return devstats
 }
 
+func StopInfluxOut(idb map[string]*InfluxDB) {
+	for k, v := range idb {
+		log.Infof("Stopping Influxdb out %s", k)
+		v.StopSender()
+	}
+}
+
 // ProcessStop stop all device goroutines
-func ProcessStop() {
+func DeviceProcessStop() {
 	mutex.Lock()
 	for _, c := range devices {
 		c.StopGather()
@@ -271,11 +281,10 @@ func ProcessStop() {
 }
 
 // ProcessStart start all devices goroutines
-func ProcessStart() {
+func DeviceProcessStart() {
 	mutex.Lock()
 	for _, c := range devices {
-		wg.Add(1)
-		go c.StartGather(&wg)
+		c.StartGather(&GatherWg)
 	}
 	mutex.Unlock()
 }
@@ -285,7 +294,7 @@ func LoadConf() {
 	//Load all database info to Cfg struct
 	cfg.Database.LoadConfig()
 	//Prepare the InfluxDataBases Configuration
-	influxdb := PrepareInfluxDBs()
+	influxdb = PrepareInfluxDBs()
 
 	//log.Debugf("INFLUXDB: %+v", influxdb)
 	//log.Debugf("SelfMonitoring config : %+v", cfg.Selfmon)
@@ -307,7 +316,9 @@ func LoadConf() {
 		dev := NewSnmpDevice(c)
 		//send db's map to initialize each one its own db if needed and not yet initialized
 		if !showConfig {
-			dev.AttachOutDBMap(influxdb)
+			outdb, _ := dev.GetOutSenderFromMap(influxdb)
+			outdb.Init()
+			outdb.StartSender(&SenderWg)
 		}
 		mutex.Lock()
 		devices[k] = dev
@@ -331,19 +342,24 @@ func LoadConf() {
 // ReloadConf call to reinitialize alln configurations
 func ReloadConf() time.Duration {
 	start := time.Now()
-	log.Info("RELOADCONF: begin device processes stop...")
+	log.Info("RELOADCONF: begin device Gather processes stop...")
 	//stop all device prcesses
-	ProcessStop()
-	log.Info("RELOADCONF: begin selfmon processes stop...")
+	DeviceProcessStop()
+	log.Info("RELOADCONF: begin selfmon Gather processes stop...")
 	//stop the selfmon process
 	cfg.Selfmon.StopGather()
-	log.Info("RELOADCONF: waiting for all gorotines stop...")
+	log.Info("RELOADCONF: waiting for all Gather gorotines stop...")
 	//wait until Done
-	wg.Wait()
+	GatherWg.Wait()
+	log.Info("RELOADCONF: begin sender processes stop...")
+	//stop all Output Emmiter
+	StopInfluxOut(influxdb)
+	log.Info("RELOADCONF: waiting for all Sender gorotines stop..")
+	SenderWg.Wait()
 	log.Info("RELOADCONF: ĺoading configuration Again...")
 	LoadConf()
 	log.Info("RELOADCONF: Starting all device processes again...")
-	ProcessStart()
+	DeviceProcessStart()
 	return time.Since(start)
 }
 
@@ -358,7 +374,7 @@ func main() {
 
 	LoadConf()
 
-	ProcessStart()
+	DeviceProcessStart()
 
 	var port int
 	if cfg.HTTP.Port > 0 {
