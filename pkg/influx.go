@@ -138,7 +138,7 @@ func (db *InfluxDB) StopSender() {
 		db.chExit <- true
 	}
 
-	log.Info("Can not stop Sender %s becaouse of its already stopped", db.cfg.ID)
+	log.Infof("Can not stop Sender %s becaouse of its already stopped", db.cfg.ID)
 }
 
 //Send send data
@@ -189,7 +189,7 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 			}
 
 			// keep trying until we get it (don't drop the data)
-			log.Debugf("sending data from Sender %d", r)
+			log.Debugf("sending data from Sender %s (%d)", db.cfg.ID, r)
 			for {
 				if err := db.client.Write(*data); err != nil {
 					db.incErrors()

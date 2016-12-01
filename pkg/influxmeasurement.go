@@ -96,6 +96,7 @@ type InfluxMeasurement struct {
 	Filterlabels     map[string]string      // `json:"-"`
 	AllIndexedLabels map[string]string      //`json:"-"` //all available values on the remote device
 	CurIndexedLabels map[string]string      //`json:"-"`
+	idxPosInOID      int
 	Filter           *MeasFilterCfg
 	log              *logrus.Logger
 	snmpClient       *gosnmp.GoSNMP
@@ -117,15 +118,13 @@ func (m *InfluxMeasurement) Init() error {
 	var err error
 	//loading all posible values in 	m.AllIndexedLabels
 	if m.cfg.GetMode == "indexed" {
+		m.idxPosInOID = len(m.cfg.IndexOID)
 		m.log.Infof("Loading Indexed values in : %s", m.cfg.ID)
 		m.AllIndexedLabels, err = m.loadIndexedLabels()
 		if err != nil {
 			m.log.Errorf("Error while trying to load Indexed Labels on for measurement %s for baseOid %s : ERROR: %s", m.cfg.ID, m.cfg.IndexOID, err)
 			return err
 		}
-	}
-
-	if m.cfg.GetMode == "indexed" {
 		//Final Selected Indexes are All Indexed
 		m.CurIndexedLabels = m.AllIndexedLabels
 	}
@@ -601,8 +600,8 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 			m.log.Warnf("no value retured by pdu :%+v", pdu)
 			return nil //if error return the bulk process will stop
 		}
-		i := strings.LastIndex(pdu.Name, ".")
-		suffix := pdu.Name[i+1:]
+		//i := strings.LastIndex(pdu.Name, ".")
+		suffix := pdu.Name[m.idxPosInOID+1:]
 
 		if m.cfg.IndexAsValue == true {
 			allindex[suffix] = suffix
