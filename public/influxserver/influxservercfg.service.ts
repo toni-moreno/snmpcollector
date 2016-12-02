@@ -1,44 +1,38 @@
-import { Http,Headers } from '@angular/http';
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
+import { HttpAPI } from '../common/httpAPI'
 
 @Injectable()
 export class InfluxServerService {
 
-    constructor(public http: Http) {
-        console.log('Task Service created.', http);
+    constructor(public httpAPI: HttpAPI) {
     }
 
     addInfluxServer(dev) {
-        var headers = new Headers();
-        headers.append("Content-Type", 'application/json');
-        return this.http.post('/influxservers',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/influxservers',JSON.stringify(dev,function (key,value) {
                 if ( key == 'Port' ) {
                   return parseInt(value);
                 }
                 return value;
-        }), { headers: headers })
+        }))
         .map( (responseData) => responseData.json());
+
     }
 
     editInfluxServer(dev, id) {
-        var headers = new Headers();
-        headers.append("Content-Type", 'application/json');
-        console.log("DEV: ",dev);
-        //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
-        return this.http.put('/influxservers/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/influxservers/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ) {
               return parseInt(value);
             }
             return value;
 
-        }), {  headers: headers   })
+        }))
         .map( (responseData) => responseData.json());
     }
 
     getInfluxServer(filter_s: string) {
         // return an observable
-        return this.http.get('/influxservers')
+        return this.httpAPI.get('/influxservers')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -66,13 +60,13 @@ export class InfluxServerService {
     getInfluxServerById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.http.get('/influxservers/'+id)
+        return this.httpAPI.get('/influxservers/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteInfluxServer(id : string){
-      return this.http.get('/influxservers/checkondel/'+id)
+      return this.httpAPI.get('/influxservers/checkondel/'+id)
       .map( (responseData) =>
        responseData.json()
       ).map((deleteobject) => {
@@ -93,7 +87,7 @@ export class InfluxServerService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.http.delete('/influxservers/'+id)
+        return this.httpAPI.delete('/influxservers/'+id)
         .map( (responseData) =>
          responseData.json()
         );

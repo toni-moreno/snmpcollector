@@ -1,18 +1,17 @@
-import { Http,Headers } from '@angular/http';
+import { HttpAPI } from '../common/httpAPI'
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 
 @Injectable()
 export class RuntimeService {
 
-    constructor(public http: Http) {
-        console.log('Task Service created.', http);
+    constructor(public httpAPI: HttpAPI) {
     }
 
 
     getRuntime(filter_s: string) {
         // return an observable
-        return this.http.get('/runtime/info')
+        return this.httpAPI.get('/runtime/info')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -41,7 +40,7 @@ export class RuntimeService {
 
     getRuntimeById(id : string) {
         // return an observable
-        return this.http.get('/runtime/info/'+id)
+        return this.httpAPI.get('/runtime/info/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
@@ -49,12 +48,12 @@ export class RuntimeService {
     changeDeviceActive(id : string, event : boolean) {
         // return an observable
         if (event) {
-            return this.http.put('/runtime/activatedev/'+id,id)
+            return this.httpAPI.put('/runtime/activatedev/'+id,id)
             .map( (responseData) =>
                 responseData.json()
             )
         } else {
-            return this.http.put('/runtime/deactivatedev/'+id,id)
+            return this.httpAPI.put('/runtime/deactivatedev/'+id,id)
             .map( (responseData) =>
                 responseData.json()
             )
@@ -64,12 +63,12 @@ export class RuntimeService {
     changeStateDebug(id : string, event : boolean) {
         // return an observable
         if (event) {
-            return this.http.put('/runtime/actsnmpdbg/'+id,id)
+            return this.httpAPI.put('/runtime/actsnmpdbg/'+id,id)
             .map( (responseData) =>
                 responseData.json()
             )
         } else {
-            return this.http.put('/runtime/deactsnmpdbg/'+id,id)
+            return this.httpAPI.put('/runtime/deactsnmpdbg/'+id,id)
             .map( (responseData) =>
                 responseData.json()
             )
@@ -78,7 +77,7 @@ export class RuntimeService {
 
     downloadLogFile(id : string) {
         // return an observable
-        return this.http.get('/runtime/getdevicelog/'+id)
+        return this.httpAPI.get('/runtime/getdevicelog/'+id)
         .map( (res) => {
             console.log("service_response",res)
             //return new Blob([res.arrayBuffer()],{type: "application/octet-stream" })
@@ -88,7 +87,7 @@ export class RuntimeService {
 
     forceFltUpdate(id : string) {
         // return an observable
-        return this.http.get('/runtime/forcefltupdate/'+id)
+        return this.httpAPI.get('/runtime/forcefltupdate/'+id)
         .map( (responseData) =>
             responseData.json()
         )

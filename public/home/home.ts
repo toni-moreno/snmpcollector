@@ -1,10 +1,8 @@
 import { Component } from '@angular/core';
 import { NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
-import { Http, Headers } from '@angular/http';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
-import { contentHeaders } from '../common/headers';
-
+import { HttpAPI} from '../common/httpAPI'
 
 
 @Component({
@@ -20,15 +18,12 @@ export class Home {
   item_type: string;
   version: any;
 
-
-  constructor(public router: Router, public http: Http) {
-
-    this.item_type= "runtime";
+  constructor(public router: Router, public httpAPI: HttpAPI) {
     this.getFooterInfo();
   }
 
   logout() {
-    this.http.post('/logout', { headers: contentHeaders })
+    this.httpAPI.post('/logout','')
       .subscribe(
         response => {
           this.router.navigate(['/login']);
@@ -41,7 +36,7 @@ export class Home {
   }
 
   reloadConfig() {
-    this.http.get('/runtime/agent/reloadconf', { headers: contentHeaders })
+    this.httpAPI.get('/runtime/agent/reloadconf')
       .subscribe(
         response => {
             alert(response.json())
@@ -84,7 +79,10 @@ export class Home {
 
   getFooterInfo() {
     this.getInfo(null)
-    .subscribe(data => { this.version = data;},
+    .subscribe(data => {
+      this.version = data;
+      this.item_type= "runtime";
+    },
      err => console.error(err),
      () =>  {}
      );
@@ -92,9 +90,8 @@ export class Home {
 
   getInfo(filter_s: string) {
       // return an observable
-      return this.http.get('/runtime/version')
+      return this.httpAPI.get('/runtime/version')
       .map( (responseData) => {
-          return responseData.json();
-      });
+          return responseData.json()});
   }
 }

@@ -12,6 +12,7 @@ import { Ng2TableModule } from './common/ng-table/ng2-table';
 import { Home } from './home/home';
 import { Login } from './login/login';
 import { App } from './app/app';
+import { HttpAPI } from './common/httpAPI';
 
 import { routes } from './app/app.routes';
 //common
@@ -32,6 +33,7 @@ import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ModalModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { GenericModal } from './common/generic-modal'
+
 //others
 import { ValidationService } from './common/validation.service';
 //pipes
@@ -72,6 +74,7 @@ import { ObjectParserPipe } from './common/custom_pipe'
     })
   ],
   providers: [
+    HttpAPI,
     ValidationService,
   ]
 })
