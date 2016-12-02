@@ -1,18 +1,16 @@
-import { Http,Headers } from '@angular/http';
+import { HttpAPI } from '../common/httpAPI'
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 
 @Injectable()
 export class SnmpDeviceService {
 
-    constructor(public http: Http) {
-        console.log('Task Service created.', http);
+    constructor(public httpAPI: HttpAPI) {
+        console.log('Task Service created.', httpAPI);
     }
 
     addDevice(dev) {
-        var headers = new Headers();
-        headers.append("Content-Type", 'application/json');
-        return this.http.post('/snmpdevice',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/snmpdevice',JSON.stringify(dev,function (key,value) {
             console.log("KEY: "+key+" Value: "+value);
             if ( key == 'Port' ||
             key == 'Retries' ||
@@ -32,16 +30,14 @@ export class SnmpDeviceService {
                 else return null;
             }
             return value;
-        }), { headers: headers })
+        }))
         .map( (responseData) => responseData.json());
     }
 
     editDevice(dev, id) {
-        var headers = new Headers();
-        headers.append("Content-Type", 'application/json');
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
-        return this.http.put('/snmpdevice/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/snmpdevice/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ||
             key == 'Retries' ||
             key == 'Timeout' ||
@@ -59,13 +55,13 @@ export class SnmpDeviceService {
                 else return null;
             }
             return value;
-        }), {  headers: headers   })
+        }))
         .map( (responseData) => responseData.json());
     }
 
     getDevices(filter_s: string) {
         // return an observable
-        return this.http.get('/snmpdevice')
+        return this.httpAPI.get('/snmpdevice')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -93,13 +89,13 @@ export class SnmpDeviceService {
     getDevicesById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.http.get('/snmpdevice/'+id)
+        return this.httpAPI.get('/snmpdevice/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteSNMPDevice(id : string){
-    return this.http.get('/influxservers/checkondel/'+id)
+    return this.httpAPI.get('/influxservers/checkondel/'+id)
     .map( (responseData) =>
      responseData.json()
     ).map((deleteobject) => {
@@ -120,16 +116,14 @@ export class SnmpDeviceService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.http.delete('/snmpdevice/'+id)
+        return this.httpAPI.delete('/snmpdevice/'+id)
         .map( (responseData) =>
          responseData.json()
         );
     };
 
     pingDevice(dev) {
-        var headers = new Headers();
-        headers.append("Content-Type", 'application/json');
-        return this.http.post('/runtime/snmpping/',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/runtime/snmpping/',JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ||
             key == 'Retries' ||
             key == 'Timeout' ||
@@ -146,7 +140,7 @@ export class SnmpDeviceService {
                 else return null;
             }
             return value;
-        }), { headers: headers })
+        }))
         .map( (responseData) => responseData.json());
     }
 
