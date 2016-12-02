@@ -1,8 +1,7 @@
 
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { Http } from '@angular/http';
-import { contentHeaders } from '../common/headers';
+import { HttpAPI} from '../common/httpAPI'
 
 @Component({
   selector: 'login',
@@ -11,13 +10,13 @@ import { contentHeaders } from '../common/headers';
 })
 
 export class Login {
-  constructor(public router: Router, public http: Http) {
+  constructor(public router: Router, public httpAPI: HttpAPI) {
   }
 
   login(event, username, password) {
     event.preventDefault();
     let body = JSON.stringify({ username, password });
-    this.http.post('/login', body, { headers: contentHeaders })
+    this.httpAPI.post('/login', body)
       .subscribe(
         response => {
           this.router.navigate(['home']);
