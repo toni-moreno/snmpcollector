@@ -1,33 +1,29 @@
-import { Http,Headers } from '@angular/http';
+import { HttpAPI } from '../common/httpAPI'
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 
 @Injectable()
 export class InfluxMeasService {
 
-    constructor(public http: Http) {
-        console.log('Task Service created.', http);
+    constructor(public httpAPI: HttpAPI) {
+        console.log('Task Service created.', httpAPI);
     }
 
     addMeas(dev) {
-        var headers = new Headers();
-        headers.append("Content-Type", 'application/json');
-        return this.http.post('/measurement',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/measurement',JSON.stringify(dev,function (key,value) {
             if ( key == 'Fields' ) {
               if (value == null || value == "")  return null;
               else return String(value).split(',');
             }
             if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
             return value;
-        }), { headers: headers })
+        }))
         .map( (responseData) => responseData.json());
     }
 
     editMeas(dev, id) {
-        var headers = new Headers();
-        headers.append("Content-Type", 'application/json');
         console.log("DEV: ",dev);
-        return this.http.put('/measurement/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/measurement/'+id,JSON.stringify(dev,function (key,value) {
           if ( key == 'Fields' ) {
             if (value == null || value == "")  return null;
             else return String(value).split(',');
@@ -35,13 +31,13 @@ export class InfluxMeasService {
           if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
           return value;
 
-        }), {  headers: headers   })
+      }))
         .map( (responseData) => responseData.json());
     }
 
     getMeas(filter_s: string) {
         // return an observable
-        return this.http.get('/measurement')
+        return this.httpAPI.get('/measurement')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -66,16 +62,17 @@ export class InfluxMeasService {
             return result;
         });
     }
+    
     getMeasById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.http.get('/measurement/'+id)
+        return this.httpAPI.get('/measurement/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteInfluxMeas(id : string){
-      return this.http.get('/measurement/checkondel/'+id)
+      return this.httpAPI.get('/measurement/checkondel/'+id)
       .map( (responseData) =>
        responseData.json()
       ).map((deleteobject) => {
@@ -96,7 +93,7 @@ export class InfluxMeasService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.http.delete('/measurement/'+id)
+        return this.httpAPI.delete('/measurement/'+id)
         .map( (responseData) =>
          responseData.json()
         );
