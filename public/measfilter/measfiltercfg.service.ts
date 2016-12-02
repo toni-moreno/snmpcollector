@@ -1,45 +1,41 @@
-import { Http,Headers } from '@angular/http';
+import { HttpAPI } from '../common/httpAPI'
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 
 @Injectable()
 export class MeasFilterService {
 
-    constructor(public http: Http) {
-        console.log('Task Service created.', http);
+    constructor(public httpAPI: HttpAPI) {
+        console.log('Task Service created.', httpAPI);
     }
 
     addMeasFilter(dev) {
-        var headers = new Headers();
-        headers.append("Content-Type", 'application/json');
-        return this.http.post('/measfilters',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/measfilters',JSON.stringify(dev,function (key,value) {
                 if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
                 if ( key == 'IDMeasurementCfg') {
                     if ( value == "" ) return null
                 }
                 return value;
-        }), { headers: headers })
+        }))
         .map( (responseData) => responseData.json());
     }
 
     editMeasFilter(dev, id) {
-        var headers = new Headers();
-        headers.append("Content-Type", 'application/json');
         console.log("DEV: ",dev);
-        return this.http.put('/measfilters/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/measfilters/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
             if ( key == 'IDMeasurementCfg') {
                 if ( value == "" ) return null
             }
             return value;
 
-        }), {  headers: headers   })
+        }))
         .map( (responseData) => responseData.json());
     }
 
     getMeasFilter(filter_s: string) {
         // return an observable
-        return this.http.get('/measfilters')
+        return this.httpAPI.get('/measfilters')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -67,13 +63,13 @@ export class MeasFilterService {
     getMeasFilterById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.http.get('/measfilters/'+id)
+        return this.httpAPI.get('/measfilters/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteMeasFilter(id : string){
-      return this.http.get('/measfilters/checkondel/'+id)
+      return this.httpAPI.get('/measfilters/checkondel/'+id)
       .map( (responseData) =>
        responseData.json()
       ).map((deleteobject) => {
@@ -94,7 +90,7 @@ export class MeasFilterService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.http.delete('/measfilters/'+id)
+        return this.httpAPI.delete('/measfilters/'+id)
         .map( (responseData) =>
          responseData.json()
         );
