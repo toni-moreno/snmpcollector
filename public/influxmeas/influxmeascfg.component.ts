@@ -243,7 +243,6 @@ export class InfluxMeasCfgComponent {
       err => console.error(err),
       () =>  {this.editmode = "list"; this.reloadData()}
 			);
-      this.influxmeasForm.reset();
 		}
  }
 
