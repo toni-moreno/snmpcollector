@@ -247,6 +247,13 @@ func StopInfluxOut(idb map[string]*InfluxDB) {
 	}
 }
 
+func ReleaseInfluxOut(idb map[string]*InfluxDB) {
+	for k, v := range idb {
+		log.Infof("Release Influxdb resources %s", k)
+		v.End()
+	}
+}
+
 // ProcessStop stop all device goroutines
 func DeviceProcessStop() {
 	mutex.Lock()
@@ -265,15 +272,20 @@ func DeviceProcessStart() {
 	mutex.Unlock()
 }
 
+func ReleaseDevices() {
+	mutex.Lock()
+	for _, c := range devices {
+		c.End()
+	}
+	mutex.Unlock()
+}
+
 // LoadConf call to initialize alln configurations
 func LoadConf() {
 	//Load all database info to Cfg struct
 	cfg.Database.LoadConfig()
 	//Prepare the InfluxDataBases Configuration
 	influxdb = PrepareInfluxDBs()
-
-	//log.Debugf("INFLUXDB: %+v", influxdb)
-	//log.Debugf("SelfMonitoring config : %+v", cfg.Selfmon)
 
 	// beginning self monitoring process if needed.( before each other gorotines could begin)
 
@@ -327,11 +339,20 @@ func ReloadConf() time.Duration {
 	log.Info("RELOADCONF: waiting for all Gather gorotines stop...")
 	//wait until Done
 	GatherWg.Wait()
+	log.Info("RELOADCONF: releasing Device Resources")
+	ReleaseDevices()
+	log.Info("RELOADCONF: releasing Seflmonitoring Resources")
+	cfg.Selfmon.End()
 	log.Info("RELOADCONF: begin sender processes stop...")
 	//stop all Output Emmiter
+	//log.Info("DEBUG Gather WAIT %+v", GatherWg)
+	//log.Info("DEBUG SENDER WAIT %+v", SenderWg)
 	StopInfluxOut(influxdb)
 	log.Info("RELOADCONF: waiting for all Sender gorotines stop..")
 	SenderWg.Wait()
+	log.Info("RELOADCONF: releasing Sender Resources")
+	ReleaseInfluxOut(influxdb)
+
 	log.Info("RELOADCONF: ĺoading configuration Again...")
 	LoadConf()
 	log.Info("RELOADCONF: Starting all device processes again...")

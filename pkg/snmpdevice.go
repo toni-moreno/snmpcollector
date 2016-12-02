@@ -72,15 +72,14 @@ func NewSnmpDevice(c *SnmpDeviceCfg) *SnmpDevice {
 
 func (d *SnmpDevice) setReloadLoopsPending(val int) {
 	d.mutex.Lock()
+	defer d.mutex.Unlock()
 	d.ReloadLoopsPending = val
-	d.mutex.Unlock()
 }
 
 func (d *SnmpDevice) getReloadLoopsPending() int {
 	d.mutex.Lock()
-	val := d.ReloadLoopsPending
-	d.mutex.Unlock()
-	return val
+	defer d.mutex.Unlock()
+	return d.ReloadLoopsPending
 }
 
 func (d *SnmpDevice) decReloadLoopsPending() {
@@ -331,6 +330,17 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 	}
 
 	return nil
+}
+
+func (d *SnmpDevice) End() {
+	close(d.chDebug)
+	close(d.chEnabled)
+	close(d.chLogLevel)
+	close(d.chExit)
+	close(d.chFltUpdate)
+	//release files
+	//os.Close(d.log.Out)
+	//release snmp resources
 }
 
 //InitSnmpConnect does the  SNMP client conection and retrieve system info

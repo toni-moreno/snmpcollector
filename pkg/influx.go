@@ -12,26 +12,30 @@ import (
 
 /*InfluxDB database export */
 type InfluxDB struct {
-	cfg     *InfluxCfg
-	started bool
-	dummy   bool
-	iChan   chan *client.BatchPoints
-	chExit  chan bool
-	client  client.Client
-	Sent    int64
-	Errors  int64
-	mutex   sync.Mutex
+	cfg         *InfluxCfg
+	initialized bool
+	imutex      sync.Mutex
+	started     bool
+	smutex      sync.Mutex
+
+	dummy  bool
+	iChan  chan *client.BatchPoints
+	chExit chan bool
+	client client.Client
+	Sent   int64
+	Errors int64
 }
 
 var influxdbDummy = &InfluxDB{
-	cfg:     nil,
-	started: false,
-	dummy:   true,
-	iChan:   nil,
-	chExit:  nil,
-	client:  nil,
-	Sent:    0,
-	Errors:  0,
+	cfg:         nil,
+	initialized: false,
+	started:     false,
+	dummy:       true,
+	iChan:       nil,
+	chExit:      nil,
+	client:      nil,
+	Sent:        0,
+	Errors:      0,
 }
 
 func (db *InfluxDB) incSent() {
@@ -94,19 +98,50 @@ func (db *InfluxDB) Connect() error {
 	return err
 }
 
+// CheckAndSetStarted check if this thread is already working and set if not
+func (db *InfluxDB) CheckAndSetStarted() bool {
+	db.smutex.Lock()
+	defer db.smutex.Unlock()
+	retval := db.started
+	db.started = true
+	return retval
+}
+
 // IsStarted check if this thread is already working
 func (db *InfluxDB) IsStarted() bool {
-	db.mutex.Lock()
-	started := db.started
-	db.mutex.Unlock()
-	return started
+	db.smutex.Lock()
+	defer db.smutex.Unlock()
+	return db.started
 }
 
 // SetStartedAs change started state
 func (db *InfluxDB) SetStartedAs(st bool) {
-	db.mutex.Lock()
+	db.smutex.Lock()
+	defer db.smutex.Unlock()
 	db.started = st
-	db.mutex.Unlock()
+}
+
+// CheckAndSetInitialized check if this thread is already working and set if not
+func (db *InfluxDB) CheckAndSetInitialized() bool {
+	db.imutex.Lock()
+	defer db.imutex.Unlock()
+	retval := db.initialized
+	db.initialized = true
+	return retval
+}
+
+// IsInitialized check if this thread is already working
+func (db *InfluxDB) IsInitialized() bool {
+	db.imutex.Lock()
+	defer db.imutex.Unlock()
+	return db.initialized
+}
+
+// SetInitializedAs change started state
+func (db *InfluxDB) SetInitialzedAs(ini bool) {
+	db.imutex.Lock()
+	defer db.imutex.Unlock()
+	db.initialized = ini
 }
 
 //Init initialies runtime info
@@ -115,7 +150,7 @@ func (db *InfluxDB) Init() {
 		return
 	}
 
-	if db.IsStarted() == true {
+	if db.CheckAndSetInitialized() == true {
 		log.Infof("Sender thread to : %s  already Initialized (skipping Initialization)", db.cfg.ID)
 		return
 	}
@@ -124,7 +159,7 @@ func (db *InfluxDB) Init() {
 		db.cfg.UserAgent = "snmpCollector-" + db.cfg.ID
 	}
 
-	log.Infof("Initializing influxdb with id = %s", db.cfg.ID)
+	log.Infof("Initializing influxdb with id = [ %s ]", db.cfg.ID)
 
 	log.Infof("Connecting to: %s", db.cfg.Host)
 	db.iChan = make(chan *client.BatchPoints, 65535)
@@ -139,6 +174,18 @@ func (db *InfluxDB) Init() {
 	log.Infof("Connected to: %s", db.cfg.Host)
 }
 
+func (db *InfluxDB) End() {
+	if db.dummy == true {
+		return
+	}
+	if db.IsInitialized() == true {
+		close(db.iChan)
+		close(db.chExit)
+		db.client.Close()
+		db.SetInitialzedAs(false)
+	}
+}
+
 // End finalize sender goroutines
 func (db *InfluxDB) StopSender() {
 	if db.dummy == true {
@@ -150,7 +197,7 @@ func (db *InfluxDB) StopSender() {
 		return
 	}
 
-	log.Infof("Can not stop Sender %s becaouse of it is already stopped", db.cfg.ID)
+	log.Infof("Can not stop Sender [%s] becaouse of it is already stopped", db.cfg.ID)
 }
 
 //Send send data
@@ -169,7 +216,7 @@ func (db *InfluxDB) Hostname() string {
 // StartSender begins sender loop
 func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
 
-	if db.IsStarted() == true {
+	if db.CheckAndSetStarted() == true {
 		log.Infof("Sender thread to : %s  already started (skipping Goroutine creation)", db.cfg.ID)
 		return
 	}
@@ -180,13 +227,13 @@ func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
 func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	db.SetStartedAs(true)
+	time.Sleep(5)
 
-	log.Infof("beggining Influx Sender thread: %d", r)
+	log.Infof("beggining Influx Sender thread: [%s]", db.cfg.ID)
 	for {
 		select {
 		case <-db.chExit:
-			log.Infof("EXIT from Influx sender process for device %s ", db.cfg.ID)
+			log.Infof("EXIT from Influx sender process for device [%s] ", db.cfg.ID)
 			db.SetStartedAs(false)
 			return
 		case data := <-db.iChan:
@@ -195,9 +242,9 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 				continue
 			}
 
-			// keep trying until we get it (don't drop the data)
-			log.Debugf("sending data from Sender %s (%d)", db.cfg.ID, r)
 			for {
+				// keep trying until we get it (don't drop the data)
+				log.Debugf("sending data from Sender [ %s ] (%d)", db.cfg.ID, r)
 				if err := db.client.Write(*data); err != nil {
 					db.incErrors()
 					log.Errorln("influxdb write error: ", err)
@@ -208,8 +255,8 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 					continue
 				} else {
 					db.incSent()
+					break
 				}
-				break
 			}
 		}
 	}

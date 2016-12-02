@@ -55,6 +55,10 @@ func (sm *SelfMonConfig) Init() {
 	sm.chExit = make(chan bool)
 }
 
+func (sm *SelfMonConfig) End() {
+	close(sm.chExit)
+}
+
 // StartGather for stopping selfmonitori goroutine
 func (sm *SelfMonConfig) StartGather(wg *sync.WaitGroup) {
 	if !sm.Enabled {
