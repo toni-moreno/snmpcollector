@@ -704,6 +704,20 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 		var cond bool
 
 		switch {
+		case typeCond == "notmatch":
+			//m.log.Debugf("PDU: %+v", pdu)
+			str := pduVal2str(pdu)
+			var re = regexp.MustCompile(valueCond)
+			matched := re.MatchString(str)
+			m.log.Debugf("Evaluated notmatch condition  value: %s | filter: %s | result : %t", str, valueCond, !matched)
+			cond = !matched
+		case typeCond == "match":
+			//m.log.Debugf("PDU: %+v", pdu)
+			str := pduVal2str(pdu)
+			var re = regexp.MustCompile(valueCond)
+			matched := re.MatchString(str)
+			m.log.Debugf("Evaluated match condition  value: %s | filter: %s | result : %t", str, valueCond, matched)
+			cond = matched
 		case strings.Contains(typeCond, "n"):
 			//undesrstand valueCondition as numeric
 			vc, err := strconv.Atoi(valueCond)
@@ -724,13 +738,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 			cond = (value >= vci)
 		case typeCond == "nle":
 			cond = (value <= vci)
-		case typeCond == "match":
-			//m.log.Debugf("PDU: %+v", pdu)
-			str := pduVal2str(pdu)
-			var re = regexp.MustCompile(valueCond)
-			matched := re.MatchString(str)
-			m.log.Debugf("Evaluated condition  value: %s | filter: %s | result : %t", str, valueCond, matched)
-			cond = matched
+
 		default:
 			m.log.Errorf("Error in Condition filter OidCondition: %s Type: %s ValCond: %s ", oidCond, typeCond, valueCond)
 		}
