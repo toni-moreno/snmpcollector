@@ -12,6 +12,7 @@ import { HttpAPI} from '../common/httpAPI'
 export class Login {
   constructor(public router: Router, public httpAPI: HttpAPI) {
   }
+  ifErrors: any;
 
   login(event, username, password) {
     event.preventDefault();
@@ -22,7 +23,7 @@ export class Login {
           this.router.navigate(['home']);
         },
         error => {
-          alert(error.text());
+          this.ifErrors = error['_body'];
           console.log(error.text());
         }
       );

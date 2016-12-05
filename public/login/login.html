@@ -1,14 +1,28 @@
-<div class="login jumbotron center-block">
-  <h1>Login</h1>
-  <form role="form" (submit)="login($event, username.value, password.value)">
-  <div class="form-group">
-    <label for="username">Username</label>
-    <input type="text" #username class="form-control" id="username" placeholder="Username">
+<div class="container">
+  <div class="login">
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h1><i class="glyphicon glyphicon-user header"> </i> Login</h1>
+      </div>
+      <div class="alert alert-danger" *ngIf="ifErrors" role="alert">
+        <h4 class="alert-heading">Warning!</h4>
+        <p class="mb-0">{{ifErrors}}</p>
+      </div>
+        <div class="panel-body">
+          <form role="form" (submit)="login($event, username.value, password.value)">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" #username class="form-control" id="username" placeholder="Username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" #password class="form-control" id="password" placeholder="Password">
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="form-group">
-    <label for="password">Password</label>
-    <input type="password" #password class="form-control" id="password" placeholder="Password">
-  </div>
-  <button type="submit" class="btn btn-default">Submit</button>
-</form>
 </div>
