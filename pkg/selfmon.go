@@ -21,6 +21,9 @@ type SelfMonConfig struct {
 	Fields              map[string]interface{}
 	bps                 *client.BatchPoints
 	chExit              chan bool
+	mutex               sync.Mutex
+	rt_meas_name        string
+	gvm_meas_name       string
 }
 
 // Init Initialize the Object data and check for consistence
@@ -38,6 +41,14 @@ func (sm *SelfMonConfig) Init() {
 			}
 		}
 	}
+	// Measurement Names
+	sm.rt_meas_name = "selfmon_rt"
+	sm.gvm_meas_name = "selfmon_gvm"
+	if len(sm.Prefix) > 0 {
+		sm.rt_meas_name = fmt.Sprintf("%sselfmon_rt", sm.Prefix)
+		sm.gvm_meas_name = fmt.Sprintf("%sselfmon_gvm", sm.Prefix)
+	}
+
 	//Init Measurment Fields.
 	sm.Fields = map[string]interface{}{
 		"runtime_goroutines":    0.0,
@@ -53,6 +64,52 @@ func (sm *SelfMonConfig) Init() {
 		"gc.gc_per_interval":    0.0,
 	}
 	sm.chExit = make(chan bool)
+
+}
+
+func (sm *SelfMonConfig) setOutput(val *InfluxDB) {
+	sm.mutex.Lock()
+	defer sm.mutex.Unlock()
+	sm.Influx = val
+	//Creating a bachpoint to begin writing data
+	sm.bps = sm.Influx.BP()
+}
+
+func (sm *SelfMonConfig) sendData() {
+	sm.mutex.Lock()
+	defer sm.mutex.Unlock()
+	sm.Influx.Send(sm.bps)
+	//BatchPoint Init again
+	sm.bps = sm.Influx.BP()
+}
+
+func (sm *SelfMonConfig) addDataPoint(pt *client.Point) {
+	sm.mutex.Lock()
+	defer sm.mutex.Unlock()
+	(*sm.bps).AddPoint(pt)
+
+}
+
+func (sm *SelfMonConfig) AddDeviceMetrics(deviceid string, process_time float64) {
+	sm.mutex.Lock()
+	defer sm.mutex.Unlock()
+
+	tagMap := make(map[string]string)
+	for k, v := range sm.TagMap {
+		tagMap[k] = v
+	}
+	tagMap["device"] = deviceid
+	now := time.Now()
+	fields := map[string]interface{}{
+		"process_t": process_time,
+	}
+	pt, _ := client.NewPoint(
+		sm.rt_meas_name,
+		tagMap,
+		fields,
+		now)
+
+	(*sm.bps).AddPoint(pt)
 }
 
 func (sm *SelfMonConfig) End() {
@@ -91,13 +148,10 @@ func (sm *SelfMonConfig) reportRuntimeStats(wg *sync.WaitGroup) {
 	lastSampleTime := time.Now()
 	var lastPauseNs uint64 = 0
 	var lastNumGc uint32 = 0
-	prefix := sm.Prefix
 
 	nsInMs := float64(time.Millisecond)
 	s := time.Tick(time.Duration(sm.Freq) * time.Second)
 	for {
-		//BatchPoint Init
-		sm.bps = sm.Influx.BP()
 
 		runtime.ReadMemStats(memStats)
 
@@ -144,19 +198,18 @@ func (sm *SelfMonConfig) reportRuntimeStats(wg *sync.WaitGroup) {
 
 		lastNumGc = memStats.NumGC
 		lastSampleTime = now
-		metricname := "selmon_gvm"
-		if len(prefix) > 0 {
-			metricname = fmt.Sprintf("%sselfmon_gvm", prefix)
-		}
+
 		pt, _ := client.NewPoint(
-			metricname,
+			sm.gvm_meas_name,
 			sm.TagMap,
 			sm.Fields,
 			now,
 		)
-		(*sm.bps).AddPoint(pt)
+
+		//add data to the batchpoint
+		sm.addDataPoint(pt)
 		//BatchPoint Send
-		sm.Influx.Send(sm.bps)
+		sm.sendData()
 
 	LOOP:
 		for {

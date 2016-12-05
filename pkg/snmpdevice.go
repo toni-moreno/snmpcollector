@@ -60,6 +60,7 @@ type SnmpDevice struct {
 	chExit      chan bool
 	chFltUpdate chan bool
 	mutex       sync.Mutex
+	selfmon     *SelfMonConfig
 }
 
 func NewSnmpDevice(c *SnmpDeviceCfg) *SnmpDevice {
@@ -343,6 +344,10 @@ func (d *SnmpDevice) End() {
 	//release snmp resources
 }
 
+func (d *SnmpDevice) SetSelfMonitoring(cfg *SelfMonConfig) {
+	d.selfmon = cfg
+}
+
 //InitSnmpConnect does the  SNMP client conection and retrieve system info
 
 func (d *SnmpDevice) InitSnmpConnect() error {
@@ -499,6 +504,9 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 
 				elapsedSnmpStats := time.Since(startSnmpStats)
 				d.log.Infof("snmpdevice [%s] snmp pooling took [%s] ", d.cfg.ID, elapsedSnmpStats)
+				if d.selfmon != nil {
+					d.selfmon.AddDeviceMetrics(d.cfg.ID, elapsedSnmpStats.Seconds())
+				}
 				/*************************
 				 *
 				 * Send data to InfluxDB process

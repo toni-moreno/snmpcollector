@@ -153,7 +153,7 @@ func initSelfMonitoring(idb map[string]*InfluxDB) {
 			val.StartSender(&SenderWg)
 
 			cfg.Selfmon.Init()
-			cfg.Selfmon.Influx = val
+			cfg.Selfmon.setOutput(val)
 
 			log.Printf("SELFMON enabled %+v", cfg.Selfmon)
 			//Begin the statistic reporting
@@ -302,6 +302,7 @@ func LoadConf() {
 	for k, c := range cfg.SnmpDevice {
 		//Inticialize each SNMP device and put pointer to the global map devices
 		dev := NewSnmpDevice(c)
+		dev.SetSelfMonitoring(&cfg.Selfmon)
 		//send db's map to initialize each one its own db if needed and not yet initialized
 		if !showConfig {
 			outdb, _ := dev.GetOutSenderFromMap(influxdb)
