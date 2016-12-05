@@ -1,4 +1,18 @@
 .login {
-  padding: 40px 40px;
-  width: 40%;
+  min-height: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header {
+  width: 60px;
+  height: 60px;
+  padding-top:5px;
+  border-radius: 50%;
+  border: 4px solid #e3e3e3;
+  color: #e3e3e3;
+  display: inline-table;
+  text-align: center;
 }
