@@ -689,6 +689,8 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 
 	m.log.Infof("Apply Condition Filter: Looking up column names in: Condition %s", oidCond)
 
+	idxPosInOID := len(oidCond)
+
 	filterlabels := make(map[string]string)
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
@@ -733,8 +735,11 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 			m.log.Errorf("Error in Condition filter OidCondition: %s Type: %s ValCond: %s ", oidCond, typeCond, valueCond)
 		}
 		if cond == true {
-			i := strings.LastIndex(pdu.Name, ".")
-			suffix := pdu.Name[i+1:]
+			if len(pdu.Name) < idxPosInOID {
+				m.log.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", m.idxPosInOID, pdu)
+				return nil //if error return the bulk process will stop
+			}
+			suffix := pdu.Name[idxPosInOID+1:]
 			filterlabels[suffix] = ""
 		}
 
