@@ -21,10 +21,6 @@ export class HttpAPI {
         this.headers.append('Accept', 'application/json');
     }
 
-    public test(){
-    console.log(this.testi)
-    }
-
     get(url:string) : Observable<any> {
         return this._http.get(url)
             .catch(this.handleError.bind(this));
