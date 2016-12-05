@@ -104,6 +104,7 @@
 			<option value="STRING">Character String</option>
 			<option value="HWADDR">Hardware Address (MAC)</option>
 			<option value="IPADDR">IP Address</option>
+			<option value="STRINGPARSER">String Parser</option>
 		</select>
 				<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
 	<control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
@@ -123,6 +124,16 @@
 		<control-messages [control]="snmpmetForm.controls.GetRate"></control-messages>
 	</div>
 </div>
+
+<div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'STRINGPARSER' " >
+<label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
+<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
+ <div class="col-sm-9">
+	<input formControlName="ExtraData" id="ExtraData" />
+	<control-messages [control]="snmpmetForm.controls.ExtraData"></control-messages>
+</div>
+</div>
+
 
 <div class="form-group">
   <label class="control-label col-sm-2" for="Scale">Scale</label>
@@ -222,6 +233,7 @@
 			<option value="STRING">Character String</option>
 			<option value="HWADDR">Hardware Address (MAC)</option>
 			<option value="IPADDR">IP Address</option>
+			<option value="STRINGPARSER">String Parser</option>
 		</select>
 				<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
 	<control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
@@ -242,6 +254,15 @@
 		<control-messages [control]="snmpmetForm.controls.GetRate"></control-messages>
 	</div>
 </div>
+		</div>
+
+		<div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'STRINGPARSER' " >
+		<label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
+		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
+		 <div class="col-sm-9">
+			<input formControlName="ExtraData" id="ExtraData"[ngModel] = "testsnmpmetric.ExtraData" />
+			<control-messages [control]="snmpmetForm.controls.ExtraData"></control-messages>
+		</div>
 		</div>
 
 		<div class="form-group">

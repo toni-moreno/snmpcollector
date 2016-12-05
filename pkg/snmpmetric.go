@@ -3,8 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"math"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -19,6 +22,8 @@ const (
 	STRING
 	HWADDR
 	IPADDR
+	STRINGPARSER
+	//STRINGEVAL
 )
 
 /*
@@ -44,11 +49,16 @@ func (m *SnmpMetricCfg) Init(name string) error {
 	case "STRING":
 	case "HWADDR":
 	case "IPADDR":
+	case "STRINGPARSER":
+		//case "STRINGEVAL":
 	default:
 		return errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
 	}
 	if !strings.HasPrefix(m.BaseOID, ".") {
 		return errors.New("Bad BaseOid format:" + m.BaseOID + " in metric Config " + m.ID)
+	}
+	if m.DataSrcType == "STRINGPARSER" && len(m.ExtraData) == 0 {
+		return errors.New("STRINGPARSER type requires extradata to work " + m.ID)
 	}
 
 	return nil
@@ -59,7 +69,6 @@ type SnmpMetric struct {
 	cfg         *SnmpMetricCfg
 	ID          string
 	CookedValue interface{}
-	//CookedValue float64
 	CurValue    int64
 	LastValue   int64
 	CurTime     time.Time
@@ -69,12 +78,20 @@ type SnmpMetric struct {
 	Scale       func() `json:"-"`
 	setRawData  func(pdu gosnmp.SnmpPDU, now time.Time)
 	RealOID     string
+	//for STRINGPARSER
+	re  *regexp.Regexp
+	log *logrus.Logger
 }
 
+// NewSnmpMetric constructor
 func NewSnmpMetric(c *SnmpMetricCfg) (*SnmpMetric, error) {
 	metric := &SnmpMetric{}
 	err := metric.Init(c)
 	return metric, err
+}
+
+func (s *SnmpMetric) SetLogger(l *logrus.Logger) {
+	s.log = l
 }
 
 func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
@@ -187,7 +204,35 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 		}
 	case "HWADDR":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue, _ = pduVal2IPaddr(pdu)
+			s.CookedValue, _ = pduVal2Hwaddr(pdu)
+			s.CurTime = now
+		}
+	case "STRINGPARSER":
+		//get Regexp
+		re, err := regexp.Compile(s.cfg.ExtraData)
+		if err != nil {
+			return fmt.Errorf("Error on initialice STRINGPARSER, invalind Regular Expression : %s", s.cfg.ExtraData)
+		}
+		s.re = re
+		//set Process Data
+		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			str := pduVal2str(pdu)
+			retarray := s.re.FindStringSubmatch(str)
+			if len(retarray) < 2 {
+				s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] without capturing group", s.cfg.ID, s.cfg.ExtraData, str)
+				return
+			}
+			//retarray[0] contains full string
+			if len(retarray[1]) == 0 {
+				s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] cause  void capturing group", s.cfg.ID, s.cfg.ExtraData, str)
+				return
+			}
+			value, err := strconv.ParseFloat(retarray[1], 64)
+			if err != nil {
+				s.log.Warnf("Error parsing float for metric %s : error: %s", s.cfg.ID, err)
+				return
+			}
+			s.CookedValue = value
 			s.CurTime = now
 		}
 	}

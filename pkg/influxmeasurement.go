@@ -150,6 +150,7 @@ func (m *InfluxMeasurement) PushMetricTable(p map[string]string) error {
 				m.log.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
 				continue
 			}
+			metric.SetLogger(m.log)
 			metric.RealOID += "." + key
 			idx[smcfg.ID] = metric
 		}
@@ -187,6 +188,7 @@ func (m *InfluxMeasurement) InitMetricTable() {
 				m.log.Errorf("ERROR on create new [value] field metric %d : Error: %s ", k, err)
 				continue
 			}
+			metric.SetLogger(m.log)
 			idx[smcfg.ID] = metric
 		}
 		m.MetricTable["0"] = idx
@@ -203,6 +205,7 @@ func (m *InfluxMeasurement) InitMetricTable() {
 					m.log.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
 					continue
 				}
+				metric.SetLogger(m.log)
 				metric.RealOID += "." + key
 				idx[smcfg.ID] = metric
 			}
@@ -413,7 +416,7 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 				m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, hostTags, v_mtr)
 				continue
 			}
-			m.log.Debugf("generating field for %s value %s ", v_mtr.cfg.FieldName, v_mtr.CookedValue)
+			m.log.Debugf("generating field for %s value %f ", v_mtr.cfg.FieldName, v_mtr.CookedValue)
 			m.log.Debugf("DEBUG METRIC %+v", v_mtr)
 			Fields[v_mtr.cfg.FieldName] = v_mtr.CookedValue
 			t = v_mtr.CurTime

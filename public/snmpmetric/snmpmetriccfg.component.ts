@@ -61,6 +61,7 @@ export class SnmpMetricCfgComponent {
 			BaseOID: ['', Validators.compose([Validators.required, ValidationService.OIDValidator])],
 			DataSrcType: ['', Validators.required],
 			//Depending on datasrctype
+			ExtraData: ['', Validators.required],
 			GetRate:['false', Validators.required],
 			Scale: ['0', Validators.required],
 			Shift: ['0', Validators.required],

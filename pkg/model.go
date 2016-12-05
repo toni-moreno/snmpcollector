@@ -71,9 +71,10 @@ type SnmpMetricCfg struct {
 	BaseOID     string  `xorm:"baseoid"`
 	DataSrcType string  `xorm:"datasrctype"`
 	GetRate     bool    `xorm:"getrate"` //ony Valid with COUNTERS
-	Scale       float64 `xorm:"scale"`   //only valid with gauge/integer
+	Scale       float64 `xorm:"scale"`
 	Shift       float64 `xorm:"shift"`
 	IsTag       bool    `xorm:"'istag' default 0"`
+	ExtraData   string  `xorm:"extradata"` //Only Valid with STRINGPARSER and STRINGEVAL
 }
 
 //InfluxMeasurementCfg the measurement configuration
