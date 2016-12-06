@@ -105,7 +105,7 @@ func initMetricsCfg() error {
 	for mKey, mVal := range cfg.Measurements {
 		err := mVal.Init(mKey, &cfg.Metrics)
 		if err != nil {
-			log.Warnln("Error in Metric config:", err)
+			log.Warnln("Error in Measurement config:", err)
 			//if some error int the format the metric is deleted from the config
 			delete(cfg.Metrics, mKey)
 		}

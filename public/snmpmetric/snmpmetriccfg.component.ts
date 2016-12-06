@@ -57,7 +57,7 @@ export class SnmpMetricCfgComponent {
 	  this.snmpmetForm = builder.group({
 			id: ['',Validators.required],
   		FieldName: ['', Validators.required],
-			BaseOID: ['', Validators.compose([Validators.required, ValidationService.OIDValidator])],
+			BaseOID: ['', Validators.compose([ ValidationService.OIDValidator])],
 			DataSrcType: ['GAUGE', Validators.required],
 			//Depending on datasrctype
 			ExtraData: [''],

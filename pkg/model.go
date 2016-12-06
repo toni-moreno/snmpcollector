@@ -76,6 +76,7 @@ type SnmpMetricCfg struct {
 	Scale       float64 `xorm:"scale"`
 	Shift       float64 `xorm:"shift"`
 	IsTag       bool    `xorm:"'istag' default 0"`
+	Report      bool    `xorm:"'report' default 1"`
 	ExtraData   string  `xorm:"extradata"` //Only Valid with STRINGPARSER and STRINGEVAL
 }
 
@@ -90,6 +91,7 @@ type InfluxMeasurementCfg struct {
 	IndexAsValue bool             `xorm:"'indexasvalue' default 0"`
 	Fields       []string         `xorm:"-"` //Got from MeasurementFieldCfg table
 	fieldMetric  []*SnmpMetricCfg `xorm:"-"`
+	evalMetric   []*SnmpMetricCfg `xorm:"-"`
 	Description  string           `xorm:"description"`
 }
 

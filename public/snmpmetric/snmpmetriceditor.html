@@ -110,6 +110,7 @@
 			<option value="IPADDR">(SNMP Asn1 Type) IPAddress</option>
 			<option value="HWADDR">(Internal) Hardware Address (MAC)</option>
 			<option value="STRINGPARSER">(Internal) String Parser</option>
+			<option value="STRINGEVAL">(Internal) Evaluated Expression [Computed data]</option>
 		</select>
 				<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
 	<control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
@@ -130,7 +131,7 @@
 	</div>
 </div>
 
-<div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'STRINGPARSER' " >
+<div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' " >
 <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
  <div class="col-sm-9">
@@ -244,6 +245,7 @@
 			<option value="IPADDR">(SNMP Asn1 Type) IPAddress</option>
 			<option value="HWADDR">(Internal) Hardware Address (MAC)</option>
 			<option value="STRINGPARSER">(Internal) String Parser</option>
+			<option value="STRINGEVAL">(Internal) Evaluated Expression [Computed data]</option>
 		</select>
 				<!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
 	<control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
@@ -266,7 +268,7 @@
 </div>
 		</div>
 
-		<div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'STRINGPARSER' " >
+		<div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' " >
 		<label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
 		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
 		 <div class="col-sm-9">
