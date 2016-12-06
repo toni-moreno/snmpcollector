@@ -43,6 +43,8 @@ type SnmpDeviceCfg struct {
 	V3AuthProt  string `xorm:"v3authprot"`
 	V3PrivPass  string `xorm:"v3privpass"`
 	V3PrivProt  string `xorm:"v3privprot"`
+	//snmp workarround for some devices
+	DisableBulk bool `xorm:"'disablebulk' default 0"`
 	//snmp runtime config
 	Freq          int `xorm:"'freq' default 60"`
 	UpdateFltFreq int `xorm:"'update_flt_freq' default 60"`

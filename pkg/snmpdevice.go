@@ -209,6 +209,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 					d.log.Errorf("Error on measurement initialization on host %s: Error: %s", d.cfg.ID, err)
 					continue
 				}
+				imeas.SetDisableBulk(d.cfg.DisableBulk)
 				d.Measurements = append(d.Measurements, imeas)
 			}
 		}
