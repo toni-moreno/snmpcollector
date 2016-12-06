@@ -101,11 +101,13 @@ type InfluxMeasurement struct {
 	log              *logrus.Logger
 	snmpClient       *gosnmp.GoSNMP
 	DisableBulk      bool
+	GetData          func() (int64, int64, error)
+	Walk             func(string, gosnmp.WalkFunc) error
 }
 
 //NewInfluxMeasurement creates object with config , log + goSnmp client
-func NewInfluxMeasurement(c *InfluxMeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP) (*InfluxMeasurement, error) {
-	m := &InfluxMeasurement{ID: c.ID, cfg: c, log: l, snmpClient: cli}
+func NewInfluxMeasurement(c *InfluxMeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool) (*InfluxMeasurement, error) {
+	m := &InfluxMeasurement{ID: c.ID, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
 	err := m.Init()
 	return m, err
 }
@@ -116,7 +118,22 @@ func NewInfluxMeasurement(c *InfluxMeasurementCfg, l *logrus.Logger, cli *gosnmp
  *init MetricTable
  */
 func (m *InfluxMeasurement) Init() error {
+
 	var err error
+	//Init snmp methods
+	if m.cfg.GetMode == "value" {
+		m.GetData = m.SnmpGetData
+	} else {
+		m.GetData = m.SnmpWalkData
+		switch {
+		case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
+			m.Walk = m.snmpClient.Walk
+		default:
+			m.Walk = m.snmpClient.BulkWalk
+		}
+	}
+	//
+
 	//loading all posible values in 	m.AllIndexedLabels
 	if m.cfg.GetMode == "indexed" {
 		m.idxPosInOID = len(m.cfg.IndexOID)
@@ -138,10 +155,10 @@ func (m *InfluxMeasurement) Init() error {
 	return nil
 }
 
-func (m *InfluxMeasurement) SetDisableBulk(disable bool) {
+/*func (m *InfluxMeasurement) SetDisableBulk(disable bool) {
 	m.DisableBulk = disable
 	m.log.Debugf("Disable Snmp Bulk Queries to measurment %s: %t", m.cfg.ID, disable)
-}
+}*/
 
 func (m *InfluxMeasurement) PushMetricTable(p map[string]string) error {
 	if m.cfg.GetMode == "value" {
@@ -355,23 +372,6 @@ func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
 	return true, nil
 }
 
-func (m *InfluxMeasurement) GetData() (int64, int64, error) {
-	var nGets, nErrors int64
-	var err error
-	if m.cfg.GetMode == "value" {
-		nGets, nErrors, err = m.SnmpGetData()
-		if err != nil {
-			m.log.Errorf("SNMP Get Data error for measurement: %s", m.cfg.ID)
-		}
-	} else {
-		nGets, nErrors, err = m.SnmpWalkData()
-		if err != nil {
-			m.log.Errorf("SNMP Get Data error for measurment: %s", m.cfg.ID)
-		}
-	}
-	return nGets, nErrors, err
-}
-
 func (m *InfluxMeasurement) printConfig() {
 	if m.cfg.GetMode == "indexed" {
 		fmt.Printf("-----------------------------------------------------------\n")
@@ -529,25 +529,14 @@ func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
 		}
 		return nil
 	}
-	switch {
-	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
-		for _, v := range m.cfg.fieldMetric {
-			if err := m.snmpClient.Walk(v.BaseOID, setRawData); err != nil {
-				m.log.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
-				errs++
-			}
-			sent++
-		}
-	default:
-		for _, v := range m.cfg.fieldMetric {
-			if err := m.snmpClient.BulkWalk(v.BaseOID, setRawData); err != nil {
-				m.log.Errorf("SNMP BULK WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
-				errs++
-			}
-			sent++
-		}
-	}
 
+	for _, v := range m.cfg.fieldMetric {
+		if err := m.Walk(v.BaseOID, setRawData); err != nil {
+			m.log.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
+			errs++
+		}
+		sent++
+	}
 	return sent, errs, nil
 }
 
@@ -634,21 +623,11 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 		allindex[suffix] = name
 		return nil
 	}
-	switch {
-	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
-		err := m.snmpClient.Walk(m.cfg.IndexOID, setRawData)
-		if err != nil {
-			m.log.Errorf("SNMP WALK version 1 walk error: %s", err)
-			return allindex, err
-		}
-	default:
-		err := m.snmpClient.BulkWalk(m.cfg.IndexOID, setRawData)
-		if err != nil {
-			m.log.Errorf("SNMP DISABLE WALK bulkwalk error: %s", err)
-			return allindex, err
-		}
+	err := m.Walk(m.cfg.IndexOID, setRawData)
+	if err != nil {
+		m.log.Errorf("SNMP WALK error: %s", err)
+		return allindex, err
 	}
-
 	return allindex, nil
 }
 
@@ -759,21 +738,10 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 
 		return nil
 	}
-	switch {
-	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
-		err := m.snmpClient.Walk(oidCond, setRawData)
-		if err != nil {
-			m.log.Errorf("SNMP version-1 walk error : %s", err)
-			return filterlabels, err
-		}
-
-	default:
-		err := m.snmpClient.BulkWalk(oidCond, setRawData)
-		if err != nil {
-			m.log.Errorf("SNMP bulkwalk error : %s", err)
-			return filterlabels, err
-		}
-
+	err := m.Walk(oidCond, setRawData)
+	if err != nil {
+		m.log.Errorf("SNMP version-1 walk error : %s", err)
+		return filterlabels, err
 	}
 
 	return filterlabels, nil

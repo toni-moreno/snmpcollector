@@ -204,12 +204,11 @@ func (d *SnmpDevice) InitDevMeasurements() {
 				d.log.Debugln("MEASUREMENT CFG KEY:", val, " VALUE ", mVal.Name)
 
 				//creating a new measurement runtime object and asigning to array
-				imeas, err := NewInfluxMeasurement(mVal, d.log, d.snmpClient)
+				imeas, err := NewInfluxMeasurement(mVal, d.log, d.snmpClient, d.cfg.DisableBulk)
 				if err != nil {
 					d.log.Errorf("Error on measurement initialization on host %s: Error: %s", d.cfg.ID, err)
 					continue
 				}
-				imeas.SetDisableBulk(d.cfg.DisableBulk)
 				d.Measurements = append(d.Measurements, imeas)
 			}
 		}
