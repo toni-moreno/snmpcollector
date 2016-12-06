@@ -1,11 +1,31 @@
 
+
+# v 0.5.6
+### New features.
+* UI Enhanced login aspect
+* added DisableBulk option to devices with problems in bulk queries like some IBM devices
+* added device process time in the selfmon metrics as selfmon_rt measurement #25
+* added new "nomatch" filter condicion #55
+* support for OctetString Indexes #54
+* added new metric type "strigParser" #51
+* added pprof options to enable debug
+* added new HTTP wrapper to the WebUI.
+* fixed race conditions on reload config
+* removed angular2-jwt unneeded dependency
+
+### fixes
+* fix for issue #54, #45, #56
+
+### breaking changes
+
+
 # v 0.5.5
 ### New features.
 * Online Reload Configuration
 * New runtime WebUI option which enables user inspect online current gathered snmp values for all measurements on all devices, also allow interact to change logging and debug options and also deactivate device.
 
 ### fixes
-* fix for issue #38, #40, #42, #46,#47
+* fix for issue #38, #40, #42, #46, #47
 
 ### breaking changes
 * no longer needed options flags: freq, repeat, verbose ; since all this features can be changed on the WebUI
