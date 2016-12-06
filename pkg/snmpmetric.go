@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/Knetic/govaluate"
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"math"
@@ -23,7 +24,7 @@ const (
 	HWADDR
 	IPADDR
 	STRINGPARSER
-	//STRINGEVAL
+	STRINGEVAL
 )
 
 /*
@@ -50,7 +51,7 @@ func (m *SnmpMetricCfg) Init(name string) error {
 	case "HWADDR":
 	case "IPADDR":
 	case "STRINGPARSER":
-		//case "STRINGEVAL":
+	case "STRINGEVAL":
 	default:
 		return errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
 	}
@@ -74,13 +75,14 @@ type SnmpMetric struct {
 	CurTime     time.Time
 	LastTime    time.Time
 	ElapsedTime float64
-	Compute     func() `json:"-"`
-	Scale       func() `json:"-"`
+	Compute     func(arg ...interface{}) `json:"-"`
+	Scale       func()                   `json:"-"`
 	setRawData  func(pdu gosnmp.SnmpPDU, now time.Time)
 	RealOID     string
 	//for STRINGPARSER
-	re  *regexp.Regexp
-	log *logrus.Logger
+	re   *regexp.Regexp
+	expr *govaluate.EvaluableExpression
+	log  *logrus.Logger
 }
 
 // NewSnmpMetric constructor
@@ -135,7 +137,7 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 			}
 		}
 		if s.cfg.GetRate == true {
-			s.Compute = func() {
+			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				if s.CurValue < s.LastValue {
 					s.CookedValue = float64(math.MaxInt32-s.LastValue+s.CurValue) / s.ElapsedTime
@@ -144,7 +146,7 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 				}
 			}
 		} else {
-			s.Compute = func() {
+			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				if s.CurValue < s.LastValue {
 					s.CookedValue = float64(math.MaxInt32 - s.LastValue + s.CurValue)
@@ -172,7 +174,7 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 			}
 		}
 		if s.cfg.GetRate == true {
-			s.Compute = func() {
+			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				//duration := s.CurTime.Sub(s.LastTime)
 				if s.CurValue < s.LastValue {
@@ -182,7 +184,7 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 				}
 			}
 		} else {
-			s.Compute = func() {
+			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				if s.CurValue < s.LastValue {
 					s.CookedValue = float64(math.MaxInt64 - s.LastValue + s.CurValue)
@@ -234,6 +236,24 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 			}
 			s.CookedValue = value
 			s.CurTime = now
+		}
+	case "STRINGEVAL":
+
+		expression, err := govaluate.NewEvaluableExpression(s.cfg.ExtraData)
+		if err != nil {
+			return fmt.Errorf("Error on initialice STRINGEVAL, evaluation : %s : ERROR : %s", s.cfg.ExtraData, err)
+		}
+		s.expr = expression
+		//set Process Data
+		s.Compute = func(arg ...interface{}) {
+			//parameters := make(map[string]interface{})
+			parameters := arg[0].(map[string]interface{})
+			result, err := s.expr.Evaluate(parameters)
+			if err != nil {
+				s.log.Errorf("Error: %s", err)
+			}
+			s.CookedValue = result
+			s.CurTime = time.Now()
 		}
 	}
 	return nil
