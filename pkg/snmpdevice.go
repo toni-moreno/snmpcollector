@@ -483,13 +483,16 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				 * SNMP Gather data process
 				 *
 				 ***************************/
-
+				var totalGets int64
+				var totalErrors int64
 				bpts := d.Influx.BP()
 				startSnmpStats := time.Now()
 				for _, m := range d.Measurements {
 					d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
 
 					nGets, nErrors, _ := m.GetData()
+					totalGets += nGets
+					totalErrors += nErrors
 
 					if nGets > 0 {
 						d.addGets(nGets)
@@ -503,9 +506,14 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				}
 
 				elapsedSnmpStats := time.Since(startSnmpStats)
-				d.log.Infof("snmpdevice [%s] snmp pooling took [%s] ", d.cfg.ID, elapsedSnmpStats)
+				d.log.Infof("snmpdevice [%s] snmp pooling took [%s] SNMP: Gets [%d] Errors [%d]", d.cfg.ID, elapsedSnmpStats, totalGets, totalErrors)
 				if d.selfmon != nil {
-					d.selfmon.AddDeviceMetrics(d.cfg.ID, elapsedSnmpStats.Seconds())
+					fields := map[string]interface{}{
+						"process_t": elapsedSnmpStats.Seconds(),
+						"getsent":   totalGets,
+						"geterror":  totalErrors,
+					}
+					d.selfmon.AddDeviceMetrics(d.cfg.ID, fields)
 				}
 				/*************************
 				 *

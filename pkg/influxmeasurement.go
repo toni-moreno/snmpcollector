@@ -101,8 +101,8 @@ type InfluxMeasurement struct {
 	log              *logrus.Logger
 	snmpClient       *gosnmp.GoSNMP
 	DisableBulk      bool
-	GetData          func() (int64, int64, error)
-	Walk             func(string, gosnmp.WalkFunc) error
+	GetData          func() (int64, int64, error)        `json:"-"`
+	Walk             func(string, gosnmp.WalkFunc) error `json:"-"`
 }
 
 //NewInfluxMeasurement creates object with config , log + goSnmp client
@@ -517,8 +517,10 @@ func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
 		m.log.Debugf("received SNMP  pdu:%+v", pdu)
+		sent++
 		if pdu.Value == nil {
 			m.log.Warnf("no value retured by pdu :%+v", pdu)
+			errs++
 			return nil //if error return the bulk process will stop
 		}
 		if metric, ok := m.OidSnmpMap[pdu.Name]; ok {
@@ -533,9 +535,7 @@ func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
 	for _, v := range m.cfg.fieldMetric {
 		if err := m.Walk(v.BaseOID, setRawData); err != nil {
 			m.log.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
-			errs++
 		}
-		sent++
 	}
 	return sent, errs, nil
 }
@@ -554,6 +554,7 @@ func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
 		end := i + maxOids
 		if end > l {
 			end = len(m.snmpOids)
+			sent += (int64(end) - int64(i))
 		}
 		m.log.Debugf("Getting snmp data from %d to %d", i, end)
 		//	log.Printf("DEBUG oids:%+v", m.snmpOids)
@@ -564,12 +565,12 @@ func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
 			m.log.Errorf("SNMP (%s) for OIDs (%d/%d) get error: %s\n", m.snmpClient.Target, i, end, err)
 			errs++
 			continue
-
 		}
-		sent++
+
 		for _, pdu := range pkt.Variables {
 			m.log.Debugf("DEBUG pdu:%+v", pdu)
 			if pdu.Value == nil {
+				errs++
 				continue
 			}
 			oid := pdu.Name

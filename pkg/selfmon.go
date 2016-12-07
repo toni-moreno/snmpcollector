@@ -90,7 +90,7 @@ func (sm *SelfMonConfig) addDataPoint(pt *client.Point) {
 
 }
 
-func (sm *SelfMonConfig) AddDeviceMetrics(deviceid string, process_time float64) {
+func (sm *SelfMonConfig) AddDeviceMetrics(deviceid string, fields map[string]interface{}) {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
 
@@ -100,9 +100,6 @@ func (sm *SelfMonConfig) AddDeviceMetrics(deviceid string, process_time float64)
 	}
 	tagMap["device"] = deviceid
 	now := time.Now()
-	fields := map[string]interface{}{
-		"process_t": process_time,
-	}
 	pt, _ := client.NewPoint(
 		sm.rt_meas_name,
 		tagMap,
