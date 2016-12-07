@@ -234,6 +234,7 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 			}
 			s.CookedValue = value
 			s.CurTime = now
+			s.Scale()
 		}
 	}
 	return nil
