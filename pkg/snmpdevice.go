@@ -61,6 +61,7 @@ type SnmpDevice struct {
 	chFltUpdate chan bool
 	mutex       sync.Mutex
 	selfmon     *SelfMonConfig
+	CurLogLevel string
 }
 
 func NewSnmpDevice(c *SnmpDeviceCfg) *SnmpDevice {
@@ -279,6 +280,7 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 	d.log.Out = f
 	l, _ := logrus.ParseLevel(d.cfg.LogLevel)
 	d.log.Level = l
+	d.CurLogLevel = d.log.Level.String()
 	//Formatter for time
 	customFormatter := new(logrus.TextFormatter)
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
@@ -560,6 +562,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				}
 				d.log.Level = l
 				d.log.Infof("CHANGED LOGLEVEL %s [%s] ", d.cfg.ID, level)
+				d.CurLogLevel = d.log.Level.String()
 			}
 		}
 	}
