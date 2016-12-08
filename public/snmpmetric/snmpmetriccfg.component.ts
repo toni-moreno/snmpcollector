@@ -59,12 +59,12 @@ export class SnmpMetricCfgComponent {
 			id: ['',Validators.required],
   		FieldName: ['', Validators.required],
 			BaseOID: ['', Validators.compose([Validators.required, ValidationService.OIDValidator])],
-			DataSrcType: ['', Validators.required],
+			DataSrcType: ['GAUGE', Validators.required],
 			//Depending on datasrctype
 			ExtraData: [''],
-			GetRate:['false', Validators.required],
-			Scale: ['0', Validators.required],
-			Shift: ['0', Validators.required],
+			GetRate:['False', Validators.compose([Validators.required,ValidationService.integerValidator])], //Validators.required],
+			Scale: ['0', Validators.compose([Validators.required,ValidationService.floatValidator])],
+      Shift: ['0', Validators.compose([Validators.required,ValidationService.floatValidator])],
       IsTag:['false',Validators.required],
 			Description: ['']
 		});

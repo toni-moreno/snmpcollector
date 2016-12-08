@@ -3,6 +3,7 @@ import { FormBuilder,  Validators} from '@angular/forms';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 import { MeasGroupService } from './measgroupcfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
+import { ValidationService } from '../common/validation.service'
 
 import { GenericModal } from '../common/generic-modal';
 

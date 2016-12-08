@@ -1,12 +1,13 @@
 import { Component, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { FormBuilder,  Validators} from '@angular/forms';
 import { InfluxServerService } from './influxservercfg.service';
+import { ValidationService } from '../common/validation.service'
 
 import { GenericModal } from '../common/generic-modal';
 
 @Component({
   selector: 'influxservers',
-  providers: [InfluxServerService],
+  providers: [InfluxServerService, ValidationService],
   templateUrl: 'public/influxserver/influxservereditor.html',
   styleUrls:['public/influxserver/influxservereditor.css'],
 })
@@ -59,13 +60,13 @@ export class InfluxServerCfgComponent {
 	  this.influxserverForm = builder.group({
 			id: ['',Validators.required],
 			Host: ['', Validators.required],
-			Port: ['', Validators.required],
+			Port: ['', Validators.compose([Validators.required,ValidationService.integerValidator])],
 			DB: ['', Validators.required],
 			User: ['', Validators.required],
 			Password: ['', Validators.required],
 			Retention: ['autogen', Validators.required],
-      Timeout: [30],
-      UserAgent: [],
+      Timeout: [30, Validators.compose([Validators.required,ValidationService.integerValidator])],
+      UserAgent: [''],
 			Description: ['']
 		});
   }
@@ -229,7 +230,9 @@ export class InfluxServerCfgComponent {
 	 if(this.influxserverForm.dirty && this.influxserverForm.valid) {
 		 this.influxServerService.addInfluxServer(this.influxserverForm.value)
 		 .subscribe(data => { console.log(data) },
-      err => console.error(err),
+      err => {
+				console.log(err);
+				},
       () =>  {this.editmode = "list"; this.reloadData()}
 			);
 		}
