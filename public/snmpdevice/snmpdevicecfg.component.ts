@@ -14,8 +14,7 @@ import { GenericModal } from '../common/generic-modal';
   selector: 'snmpdevs',
   providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService],
   templateUrl: 'public/snmpdevice/snmpdeviceeditor.html',
-  styleUrls:['public/snmpdevice/snmpdeviceeditor.css']
-
+  styleUrls:['public/css/component-styles.css']
 })
 export class SnmpDeviceCfgComponent {
   //TEST:

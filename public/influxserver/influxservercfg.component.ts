@@ -9,7 +9,7 @@ import { GenericModal } from '../common/generic-modal';
   selector: 'influxservers',
   providers: [InfluxServerService, ValidationService],
   templateUrl: 'public/influxserver/influxservereditor.html',
-  styleUrls:['public/influxserver/influxservereditor.css'],
+	styleUrls:['public/css/component-styles.css']
 })
 
 export class InfluxServerCfgComponent {

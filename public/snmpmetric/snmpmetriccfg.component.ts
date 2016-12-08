@@ -10,8 +10,7 @@ import { GenericModal } from '../common/generic-modal';
   selector: 'snmpmetrics',
   providers: [SnmpMetricService],
   templateUrl: 'public/snmpmetric/snmpmetriceditor.html',
-  styleUrls:['public/snmpmetric/snmpmetriceditor.css'],
-
+	styleUrls:['public/css/component-styles.css']
 })
 
 export class SnmpMetricCfgComponent {

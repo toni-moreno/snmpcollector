@@ -11,7 +11,7 @@ import { GenericModal } from '../common/generic-modal';
   selector: 'influxmeas',
   providers: [InfluxMeasService, SnmpMetricService],
   templateUrl: 'public/influxmeas/influxmeaseditor.html',
-  styleUrls:['public/influxmeas/influxmeaseditor.css'],
+  styleUrls:['public/css/component-styles.css']
 })
 
 export class InfluxMeasCfgComponent {
