@@ -23,6 +23,10 @@ label {
   padding-left: 10px;
 }
 
+pagination {
+  border none;
+}
+
 input, button {
  // display: block;
 }
@@ -35,6 +39,7 @@ select,input {
     padding: 2px 12px;
     font-size: 14px;
     color: #555;
+    outline: none;
     background-color: #fff;
     background-image: none;
     border: 1px solid #ccc;
@@ -52,13 +57,27 @@ button {
   font-weight: 300;
 }
 
+input:focus.ng-invalid,select:focus.ng-invalid, textarea:focus.ng-invalid {
+  box-shadow: 0 0 5px #a94442;
+  border: 1px solid #a94442;
+  border-left: 5px solid #a94442
+}
+
+input:focus.ng-valid, select:focus.ng-valid{
+  box-shadow: 0 0 5px #42A948;
+  border: 1px solid #42A948;
+  border-left:5px solid #42A948;
+}
+
 .ng-invalid:not(form)  {
   border-left: 5px solid #a94442; /* red */
 }
 
-.ng-valid:not(form) {
+
+.ng-valid:not(pagination).ng-valid:not(form) {
   border-left: 5px solid #42A948; /* green */
 }
+
 
 button[disabled] {
   background-color: #337ab7;
@@ -69,6 +88,5 @@ button[disabled] {
 
 control-messages {
   color: #E82C0C;
-
   margin: 6px 0;
 }

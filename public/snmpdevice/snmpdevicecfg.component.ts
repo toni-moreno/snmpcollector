@@ -6,14 +6,15 @@ import { InfluxServerService } from '../influxserver/influxservercfg.service';
 import { MeasGroupService } from '../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
 import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
+import { ValidationService } from '../common/validation.service'
+
 import { GenericModal } from '../common/generic-modal';
 
 @Component({
   selector: 'snmpdevs',
   providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService],
   templateUrl: 'public/snmpdevice/snmpdeviceeditor.html',
-  styleUrls:['public/snmpdevice/snmpdeviceeditor.css']
-
+  styleUrls:['public/css/component-styles.css']
 })
 export class SnmpDeviceCfgComponent {
   //TEST:
@@ -78,9 +79,9 @@ export class SnmpDeviceCfgComponent {
     this.snmpdevForm = builder.group({
     id: ['',Validators.required],
     Host: ['',Validators.required],
-    Port: [161,Validators.required],
-    Retries: [5],
-    Timeout: [20],
+    Port: [161,Validators.compose([Validators.required,ValidationService.integerValidator])],
+    Retries: [5,Validators.compose([Validators.required,ValidationService.integerValidator])],
+    Timeout: [20,Validators.compose([Validators.required,ValidationService.integerValidator])],
     Active: ['true',Validators.required],
     SnmpVersion:['2c',Validators.required],
     DisableBulk:['false'],
@@ -91,14 +92,14 @@ export class SnmpDeviceCfgComponent {
     V3AuthProt:[''],
     V3PrivPass:[''],
     V3PrivProt:[''],
-    Freq:[60,Validators.required],
-    UpdateFltFreq:[60,Validators.required],
+    Freq:[60,Validators.compose([Validators.required,ValidationService.integerValidator])],
+    UpdateFltFreq:[60,Validators.compose([Validators.required,ValidationService.integerValidator])],
     OutDB: ['',Validators.required],
     LogLevel:['info',Validators.required],
     SnmpDebug:['false',Validators.required],
     DeviceTagName: ['',Validators.required],
     DeviceTagValue: ['id'],
-    Extratags:[''],
+    Extratags:['',Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
     MeasurementGroups: [''],
     MeasFilters: [''],
     Description: ['']

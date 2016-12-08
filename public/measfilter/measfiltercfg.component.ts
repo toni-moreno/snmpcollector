@@ -10,7 +10,7 @@ import { GenericModal } from '../common/generic-modal';
   selector: 'measfilters',
   providers: [MeasFilterService, InfluxMeasService],
   templateUrl: 'public/measfilter/measfiltereditor.html',
-  styleUrls:['public/measfilter/measfiltereditor.css'],
+	styleUrls:['public/css/component-styles.css']
 })
 
 export class MeasFilterCfgComponent {

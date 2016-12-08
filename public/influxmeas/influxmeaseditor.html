@@ -63,8 +63,8 @@
 				tooltip="Measurement name used on InfluxDB server"></i>
 			 <div class="col-sm-9">
       		<input formControlName="Name" id="Name" />
+					<control-messages [control]="influxmeasForm.controls.Name"></control-messages>
 			</div>
-			<control-messages [control]="influxmeasForm.controls.Name"></control-messages>
  		</div>
 
 		<div class="form-group">
@@ -98,7 +98,7 @@
 		tooltip="Tag name that will be sent after data gathered"></i>
 		<div class="col-sm-9">
 			<input formControlName="IndexTag" id="IndexTag" />
-				<control-messages [control]="influxmeasForm.controls.IndexTag"></control-messages>
+			<control-messages [control]="influxmeasForm.controls.IndexTag"></control-messages>
 		</div>
 		</div>
 

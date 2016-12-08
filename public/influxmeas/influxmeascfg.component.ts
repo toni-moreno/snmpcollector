@@ -3,6 +3,7 @@ import {  FormBuilder,  Validators} from '@angular/forms';
 import { InfluxMeasService } from './influxmeascfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
+import { ValidationService } from '../common/validation.service'
 
 import { GenericModal } from '../common/generic-modal';
 
@@ -10,7 +11,7 @@ import { GenericModal } from '../common/generic-modal';
   selector: 'influxmeas',
   providers: [InfluxMeasService, SnmpMetricService],
   templateUrl: 'public/influxmeas/influxmeaseditor.html',
-  styleUrls:['public/influxmeas/influxmeaseditor.css'],
+  styleUrls:['public/css/component-styles.css']
 })
 
 export class InfluxMeasCfgComponent {
@@ -60,7 +61,7 @@ export class InfluxMeasCfgComponent {
 	  this.influxmeasForm = builder.group({
 			id: ['',Validators.required],
   		Name: ['', Validators.required],
-			GetMode: ['', Validators.required],
+			GetMode: ['value', Validators.required],
 			IndexOID: [''],
 			IndexTag: [''],
       IndexAsValue: ['false'],
