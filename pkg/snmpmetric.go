@@ -13,8 +13,9 @@ import (
 )
 
 //https://collectd.org/wiki/index.php/Data_source
+// http://stackoverflow.com/questions/14572006/net-snmp-returned-types
 
-const (
+/*const (
 	GAUGE = 0 << iota //value is simply stored as-is
 	INTEGER
 	COUNTER32
@@ -24,7 +25,7 @@ const (
 	IPADDR
 	STRINGPARSER
 	//STRINGEVAL
-)
+)*/
 
 /*
 3.- Check minimal data is set  (pending)
@@ -43,9 +44,14 @@ func (m *SnmpMetricCfg) Init(name string) error {
 	}
 	switch m.DataSrcType {
 	case "GAUGE":
+	case "GAUGE32":
 	case "INTEGER":
+	case "INTEGER32":
+	case "UINTEGER32":
 	case "COUNTER32":
 	case "COUNTER64":
+	case "TIMETICKS":
+	case "OCTETSTRING":
 	case "STRING":
 	case "HWADDR":
 	case "IPADDR":
@@ -110,7 +116,14 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 		}
 	}
 	switch s.cfg.DataSrcType {
-	case "GAUGE", "INTEGER":
+	case "TIMETICKS":
+		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			val := pduVal2Int64(pdu)
+			s.CookedValue = float64(val / 100) //now data in secoonds
+			s.CurTime = now
+			s.Scale()
+		}
+	case "GAUGE", "GAUGE32", "INTEGER", "INTEGER32", "UINTEGER32":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := pduVal2Int64(pdu)
 			s.CookedValue = float64(val)
@@ -192,7 +205,7 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 			}
 
 		}
-	case "STRING":
+	case "STRING", "OCTETSTRING":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue = pduVal2str(pdu)
 			s.CurTime = now
