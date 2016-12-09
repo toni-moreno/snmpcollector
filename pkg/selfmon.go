@@ -24,10 +24,17 @@ type SelfMonConfig struct {
 	mutex               sync.Mutex
 	rt_meas_name        string
 	gvm_meas_name       string
+	initialized         bool
+	imutex              sync.Mutex
 }
 
 // Init Initialize the Object data and check for consistence
 func (sm *SelfMonConfig) Init() {
+	if sm.CheckAndSetInitialized() == true {
+		log.Info("Self monitoring thread  already Initialized (skipping Initialization)")
+		return
+	}
+
 	//Init extra tags
 	if len(sm.ExtraTags) > 0 {
 		sm.TagMap = make(map[string]string)
@@ -67,6 +74,21 @@ func (sm *SelfMonConfig) Init() {
 
 }
 
+func (sm *SelfMonConfig) CheckAndSetInitialized() bool {
+	sm.imutex.Lock()
+	defer sm.imutex.Unlock()
+	retval := sm.initialized
+	sm.initialized = true
+	return retval
+}
+
+// IsInitialized check if this thread is already working
+func (sm *SelfMonConfig) IsInitialized() bool {
+	sm.imutex.Lock()
+	defer sm.imutex.Unlock()
+	return sm.initialized
+}
+
 func (sm *SelfMonConfig) setOutput(val *InfluxDB) {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
@@ -91,6 +113,9 @@ func (sm *SelfMonConfig) addDataPoint(pt *client.Point) {
 }
 
 func (sm *SelfMonConfig) AddDeviceMetrics(deviceid string, fields map[string]interface{}) {
+	if !sm.IsInitialized() {
+		return
+	}
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
 
@@ -110,7 +135,9 @@ func (sm *SelfMonConfig) AddDeviceMetrics(deviceid string, fields map[string]int
 }
 
 func (sm *SelfMonConfig) End() {
-	close(sm.chExit)
+	if sm.IsInitialized() {
+		close(sm.chExit)
+	}
 }
 
 // StartGather for stopping selfmonitori goroutine
