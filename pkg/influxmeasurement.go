@@ -57,23 +57,23 @@ func (mc *InfluxMeasurementCfg) Init(name string, MetricCfg *map[string]*SnmpMet
 	log.Infof("processing measurement key: %s ", name)
 	log.Debugf("%+v", mc)
 	for _, f_val := range mc.Fields {
-		log.Debugf("looking for measurement %s : fields: %s ", mc.Name, f_val)
-		if val, ok := (*MetricCfg)[f_val]; ok {
+		log.Debugf("looking for measurement %s : fields: %s : Report %t", mc.Name, f_val.ID, f_val.Report)
+		if val, ok := (*MetricCfg)[f_val.ID]; ok {
 			if val.DataSrcType == "STRINGEVAL" {
 				mc.evalMetric = append(mc.evalMetric, val)
-				log.Debugf("EVAL metric found measurement %s : fields: %s ", mc.Name, f_val)
+				log.Debugf("EVAL metric found measurement %s : fields: %s ", mc.Name, f_val.ID)
 			} else {
 				mc.fieldMetric = append(mc.fieldMetric, val)
 			}
 		} else {
-			log.Warnf("measurement field  %s NOT FOUND in Metrics Database !", f_val)
+			log.Warnf("measurement field  %s NOT FOUND in Metrics Database !", f_val.ID)
 		}
 	}
 	//check if fieldMetric
 	if len(mc.fieldMetric) == 0 {
 		var s string
 		for _, v := range mc.Fields {
-			s += v
+			s += ";" + v.ID
 		}
 		return errors.New("No metrics found with names" + s + " in measurement Config " + mc.ID)
 	}
@@ -181,6 +181,17 @@ func (m *InfluxMeasurement) PushMetricTable(p map[string]string) error {
 			metric.RealOID = m.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
 			idx[smcfg.ID] = metric
 		}
+		//setup visibility on db for each metric
+		for k, v := range idx {
+			report := true
+			for _, r := range m.cfg.Fields {
+				if r.ID == k {
+					report = r.Report
+					break
+				}
+			}
+			v.Report = report
+		}
 		m.MetricTable[label] = idx
 	}
 	return nil
@@ -228,6 +239,17 @@ func (m *InfluxMeasurement) InitMetricTable() {
 			metric.RealOID = m.cfg.ID + "." + smcfg.ID
 			idx[smcfg.ID] = metric
 		}
+		//setup visibility on db for each metric
+		for k, v := range idx {
+			report := true
+			for _, r := range m.cfg.Fields {
+				if r.ID == k {
+					report = r.Report
+					break
+				}
+			}
+			v.Report = report
+		}
 		m.MetricTable["0"] = idx
 
 	case "indexed":
@@ -254,6 +276,17 @@ func (m *InfluxMeasurement) InitMetricTable() {
 				metric.SetLogger(m.log)
 				metric.RealOID = m.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
 				idx[smcfg.ID] = metric
+			}
+			//setup visibility on db for each metric
+			for k, v := range idx {
+				report := true
+				for _, r := range m.cfg.Fields {
+					if r.ID == k {
+						report = r.Report
+						break
+					}
+				}
+				v.Report = report
 			}
 			m.MetricTable[label] = idx
 		}
@@ -459,6 +492,10 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 				m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, hostTags, v_mtr)
 				continue
 			}
+			if v_mtr.Report == false {
+				m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.cfg.ID, m.cfg.ID)
+				continue
+			}
 			m.log.Debugf("generating field for %s value %f ", v_mtr.cfg.FieldName, v_mtr.CookedValue)
 			m.log.Debugf("DEBUG METRIC %+v", v_mtr)
 			Fields[v_mtr.cfg.FieldName] = v_mtr.CookedValue
@@ -498,6 +535,10 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, Tags, v_mtr)
 						continue
 					}
+					if v_mtr.Report == false {
+						m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.cfg.ID, m.cfg.ID)
+						continue
+					}
 
 					var tag string
 					switch v := v_mtr.CookedValue.(type) {
@@ -513,6 +554,10 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 				} else {
 					if v_mtr.CookedValue == nil {
 						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, Tags, v_mtr)
+						continue
+					}
+					if v_mtr.Report == false {
+						m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.cfg.ID, m.cfg.ID)
 						continue
 					}
 					m.log.Debugf("generating field for Metric: %s : value %f", v_mtr.cfg.FieldName, v_mtr.CookedValue.(float64))
