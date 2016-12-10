@@ -23,6 +23,141 @@ type SysInfo struct {
 	SysLocation string
 }
 
+func PduVal2Cooked(pdu gosnmp.SnmpPDU) interface{} {
+	switch pdu.Type {
+	case gosnmp.EndOfContents:
+		return pdu.Value
+	case gosnmp.Boolean:
+		return pdu.Value
+	case gosnmp.Integer:
+		return pduVal2Int64(pdu)
+	case gosnmp.BitString:
+		return pduVal2str(pdu)
+	case gosnmp.OctetString:
+		return pduVal2str(pdu)
+	case gosnmp.Null:
+		return pdu.Value
+	case gosnmp.ObjectIdentifier:
+		//	log.Debugf("DEBUG ObjectIdentifier :%s", pdu.Value)
+		return pdu.Value
+	case gosnmp.ObjectDescription:
+		return pduVal2str(pdu)
+	case gosnmp.IPAddress:
+		ip, _ := pduVal2IPaddr(pdu)
+		return ip
+	case gosnmp.Counter32:
+		return pduVal2Int64(pdu)
+	case gosnmp.Gauge32:
+		return pduVal2Int64(pdu)
+	case gosnmp.TimeTicks:
+		return pduVal2Int64(pdu)
+	case gosnmp.Opaque:
+		return pdu.Value
+	case gosnmp.NsapAddress:
+		return pduVal2str(pdu)
+	case gosnmp.Counter64:
+		return pduVal2Int64(pdu)
+	case gosnmp.Uinteger32:
+		return pduVal2Int64(pdu)
+	case gosnmp.NoSuchObject:
+		return pdu.Value
+	case gosnmp.NoSuchInstance:
+		return "No Such Instance currently exists at this OID"
+	case gosnmp.EndOfMibView:
+		return pdu.Value
+	default:
+		return "--"
+	}
+}
+
+// PduType2Str
+func PduType2Str(pdutype gosnmp.Asn1BER) string {
+	switch pdutype {
+	case gosnmp.EndOfContents: // 	case gosnmp.UnknownType
+		return "EndOfContents"
+	case gosnmp.Boolean:
+		return "Boolean"
+	case gosnmp.Integer:
+		return "Integer"
+	case gosnmp.BitString:
+		return "BitString"
+	case gosnmp.OctetString:
+		return "OctetString"
+	case gosnmp.Null:
+		return "Null"
+	case gosnmp.ObjectIdentifier:
+		return "ObjectIdentifier"
+	case gosnmp.ObjectDescription:
+		return "ObjectDescription"
+	case gosnmp.IPAddress:
+		return "IPaddress"
+	case gosnmp.Counter32:
+		return "Counter32"
+	case gosnmp.Gauge32:
+		return "Gauge32"
+	case gosnmp.TimeTicks:
+		return "TimeTicks"
+	case gosnmp.Opaque:
+		return "Opaque"
+	case gosnmp.NsapAddress:
+		return "NsapAddress"
+	case gosnmp.Counter64:
+		return "Counter64"
+	case gosnmp.Uinteger32:
+		return "Uinteger32"
+	case gosnmp.NoSuchObject:
+		return "NoSuchObject"
+	case gosnmp.NoSuchInstance:
+		return "NoSuchInstance"
+	case gosnmp.EndOfMibView:
+		return "EnvOfMibView"
+	default:
+		return "--"
+	}
+	return "--"
+}
+
+type EasyPDU struct {
+	Name  string
+	Type  string
+	Value interface{}
+}
+
+func SNMPQuery(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error) {
+	var result []EasyPDU
+	switch mode {
+	case "get":
+		pkt, err := client.Get([]string{oid})
+		if err != nil {
+			log.Errorf("SNMP (%s) for OIDs get error: %s\n", client.Target, err)
+			return result, err
+		}
+		for _, pdu := range pkt.Variables {
+			result = append(result, EasyPDU{Name: pdu.Name, Type: PduType2Str(pdu.Type), Value: PduVal2Cooked(pdu)})
+		}
+	case "walk":
+		setRawData := func(pdu gosnmp.SnmpPDU) error {
+			if pdu.Value == nil {
+				log.Warnf("no value retured by pdu :%+v", pdu)
+				return nil //if error return the bulk process will stop
+			}
+			result = append(result, EasyPDU{Name: pdu.Name, Type: PduType2Str(pdu.Type), Value: PduVal2Cooked(pdu)})
+			return nil
+		}
+		err := client.Walk(oid, setRawData)
+		if err != nil {
+			log.Errorf("SNMP WALK error: %s", err)
+			return result, err
+		}
+	default:
+		return result, fmt.Errorf("error on getmode parameter [%s] not supported", mode)
+	}
+	if len(result) == 0 {
+		result = append(result, EasyPDU{Name: oid, Type: "ERROR", Value: "No Such Instance currently exists at this OID"})
+	}
+	return result, nil
+}
+
 // SnmpDebugLog returns a logger handler for snmp debug data
 func SnmpDebugLog(filename string) *olog.Logger {
 	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(filename, ".", "-", -1)+".log")

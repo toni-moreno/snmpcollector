@@ -10,6 +10,7 @@ import (
 	//	"html/template"
 	"crypto/md5"
 	"net/http"
+	"time"
 )
 
 //HTTPConfig has webserver config options
@@ -198,6 +199,7 @@ func webServer(port int) {
 	m.Group("/runtime", func() {
 		m.Get("/agent/reloadconf/", reqSignedIn, AgentReloadConf)
 		m.Post("/snmpping/", reqSignedIn, bind(SnmpDeviceCfg{}), PingSNMPDevice)
+		m.Post("/snmpquery/:getmode/:obtype/:data", reqSignedIn, bind(SnmpDeviceCfg{}), QuerySNMPDevice)
 		m.Get("/version/", reqSignedIn, RTGetVersion)
 		m.Get("/info/", reqSignedIn, RTGetInfo)
 		m.Get("/info/:id", reqSignedIn, RTGetInfo)
@@ -261,6 +263,49 @@ func PingSNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
 		log.Debugf("OK on query device ")
 		ctx.JSON(200, sysinfo)
 	}
+}
+
+//PingSNMPDevice xx
+func QuerySNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
+	getmode := ctx.Params(":getmode")
+	obtype := ctx.Params(":obtype")
+	data := ctx.Params(":data")
+
+	log.Infof("trying to query device %s : getmode: %s objectype: %s data %s", cfg.ID, getmode, obtype, data)
+
+	if obtype != "oid" {
+		log.Warnf("Object Type [%s] Not Supperted", obtype)
+		ctx.JSON(400, "Object Type [ "+obtype+"] Not Supperted")
+		return
+	}
+
+	snmpcli, info, err := SnmpClient(&cfg, log)
+	if err != nil {
+		log.Debugf("ERROR  on open connection with device %s : %s", cfg.ID, err)
+		ctx.JSON(400, err.Error())
+		return
+	}
+	start := time.Now()
+	result, err := SNMPQuery(snmpcli, getmode, data)
+	elapsed := time.Since(start)
+	if err != nil {
+		log.Debugf("ERROR  on query device : %s", err)
+		ctx.JSON(400, err.Error())
+		return
+	}
+	log.Debugf("OK on query device ")
+	snmpdata := struct {
+		DeviceCfg   *SnmpDeviceCfg
+		TimeTaken   float64
+		PingInfo    *SysInfo
+		QueryResult []EasyPDU
+	}{
+		&cfg,
+		elapsed.Seconds(),
+		info,
+		result,
+	}
+	ctx.JSON(200, snmpdata)
 }
 
 //RTSetLogLevelDev xx
