@@ -29,7 +29,14 @@ import { ModalDirective } from 'ng2-bootstrap/components/modal/modal.component';
                       {{entry.value}}
                     </dd>
                     <div *ngIf="isArray(entry.value)" style="margin-bottom:10px">
-                      <dd *ngFor="let val of entry.value">{{val}}</dd>
+                      <div *ngFor="let val of entry.value">
+                        <div *ngIf="isObject(val)">
+                          <dd>{{val?.ID}} <i [ngClass]="val?.Report ? 'glyphicon glyphicon-arrow-right' : 'glyphicon glyphicon-alert'"></i>
+                        </div>
+                        <div *ngIf="!isObject(val)">
+                          <dd> {{val}}</dd>
+                        </div>
+                      </div>
                     </div>
                     <dt *ngIf = "entry.value.Description">Description</dt>
                     <dd *ngIf = "entry.value.Description">{{entry.value.Description}}</dd>
@@ -74,6 +81,11 @@ export class GenericModal {
   isArray (myObject) {
     return myObject instanceof Array;
   }
+
+  isObject (myObject) {
+  return typeof myObject === 'object'
+}
+
 
   hide() {
     this.childModal.hide();
