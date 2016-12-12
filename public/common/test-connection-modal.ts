@@ -163,7 +163,7 @@ export class TestConnectionModal implements OnInit  {
 
   //Result params
   queryResult : any;
-  editResults: boolean = true;
+  editResults: boolean = false;
 
   selectOption(id : string) {
     this.selectedOption = id;
