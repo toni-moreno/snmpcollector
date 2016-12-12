@@ -31,13 +31,14 @@ import { RuntimeComponent } from './runtime/runtime.component';
 import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ModalModule } from 'ng2-bootstrap/ng2-bootstrap';
-import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
-import { GenericModal } from './common/generic-modal'
-
+import { GenericModal } from './common/generic-modal';
+import { TestConnectionModal } from './common/test-connection-modal';
 //others
 import { ValidationService } from './common/validation.service';
 //pipes
-import { ObjectParserPipe } from './common/custom_pipe'
+import { ObjectParserPipe } from './common/custom_pipe';
+
+import { SpinnerComponent } from './common/spinner';
 
 @NgModule({
   bootstrap: [App],
@@ -52,6 +53,8 @@ import { ObjectParserPipe } from './common/custom_pipe'
     InfluxServerCfgComponent,
     RuntimeComponent,
     GenericModal,
+    SpinnerComponent,
+    TestConnectionModal,
     Home,
     Login,
     App,
@@ -65,7 +68,6 @@ import { ObjectParserPipe } from './common/custom_pipe'
     AccordionModule,
     TooltipModule,
     ModalModule,
-    AlertModule,
     PaginationModule,
     TabsModule,
     Ng2TableModule,
