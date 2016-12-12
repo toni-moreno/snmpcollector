@@ -9,6 +9,8 @@ import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ValidationService } from '../common/validation.service'
 
 import { GenericModal } from '../common/generic-modal';
+import { TestConnectionModal } from '../common/test-connection-modal';
+
 
 @Component({
   selector: 'snmpdevs',
@@ -20,6 +22,8 @@ export class SnmpDeviceCfgComponent {
   //TEST:
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
+  @ViewChild('viewTestConnectionModal') public viewTestConnectionModal: TestConnectionModal;
+
 
   //ADDED
     editmode: string; //list , create, modify
@@ -310,20 +314,8 @@ export class SnmpDeviceCfgComponent {
 
    pingSnmpDev(){
     if(this.snmpdevForm.valid) {
-      this.snmpDeviceService.pingDevice(this.snmpdevForm.value)
-      .subscribe(data => {
-        console.log("data:",data);
-        this.alertHandler = [];
-        this.alertHandler.push({msg: 'Test succesfull '+data['SysDescr'], type: 'success', closable: true});
-       },
-        err => {
-        console.error(err);
-        this.alertHandler = [];
-        this.alertHandler.push({msg: 'Test failed! '+err['_body'], type: 'danger', closable: true});
-        },
-        () =>  {console.log("OK")}
-       );
-     }
+      this.viewTestConnectionModal.show();
+    }
    }
 
 

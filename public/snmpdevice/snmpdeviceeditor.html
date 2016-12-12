@@ -2,6 +2,7 @@
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <!-- Large modal -->
 <hr>
+
 <p [ngSwitch]="editmode">
   <template ngSwitchCase="list">
   <test-modal #viewModal titleName='Device'></test-modal>
@@ -13,6 +14,7 @@
               [controlSize]="true"
               (validationClicked)="deleteSnmpDevice($event)">
   </test-modal>
+
     <div class="row">
   <div class="col-md-6">
     <input *ngIf="config.filtering" placeholder="Filter all columns"
@@ -48,13 +50,6 @@
 </template>
 
 <template ngSwitchCase="create">
-  <div class="col-sm-12" *ngIf="alertHandler.length > 0">
-  <div>
-      <alert *ngFor="let alert of alertHandler; let i = index" style="position: fixed; top: 0; right: 0" [type]="alert.type" dismissible="true">
-        {{ alert?.msg }}
-      </alert>
-  </div>
-  </div>
 
 <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="saveSnmpDev()">
 
@@ -360,7 +355,10 @@ tooltip="Tag's value to identify the device in InfluxDB"></i>
     <control-messages [control]="snmpdevForm.controls.Description"></control-messages>
  </div>
 </div>
-
+<test-connection-modal #viewTestConnectionModal
+                      titleName='Test connection:'
+                      [formValues]="snmpdevForm.value">
+</test-connection-modal>
 <div class="col-sm-2">
   <button type="button" [disabled]="!snmpdevForm.valid" (click)="pingSnmpDev()">Test Connection</button>
 </div>
@@ -374,13 +372,7 @@ tooltip="Tag's value to identify the device in InfluxDB"></i>
 </template>
 
 <template ngSwitchCase="modify">
-  <div class="col-sm-12" *ngIf="alertHandler.length > 0">
-  <div>
-      <alert *ngFor="let alert of alertHandler; let i = index" style="position: fixed; top: 0; right: 0" [type]="alert.type" dismissible="true">
-        {{ alert?.msg }}
-      </alert>
-  </div>
-  </div>
+
 <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="updateSnmpDev(testsnmpdev.ID)">
 <div class="form-group">
 <label class="control-label col-sm-2" for="id">ID</label>
@@ -693,7 +685,10 @@ tooltip="Severity log level"></i>
 <div class="col-sm-2">
   <button type="button" [disabled]="!snmpdevForm.valid" (click)="pingSnmpDev()">Test Connection</button>
 </div>
-
+<test-connection-modal #viewTestConnectionModal
+                      titleName='Test connection for:'
+                      [formValues]="snmpdevForm.value">
+</test-connection-modal>
 <div class="col-sm-offset-2 col-sm-3">
   <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
   <button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>

@@ -125,6 +125,7 @@ export class SnmpDeviceService {
     };
 
     pingDevice(dev) {
+        console.log(dev);
         return this.httpAPI.post('/runtime/snmpping/',JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ||
             key == 'Retries' ||
@@ -147,5 +148,26 @@ export class SnmpDeviceService {
         .map( (responseData) => responseData.json());
     }
 
-
+    sendQuery(dev,getMode,oid) {
+        return this.httpAPI.post('/runtime/snmpquery/'+getMode+'/oid/'+oid,JSON.stringify(dev,function (key,value) {
+            if ( key == 'Port' ||
+            key == 'Retries' ||
+            key == 'Timeout' ||
+            key == 'Repeat' ||
+            key == 'Freq' ) {
+                return parseInt(value);
+            }
+            if ( key == 'Active' ||
+            key == 'SnmpDebug' ||
+            key == 'DisableBulk' ) return ( value === "true" || value === true);
+            if ( key == 'Extratags' ) return  String(value).split(',');
+            if ( key == 'MeasFilters' ||
+            key == 'MetricGroups') {
+                if (value != null) return String(value).split(',');
+                else return null;
+            }
+            return value;
+        }))
+        .map( (responseData) => responseData.json());
+    }
 }
