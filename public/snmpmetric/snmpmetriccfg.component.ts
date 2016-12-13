@@ -61,7 +61,7 @@ export class SnmpMetricCfgComponent {
 			DataSrcType: ['GAUGE', Validators.required],
 			//Depending on datasrctype
 			ExtraData: [''],
-			GetRate:['False', Validators.compose([Validators.required,ValidationService.integerValidator])], //Validators.required],
+			GetRate:['False'], //Validators.required],
 			Scale: ['0', Validators.compose([Validators.required,ValidationService.floatValidator])],
       Shift: ['0', Validators.compose([Validators.required,ValidationService.floatValidator])],
       IsTag:['false',Validators.required],
