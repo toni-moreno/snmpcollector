@@ -107,6 +107,15 @@ func (db *InfluxDB) CheckAndSetStarted() bool {
 	return retval
 }
 
+// CheckAndUnSetStarted check if this thread is already working and unset if not
+func (db *InfluxDB) CheckAndUnSetStarted() bool {
+	db.smutex.Lock()
+	defer db.smutex.Unlock()
+	retval := db.started
+	db.started = false
+	return retval
+}
+
 // IsStarted check if this thread is already working
 func (db *InfluxDB) IsStarted() bool {
 	db.smutex.Lock()
@@ -130,7 +139,16 @@ func (db *InfluxDB) CheckAndSetInitialized() bool {
 	return retval
 }
 
-// IsInitialized check if this thread is already working
+// CheckAndSetInitialized check if this thread is already working and set if not
+func (db *InfluxDB) CheckAndUnSetInitialized() bool {
+	db.imutex.Lock()
+	defer db.imutex.Unlock()
+	retval := db.initialized
+	db.initialized = false
+	return retval
+}
+
+/*/ IsInitialized check if this thread is already working
 func (db *InfluxDB) IsInitialized() bool {
 	db.imutex.Lock()
 	defer db.imutex.Unlock()
@@ -142,7 +160,7 @@ func (db *InfluxDB) SetInitialzedAs(ini bool) {
 	db.imutex.Lock()
 	defer db.imutex.Unlock()
 	db.initialized = ini
-}
+}*/
 
 //Init initialies runtime info
 func (db *InfluxDB) Init() {
@@ -178,11 +196,10 @@ func (db *InfluxDB) End() {
 	if db.dummy == true {
 		return
 	}
-	if db.IsInitialized() == true {
+	if db.CheckAndUnSetInitialized() == true {
 		close(db.iChan)
 		close(db.chExit)
 		db.client.Close()
-		db.SetInitialzedAs(false)
 	}
 }
 

@@ -82,6 +82,14 @@ func (sm *SelfMonConfig) CheckAndSetInitialized() bool {
 	return retval
 }
 
+func (sm *SelfMonConfig) CheckAndUnSetInitialized() bool {
+	sm.imutex.Lock()
+	defer sm.imutex.Unlock()
+	retval := sm.initialized
+	sm.initialized = false
+	return retval
+}
+
 // IsInitialized check if this thread is already working
 func (sm *SelfMonConfig) IsInitialized() bool {
 	sm.imutex.Lock()
@@ -135,7 +143,7 @@ func (sm *SelfMonConfig) AddDeviceMetrics(deviceid string, fields map[string]int
 }
 
 func (sm *SelfMonConfig) End() {
-	if sm.IsInitialized() {
+	if sm.CheckAndUnSetInitialized() {
 		close(sm.chExit)
 	}
 }
