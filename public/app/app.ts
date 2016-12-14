@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'auth-app',
+  selector: 'snmpcol-app',
   templateUrl: 'public/app/app.html'
 })
 
