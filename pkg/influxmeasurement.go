@@ -327,6 +327,7 @@ func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
 		return true, nil
 	}
 	//----------------
+	m.log.Infof("Applying filter : [ %s ] on measurement [ %s ]", m.Filter.ID, m.cfg.ID)
 	switch m.Filter.FType {
 	case "file":
 		newfilterlabels, err = m.applyFileFilter(m.Filter.FileName, m.Filter.EnableAlias)
@@ -340,6 +341,10 @@ func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
 		}
 	default:
 		return false, fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
+	}
+	//check if all values have been filtered to send a warnign message.
+	if len(newfilterlabels) == 0 {
+		m.log.Warnf("WARNING after applying filter no values on this measurement will be sent")
 	}
 	//check if newfilterlabels are diferent than previous.
 
@@ -673,7 +678,7 @@ func (m *InfluxMeasurement) filterIndexedLabels(f_mode string, L map[string]stri
 
 func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, valueCond string) (map[string]string, error) {
 
-	m.log.Infof("Apply Condition Filter: Looking up column names in: Condition %s", oidCond)
+	m.log.Debugf("Apply Condition Filter: Looking up column names in: Condition %s", oidCond)
 
 	idxPosInOID := len(oidCond)
 
