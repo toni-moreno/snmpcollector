@@ -94,7 +94,7 @@ func initMetricsCfg() error {
 	log.Debug("--------------------Initializing Config metrics-------------------")
 	log.Debug("Initializing SNMPMetricconfig...")
 	for mKey, mVal := range cfg.Metrics {
-		err := mVal.Init(mKey)
+		err := mVal.Init()
 		if err != nil {
 			log.Warnln("Error in Metric config:", err)
 			//if some error int the format the metric is deleted from the config
@@ -103,7 +103,7 @@ func initMetricsCfg() error {
 	}
 	log.Debug("Initializing MEASSUREMENTSconfig...")
 	for mKey, mVal := range cfg.Measurements {
-		err := mVal.Init(mKey, &cfg.Metrics)
+		err := mVal.Init(&cfg.Metrics)
 		if err != nil {
 			log.Warnln("Error in Measurement config:", err)
 			//if some error int the format the metric is deleted from the config

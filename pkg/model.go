@@ -300,6 +300,12 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgArray(filter string) ([]*SnmpMetricCfg, 
 func (dbc *DatabaseCfg) AddSnmpMetricCfg(dev SnmpMetricCfg) (int64, error) {
 	var err error
 	var affected int64
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
+	err = dev.Init()
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
 	session := dbc.x.NewSession()
 	defer session.Close()
 
@@ -352,6 +358,12 @@ func (dbc *DatabaseCfg) DelSnmpMetricCfg(id string) (int64, error) {
 func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64, error) {
 	var affecteddev, affected int64
 	var err error
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
+	_, err = NewSnmpMetric(&dev)
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
 	session := dbc.x.NewSession()
 	defer session.Close()
 
@@ -477,6 +489,12 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgArray(filter string) ([]*InfluxMe
 func (dbc *DatabaseCfg) AddInfluxMeasurementCfg(dev InfluxMeasurementCfg) (int64, error) {
 	var err error
 	var affected, newmf int64
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
+	err = dev.Init(&cfg.Metrics)
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
 	session := dbc.x.NewSession()
 	defer session.Close()
 
@@ -554,6 +572,12 @@ func (dbc *DatabaseCfg) DelInfluxMeasurementCfg(id string) (int64, error) {
 func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurementCfg) (int64, error) {
 	var affecteddev, newmf, affected int64
 	var err error
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
+	err = dev.Init(&cfg.Metrics)
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
 	session := dbc.x.NewSession()
 	defer session.Close()
 

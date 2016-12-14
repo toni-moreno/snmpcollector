@@ -26,9 +26,30 @@ type InfluxMeasurementCfg struct {
 	fieldMetric []*SnmpMetricCfg
 }*/
 
+func (mc *InfluxMeasurementCfg) CheckComputedMetric() error {
+	parameters := make(map[string]interface{})
+	log.Debugf("Building check parrameters array for index measurement %s", mc.ID)
+	parameters["NR"] = 1                   //Number of rows (like awk)
+	parameters["NF"] = len(mc.fieldMetric) //Number of fields ( like awk)
+	//getting all values to the array
+	for _, v := range mc.fieldMetric {
+		parameters[v.FieldName] = float64(1)
+	}
+	log.Debugf("PARAMETERS: %+v", parameters)
+	//compute Evalutated metrics
+	for _, v := range mc.evalMetric {
+		err := v.CheckEvalCfg(parameters)
+		if err != nil {
+			return fmt.Errorf("Error on metric %s evaluation ERROR : %s", v.ID, err)
+		}
+		parameters[v.FieldName] = float64(1)
+	}
+	return nil
+}
+
 //Init initialize the measurement configuration
-func (mc *InfluxMeasurementCfg) Init(name string, MetricCfg *map[string]*SnmpMetricCfg) error {
-	mc.ID = name
+func (mc *InfluxMeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error {
+	//mc.ID = name
 	//validate config values
 	if len(mc.Name) == 0 {
 		return errors.New("Name not set in measurement Config " + mc.ID)
@@ -54,8 +75,9 @@ func (mc *InfluxMeasurementCfg) Init(name string, MetricCfg *map[string]*SnmpMet
 		return errors.New("Unknown GetMode" + mc.GetMode + " in measurement Config " + mc.ID)
 	}
 
-	log.Infof("processing measurement key: %s ", name)
+	log.Infof("processing measurement key: %s ", mc.ID)
 	log.Debugf("%+v", mc)
+
 	for _, f_val := range mc.Fields {
 		log.Debugf("looking for measurement %s : fields: %s : Report %t", mc.Name, f_val.ID, f_val.Report)
 		if val, ok := (*MetricCfg)[f_val.ID]; ok {
@@ -63,13 +85,15 @@ func (mc *InfluxMeasurementCfg) Init(name string, MetricCfg *map[string]*SnmpMet
 				mc.evalMetric = append(mc.evalMetric, val)
 				log.Debugf("EVAL metric found measurement %s : fields: %s ", mc.Name, f_val.ID)
 			} else {
+
+				log.Debugf("found Metric configuration: %s/ %s", f_val.ID, val.BaseOID)
 				mc.fieldMetric = append(mc.fieldMetric, val)
 			}
 		} else {
 			log.Warnf("measurement field  %s NOT FOUND in Metrics Database !", f_val.ID)
 		}
 	}
-	//check if fieldMetric
+	//check if there is any field ( should be at least one!!)
 	if len(mc.fieldMetric) == 0 {
 		var s string
 		for _, v := range mc.Fields {
@@ -77,6 +101,43 @@ func (mc *InfluxMeasurementCfg) Init(name string, MetricCfg *map[string]*SnmpMet
 		}
 		return errors.New("No metrics found with names" + s + " in measurement Config " + mc.ID)
 	}
+	//Check if duplicated oids
+	oidcheckarray := make(map[string]string)
+	for _, v := range mc.fieldMetric {
+		//check if the OID has already used as metric in the same measurement
+		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.BaseOID, v.ID)
+		if v2, ok := oidcheckarray[v.BaseOID]; ok {
+			//oid has already inserted
+			return fmt.Errorf("This measurement has duplicated OID[%s] in metric [%s/%s] ", v.BaseOID, v.ID, v2)
+		}
+		oidcheckarray[v.BaseOID] = v.ID
+	}
+	//Check if duplicated fieldNames in any of field/eval Metrics
+	fieldnamecheckarray := make(map[string]string)
+	for _, v := range mc.fieldMetric {
+		//check if the OID has already used as metric in the same measurement
+		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
+		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
+			//oid has already inserted
+			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
+		}
+		oidcheckarray[v.FieldName] = v.ID
+	}
+	for _, v := range mc.evalMetric {
+		//check if the OID has already used as metric in the same measurement
+		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
+		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
+			//oid has already inserted
+			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
+		}
+		oidcheckarray[v.FieldName] = v.ID
+	}
+	//Check if all evaluated metrics has well defined its parameters as FieldNames
+	err := mc.CheckComputedMetric()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

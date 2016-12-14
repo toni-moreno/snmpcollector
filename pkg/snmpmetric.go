@@ -34,8 +34,7 @@ name, BaseOID BaseOID begining with "."
 fieldname != null
 */
 // Init initialize metrics
-func (m *SnmpMetricCfg) Init(name string) error {
-	m.ID = name
+func (m *SnmpMetricCfg) Init() error {
 	//valIDate config values
 	if len(m.FieldName) == 0 {
 		return errors.New("FieldName not set in metric Config " + m.ID)
@@ -70,6 +69,23 @@ func (m *SnmpMetricCfg) Init(name string) error {
 	}
 	if m.DataSrcType == "STRINGEVAL" && len(m.ExtraData) == 0 {
 		return fmt.Errorf("ExtraData not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
+	}
+	return nil
+}
+
+func (m SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
+	if m.DataSrcType != "STRINGEVAL" {
+		return nil
+	}
+	expression, err := govaluate.NewEvaluableExpression(m.ExtraData)
+	if err != nil {
+		//log.Errorf("Error on initialice STRINGEVAL on metric %s evaluation : %s : ERROR : %s", m.ID, m.ExtraData, err)
+		return err
+	}
+	_, err = expression.Evaluate(parameters)
+	if err != nil {
+		//log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", m.ID, m.ExtraData, err)
+		return err
 	}
 	return nil
 }
