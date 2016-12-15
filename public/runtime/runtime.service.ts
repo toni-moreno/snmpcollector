@@ -75,6 +75,15 @@ export class RuntimeService {
         }
     };
 
+    changeLogLevel(id : string, level: string) {
+        console.log(level);
+        // return an observable
+            return this.httpAPI.put('/runtime/setloglevel/'+id+'/'+level,[id,level])
+            .map( (responseData) =>
+                responseData.json()
+            )
+    };
+
     downloadLogFile(id : string) {
         // return an observable
         return this.httpAPI.get('/runtime/getdevicelog/'+id)

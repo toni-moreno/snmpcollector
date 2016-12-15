@@ -17,6 +17,17 @@ export class RuntimeComponent {
 
 	runtime_dev: any;
 	subItem: any;
+	islogLevelChanged : boolean = false;
+	newLogLevel : string = null;
+
+	loglLevelArray : Array<string> = [
+		'panic',
+		'fatal',
+		'error',
+		'warning',
+		'info',
+		'debug'
+	];
 
 	isObject(val) { return typeof val === 'object'; }
 	isArray(val) { return typeof val === 'array'}
@@ -28,6 +39,8 @@ export class RuntimeComponent {
 	}
 
 	loadRuntimeById(id) {
+	 this.islogLevelChanged = false;
+	 this.newLogLevel = null;
 	 this.runtimeService.getRuntimeById(id)
 		 .subscribe(
 			data => {
@@ -64,6 +77,29 @@ export class RuntimeComponent {
 				 this.runtime_dev.ID = id;
 				 this.reloadData();
 
+			 },
+			 err => console.error(err),
+			 () => console.log('DONE')
+		 );
+	 }
+
+	 onChangeLogLevel(level) {
+		 console.log(level);
+		 this.islogLevelChanged = true;
+		 this.newLogLevel = level;
+	 }
+
+
+	 changeLogLevel(id) {
+		console.log("ID,event");
+		this.runtimeService.changeLogLevel(id,this.newLogLevel)
+			.subscribe(
+			 data => {
+				 this.runtime_dev = data;
+				 this.runtime_dev.CurLogLevel = this.newLogLevel;
+				 this.runtime_dev.ID = id;
+				 this.islogLevelChanged = !true;
+				 this.reloadData();
 			 },
 			 err => console.error(err),
 			 () => console.log('DONE')

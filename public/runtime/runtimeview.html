@@ -39,7 +39,7 @@
 
 	<div class="col-md-8">
 		<h4>SysInfo</h4><hr>
-		<table class="table-striped table-bordered">
+		<table class="table-striped table-bordered" style="overflow-x: scroll">
 		<tr *ngFor="let info of runtime_dev['SysInfo'] | objectParser">
 			<span>{{info.key}}</span>
 			<td style="padding-left:10px">{{info.value }}</td>
@@ -73,24 +73,40 @@
 		</div>
 
 		<div class="input-group" style="padding-bottom: 10px">
+			<span class="input-group-addon">Log Level</span>
+			<span class="input-group-addon">
+				<span class="glyphicon glyphicon-question-sign"  tooltip="change log level of the device"></span>
+			</span>
+			<span class="input-group-btn">
+				<select style="width:100px" [(ngModel)]="runtime_dev.CurLogLevel" (ngModelChange)="onChangeLogLevel($event)" [ngModelOptions]="{standalone: true}">
+					<option *ngFor="let loglevel of loglLevelArray" [value]="loglevel" >{{loglevel}}</option>
+				</select>
+			</span>
+			<span class="input-group-btn">
+				<button type="button" (click)="changeLogLevel(runtime_dev.ID)" [disabled] = "!islogLevelChanged" [ngClass]="'btn btn-primary'">Change</button>
+			</span>
+		</div>
+
+		<div class="input-group" style="padding-bottom: 10px">
 			<span class="input-group-addon">Force Flt Update</span>
 			<span class="input-group-addon">
 				<span class="glyphicon glyphicon-question-sign"  tooltip="Force FIlter update on next cicle"></span>
 			</span>
 			<span class="input-group-btn">
-				<button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-success'">'Force'</button>
+				<button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Force</button>
 			</span>
 		</div>
-    
+
 		<div class="input-group">
 			<span class="input-group-addon">Download Device Log file</span>
 			<span class="input-group-addon">
 				<span class="glyphicon glyphicon-question-sign"  tooltip="download the device related log file"></span>
 			</span>
 			<span class="input-group-btn">
-				<button type="button" (click)="downloadLogFile(runtime_dev.ID)" [ngClass]="'btn btn-success'">'Download'</button>
+				<button type="button" (click)="downloadLogFile(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Download</button>
 			</span>
 		</div>
+
 		<!--div class="btn-group-vertical" role="group">
 			{{runtime_dev.DeviceActive}}
 				<select [ngModel]="runtime_dev.StateDebug" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeFilter($event)">
