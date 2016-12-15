@@ -58,6 +58,11 @@ export class HttpAPI {
     private handleError(error:any) {
         if (error['status'] == 403) {
             this.router.navigate(['/login']);
+        }else if (error['status'] == 0) {
+            alert('Server seems not being running...');
+        } else if (error['status'] == 404) {
+            console.log(error);
+            alert('CODE :'+error.status +'\n'+"ERROR: \t"+error['_body']);
         }
         //return Observable.bindNodeCallback(this.test);
         return Observable.throw(error);
