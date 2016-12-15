@@ -496,6 +496,8 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					totalGets += nGets
 					totalErrors += nErrors
 
+					m.ComputeEvaluatedMetrics()
+
 					if nGets > 0 {
 						d.addGets(nGets)
 					}

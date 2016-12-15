@@ -97,7 +97,18 @@ export class NgTableComponent {
     if ( typeof html === 'object') {
       var test: any = '<ul class="list-unstyled">';
       for (var item of html) {
-        test += "<li>"+item+"</li>";
+        if(typeof item === 'object') {
+          test += "<li>";
+          for (var item2 in Object(item)) {
+            if (typeof item[item2] === 'boolean') {
+                if (item[item2]) test += ' <i class="glyphicon glyphicon-arrow-right"></i>'
+                else test += ' <i class="glyphicon glyphicon-alert"></i>'
+            } else test += item[item2];
+          }
+          test += "</li>";
+        } else {
+          test += "<li>"+item+"</li>";
+        }
       }
       test+="</ul>"
       return test;

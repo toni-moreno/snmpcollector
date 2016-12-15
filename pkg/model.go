@@ -84,19 +84,24 @@ type InfluxMeasurementCfg struct {
 	ID   string `xorm:"'id' unique"`
 	Name string `xorm:"name"`
 
-	GetMode      string           `xorm:"getmode"` //0=value 1=indexed
-	IndexOID     string           `xorm:"indexoid"`
-	IndexTag     string           `xorm:"indextag"`
-	IndexAsValue bool             `xorm:"'indexasvalue' default 0"`
-	Fields       []string         `xorm:"-"` //Got from MeasurementFieldCfg table
-	fieldMetric  []*SnmpMetricCfg `xorm:"-"`
-	Description  string           `xorm:"description"`
+	GetMode      string `xorm:"getmode"` //0=value 1=indexed
+	IndexOID     string `xorm:"indexoid"`
+	IndexTag     string `xorm:"indextag"`
+	IndexAsValue bool   `xorm:"'indexasvalue' default 0"`
+	Fields       []struct {
+		ID     string
+		Report bool
+	} `xorm:"-"` //Got from MeasurementFieldCfg table
+	fieldMetric []*SnmpMetricCfg `xorm:"-"`
+	evalMetric  []*SnmpMetricCfg `xorm:"-"`
+	Description string           `xorm:"description"`
 }
 
 //MeasurementFieldCfg the metrics contained on each measurement (to initialize on the fieldMetric array)
 type MeasurementFieldCfg struct {
 	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
 	IDMetricCfg      string `xorm:"id_metric_cfg"`
+	Report           bool   `xorm:"'report' default 1"`
 }
 
 //MeasFilterCfg the filter configuration
@@ -295,6 +300,12 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgArray(filter string) ([]*SnmpMetricCfg, 
 func (dbc *DatabaseCfg) AddSnmpMetricCfg(dev SnmpMetricCfg) (int64, error) {
 	var err error
 	var affected int64
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
+	err = dev.Init()
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
 	session := dbc.x.NewSession()
 	defer session.Close()
 
@@ -347,6 +358,12 @@ func (dbc *DatabaseCfg) DelSnmpMetricCfg(id string) (int64, error) {
 func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64, error) {
 	var affecteddev, affected int64
 	var err error
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
+	_, err = NewSnmpMetric(&dev)
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
 	session := dbc.x.NewSession()
 	defer session.Close()
 
@@ -454,7 +471,14 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgArray(filter string) ([]*InfluxMe
 	for _, mVal := range devices {
 		for _, mm := range MeasureMetric {
 			if mm.IDMeasurementCfg == mVal.ID {
-				mVal.Fields = append(mVal.Fields, mm.IDMetricCfg)
+				data := struct {
+					ID     string
+					Report bool
+				}{
+					mm.IDMetricCfg,
+					mm.Report,
+				}
+				mVal.Fields = append(mVal.Fields, data)
 			}
 		}
 	}
@@ -465,6 +489,12 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgArray(filter string) ([]*InfluxMe
 func (dbc *DatabaseCfg) AddInfluxMeasurementCfg(dev InfluxMeasurementCfg) (int64, error) {
 	var err error
 	var affected, newmf int64
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
+	err = dev.Init(&cfg.Metrics)
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
 	session := dbc.x.NewSession()
 	defer session.Close()
 
@@ -474,11 +504,12 @@ func (dbc *DatabaseCfg) AddInfluxMeasurementCfg(dev InfluxMeasurementCfg) (int64
 		return 0, err
 	}
 	//Measurement Fields
-	for _, metricID := range dev.Fields {
+	for _, metric := range dev.Fields {
 
 		mstruct := MeasurementFieldCfg{
 			IDMeasurementCfg: dev.ID,
-			IDMetricCfg:      metricID,
+			IDMetricCfg:      metric.ID,
+			Report:           metric.Report,
 		}
 		newmf, err = session.Insert(&mstruct)
 		if err != nil {
@@ -541,6 +572,12 @@ func (dbc *DatabaseCfg) DelInfluxMeasurementCfg(id string) (int64, error) {
 func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurementCfg) (int64, error) {
 	var affecteddev, newmf, affected int64
 	var err error
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
+	err = dev.Init(&cfg.Metrics)
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
 	session := dbc.x.NewSession()
 	defer session.Close()
 
@@ -567,11 +604,12 @@ func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurem
 	}
 
 	//Creating nuew Measurement Fields
-	for _, metricID := range dev.Fields {
+	for _, metric := range dev.Fields {
 
 		mstruct := MeasurementFieldCfg{
 			IDMeasurementCfg: dev.ID,
-			IDMetricCfg:      metricID,
+			IDMetricCfg:      metric.ID,
+			Report:           metric.Report,
 		}
 		newmf, err = session.Insert(&mstruct)
 		if err != nil {

@@ -26,6 +26,8 @@ export class InfluxMeasCfgComponent {
 	snmpmetrics: Array<any>;
  	selectmetrics: IMultiSelectOption[];
 	deleteobject: Object;
+	metricArray : Array<string> = [];
+
 
 	//Initialization data, rows, colunms for Table
 	private data:Array<any> = [];
@@ -56,7 +58,6 @@ export class InfluxMeasCfgComponent {
 
   constructor(public influxMeasService: InfluxMeasService, public metricMeasService: SnmpMetricService, builder: FormBuilder) {
 	  this.editmode='list';
-
 	  this.reloadData();
 	  this.influxmeasForm = builder.group({
 			id: ['',Validators.required],
@@ -213,12 +214,17 @@ export class InfluxMeasCfgComponent {
 
  editMeas(row){
 	 let id = row.ID;
+	 this.metricArray = [];
+
 	 this.getMetricsforMeas();
 	 this.influxMeasService.getMeasById(id)
  		 .subscribe(data => {
        this.testinfluxmeas = data
+			 for (var values of this.testinfluxmeas.Fields) {
+				 this.metricArray.push(values.ID);
+			 }
        //Update metrics fields
-	 		this.influxmeasForm.controls['Fields'].patchValue(this.testinfluxmeas.Fields);
+	 		this.influxmeasForm.controls['Fields'].patchValue(this.metricArray);
       },
  		 err => console.error(err),
  		 () =>  this.editmode = "modify"
@@ -273,7 +279,6 @@ export class InfluxMeasCfgComponent {
 				this.selectmetrics = [];
         this.influxmeasForm.controls['Fields'].reset();
 				for (let entry of data) {
-					console.log(entry)
 					this.selectmetrics.push({'id' : entry.ID , 'name' : entry.ID});
 				}
 			},

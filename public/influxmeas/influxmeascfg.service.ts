@@ -13,7 +13,13 @@ export class InfluxMeasService {
         return this.httpAPI.post('/measurement',JSON.stringify(dev,function (key,value) {
             if ( key == 'Fields' ) {
               if (value == null || value == "")  return null;
-              else return String(value).split(',');
+              else {
+                let array: any =  [];
+                _.forEach(String(value).split(','),function(val,key){
+                  array.push({'ID': val, 'Report': true})
+                });
+                return array; //String(value).split(',');
+              }
             }
             if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
             return value;
@@ -26,7 +32,13 @@ export class InfluxMeasService {
         return this.httpAPI.put('/measurement/'+id,JSON.stringify(dev,function (key,value) {
           if ( key == 'Fields' ) {
             if (value == null || value == "")  return null;
-            else return String(value).split(',');
+            else {
+              let array: any = [];
+              _.forEach(String(value).split(','),function(val,key){
+                array.push({'ID': val, 'Report': true})
+              });
+              return array; //String(value).split(',');
+            }
           }
           if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
           return value;
@@ -62,7 +74,7 @@ export class InfluxMeasService {
             return result;
         });
     }
-    
+
     getMeasById(id : string) {
         // return an observable
         console.log("ID: ",id);
