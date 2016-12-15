@@ -3,7 +3,12 @@ import { Validators, FormGroup, FormArray, FormBuilder } from '@angular/forms';
 import { ModalDirective } from 'ng2-bootstrap/components/modal/modal.component';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
+import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
+import { MeasFilterService } from '../measfilter/measfiltercfg.service';
+
+
 import {SpinnerComponent} from '../common/spinner';
+import { Subscription } from "rxjs";
 
 
 @Component({
@@ -20,28 +25,50 @@ import {SpinnerComponent} from '../common/spinner';
              </div>
               <div class="modal-body">
               <!--System Info Panel-->
-              <div class="panel panel-default">
+              <div class="panel panel-primary" *ngIf = "maximized === false">
                 <div class="panel-heading">System Info</div>
                 <my-spinner [isRunning]="isRequesting"></my-spinner>
                 <div [ngClass]="['panel-body', 'bg-'+alertHandler.type]">
                   {{alertHandler.msg}}
                 </div>
               </div>
-              <div class="row" *ngIf="isConnected">
+              <div class="row" *ngIf="isConnected && maximized === false" >
               <!--System Info Panel-->
                 <div class="col-md-6">
-                <div class="panel panel-default">
+                <div class="panel panel-primary">
                   <div class="panel-heading">Source from OID</div>
                   <div class="panel-body">
-                    <label class="checkbox-inline col-md-5">
+                  <div class="col-md-3">
+                    <label class="checkbox-inline">
                       <input type="radio" class=""  (click)="selectOption('OID')" [checked]="selectedOption === 'OID'">Direct OID
                     </label>
-                    <label class="checkbox-inline col-md-5">
-                      <input type="radio" class="btn btn-default" (click)="selectedOption = 'Metric'"   [checked]="selectedOption === 'Metric'">Metric OID
+                    </div>
+                    <div class="col-md-3">
+
+                    <label class="checkbox-inline">
+                      <input type="radio" class="btn btn-default" (click)="selectOption('Metric')"   [checked]="selectedOption === 'Metric'">Metric Base OID
                     </label>
-                    <div class="col-md-offset-5">
-                    <select class="form-control" *ngIf="selectedOption === 'Metric'" [(ngModel)]="metric" (ngModelChange)="selectMetric($event)" [ngModelOptions]="{standalone: true}">
-                      <option *ngFor="let metric of snmpmetrics" [value]="metric.OID" >{{metric.ID}}</option>
+                    <select class="form-control" *ngIf="selectedOption === 'Metric'" [ngModel]="''" (ngModelChange)="selectOID($event)" [ngModelOptions]="{standalone: true}">
+                      <option value="" disabled selected>Select Metric</option>
+                      <option *ngFor="let metric of metricList" [value]="metric.OID" >{{metric.ID}}</option>
+                    </select>
+                    </div>
+                    <div class="col-md-3">
+                    <label class="checkbox-inline">
+                      <input type="radio" class="btn btn-default" (click)="selectOption('Meas')"   [checked]="selectedOption === 'Meas'">Meas Index OID
+                    </label>
+                    <select class="form-control" *ngIf="selectedOption === 'Meas'"  [ngModel]="''" (ngModelChange)="selectOID($event, 'walk')" [ngModelOptions]="{standalone: true}">
+                    <option value="" disabled selected>Select Measurement</option>
+                      <option *ngFor="let meas of measlist" [value]="meas.OID" >{{meas.ID}}</option>
+                    </select>
+                    </div>
+                    <div class="col-md-3">
+                    <label class="checkbox-inline">
+                      <input type="radio" class="btn btn-default" (click)="selectOption('Filter')"   [checked]="selectedOption === 'Filter'">Filter OID
+                    </label>
+                    <select class="form-control" *ngIf="selectedOption === 'Filter'"  [ngModel]="''" (ngModelChange)="selectOID($event, null, filter)" [ngModelOptions]="{standalone: true}">
+                    <option value="" disabled selected>Select Filter</option>
+                      <option *ngFor="let filter of filterlist" [value]="filter.OID" >{{filter.ID}}</option>
                     </select>
                     </div>
                   </div>
@@ -49,9 +76,25 @@ import {SpinnerComponent} from '../common/spinner';
                 </div>
                 <form [formGroup]="testForm" class="form-horizontal">
                   <div class="col-md-6">
-                    <div class="panel panel-default">
+                    <div class="panel panel-primary">
                       <div class="panel-heading">Connection data</div>
                         <div class="panel-body">
+                        <div class="col-md-6">
+                        <div class="panel panel-default">
+                          <!-- Default panel contents -->
+                          <div class="panel-heading" style="padding: 0px">History</div>
+                            <ul class="list-group">
+                            <li class="list-group-item"  style="padding: 3px" *ngIf="histArray.length === 0"> Empty history</li>
+                            <li class="list-group-item" style="padding: 3px" *ngFor="let hist of histArray">
+                            <div>
+                            <span style="padding: 0px; margin-right: 10px" class="glyphicon glyphicon-plus" (click)="selectOID(hist)"></span>
+                            <span> {{hist}} </span>
+                            </div>
+                            </li>
+                          </ul>
+                        </div>
+                        </div>
+                        <div class="col-md-5">
                         <!--MODE-->
                         <div class="form-group">
                           <label for="Mode" class="col-sm-4 control-label">Mode</label>
@@ -65,10 +108,11 @@ import {SpinnerComponent} from '../common/spinner';
                         <div class="form-group">
                           <label for="OID" class="col-sm-4 control-label">OID</label>
                           <div class="col-sm-8">
-                          <input type="text" class="form-control" placeholder="Text input" [ngModel]="selectedMetric" formControlName="OID" id="OID">
+                          <input type="text" class="form-control" placeholder="Text input" [ngModel]="selectedOID" formControlName="OID" id="OID">
                           </div>
                         </div>
-                            <button type="button" class="btn btn-default pull-right" style="margin-top:10px" [disabled]="!testForm.valid" (click)="sendQuery()">Send query</button>
+                            <button type="button" class="btn btn-primary pull-right" style="margin-top:10px" [disabled]="!testForm.valid" (click)="sendQuery()">Send query</button>
+                        </div>
                         </div>
                       </div>
                     </div>
@@ -79,15 +123,17 @@ import {SpinnerComponent} from '../common/spinner';
               <div *ngIf="queryResult" class="panel panel-default">
                 <div class="panel-heading">
                   <h4>
-                    Query Result
-                    <label class="label label-primary" style="padding-top: 0.5em; margin:0px">
-                      {{queryResult.QueryResult.length}}
+                    Query OID: {{queryResult.OID}}
+                    <label [ngClass]="(queryResult.QueryResult[0].Type != 'Error' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance') ? ['label label-primary'] : ['label label-danger']" style="padding-top: 0.5em; margin:0px">
+                      {{queryResult.QueryResult[0].Type != 'Error' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance' ? queryResult.QueryResult.length +' results': '0 results - '+queryResult.QueryResult[0].Type}}
                     </label>
+                    <i [ngClass]="maximized ? ['pull-right glyphicon glyphicon-resize-full']: ['pull-right glyphicon glyphicon-resize-small']" style="margin-left: 10px;" (click)="maximizeQueryResults()"></i>
                     <span class="pull-right">  elapsed: {{queryResult.TimeTaken}} s </span>
+
                   </h4>
                 </div>
-              <div class="panel-body" style="max-height : 300px; overflow-y:scroll">
-                <table class="table table-hover table-striped table-condensed">
+              <div class="panel-body" [ngStyle]="maximized ? {'max-height' : '100%' } : {'max-height.px' : 300 , 'overflow-y' : 'scroll'}">
+                <table class="table table-hover table-striped table-condensed" style="width:100%">
                 <thead>
                 <tr>
                     <th>OID</th>
@@ -116,7 +162,7 @@ import {SpinnerComponent} from '../common/spinner';
             </div>
           </div>
         </div>`,
-        providers: [SnmpDeviceService, SnmpMetricService, SpinnerComponent],
+        providers: [SnmpDeviceService, SnmpMetricService, InfluxMeasService, MeasFilterService, SpinnerComponent],
 })
 
 export class TestConnectionModal implements OnInit  {
@@ -133,7 +179,7 @@ export class TestConnectionModal implements OnInit  {
     this.validationClicked.emit(myId);
   }
 
-  constructor(private builder: FormBuilder, public metricMeasService: SnmpMetricService, public snmpDeviceService: SnmpDeviceService) {
+  constructor(private builder: FormBuilder, public metricMeasService: SnmpMetricService, public influxMeasService: InfluxMeasService, public measFilterService : MeasFilterService,public snmpDeviceService: SnmpDeviceService) {
   }
 
   ngOnInit () {
@@ -141,19 +187,27 @@ export class TestConnectionModal implements OnInit  {
     Mode: ['get', Validators.required],
     OID: ['', Validators.required]
     });
-  this.getMetricsforMeas();
+  this.getMetricsforModal();
+  this.getMeasforModal();
+  this.getFiltersforModal();
   }
+
+  //History OIDs
+  histArray : Array<string> = [];
 
   //Sysinfo
    alertHandler : any = {};
    isRequesting : boolean ;
    isConnected: boolean;
+   myObservable : Subscription;
 
 
   //Panel OID source
   selectedOption : any = 'OID';
-  snmpmetrics : any = [];
-  selectedMetric : any;
+  metricList : any = [];
+  selectedOID : any;
+  measlist: any = [];
+  filterlist: any = [];
 
   //Panel connection
   modeGo : Array<string> = [
@@ -164,21 +218,29 @@ export class TestConnectionModal implements OnInit  {
   //Result params
   queryResult : any;
   editResults: boolean = false;
+  maximized : boolean = false;
 
   selectOption(id : string) {
     this.selectedOption = id;
-    this.selectedMetric = null;
+    this.selectedOID = null;
+    this.testForm.controls['Mode'].patchValue('get');
   }
 
-  selectMetric(metric) {
-    this.selectedMetric = metric;
-    // ... do other stuff here ...
+  selectOID(OID: string, forceMode: string) {
+    this.selectedOID = OID;
+    console.log("force",forceMode);
+    forceMode ? this.testForm.controls['Mode'].patchValue(forceMode) : '';
 }
+
+    maximizeQueryResults () {
+        this.maximized = !this.maximized;
+    }
 
   show() {
     //reset var values
     this.alertHandler = {};
     this.queryResult = null;
+    this.maximized = false;
     this.isConnected = false;
     this.isRequesting = true;
     this.pingDevice();
@@ -189,12 +251,38 @@ export class TestConnectionModal implements OnInit  {
     this.childModal.hide();
   }
 
-  getMetricsforMeas(){
-    this.metricMeasService.getMetrics(null)
+  getMetricsforModal(){
+    this.myObservable = this.metricMeasService.getMetrics(null)
     .subscribe(
       data => {
         for (let entry of data) {
-          this.snmpmetrics.push({'ID' : entry.ID , 'OID' : entry.BaseOID});
+            this.metricList.push({'ID' : entry.ID , 'OID' : entry.BaseOID});
+        }
+      },
+      err => console.error(err),
+      () => console.log('DONE')
+    );
+  }
+
+  getMeasforModal(){
+    this.myObservable = this.influxMeasService.getMeas(null)
+    .subscribe(
+      data => {
+        for (let entry of data) {
+          if (entry.IndexOID !== "") this.measlist.push({'ID' : entry.ID , 'OID' : entry.IndexOID});
+        }
+      },
+      err => console.error(err),
+      () => console.log('DONE')
+    );
+  }
+
+  getFiltersforModal(){
+    this.myObservable = this.measFilterService.getMeasFilter(null)
+    .subscribe(
+      data => {
+        for (let entry of data) {
+          if (entry.OIDCond !== "")  this.filterlist.push({'ID' : entry.ID , 'OID' : entry.OIDCond});
         }
       },
       err => console.error(err),
@@ -203,9 +291,12 @@ export class TestConnectionModal implements OnInit  {
   }
 
   sendQuery() {
+    this.histArray.push(this.testForm.value.OID);
+    if (this.histArray.length > 5 ) this.histArray.shift();
     this.snmpDeviceService.sendQuery(this.formValues,this.testForm.value.Mode, this.testForm.value.OID)
     .subscribe(data => {
       this.queryResult = data;
+      this.queryResult.OID = this.testForm.value.OID;
      },
       err => {
       console.error(err);
@@ -217,7 +308,7 @@ export class TestConnectionModal implements OnInit  {
 
   //WAIT
    pingDevice(){
-    this.snmpDeviceService.pingDevice(this.formValues)
+    this.myObservable = this.snmpDeviceService.pingDevice(this.formValues)
     .subscribe(data => {
       this.alertHandler = {msg: 'Test succesfull '+data['SysDescr'], type: 'success', closable: true};
       this.isConnected = true;
@@ -232,5 +323,10 @@ export class TestConnectionModal implements OnInit  {
       () =>  {console.log("OK") ;
             }
      );
+   }
+
+   ngOnDestroy() {
+     console.log("UNSUBSCRIBING");
+     this.myObservable.unsubscribe();
    }
 }
