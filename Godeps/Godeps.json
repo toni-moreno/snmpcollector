@@ -12,6 +12,11 @@
 			"Rev": "f0aeabca5a127c4078abb8c8d64298b147264b55"
 		},
 		{
+			"ImportPath": "github.com/Knetic/govaluate",
+			"Comment": "2.2.0-7-g36d12fd",
+			"Rev": "36d12fdf60d2eced73454479e9935c9ea8bbe46a"
+		},
+		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.10.0-38-g3ec0642",
 			"Rev": "3ec0642a7fb6488f65b06f9040adc67e3990296a"
@@ -28,10 +33,6 @@
 		{
 			"ImportPath": "github.com/go-macaron/binding",
 			"Rev": "9440f336b443056c90d7d448a0a55ad8c7599880"
-		},
-		{
-			"ImportPath": "github.com/go-macaron/cache",
-			"Rev": "56173531277692bc2925924d51fda1cd0a6b8178"
 		},
 		{
 			"ImportPath": "github.com/go-macaron/inject",
