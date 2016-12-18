@@ -910,7 +910,7 @@ func myLoginHandler(ctx *Context, user UserLogin) {
 		ctx.JSON(200, cookie)
 	} else {
 		log.Println("ERROR")
-		ctx.JSON(404, "ERROR user or password not match")
+		ctx.JSON(400, "ERROR user or password not match")
 	}
 }
 
