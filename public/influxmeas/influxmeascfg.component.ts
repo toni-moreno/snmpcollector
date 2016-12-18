@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, ViewChild} from '@angular/core';
-import {  FormBuilder,  Validators} from '@angular/forms';
+import { FormBuilder, Validators, FormArray } from '@angular/forms';
 import { InfluxMeasService } from './influxmeascfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
@@ -24,9 +24,10 @@ export class InfluxMeasCfgComponent {
   influxmeasForm: any;
 	testinfluxmeas: any;
 	snmpmetrics: Array<any>;
- 	selectmetrics: IMultiSelectOption[];
+ 	selectmetrics: IMultiSelectOption[] = [];
 	deleteobject: Object;
-	metricArray : Array<string> = [];
+	metricArray : Array<Object> = [];
+	selectedMetrics : any = [];
 
 
 	//Initialization data, rows, colunms for Table
@@ -56,7 +57,7 @@ export class InfluxMeasCfgComponent {
 		className: ['table-striped', 'table-bordered']
 	};
 
-  constructor(public influxMeasService: InfluxMeasService, public metricMeasService: SnmpMetricService, builder: FormBuilder) {
+  constructor(public influxMeasService: InfluxMeasService, public metricMeasService: SnmpMetricService, private builder: FormBuilder) {
 	  this.editmode='list';
 	  this.reloadData();
 	  this.influxmeasForm = builder.group({
@@ -66,10 +67,21 @@ export class InfluxMeasCfgComponent {
 			IndexOID: [''],
 			IndexTag: [''],
       IndexAsValue: ['false'],
-			Fields: ['', Validators.required],
+			Fields: builder.array([
+			]),
 			Description: ['']
 		});
   }
+
+	onChangeMetricArray(id){
+		this.metricArray = [];
+		for (let a of id) {
+			this.metricArray.push({ID: a, Report: true});
+		}
+	}
+	onCheckMetric(index) {
+		this.metricArray[index]['Report'] = !this.metricArray[index]['Report'];
+	}
 
 	public changePage(page:any, data:Array<any> = this.data):Array<any> {
 		let start = (page.page - 1) * page.itemsPerPage;
@@ -165,10 +177,6 @@ export class InfluxMeasCfgComponent {
 		console.log(data);
 	}
 
-	onChange(value){
-		this.influxmeasForm.controls['Fields'].patchValue(value);
-	}
-
   reloadData(){
   // now it's a simple subscription to the observable
     this.influxMeasService.getMeas(this.filter)
@@ -215,16 +223,17 @@ export class InfluxMeasCfgComponent {
  editMeas(row){
 	 let id = row.ID;
 	 this.metricArray = [];
-
+	 this.selectedMetrics = [];
 	 this.getMetricsforMeas();
 	 this.influxMeasService.getMeasById(id)
  		 .subscribe(data => {
        this.testinfluxmeas = data
-			 for (var values of this.testinfluxmeas.Fields) {
-				 this.metricArray.push(values.ID);
-			 }
-       //Update metrics fields
-	 		this.influxmeasForm.controls['Fields'].patchValue(this.metricArray);
+			 if (this.testinfluxmeas.Fields) {
+				 for (var values of this.testinfluxmeas.Fields) {
+					 this.metricArray.push({ID: values.ID, Report: values.Report});
+					 this.selectedMetrics.push(values.ID);
+				 }
+		 	}
       },
  		 err => console.error(err),
  		 () =>  this.editmode = "modify"
@@ -244,12 +253,14 @@ export class InfluxMeasCfgComponent {
  }
 
  saveInfluxMeas(){
+	 this.influxmeasForm.value['Fields'] =  this.metricArray;
+	 console.log(this.influxmeasForm.value);
 	 if(this.influxmeasForm.dirty && this.influxmeasForm.valid) {
 		 this.influxMeasService.addMeas(this.influxmeasForm.value)
 		 .subscribe(data => { console.log(data) },
       err => console.error(err),
       () =>  {this.editmode = "list"; this.reloadData()}
-			);
+		);
 		}
  }
 
@@ -262,6 +273,7 @@ export class InfluxMeasCfgComponent {
 			 r = confirm("Changing Measurement ID from "+oldId+" to " +this.influxmeasForm.value.id+". Proceed?");
 		 }
 		if (r == true) {
+				this.influxmeasForm.value['Fields'] = this.metricArray;
 				this.influxMeasService.editMeas(this.influxmeasForm.value, oldId)
 				.subscribe(data => { console.log(data) },
 	       err => console.error(err),
