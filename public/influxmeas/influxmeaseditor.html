@@ -117,17 +117,34 @@
 
 	</div>
 
-		<div class="form-group">
-  	<label class="control-label col-sm-2" for="Fields">Fields</label>
-		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-		tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
-	 <div class="col-sm-9">
-    	<div>
-		  	<ss-multiselect-dropdown [options]="selectmetrics" [texts]="myTexts" [settings]="mySettings" [ngModel]="metricArray" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)"></ss-multiselect-dropdown>
-		    <control-messages [control]="influxmeasForm.controls.Fields"></control-messages>
-		  </div>
-    </div>
+	<div class="form-group">
+	<label class="control-label col-sm-2" for="Fields">Fields</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
+	<div class="col-sm-9">
+		<div>
+			<ss-multiselect-dropdown [options]="selectmetrics" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="selectedMetrics" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeMetricArray($event)"></ss-multiselect-dropdown>
+			<control-messages [control]="influxmeasForm.controls.Fields"></control-messages>
+		</div>
 	</div>
+	</div>
+
+	<div class="form-group" *ngIf = "metricArray.length > 0">
+	<label class="control-label col-sm-2" for="Report">Report Fields</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
+	<div class="col-sm-9">
+	<div class="input-group list-group">
+		<div *ngFor="let metric of metricArray; let i = index">
+			<span class="input-group-addon ">
+				<input type="checkbox" style="width: auto" (click)="onCheckMetric(i)" [checked]="metricArray[i].Report" >
+			</span>
+			<div class="input-group-addon" style="background: none"><span [ngClass]="metric.Report ? ['text-success'] : ['text-danger']">{{metric.ID}}</span></div>
+		</div>
+		</div><!-- /input-group -->
+	</div>
+	</div>
+
 
 	<div class="form-group">
 	 <label class="control-label col-sm-2" for="Description">Description</label>
@@ -227,17 +244,32 @@
 	</div>
 
 
-		<div class="form-group">
-  	<label class="control-label col-sm-2" for="Fields">Fields</label>
-		<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-		tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
-	 <div class="col-sm-9">
-			<div>
-				<ss-multiselect-dropdown required [options]="selectmetrics" [texts]="myTexts" [settings]="mySettings" [ngModel]="metricArray" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)" ></ss-multiselect-dropdown>
-				<control-messages [control]="influxmeasForm.controls.Fields"></control-messages>
-			</div>
+	<div class="form-group">
+	<label class="control-label col-sm-2" for="Fields">Fields</label>
+	<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+	tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
+ <div class="col-sm-9">
+		<div>
+			<ss-multiselect-dropdown [options]="selectmetrics" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="selectedMetrics" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeMetricArray($event)"></ss-multiselect-dropdown>
+			<control-messages [control]="influxmeasForm.controls.Fields"></control-messages>
 		</div>
 	</div>
+</div>
+<div class="form-group" *ngIf = "metricArray.length > 0">
+<label class="control-label col-sm-2" for="Report">Report Fields</label>
+<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
+tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
+<div class="col-sm-9">
+	<div class="input-group list-group">
+		<div *ngFor="let metric of metricArray; let i = index">
+      <span class="input-group-addon ">
+        <input type="checkbox" style="width: auto" (click)="onCheckMetric(i)" [checked]="metricArray[i].Report" >
+      </span>
+ 			<div class="input-group-addon" style="background: none"><span [ngClass]="metric.Report ? ['text-success'] : ['text-danger']">{{metric.ID}}</span></div>
+		</div>
+    </div><!-- /input-group -->
+</div>
+</div>
 
 	<div class="form-group">
 	 <label class="control-label col-sm-2" for="Description">Description</label>

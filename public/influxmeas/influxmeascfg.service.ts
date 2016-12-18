@@ -14,11 +14,7 @@ export class InfluxMeasService {
             if ( key == 'Fields' ) {
               if (value == null || value == "")  return null;
               else {
-                let array: any =  [];
-                _.forEach(String(value).split(','),function(val,key){
-                  array.push({'ID': val, 'Report': true})
-                });
-                return array; //String(value).split(',');
+                return value; //String(value).split(',');
               }
             }
             if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
@@ -33,11 +29,7 @@ export class InfluxMeasService {
           if ( key == 'Fields' ) {
             if (value == null || value == "")  return null;
             else {
-              let array: any = [];
-              _.forEach(String(value).split(','),function(val,key){
-                array.push({'ID': val, 'Report': true})
-              });
-              return array; //String(value).split(',');
+                return value;
             }
           }
           if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
