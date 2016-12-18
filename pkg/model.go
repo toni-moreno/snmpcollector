@@ -659,7 +659,7 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjA
 	for _, val := range mg {
 		obj = append(obj, &DbObjAction{
 			Type:   "measurement_group",
-			ObID:   val.IDMeasurementCfg,
+			ObID:   val.IDMGroupCfg,
 			Action: "Delete Measurement from Measurement Group relation",
 		})
 	}
