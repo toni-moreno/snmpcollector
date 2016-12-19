@@ -1,4 +1,15 @@
+# v 0.6.0
+### New Features
+* new metric types based on SNMP ANS1 types
+* new snmp runtime console
+* improved form validations
+* new string eval metric type (computed metric)
+* added new "report metric" option allowing get data to operate them but not for send to the Output DB
 
+### fixes
+* fix for isue #66, #69, #61
+
+### breaking changes
 
 # v 0.5.6
 ### New features.
