@@ -489,8 +489,11 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgArray(filter string) ([]*InfluxMe
 func (dbc *DatabaseCfg) AddInfluxMeasurementCfg(dev InfluxMeasurementCfg) (int64, error) {
 	var err error
 	var affected, newmf int64
-	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
-	err = dev.Init(&cfg.Metrics)
+
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database
+	// We need to get data from database
+	cfg, _ := dbc.GetSnmpMetricCfgMap("")
+	err = dev.Init(&cfg)
 	if err != nil {
 		return 0, err
 	}
@@ -573,7 +576,10 @@ func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurem
 	var affecteddev, newmf, affected int64
 	var err error
 	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
-	err = dev.Init(&cfg.Metrics)
+	// config should be got from database
+	// TODO: filter only metrics in Measurement to test if measurement was well defined
+	cfg, _ := dbc.GetSnmpMetricCfgMap("")
+	err = dev.Init(&cfg)
 	if err != nil {
 		return 0, err
 	}
