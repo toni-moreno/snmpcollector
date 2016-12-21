@@ -288,6 +288,15 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 				s.log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", s.cfg.ID, s.cfg.ExtraData, err)
 				return
 			}
+			//Influxdb has not support for NaN,Inf values
+			//https://github.com/influxdata/influxdb/issues/4089
+			switch v := result.(type) {
+			case float64:
+				if math.IsNaN(v) || math.IsInf(v, 0) {
+					s.log.Warnf("Warning in metric %s On EVAL string: %s : Value is not a valid Floating Pint (NaN/Inf) : %f", s.cfg.ID, s.cfg.ExtraData, v)
+					return
+				}
+			}
 			s.CookedValue = result
 			s.CurTime = time.Now()
 			s.Scale()
