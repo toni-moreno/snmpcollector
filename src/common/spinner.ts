@@ -18,12 +18,12 @@ import {Component, Input, OnDestroy} from '@angular/core';
           <div class="sk-circle11 sk-child"></div>
           <div class="sk-circle12 sk-child"></div>
     </div>  `,
-    styleUrls:['public/css/spinner.css']
+    styleUrls:['../css/spinner.css']
 
 
 })
 export class SpinnerComponent implements OnDestroy {
-    private currentTimeout: number;
+    private currentTimeout: any;
     private isDelayedRunning: boolean = false;
 
     @Input()

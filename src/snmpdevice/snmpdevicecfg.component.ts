@@ -7,6 +7,8 @@ import { MeasGroupService } from '../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
 import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ValidationService } from '../common/validation.service'
+import { Observable } from 'rxjs/Observable';
+
 
 import { GenericModal } from '../common/generic-modal';
 import { TestConnectionModal } from '../common/test-connection-modal';
@@ -15,8 +17,8 @@ import { TestConnectionModal } from '../common/test-connection-modal';
 @Component({
   selector: 'snmpdevs',
   providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService],
-  templateUrl: 'public/snmpdevice/snmpdeviceeditor.html',
-  styleUrls:['public/css/component-styles.css']
+  templateUrl: './snmpdeviceeditor.html',
+  styleUrls:['../css/component-styles.css']
 })
 export class SnmpDeviceCfgComponent {
   //TEST:

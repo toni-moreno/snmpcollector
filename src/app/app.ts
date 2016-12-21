@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'snmpcol-app',
-  templateUrl: 'public/app/app.html'
+  templateUrl: './app.html'
 })
 
 export class App {

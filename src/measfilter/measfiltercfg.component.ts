@@ -9,8 +9,8 @@ import { GenericModal } from '../common/generic-modal';
 @Component({
   selector: 'measfilters',
   providers: [MeasFilterService, InfluxMeasService],
-  templateUrl: 'public/measfilter/measfiltereditor.html',
-	styleUrls:['public/css/component-styles.css']
+  templateUrl: './measfiltereditor.html',
+	styleUrls:['../css/component-styles.css']
 })
 
 export class MeasFilterCfgComponent {

@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
 import { NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { Router } from '@angular/router';
-import * as _ from 'lodash';
-import { HttpAPI} from '../common/httpAPI'
+import { HttpAPI} from '../common/httpAPI';
+import { Observable } from 'rxjs/Observable';
 
+declare var _:any;
 
 @Component({
   selector: 'home',
-  templateUrl: 'public/home/home.html',
-  styleUrls: [ 'public/home/home.css' ]
+  templateUrl: './home.html',
+  styleUrls: [ './home.css' ]
 })
 
 export class Home {

@@ -47,7 +47,7 @@ export interface IMultiSelectTexts {
 @Pipe({
     name: 'searchFilter'
 })
-class MultiSelectSearchFilter {
+export class MultiSelectSearchFilter {
     transform(options: Array<IMultiSelectOption>, args: string): Array<IMultiSelectOption> {
         return options.filter((option: IMultiSelectOption) => option.name.toLowerCase().indexOf((args || '').toLowerCase()) > -1);
     }

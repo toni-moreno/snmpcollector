@@ -5,8 +5,8 @@ import { RuntimeService } from './runtime.service';
 @Component({
   selector: 'runtime',
   providers: [RuntimeService],
-  templateUrl: 'public/runtime/runtimeview.html',
-  styleUrls:['public/runtime/runtimeeditor.css'],
+  templateUrl: './runtimeview.html',
+  styleUrls:['./runtimeeditor.css'],
 })
 
 export class RuntimeComponent {

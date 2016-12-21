@@ -4,13 +4,15 @@ import { SnmpMetricService } from './snmpmetriccfg.service';
 import { ControlMessagesComponent } from '../common/control-messages.component'
 import { ValidationService } from '../common/validation.service'
 
+
+
 import { GenericModal } from '../common/generic-modal';
 
 @Component({
   selector: 'snmpmetrics',
   providers: [SnmpMetricService],
-  templateUrl: 'public/snmpmetric/snmpmetriceditor.html',
-	styleUrls:['public/css/component-styles.css']
+  templateUrl: './snmpmetriceditor.html',
+	styleUrls:['../css/component-styles.css']
 })
 
 export class SnmpMetricCfgComponent {

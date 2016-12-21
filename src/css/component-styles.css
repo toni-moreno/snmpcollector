@@ -23,10 +23,6 @@ label {
   padding-left: 10px;
 }
 
-pagination {
-  border none;
-}
-
 input, button {
  // display: block;
 }

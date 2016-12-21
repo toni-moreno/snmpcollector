@@ -1,3 +1,5 @@
+import 'zone.js';
+import 'reflect-metadata';
 //Auth examples from: https://github.com/auth0-blog/angular2-authentication-sample
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
@@ -31,6 +33,8 @@ import { RuntimeComponent } from './runtime/runtime.component';
 import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ModalModule } from 'ng2-bootstrap/ng2-bootstrap';
+import { ModalDirective } from 'ng2-bootstrap/ng2-bootstrap';
+
 import { GenericModal } from './common/generic-modal';
 import { TestConnectionModal } from './common/test-connection-modal';
 //others
@@ -65,11 +69,11 @@ import { SpinnerComponent } from './common/spinner';
     FormsModule,
     ReactiveFormsModule,
     MultiselectDropdownModule,
-    AccordionModule,
-    TooltipModule,
-    ModalModule,
-    PaginationModule,
-    TabsModule,
+    AccordionModule.forRoot(),
+    TooltipModule.forRoot(),
+    ModalModule.forRoot(),
+    PaginationModule.forRoot(),
+    TabsModule.forRoot(),
     Ng2TableModule,
     RouterModule.forRoot(routes, {
     //  useHash: true

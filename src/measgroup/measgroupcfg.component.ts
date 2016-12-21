@@ -10,8 +10,8 @@ import { GenericModal } from '../common/generic-modal';
 @Component({
   selector: 'measgroups',
   providers: [MeasGroupService, InfluxMeasService],
-  templateUrl: 'public/measgroup/measgroupeditor.html',
-	styleUrls:['public/css/component-styles.css']
+  templateUrl: './measgroupeditor.html',
+	styleUrls:['../css/component-styles.css']
 })
 
 export class MeasGroupCfgComponent {
@@ -53,7 +53,7 @@ export class MeasGroupCfgComponent {
 		this.reloadData();
 		this.measgroupForm = builder.group({
 			id: ['',Validators.required],
-			Measurements: ['', Validators.required],
+			Measurements: ['', Validators.compose([Validators.required])],
 			Description: ['']
 		});
 	}

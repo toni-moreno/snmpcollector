@@ -5,8 +5,8 @@ import { HttpAPI} from '../common/httpAPI'
 
 @Component({
   selector: 'login',
-  templateUrl: 'public/login/login.html',
-  styleUrls: ['public/login/login.css']
+  templateUrl: './login.html',
+  styleUrls: ['./login.css']
 })
 
 export class Login {
