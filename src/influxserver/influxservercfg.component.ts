@@ -8,8 +8,8 @@ import { GenericModal } from '../common/generic-modal';
 @Component({
   selector: 'influxservers',
   providers: [InfluxServerService, ValidationService],
-  templateUrl: 'public/influxserver/influxservereditor.html',
-	styleUrls:['public/css/component-styles.css']
+  templateUrl: './influxservereditor.html',
+	styleUrls:['../css/component-styles.css']
 })
 
 export class InfluxServerCfgComponent {

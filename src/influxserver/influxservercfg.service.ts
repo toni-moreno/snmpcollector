@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import * as _ from 'lodash';
 import { HttpAPI } from '../common/httpAPI'
+import { Observable } from 'rxjs/Observable';
+
+declare var _:any;
 
 @Injectable()
 export class InfluxServerService {

@@ -15,7 +15,8 @@
   "license": "Apache-2.0",
   "angular-cli": {},
   "scripts": {
-    "start": "ng serve --proxy-config proxy.conf.json",
+    "prestart": "go run build.go build",
+    "start": "concurrently \"./bin/snmpcollector \" \"ng serve --proxy-config proxy.conf.json\" ",
     "lint": "tslint \"src/**/*.ts\"",
     "build": "ng build",
     "test": "ng test",

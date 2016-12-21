@@ -10,8 +10,8 @@ import { GenericModal } from '../common/generic-modal';
 @Component({
   selector: 'influxmeas',
   providers: [InfluxMeasService, SnmpMetricService],
-  templateUrl: 'public/influxmeas/influxmeaseditor.html',
-  styleUrls:['public/css/component-styles.css']
+  templateUrl: './influxmeaseditor.html',
+  styleUrls:['../css/component-styles.css']
 })
 
 export class InfluxMeasCfgComponent {
