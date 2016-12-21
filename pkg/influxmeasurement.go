@@ -95,11 +95,7 @@ func (mc *InfluxMeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error
 	}
 	//check if there is any field ( should be at least one!!)
 	if len(mc.fieldMetric) == 0 {
-		var s string
-		for _, v := range mc.Fields {
-			s += ";" + v.ID
-		}
-		return errors.New("No metrics found with names" + s + " in measurement Config " + mc.ID)
+		return fmt.Errorf("There is no any Field metrics in measurement Config  %s (should be at least one)", mc.ID)
 	}
 	//Check if duplicated oids
 	oidcheckarray := make(map[string]string)
