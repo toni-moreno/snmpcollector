@@ -35,8 +35,8 @@ export class SnmpDeviceCfgComponent {
     measfilters: Array<any>;
     measgroups: Array<any>;
   	filteroptions: any;
-    selectgroups: IMultiSelectOption[];
-  	selectfilters: IMultiSelectOption[];
+    selectgroups: IMultiSelectOption[] = [];
+  	selectfilters: IMultiSelectOption[] = [];
     alertHandler : any = [];
 
     //Initialization data, rows, colunms for Table

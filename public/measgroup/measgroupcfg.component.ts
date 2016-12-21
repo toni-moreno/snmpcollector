@@ -24,7 +24,7 @@ export class MeasGroupCfgComponent {
   measgroupForm: any;
 	testmeasgroups: any;
 	influxmeas: Array<any>;
-  selectmeas: IMultiSelectOption[];
+  selectmeas: IMultiSelectOption[] = [];
 
 	//Initialization data, rows, colunms for Table
 	private data:Array<any> = [];
@@ -53,7 +53,7 @@ export class MeasGroupCfgComponent {
 		this.reloadData();
 		this.measgroupForm = builder.group({
 			id: ['',Validators.required],
-			Measurements: ['', Validators.compose([Validators.required,Validators.minLength(1)])],
+			Measurements: ['', Validators.required],
 			Description: ['']
 		});
 	}
