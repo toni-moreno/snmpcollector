@@ -15,17 +15,6 @@ import (
 	"github.com/soniah/gosnmp"
 )
 
-/*
-type InfluxMeasurementCfg struct {
-	id          string   //name of the key in the config array
-	Name        string   `toml:"name"`
-	Fields      []string `toml:"fields"`
-	GetMode     string   `toml:"getmode"` //0=value 1=indexed
-	IndexOID    string   `toml:"indexoid"`
-	IndexTag    string   `toml:"indextag"`
-	fieldMetric []*SnmpMetricCfg
-}*/
-
 func (mc *InfluxMeasurementCfg) CheckComputedMetric() error {
 	parameters := make(map[string]interface{})
 	log.Debugf("Building check parrameters array for index measurement %s", mc.ID)
@@ -59,7 +48,7 @@ func (mc *InfluxMeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error
 	}
 
 	switch mc.GetMode {
-	case "indexed":
+	case "indexed", "indexed_it":
 		if len(mc.IndexOID) == 0 {
 			return errors.New("Indexed measurement with no IndexOID in measurement Config " + mc.ID)
 		}
@@ -186,7 +175,7 @@ func (m *InfluxMeasurement) Init() error {
 	//
 
 	//loading all posible values in 	m.AllIndexedLabels
-	if m.cfg.GetMode == "indexed" {
+	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" {
 		m.idxPosInOID = len(m.cfg.IndexOID)
 		m.log.Infof("Loading Indexed values in : %s", m.cfg.ID)
 		m.AllIndexedLabels, err = m.loadIndexedLabels()
@@ -309,7 +298,7 @@ func (m *InfluxMeasurement) InitMetricTable() {
 		}
 		m.MetricTable["0"] = idx
 
-	case "indexed":
+	case "indexed", "indexed_it":
 		//for each field an each index (previously initialized)
 		for key, label := range m.CurIndexedLabels {
 			idx := make(map[string]*SnmpMetric)
@@ -502,6 +491,11 @@ func (m *InfluxMeasurement) printConfig() {
 		fmt.Printf(" ** Indexed by OID: %s (TagName: %s) **\n", m.cfg.IndexOID, m.cfg.IndexTag)
 		fmt.Printf("-----------------------------------------------------------\n")
 	}
+	if m.cfg.GetMode == "indexed_it" {
+		fmt.Printf("-----------------------------------------------------------\n")
+		fmt.Printf(" ** Indexed  by OID: %s (TagName: %s in INDIRECT TAG OID :%s ) **\n", m.cfg.IndexOID, m.cfg.IndexTag, m.cfg.TagOID)
+		fmt.Printf("-----------------------------------------------------------\n")
+	}
 
 	if m.Filter != nil {
 		switch m.Filter.FType {
@@ -532,7 +526,7 @@ func (m *InfluxMeasurement) printConfig() {
 		}
 	}
 
-	if m.cfg.GetMode == "indexed" {
+	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" {
 		fmt.Printf(" ---------------------------------------------------------\n")
 		for k, v := range m.CurIndexedLabels {
 			fmt.Printf("\t\tIndex[%s / %s]\n", k, v)
@@ -578,7 +572,7 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 			ptarray = append(ptarray, pt)
 		}
 
-	case "indexed":
+	case "indexed", "indexed_it":
 		var t time.Time
 		for k_idx, v_idx := range m.MetricTable {
 			m.log.Debugf("generating influx point for indexed %s", k_idx)
@@ -717,7 +711,7 @@ func (m *InfluxMeasurement) ComputeEvaluatedMetrics() {
 				m.log.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 			}
 		}
-	case "indexed":
+	case "indexed", "indexed_it":
 		for key, val := range m.CurIndexedLabels {
 			//building parameters array
 			parameters := make(map[string]interface{})
@@ -839,6 +833,57 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 	if err != nil {
 		m.log.Errorf("SNMP WALK error: %s", err)
 		return allindex, err
+	}
+	if m.cfg.GetMode != "indexed_it" {
+		return allindex, nil
+	}
+	// INDIRECT INDEXED
+
+	tagOIDArray := []string{}
+	//we need to get Tag Names from other OID
+	for _, v := range allindex {
+		tagOIDArray = append(tagOIDArray, m.cfg.TagOID+"."+v)
+	}
+	//GET again all names from other OID with index from previous walk
+	l := len(tagOIDArray)
+	for i := 0; i < l; i += maxOids {
+		end := i + maxOids
+		if end > l {
+			end = len(tagOIDArray)
+		}
+		m.log.Debugf("Getting snmp indexed for TAGS from %d to %d", i, end)
+		pkt, err := m.snmpClient.Get(tagOIDArray[i:end])
+		if err != nil {
+			m.log.Debugf("selected OIDS %+v", tagOIDArray[i:end])
+			m.log.Errorf("SNMP (%s) for OIDs (%d/%d) get error: %s\n", m.snmpClient.Target, i, end, err)
+			continue
+		}
+
+		for _, pdu := range pkt.Variables {
+			if pdu.Value == nil {
+				continue
+			}
+
+			i := strings.LastIndex(pdu.Name, ".")
+			idx := pdu.Name[i+1:]
+			if k, ok := allindex[idx]; ok {
+				var name string
+				switch pdu.Type {
+				case gosnmp.OctetString:
+					name = string(pdu.Value.([]byte))
+					m.log.Debugf("Got the following OctetString index for [%s/%s]", idx, name)
+				case gosnmp.Integer, gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
+					name = strconv.FormatInt(pduVal2Int64(pdu), 10)
+					m.log.Debugf("Got the following Numeric index for [%s/%s]", idx, name)
+				default:
+					m.log.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric Value", m.cfg.IndexOID)
+				}
+				allindex[idx] = name
+				m.log.Debugf("Change Index TAG from [%s] to [%s] in OID: %s ", k, name, pdu.Name)
+			} else {
+				m.log.Warnf("There is no Values for Indirect TAGS index[%s] OID: %s", i, pdu.Name)
+			}
+		}
 	}
 	return allindex, nil
 }

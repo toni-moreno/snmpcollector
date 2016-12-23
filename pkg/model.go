@@ -84,8 +84,9 @@ type InfluxMeasurementCfg struct {
 	ID   string `xorm:"'id' unique"`
 	Name string `xorm:"name"`
 
-	GetMode      string `xorm:"getmode"` //0=value 1=indexed
-	IndexOID     string `xorm:"indexoid"`
+	GetMode      string `xorm:"getmode"`  //value ,indexed  (direct tag), indexed_it ( indirect_tag)
+	IndexOID     string `xorm:"indexoid"` //only valid if Indexed (direct or indirect)
+	TagOID       string `xorm:"tagoid"`   //only valid if inderecta TAG indexeded
 	IndexTag     string `xorm:"indextag"`
 	IndexAsValue bool   `xorm:"'indexasvalue' default 0"`
 	Fields       []struct {

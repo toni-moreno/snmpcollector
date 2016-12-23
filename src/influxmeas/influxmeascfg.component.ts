@@ -38,6 +38,7 @@ export class InfluxMeasCfgComponent {
 	{title: 'Name', name: 'Name'},
 	{title: 'GetMode', name: 'GetMode'},
 	{title: 'Index OID', name: 'IndexOID'},
+	{title: 'Tag OID', name: 'TagOID'},
 	{title: 'Index Tag', name: 'IndexTag'},
 	{title: 'Index as Value', name: 'IndexAsValue'},
 	{title: 'Metric Fields', name: 'Fields'}
@@ -62,11 +63,12 @@ export class InfluxMeasCfgComponent {
 	  this.reloadData();
 	  this.influxmeasForm = builder.group({
 			id: ['',Validators.required],
-  		Name: ['', Validators.required],
+			Name: ['', Validators.required],
 			GetMode: ['value', Validators.required],
 			IndexOID: [''],
+			TagOID: [''],
 			IndexTag: [''],
-      IndexAsValue: ['false'],
+			IndexAsValue: ['false'],
 			Fields: builder.array([
 			]),
 			Description: ['']
