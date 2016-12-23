@@ -5,11 +5,9 @@ init_cmds = [
 ]
 watch_all = true
 watch_dirs = [
-	"$WORKDIR/public",
 	"$WORKDIR/pkg",
-	"$WORKDIR/conf",
 ]
-watch_exts = [".go", ".ini", ".toml", ".html"]
+watch_exts = [".go", ".toml"]
 build_delay = 1500
 cmds = [
   ["go", "build", "-o", "./bin/snmpcollector", "./pkg/"],

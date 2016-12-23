@@ -1,0 +1,88 @@
+html {
+  font-family: sans-serif;
+}
+
+.info-mode {
+  border-left: 5px solid #1b809e;
+  padding-left: 5px;
+}
+/*form {
+  padding: 10px;
+  max-width: 320px;
+}
+
+label {
+  margin-top: 16px;
+//  float: left;
+  display: block;
+}*/
+
+.info {
+  color: #337ab7;
+  float: left;
+  padding-left: 10px;
+}
+
+input, button {
+ // display: block;
+}
+
+select,input {
+ //  float: right;
+    display: inline;
+    width: 320px;
+    height: 27px;
+    padding: 2px 12px;
+    font-size: 14px;
+    color: #555;
+    outline: none;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+  margin-top: 4px;
+  color: #fff;
+  background-color: #337ab7;
+  border: 1px solid #2e6da4;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 1em;
+  font-weight: 300;
+}
+
+input:focus.ng-invalid,select:focus.ng-invalid, textarea:focus.ng-invalid {
+  box-shadow: 0 0 5px #a94442;
+  border: 1px solid #a94442;
+  border-left: 5px solid #a94442
+}
+
+input:focus.ng-valid, select:focus.ng-valid{
+  box-shadow: 0 0 5px #42A948;
+  border: 1px solid #42A948;
+  border-left:5px solid #42A948;
+}
+
+.ng-invalid:not(form)  {
+  border-left: 5px solid #a94442; /* red */
+}
+
+
+.ng-valid:not(pagination).ng-valid:not(form) {
+  border-left: 5px solid #42A948; /* green */
+}
+
+
+button[disabled] {
+  background-color: #337ab7;
+  border-color: #2e6da4;
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+control-messages {
+  color: #E82C0C;
+  margin: 6px 0;
+}

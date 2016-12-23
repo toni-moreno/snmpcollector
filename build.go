@@ -74,19 +74,16 @@ func main() {
 			//"-linkmode external -extldflags -static"
 		case "test":
 			test("./pkg/...")
-			//grunt("test")
 
 		case "package":
 			//verifyGitRepoIsClean()
-			//grunt("release")
 			createLinuxPackages()
-
+		case "pkg-min-tar":
+			createMinTar()
 		case "pkg-rpm":
-			//grunt("release")
 			createRpmPackages()
 
 		case "pkg-deb":
-			//grunt("release")
 			createDebPackages()
 
 		case "latest":
@@ -160,7 +157,7 @@ type linuxPackageOptions struct {
 }
 
 func createDebPackages() {
-	createPackage(linuxPackageOptions{
+	createFpmPackage(linuxPackageOptions{
 		packageType:            "deb",
 		homeDir:                "/usr/share/snmpcollector",
 		binPath:                "/usr/sbin/snmpcollector",
@@ -181,7 +178,7 @@ func createDebPackages() {
 }
 
 func createRpmPackages() {
-	createPackage(linuxPackageOptions{
+	createFpmPackage(linuxPackageOptions{
 		packageType:            "rpm",
 		homeDir:                "/usr/share/snmpcollector",
 		binPath:                "/usr/sbin/snmpcollector",
@@ -206,7 +203,23 @@ func createLinuxPackages() {
 	createRpmPackages()
 }
 
-func createPackage(options linuxPackageOptions) {
+func createMinTar() {
+	packageRoot, _ := ioutil.TempDir("", "snmpcollector-linux-pack")
+	// create directories
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/opt/snmpcollector"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/opt/snmpcollector/conf"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/opt/snmpcollector/bin"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/opt/snmpcollector/log"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/opt/snmpcollector/public"))
+	runPrint("cp", "conf/sample.config.toml", filepath.Join(packageRoot, "/opt/snmpcollector/conf"))
+	runPrint("cp", "bin/snmpcollector", filepath.Join(packageRoot, "/opt/snmpcollector/bin"))
+	runPrint("cp", "bin/snmpcollector.md5", filepath.Join(packageRoot, "/opt/snmpcollector/bin"))
+	runPrint("cp", "-a", filepath.Join(workingDir, "public")+"/.", filepath.Join(packageRoot, "/opt/snmpcollector/public"))
+	runPrint("tar", "zcvf", "snmpcollector-"+version+"-"+getGitSha()+".tar.gz", "-C", packageRoot, ".")
+	runPrint("rm", "-rf", packageRoot)
+}
+
+func createFpmPackage(options linuxPackageOptions) {
 	packageRoot, _ := ioutil.TempDir("", "snmpcollector-linux-pack")
 
 	// create directories
@@ -223,7 +236,7 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
 	// copy environment var file
 	runPrint("cp", "-p", options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath))
-	// copy systemd file
+	// copy systemd filerunPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
 	runPrint("cp", "-p", options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath))
 	// copy release files
 	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
@@ -388,7 +401,7 @@ func setBuildEnv() {
 }
 
 func getGitSha() string {
-	v, err := runError("git", "describe", "--always", "--dirty")
+	v, err := runError("git", "describe", "--always", "--tags")
 	if err != nil {
 		return "unknown-dev"
 	}
