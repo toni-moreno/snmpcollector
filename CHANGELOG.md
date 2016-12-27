@@ -1,3 +1,16 @@
+# v 0.6.1
+### New Features
+* upgraded to angular 2.4.1/router 3.4.1/ng2-bootstrap 1.1.16-9/angular-cli 1.0.0-beta.24/ zone.js 0.7.4 /rxjs 5.0.1
+* new bundle system based on angular-cli and npm
+* added new indexed with indirec tag measurement type , implements #67
+
+
+### fixes
+* fix for issue #81, #83 #85, #87
+
+### breaking changes
+
+
 # v 0.6.0
 ### New Features
 * new metric types based on SNMP ANS1 types
