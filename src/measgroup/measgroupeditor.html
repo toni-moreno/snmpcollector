@@ -4,129 +4,94 @@
 <p [ngSwitch]="editmode">
   <template ngSwitchCase="list">
     <test-modal #viewModal titleName='Measurements Groups'></test-modal>
-    <test-modal #viewModalDelete titleName='Deleting:'
-                [customMessage]="['Deleting this Measurement Group will affect the following components','Deleting this Measurement Group will NOT affect any component. Safe delete']"
-                [customMessageClass]="['alert alert-danger','alert alert-success']"
-                [showValidation]="true"
-                [textValidation]="'Delete'"
-                [controlSize]="true"
-                (validationClicked)="deleteMeasGroup($event)">
+    <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this Measurement Group will affect the following components','Deleting this Measurement Group will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
+        [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteMeasGroup($event)">
     </test-modal>
     <div class="row">
       <div class="col-md-6">
-      <input *ngIf="config.filtering" placeholder="Filter all columns"
-             [ngTableFiltering]="config.filtering"
-             class="form-control"
-             (tableChanged)="onChangeTable(config)"/>
-      <button type="button" (click)="newMeasGroup()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+        <input *ngIf="config.filtering" placeholder="Filter all columns" [ngTableFiltering]="config.filtering" class="form-control" (tableChanged)="onChangeTable(config)" />
+        <button type="button" (click)="newMeasGroup()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+      </div>
     </div>
-    </div>
-  <br>
-  <ng-table [config]="config"
-          (tableChanged)="onChangeTable(config)"
-          (cellClicked)="onCellClick($event)"
-          (viewedItem)="viewItem($event)"
-          (editedItem)="editMeasGroup($event)"
-          (removedItem)="removeItem($event)"
-          [showCustom]="true"
-          [rows]="rows" [columns]="columns">
-  </ng-table>
+    <br>
+    <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (cellClicked)="onCellClick($event)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="true" [rows]="rows" [columns]="columns">
+    </ng-table>
+    <pagination *ngIf="config.paging" class="pagination-sm" [ngModel]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
+    </pagination>
+    <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+  </template>
 
-  <pagination *ngIf="config.paging"
-            class="pagination-sm"
-            [ngModel]="page"
-            [totalItems]="length"
-            [itemsPerPage]="itemsPerPage"
-            [maxSize]="maxSize"
-            [boundaryLinks]="true"
-            [rotate]="false"
-            (pageChanged)="onChangeTable(config, $event)"
-            (numPages)="numPages = $event">
-  </pagination>
-  <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
-</template>
-
-     <template ngSwitchCase="create">
-   	<form [formGroup]="measgroupForm" class="form-horizontal" (ngSubmit)="saveMeasGroup()">
-				<div class="form-group">
-  	<label class="control-label col-sm-2" for="id">id</label>
-			<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-				tooltip="Unique identifier of Measurement Group"></i>
-			 <div class="col-sm-9">
-		 <input formControlName="id" id="id" />
-		 <control-messages [control]="measgroupForm.controls.id"></control-messages>
-	 	 </div>
-		 	</div>
-
-    <div>
-				<div class="form-group">
-  	<label class="control-label col-sm-2" for="Measurements">Measurements</label>
-			<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-				tooltip="List of measurements ready to be attached on {{measgroupForm.controls.id.value}}"></i>
-			 <div class="col-sm-9">
-      <ss-multiselect-dropdown [options]="selectmeas" [texts]="myTexts" [settings]="mySettings" [ngModel] [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)"></ss-multiselect-dropdown>
-			<control-messages [control]="measgroupForm.controls.Measurements"></control-messages>
-			 </div>
-				</div>
-  </div>
-
-	<div class="form-group">
-	 <label class="control-label col-sm-2" for="Description">Description</label>
-	 <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-	   tooltip="Description of the SNMP Device"></i>
-	  <div class="col-sm-9">
-	    <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
-	    <control-messages [control]="measgroupForm.controls.Description"></control-messages>
-	 </div>
-	</div>
-
-		<div class="col-sm-offset-4 col-sm-6">
-			<button type="submit" [disabled]="!measgroupForm.valid">Submit</button>
-			<button type="reset" [disabled]="!measgroupForm.dirty">Reset</button>
-			<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
-		</div>
-  	</form>
-
-     </template>
-
-		 <template ngSwitchCase="modify">
-		<form [formGroup]="measgroupForm" class="form-horizontal" (ngSubmit)="updateMeasGroup(testmeasgroups.ID)">
-					<div class="form-group">
-  		<label class="control-label col-sm-2" for="id">id</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-				tooltip="Connection port to the Device by SNMP protocol"></i>
-			 <div class="col-sm-9">
-			 <input formControlName="id" id="id" [ngModel] = "testmeasgroups.ID"/>
-			 <control-messages [control]="measgroupForm.controls.id"></control-messages>
-		  </div>
-		 	</div>
-
-			<div class="form-group">
-  	<label class="control-label col-sm-2" for="Measurements">Measurements</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-				tooltip="Connection port to the Device by SNMP protocol"></i>
-			 <div class="col-sm-9">
-					<ss-multiselect-dropdown [texts]="myTexts" [settings]="mySettings" [options]="selectmeas" [ngModel]="testmeasgroups.Measurements" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)"></ss-multiselect-dropdown>
-					<control-messages [control]="measgroupForm.controls.Measurements"></control-messages>
-				</div>
-			</div>
+  <template ngSwitchCase="create">
+    <form [formGroup]="measgroupForm" class="form-horizontal" (ngSubmit)="saveMeasGroup()">
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="id">id</label>
+        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Group"></i>
+        <div class="col-sm-9">
+          <input formControlName="id" id="id" />
+          <control-messages [control]="measgroupForm.controls.id"></control-messages>
+        </div>
+      </div>
 
       <div class="form-group">
-       <label class="control-label col-sm-2" for="Description">Description</label>
-       <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true"
-         tooltip="Description of the Measurement Group"></i>
+        <label class="control-label col-sm-2" for="Measurements">Measurements</label>
+        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of measurements ready to be attached on {{measgroupForm.controls.id.value}}"></i>
+        <div class="col-sm-9">
+          <ss-multiselect-dropdown [options]="selectmeas" [texts]="myTexts" [settings]="mySettings" [ngModel] [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)"></ss-multiselect-dropdown>
+          <control-messages [control]="measgroupForm.controls.Measurements"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Description">Description</label>
+        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Device"></i>
+        <div class="col-sm-9">
+          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
+          <control-messages [control]="measgroupForm.controls.Description"></control-messages>
+        </div>
+      </div>
+
+      <div class="col-sm-offset-4 col-sm-6">
+        <button type="submit" [disabled]="!measgroupForm.valid">Submit</button>
+        <button type="reset" [disabled]="!measgroupForm.dirty">Reset</button>
+        <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </form>
+  </template>
+
+  <template ngSwitchCase="modify">
+    <form [formGroup]="measgroupForm" class="form-horizontal" (ngSubmit)="updateMeasGroup(testmeasgroups.ID)">
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="id">id</label>
+        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to the Device by SNMP protocol"></i>
+        <div class="col-sm-9">
+          <input formControlName="id" id="id" [ngModel]="testmeasgroups.ID" />
+          <control-messages [control]="measgroupForm.controls.id"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Measurements">Measurements</label>
+        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to the Device by SNMP protocol"></i>
+        <div class="col-sm-9">
+          <ss-multiselect-dropdown [texts]="myTexts" [settings]="mySettings" [options]="selectmeas" [ngModel]="testmeasgroups.Measurements" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)"></ss-multiselect-dropdown>
+          <control-messages [control]="measgroupForm.controls.Measurements"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Description">Description</label>
+        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Group"></i>
         <div class="col-sm-9">
           <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='testmeasgroups.Description'> </textarea>
           <control-messages [control]="measgroupForm.controls.Description"></control-messages>
-       </div>
+        </div>
       </div>
 
-			<div class="col-sm-offset-4 col-sm-6">
-		<button type="submit" [disabled]="!measgroupForm.valid">Submit</button>
-		<button type="reset" [disabled]="!measgroupForm.dirty">Reset</button>
-		<button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
-		</div>
-			</form>
-		 </template>
-
+      <div class="col-sm-offset-4 col-sm-6">
+        <button type="submit" [disabled]="!measgroupForm.valid">Submit</button>
+        <button type="reset" [disabled]="!measgroupForm.dirty">Reset</button>
+        <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </form>
+  </template>
 </p>
