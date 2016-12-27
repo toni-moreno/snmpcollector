@@ -1,89 +1,90 @@
 <div id="wrapper">
+  <!-- Sidebar -->
+  <div id="sidebar-wrapper">
+    <ul class="sidebar-nav">
+      <li class="sidebar-brand">
+        <a href="#">
+          SNMP Collector
+        </a>
+      </li>
+      <li>
+        <a class="btn btn-primary btn-lg" role="button" (click)="logout()">Logout</a>
+      </li>
+      <li>
+        <a (click)="InfluxServers()">Influx Servers</a>
+      </li>
+      <li>
+        <a (click)="SNMPMetrics()">SNMP Metrics</a>
+      </li>
+      <li>
+        <a (click)="InfluxMeasurements()">Influx Measurements</a>
+      </li>
+      <li>
+        <a (click)="MeasGroups()">Measurement Groups</a>
+      </li>
+      <li>
+        <a (click)="MeasFilters()">Measurement Filters</a>
+      </li>
+      <li>
+        <a (click)="SNMPDevices()">SNMP Devices</a>
+      </li>
+      <li>
+        <a (click)="Runtime()">Runtime</a>
+      </li>
+      <li>
+        <a class="btn btn-primary btn-lg" role="button" (click)="reloadConfig()">Reload Config</a>
+      </li>
+      <li>
+        <a href="#">About</a>
+      </li>
+    </ul>
+  </div>
+  <!-- /#sidebar-wrapper -->
 
-    <!-- Sidebar -->
-    <div id="sidebar-wrapper">
-        <ul class="sidebar-nav">
-            <li class="sidebar-brand">
-                <a href="#">
-                    SNMP Collector
-                </a>
-            </li>
-            <li>
-              <a class="btn btn-primary btn-lg" role="button" (click)="logout()">Logout</a>
-            </li>
-            <li>
-                <a (click)="InfluxServers()">Influx Servers</a>
-            </li>
-            <li>
-                <a (click)="SNMPMetrics()">SNMP Metrics</a>
-            </li>
-            <li>
-                <a (click)="InfluxMeasurements()">Influx Measurements</a>
-            </li>
-            <li>
-                <a (click)="MeasGroups()">Measurement Groups</a>
-            </li>
-            <li>
-                <a (click)="MeasFilters()">Measurement Filters</a>
-            </li>
-            <li>
-             <a  (click)="SNMPDevices()">SNMP Devices</a>
-            </li>
-            <li>
-             <a  (click)="Runtime()">Runtime</a>
-            </li>
-            <li>
-              <a class="btn btn-primary btn-lg" role="button" (click)="reloadConfig()">Reload Config</a>
-            </li>
-            <li>
-                <a href="#">About</a>
-            </li>
-        </ul>
-    </div>
-    <!-- /#sidebar-wrapper -->
+  <!-- Page Content -->
+  <div id="page-content-wrapper">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg-12">
+          <p [ngSwitch]="item_type">
+            <template ngSwitchCase="influxserver">
+              <influxservers></influxservers>
+            </template>
+            <template ngSwitchCase="snmpmetric">
+              <snmpmetrics></snmpmetrics>
+            </template>
+            <template ngSwitchCase="influxmeas">
+              <influxmeas></influxmeas>
+            </template>
+            <template ngSwitchCase="measgroup">
+              <measgroups></measgroups>
+            </template>
+            <template ngSwitchCase="measfilter">
+              <measfilters></measfilters>
+            </template>
+            <template ngSwitchCase="snmpdevice">
+              <snmpdevs></snmpdevs>
+            </template>
+            <template ngSwitchCase="runtime">
+              <runtime></runtime>
+            </template>
 
-    <!-- Page Content -->
-    <div id="page-content-wrapper">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-lg-12">
-              <p [ngSwitch]="item_type">
-                           <template ngSwitchCase="influxserver">
-                             <influxservers></influxservers>
-                         </template>
-                         <template ngSwitchCase="snmpmetric">
-                            <snmpmetrics></snmpmetrics>
-                         </template>
-                         <template ngSwitchCase="influxmeas">
-                            <influxmeas></influxmeas>
-                         </template>
-                         <template ngSwitchCase="measgroup">
-                            <measgroups></measgroups>
-                        </template>
-                        <template ngSwitchCase="measfilter">
-                            <measfilters></measfilters>
-                        </template>
-                   <template ngSwitchCase="snmpdevice">
-                      <snmpdevs></snmpdevs>
-                   </template>
-                   <template ngSwitchCase="runtime">
-                     <runtime></runtime>
-                   </template>
-
-                        <template ngSwitchDefault>DEFAULT</template>
-                    </p>
-                </div>
-            </div>
+            <template ngSwitchDefault>DEFAULT</template>
+          </p>
         </div>
+      </div>
     </div>
-    <!-- /#page-content-wrapper -->
-</div> <!-- /#wrapper -->
+  </div>
+  <!-- /#page-content-wrapper -->
+</div>
+<!-- /#wrapper -->
 <nav class="navbar navbar-inverse navbar-fixed-bottom">
   <div class="container-fluid">
-  <!-- Brand and toggle get grouped for better mobile display -->
+    <!-- Brand and toggle get grouped for better mobile display -->
     <span class="navbar-text pull-left" *ngIf="version"> Instance - <b>{{version.InstanceID}}</b></span>
     <span class="navbar-text pull-right" *ngIf="version">SNMPCollector - {{version.Version}} - {{version.Commit}} ({{version.BuildStamp*1000 | date}}) </span>
-  </div><!-- /.container-fluid -->
+  </div>
+  <!-- /.container-fluid -->
 </nav>
 <div class="col-md-12" style="top 0px;padding-bottom: 50px">
 </div>

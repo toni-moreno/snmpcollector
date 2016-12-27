@@ -1,161 +1,159 @@
 <h2>Runtime</h2>
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <hr>
-<!--snmpdevice-table></snmpdevice-table-->
-	<p [ngSwitch]="editmode">
-    <template ngSwitchCase="list">
-			<div class="row-fluid">
-						<h4>{{ errorhandler }} </h4>
-      <div  class="col-md-9">
-			<input type="text"  class="form-control" [(ngModel)]="filter" >
- 			<button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
-     	</div>
-			</div>
-<div class="col-md-12">
-	<hr><br>
-	<div class="col-md-4">
-	<h4>
-		<li class="glyphicon glyphicon-refresh" (click)="onFilter()"> </li>
-		Devices
-	</h4>
-	<hr>
-	<ul class="list-group" style="max-height:500px; overflow-y:auto">
-	  <li class="list-group-item"  *ngFor="let dev of runtime_devs">
-      <label style="display: inline; margin-right:2px" [tooltipHtml]="dev.value.DeviceActive ?  'Active' : 'Not active'" [ngClass]="dev.value.DeviceActive ?  'glyphicon glyphicon-play label label-success' : 'glyphicon glyphicon-pause label label-danger'"></label>
-			<label style="display: inline; margin-right:2px" [tooltipHtml]="dev.value.DeviceConnected ?  'Connected' : 'Not connected'" [ngClass]="dev.value.DeviceConnected ?  'glyphicon glyphicon-globe label label-success' : 'glyphicon glyphicon-warning-sign label label-danger'"></label>
-			<label style="display: inline; argin-right: 2px" [tooltipHtml]="'View '+dev.ID+'<br/> #Metrics: '+dev.value.NumMetrics+'<br/>#Measurements: '+dev.value.NumMeasurements" class="label label-primary glyphicon glyphicon-eye-open" (click)="loadRuntimeById(dev.ID)"></label>
-			- {{dev.ID}}
-    </li>
-	</ul>
-</div>
-<div class="col-md-8" *ngIf="runtime_dev">
+<p [ngSwitch]="editmode">
+  <template ngSwitchCase="list">
+    <div class="row-fluid">
+      <h4>{{ errorhandler }} </h4>
+      <div class="col-md-9">
+        <input type="text" class="form-control" [(ngModel)]="filter">
+        <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
+      </div>
+    </div>
+    <div class="col-md-12">
+      <hr>
+      <br>
+      <div class="col-md-4">
+        <h4>
+          <li class="glyphicon glyphicon-refresh" (click)="onFilter()"> </li>
+          Devices
+        </h4>
+        <hr>
+        <ul class="list-group" style="max-height:500px; overflow-y:auto">
+          <li class="list-group-item" *ngFor="let dev of runtime_devs">
+            <label style="display: inline; margin-right:2px" container="body" [tooltip]="dev.value.DeviceActive ?  'Active' : 'Not active'" [ngClass]="dev.value.DeviceActive ?  'glyphicon glyphicon-play label label-success' : 'glyphicon glyphicon-pause label label-danger'"></label>
+            <label style="display: inline; margin-right:2px" container="body" [tooltip]="dev.value.DeviceConnected ?  'Connected' : 'Not connected'" [ngClass]="dev.value.DeviceConnected ?  'glyphicon glyphicon-globe label label-success' : 'glyphicon glyphicon-warning-sign label label-danger'"></label>
+            <label style="display: inline; argin-right: 2px" container="body" [tooltip]="tooltipMetrics" class="label label-primary glyphicon glyphicon-eye-open" (click)="loadRuntimeById(dev.ID)"></label>
+            - {{dev.ID}}
+            <template #tooltipMetrics> View {{dev.ID }}
+              <br/> #Metrics: {{dev.value.NumMetrics}}
+              <br/>#Measurements: {{dev.value.NumMeasurements}} </template>
+          </li>
+        </ul>
+      </div>
+      <div class="col-md-8" *ngIf="runtime_dev">
+        <h4>
+          <li class="glyphicon glyphicon-refresh" (click)="loadRuntimeById(runtime_dev.ID)"></li>
+          <span style="padding-left: 1.5em">{{runtime_dev.ID}}</span>
+        </h4>
+        <hr>
+        <div class="row">
+          <div class="col-md-8">
+            <h4>SysInfo</h4>
+            <hr>
+            <table class="table-striped table-bordered" style="overflow-x: scroll">
+              <tr *ngFor="let info of runtime_dev['SysInfo'] | objectParser">
+                <span>{{info.key}}</span>
+                <td style="padding-left:10px">{{info.value }}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-4">
+            <h4>Edit</h4>
+            <hr>
 
-	<h4>
-		<li class="glyphicon glyphicon-refresh" (click)="loadRuntimeById(runtime_dev.ID)"></li>
-		<span style="padding-left: 1.5em">{{runtime_dev.ID}}</span>
-	</h4>
-	<hr>
-	<div class="row">
+            <div class="input-group" style="padding-bottom: 10px">
+              <span class="input-group-addon ">SNMP State</span>
+              <span class="input-group-addon">
+                <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the SNMP Active status"></span>
+              </span>
+              <span class="input-group-btn">
+                <button type="button" (click)="runtime_dev.DeviceActive ? changeActiveDevice(runtime_dev.ID,false) : changeActiveDevice(runtime_dev.ID,true)" [ngClass]="runtime_dev.DeviceActive ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.DeviceActive ? 'Disable' : 'Enable'}}</button>
+              </span>
+            </div>
 
-	<div class="col-md-8">
-		<h4>SysInfo</h4><hr>
-		<table class="table-striped table-bordered" style="overflow-x: scroll">
-		<tr *ngFor="let info of runtime_dev['SysInfo'] | objectParser">
-			<span>{{info.key}}</span>
-			<td style="padding-left:10px">{{info.value }}</td>
-		</tr>
-		</table>
-		<!--ul class="list-group">
-		  <li class="list-group-item"  *ngFor="let entry of test['SysInfo'] | objectParser">ee{{entry.key}} {{entry.value}}</li>
-		</ul-->
-	</div>
-	<div class="col-md-4">
-		<h4>Edit</h4><hr>
+            <div class="input-group" style="padding-bottom: 10px">
+              <span class="input-group-addon">SNMP Debug</span>
+              <span class="input-group-addon">
+                <span class="glyphicon glyphicon-question-sign"  tooltip="Enable or disable the SNMP Debug"></span>
+              </span>
+              <span class="input-group-btn">
+                <button type="button" (click)="runtime_dev.StateDebug ? changeStateDebug(runtime_dev.ID,false) : changeStateDebug(runtime_dev.ID,true)" [ngClass]="runtime_dev.StateDebug ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.StateDebug ? 'Disable' : 'Enable'}}</button>
+              </span>
+            </div>
 
-		<div class="input-group" style="padding-bottom: 10px">
-			<span class="input-group-addon ">SNMP State</span>
-			<span class="input-group-addon">
-				 <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the SNMP Active status"></span>
-			 </span>
-			<span class="input-group-btn">
-				<button type="button" (click)="runtime_dev.DeviceActive ? changeActiveDevice(runtime_dev.ID,false) : changeActiveDevice(runtime_dev.ID,true)" [ngClass]="runtime_dev.DeviceActive ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.DeviceActive ? 'Disable' : 'Enable'}}</button>
-			</span>
-		</div>
+            <div class="input-group" style="padding-bottom: 10px">
+              <span class="input-group-addon">Log Level</span>
+              <span class="input-group-addon">
+                <span class="glyphicon glyphicon-question-sign"  tooltip="change log level of the device"></span>
+              </span>
+              <span class="input-group-btn">
+                <select style="width:100px" [(ngModel)]="runtime_dev.CurLogLevel" (ngModelChange)="onChangeLogLevel($event)" [ngModelOptions]="{standalone: true}">
+                  <option *ngFor="let loglevel of loglLevelArray" [value]="loglevel" >{{loglevel}}</option>
+                </select>
+              </span>
+              <span class="input-group-btn">
+                <button type="button" (click)="changeLogLevel(runtime_dev.ID)" [disabled] = "!islogLevelChanged" [ngClass]="'btn btn-primary'">Change</button>
+              </span>
+            </div>
 
-		<div class="input-group"  style="padding-bottom: 10px">
-		  <span class="input-group-addon">SNMP Debug</span>
-			<span class="input-group-addon">
-				 <span class="glyphicon glyphicon-question-sign"  tooltip="Enable or disable the SNMP Debug"></span>
-			 </span>
-			<span class="input-group-btn">
-				<button type="button" (click)="runtime_dev.StateDebug ? changeStateDebug(runtime_dev.ID,false) : changeStateDebug(runtime_dev.ID,true)" [ngClass]="runtime_dev.StateDebug ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.StateDebug ? 'Disable' : 'Enable'}}</button>
-			</span>
-		</div>
+            <div class="input-group" style="padding-bottom: 10px">
+              <span class="input-group-addon">Force Flt Update</span>
+              <span class="input-group-addon">
+                <span class="glyphicon glyphicon-question-sign"  tooltip="Force FIlter update on next cicle"></span>
+              </span>
+              <span class="input-group-btn">
+                <button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Force</button>
+              </span>
+            </div>
 
-		<div class="input-group" style="padding-bottom: 10px">
-			<span class="input-group-addon">Log Level</span>
-			<span class="input-group-addon">
-				<span class="glyphicon glyphicon-question-sign"  tooltip="change log level of the device"></span>
-			</span>
-			<span class="input-group-btn">
-				<select style="width:100px" [(ngModel)]="runtime_dev.CurLogLevel" (ngModelChange)="onChangeLogLevel($event)" [ngModelOptions]="{standalone: true}">
-					<option *ngFor="let loglevel of loglLevelArray" [value]="loglevel" >{{loglevel}}</option>
-				</select>
-			</span>
-			<span class="input-group-btn">
-				<button type="button" (click)="changeLogLevel(runtime_dev.ID)" [disabled] = "!islogLevelChanged" [ngClass]="'btn btn-primary'">Change</button>
-			</span>
-		</div>
+            <div class="input-group">
+              <span class="input-group-addon">Download Device Log file</span>
+              <span class="input-group-addon">
+                <span class="glyphicon glyphicon-question-sign"  tooltip="download the device related log file"></span>
+              </span>
+              <span class="input-group-btn">
+                <button type="button" (click)="downloadLogFile(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Download</button>
+              </span>
+            </div>
+          </div>
+        </div>
+        <br>
 
-		<div class="input-group" style="padding-bottom: 10px">
-			<span class="input-group-addon">Force Flt Update</span>
-			<span class="input-group-addon">
-				<span class="glyphicon glyphicon-question-sign"  tooltip="Force FIlter update on next cicle"></span>
-			</span>
-			<span class="input-group-btn">
-				<button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Force</button>
-			</span>
-		</div>
-
-		<div class="input-group">
-			<span class="input-group-addon">Download Device Log file</span>
-			<span class="input-group-addon">
-				<span class="glyphicon glyphicon-question-sign"  tooltip="download the device related log file"></span>
-			</span>
-			<span class="input-group-btn">
-				<button type="button" (click)="downloadLogFile(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Download</button>
-			</span>
-		</div>
-
-		<!--div class="btn-group-vertical" role="group">
-			{{runtime_dev.DeviceActive}}
-				<select [ngModel]="runtime_dev.StateDebug" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeFilter($event)">
-				 <option value="true">StateDebug - True</option>
-				 <option value="false">State Debug - False</option>
-				</select>
-		</div-->
-	</div>
-	</div>
-	<br>
-
-	<h4>Metrics Info</h4><hr>
-	<tabset [justified]="true">
-		<tab *ngFor="let measurement of runtime_dev['Measurements']; let i of index" [heading]="measurement.ID">
-			<table class="table-striped table-bordered" style="width: 100%">
-					<!--Columnas-->
-					<thead *ngFor="let metrics of measurement.MetricTable | objectParser">
-						<tr>
-						<td style="text-align: center">
-
-						</td>
-					<td *ngFor="let metric of measurement.MetricTable[metrics.key] | objectParser">
-							<!--Titulo del measurement -->
-						<span class="pull-right"> {{metric.key}}</span>
-					</td>
-				</tr>
-				<tr>
-					<!--Valor indexado-->
-					<td style="color: #fff; background-color: #337ab7;">
-						<span class="pull-right">
-							{{metrics.key}}
-						</span>
-					</td>
-					<td *ngFor="let values of measurement.MetricTable[metrics.key] | objectParser">
-							<!--Titulo de métrica -->
-						<span class="pull-right" [tooltipHtml]="values.value.CookedValue ?
-						'<dt class=\'pull-left\'>Value:</dt><dd>'+values.value.CookedValue+'</dd>'+
-                '<dt class=\'pull-left\'>Time:</dt><dd>'+ (values.value.CurTime | date:'d/M/y H:m:s') +'</dd>'+
-                '<hr>'+
-                '<dt class=\'pull-left\'>RawCurrent:</dt><dd>'+values.value.CurValue+'</dd>'+
-                '<dt class=\'pull-left\'>RawLast:</dt><dd>'+values.value.LastValue+'</dd>'+
-                '<dt class=\'pull-left\'>Elapsed(sec):</dt><dd>'+values.value.ElapsedTime+'</dd>'
-                : '--'"> {{values.value.CookedValue ? values.value.CookedValue  : '--'}}
-							</span>
-					</td>
-				</tr>
-			</thead>
-		</table>
-		</tab>
-	</tabset>
-</div>
-</div>
+        <h4>Metrics Info</h4>
+        <hr>
+        <tabset [justified]="true">
+          <tab *ngFor="let measurement of runtime_dev['Measurements']; let i of index" [heading]="measurement.ID">
+            <table class="table-striped table-bordered" style="width: 100%">
+              <!--Columnas-->
+              <thead *ngFor="let metrics of measurement.MetricTable | objectParser">
+                <tr>
+                  <td style="text-align: center">
+                  </td>
+                  <td *ngFor="let metric of measurement.MetricTable[metrics.key] | objectParser">
+                    <!--Titulo del measurement -->
+                    <span class="pull-right"> {{metric.key}}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <!--Valor indexado-->
+                  <td style="color: #fff; background-color: #337ab7;">
+                    <span class="pull-right">
+                      {{metrics.key}}
+                    </span>
+                  </td>
+                  <td *ngFor="let values of measurement.MetricTable[metrics.key] | objectParser">
+                    <!--Titulo de métrica -->
+                    <span class="pull-right" [tooltip]="tooltipValues"> {{values.value.CookedValue != null ? values.value.CookedValue  : '--'}}
+                      <template #tooltipValues>
+                        <div *ngIf="values.value.CookedValue != null">
+                          <dt class="pull-left">Value:</dt><dd> {{ values.value.CookedValue }}</dd>
+                          <dt class="pull-left">Time:</dt><dd> {{values.value.CurTime | date:'d/M/y H:m:s'}}</dd>
+                          <hr>
+                          <dt class="pull-left">RawCurrent:</dt><dd>{{values.value.CurValue}}</dd>
+                          <dt class="pull-left">RawLast:</dt><dd>{{values.value.LastValue}}</dd>
+                          <dt class="pull-left">Elapsed(sec):</dt><dd>{{values.value.ElapsedTime}}</dd>
+                        </div>
+                      <div *ngIf="values.value.CookedValue == null">
+                        --
+                      </div>
+                    </template>
+                  </span>
+                  </td>
+                </tr>
+              </thead>
+            </table>
+          </tab>
+        </tabset>
+      </div>
+    </div>
