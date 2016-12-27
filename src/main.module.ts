@@ -1,5 +1,3 @@
-import 'zone.js';
-import 'reflect-metadata';
 //Auth examples from: https://github.com/auth0-blog/angular2-authentication-sample
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
@@ -30,10 +28,10 @@ import { MeasFilterCfgComponent } from './measfilter/measfiltercfg.component';
 import { InfluxServerCfgComponent } from './influxserver/influxservercfg.component';
 import { RuntimeComponent } from './runtime/runtime.component';
 
-import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap/ng2-bootstrap';
-import { TooltipModule } from 'ng2-bootstrap/ng2-bootstrap';
-import { ModalModule } from 'ng2-bootstrap/ng2-bootstrap';
-import { ModalDirective } from 'ng2-bootstrap/ng2-bootstrap';
+import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap';
+import { TooltipModule } from 'ng2-bootstrap';
+import { ModalModule } from 'ng2-bootstrap';
+import { ModalDirective } from 'ng2-bootstrap';
 
 import { GenericModal } from './common/generic-modal';
 import { TestConnectionModal } from './common/test-connection-modal';
