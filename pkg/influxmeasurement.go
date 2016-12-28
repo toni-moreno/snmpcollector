@@ -840,6 +840,7 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 	// INDIRECT INDEXED
 
 	tagOIDArray := []string{}
+	allindex_it := make(map[string]string) //with Indirect Tag
 	//we need to get Tag Names from other OID
 	for _, v := range allindex {
 		tagOIDArray = append(tagOIDArray, m.cfg.TagOID+"."+v)
@@ -866,26 +867,30 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 
 			i := strings.LastIndex(pdu.Name, ".")
 			idx := pdu.Name[i+1:]
-			if k, ok := allindex[idx]; ok {
-				var name string
-				switch pdu.Type {
-				case gosnmp.OctetString:
-					name = string(pdu.Value.([]byte))
-					m.log.Debugf("Got the following OctetString index for [%s/%s]", idx, name)
-				case gosnmp.Integer, gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
-					name = strconv.FormatInt(pduVal2Int64(pdu), 10)
-					m.log.Debugf("Got the following Numeric index for [%s/%s]", idx, name)
-				default:
-					m.log.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric Value", m.cfg.IndexOID)
+			for k, v := range allindex {
+				if v == idx { //the index for TagOID received is the value on the previous IndexOID
+					var name string
+					switch pdu.Type {
+					case gosnmp.OctetString:
+						name = string(pdu.Value.([]byte))
+						m.log.Debugf("Got the following OctetString - index/index value/indirect value - [%s/%s/%s]", k, idx, name)
+					case gosnmp.Integer, gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
+						name = strconv.FormatInt(pduVal2Int64(pdu), 10)
+						m.log.Debugf("Got the following Numeric -index/index value/indirect value- [%s/%s/%s]", k, idx, name)
+					default:
+						m.log.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric Value", m.cfg.IndexOID)
+					}
+					allindex_it[k] = name
+					m.log.Debugf("Change Index TAG from [%s] to [%s] in OID: %s ", idx, name, pdu.Name)
+					break
 				}
-				allindex[idx] = name
-				m.log.Debugf("Change Index TAG from [%s] to [%s] in OID: %s ", k, name, pdu.Name)
-			} else {
-				m.log.Warnf("There is no Values for Indirect TAGS index[%s] OID: %s", i, pdu.Name)
 			}
 		}
 	}
-	return allindex, nil
+	if len(allindex) != len(allindex_it) {
+		m.log.Warn("Not adll indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindex, allindex_it)
+	}
+	return allindex_it, nil
 }
 
 /*
