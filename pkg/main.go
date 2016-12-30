@@ -18,6 +18,7 @@ type GeneralConfig struct {
 	InstanceID string `toml:"instanceID"`
 	LogDir     string `toml:"logdir"`
 	HomeDir    string `toml:"homedir"`
+	DataDir    string `toml:"datadir"`
 	LogLevel   string `toml:"loglevel"`
 }
 
@@ -40,6 +41,7 @@ var (
 	pidFile    string
 	logDir     = filepath.Join(appdir, "log")
 	confDir    = filepath.Join(appdir, "conf")
+	dataDir    = confDir
 	configFile = filepath.Join(confDir, "config.toml")
 
 	cfg = struct {
@@ -91,6 +93,7 @@ func flags() *flag.FlagSet {
 	f.IntVar(&httpPort, "http", httpPort, "http port")
 	f.StringVar(&logDir, "logs", logDir, "log directory")
 	f.StringVar(&homeDir, "home", homeDir, "home directory")
+	f.StringVar(&dataDir, "data", dataDir, "Data directory")
 	f.StringVar(&pidFile, "pidfile", pidFile, "path to pid file")
 	f.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
@@ -238,6 +241,9 @@ func init() {
 	if len(cfg.General.LogLevel) > 0 {
 		l, _ := logrus.ParseLevel(cfg.General.LogLevel)
 		log.Level = l
+	}
+	if len(cfg.General.DataDir) > 0 {
+		dataDir = cfg.General.DataDir
 	}
 	if len(cfg.General.HomeDir) > 0 {
 		homeDir = cfg.General.HomeDir

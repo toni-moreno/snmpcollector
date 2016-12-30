@@ -232,7 +232,9 @@ func (db *InfluxDB) Hostname() string {
 
 // StartSender begins sender loop
 func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
-
+	if db.dummy == true {
+		return
+	}
 	if db.CheckAndSetStarted() == true {
 		log.Infof("Sender thread to : %s  already started (skipping Goroutine creation)", db.cfg.ID)
 		return

@@ -185,7 +185,7 @@ func InitDB(dbc *DatabaseCfg) {
 	switch dbc.Type {
 	case "sqlite3":
 		dbtype = "sqlite3"
-		datasource = confDir + "/" + dbc.Name + ".db"
+		datasource = dataDir + "/" + dbc.Name + ".db"
 	case "mysql":
 		dbtype = "mysql"
 		datasource = dbc.User + ":" + dbc.Pass + "@" + dbc.Host + "/" + dbc.Name + "?charset=utf8"
