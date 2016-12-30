@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 type GeneralConfig struct {
 	InstanceID string `toml:"instanceID"`
 	LogDir     string `toml:"logdir"`
+	HomeDir    string `toml:"homedir"`
 	LogLevel   string `toml:"loglevel"`
 }
 
@@ -34,6 +36,8 @@ var (
 	getversion bool
 	httpPort   = 8080
 	appdir     = os.Getenv("PWD")
+	homeDir    string
+	pidFile    string
 	logDir     = filepath.Join(appdir, "log")
 	confDir    = filepath.Join(appdir, "conf")
 	configFile = filepath.Join(confDir, "config.toml")
@@ -61,6 +65,24 @@ var (
 	SenderWg sync.WaitGroup
 )
 
+func writePIDFile() {
+	if pidFile == "" {
+		return
+	}
+
+	// Ensure the required directory structure exists.
+	err := os.MkdirAll(filepath.Dir(pidFile), 0700)
+	if err != nil {
+		log.Fatal(3, "Failed to verify pid directory", err)
+	}
+
+	// Retrieve the PID and write it.
+	pid := strconv.Itoa(os.Getpid())
+	if err := ioutil.WriteFile(pidFile, []byte(pid), 0644); err != nil {
+		log.Fatal(3, "Failed to write pidfile", err)
+	}
+}
+
 func flags() *flag.FlagSet {
 	var f flag.FlagSet
 	f.BoolVar(&getversion, "version", getversion, "display de version")
@@ -68,6 +90,8 @@ func flags() *flag.FlagSet {
 	f.StringVar(&configFile, "config", configFile, "config file")
 	f.IntVar(&httpPort, "http", httpPort, "http port")
 	f.StringVar(&logDir, "logs", logDir, "log directory")
+	f.StringVar(&homeDir, "home", homeDir, "home directory")
+	f.StringVar(&pidFile, "pidfile", pidFile, "path to pid file")
 	f.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 		f.VisitAll(func(flag *flag.Flag) {
@@ -191,6 +215,7 @@ func init() {
 		confDir = filepath.Dir(configFile)
 	} else {
 		viper.SetConfigName("config")
+		viper.AddConfigPath("/etc/snmpcollector/")
 		viper.AddConfigPath("/opt/snmpcollector/conf/")
 		viper.AddConfigPath("./conf/")
 		viper.AddConfigPath(".")
@@ -214,8 +239,18 @@ func init() {
 		l, _ := logrus.ParseLevel(cfg.General.LogLevel)
 		log.Level = l
 	}
+	if len(cfg.General.HomeDir) > 0 {
+		homeDir = cfg.General.HomeDir
+	}
+	//check if exist public dir in home
+	if _, err := os.Stat(filepath.Join(homeDir, "public")); err != nil {
+		log.Warnf("There is no public (www) directory on [%s] directory", homeDir)
+		if len(homeDir) == 0 {
+			homeDir = appdir
+		}
+	}
 	//
-	log.Infof("Set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n", appdir, confDir, logDir)
+	log.Infof("Set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n -Home: %s\n", appdir, confDir, logDir, homeDir)
 }
 
 //GetDevice is a safe method to get a Device Object
@@ -366,6 +401,7 @@ func main() {
 	defer func() {
 		//errorLog.Close()
 	}()
+	writePIDFile()
 	//Init BD config
 
 	InitDB(&cfg.Database)
@@ -382,7 +418,7 @@ func main() {
 	}
 
 	if port > 0 {
-		webServer(port)
+		webServer(filepath.Join(homeDir, "public"), port)
 	} else {
 		<-quit
 	}

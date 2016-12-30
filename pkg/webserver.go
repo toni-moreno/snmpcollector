@@ -29,7 +29,7 @@ type UserLogin struct {
 
 var cookie string
 
-func webServer(port int) {
+func webServer(publicPath string, port int) {
 
 	bind := binding.Bind
 
@@ -43,18 +43,20 @@ func webServer(port int) {
 		SigningMethod: jwt.SigningMethodHS256,
 	})*/
 	// initiate the app
-	m := macaron.Classic()
+	m := macaron.New()
+	m.Use(macaron.Logger())
+	m.Use(macaron.Recovery())
 	m.Use(toolbox.Toolboxer(m))
 	// register middleware
 	m.Use(GetContextHandler())
-	m.Use(macaron.Recovery())
 	//	m.Use(gzip.Gziper())
-	m.Use(macaron.Static("public",
+	log.Infof("setting HTML Static Path to %s", publicPath)
+	m.Use(macaron.Static(publicPath,
 		macaron.StaticOptions{
 			// Prefix is the optional prefix used to serve the static directory content. Default is empty string.
-			Prefix: "public",
+			Prefix: "",
 			// SkipLogging will disable [Static] log messages when a static file is served. Default is false.
-			SkipLogging: true,
+			SkipLogging: false,
 			// IndexFile defines which file to serve as index if it exists. Default is "index.html".
 			IndexFile: "index.html",
 			// Expires defines which user-defined function to use for producing a HTTP Expires Header. Default is nil.
