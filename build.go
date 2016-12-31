@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -76,18 +77,25 @@ func main() {
 			test("./pkg/...")
 
 		case "package":
-			//verifyGitRepoIsClean()
+			os.Mkdir("./dist", 0755)
 			createLinuxPackages()
+			sha1FilesInDist()
 		case "pkg-min-tar":
+			os.Mkdir("./dist", 0755)
 			createMinTar()
 		case "pkg-rpm":
+			os.Mkdir("./dist", 0755)
 			createRpmPackages()
-
+			sha1FilesInDist()
 		case "pkg-deb":
+			os.Mkdir("./dist", 0755)
 			createDebPackages()
-
+			sha1FilesInDist()
+		case "sha1-dist":
+			sha1FilesInDist()
 		case "latest":
 			makeLatestDistCopies()
+			sha1FilesInDist()
 
 		case "clean":
 			clean()
@@ -173,7 +181,7 @@ func createDebPackages() {
 		defaultFileSrc: "packaging/deb/default/snmpcollector",
 		systemdFileSrc: "packaging/deb/systemd/snmpcollector.service",
 
-		depends: []string{"adduser", "libfontconfig"},
+		depends: []string{"adduser"},
 	})
 }
 
@@ -194,7 +202,7 @@ func createRpmPackages() {
 		defaultFileSrc: "packaging/rpm/sysconfig/snmpcollector",
 		systemdFileSrc: "packaging/rpm/systemd/snmpcollector.service",
 
-		depends: []string{"initscripts", "fontconfig"},
+		depends: []string{"initscripts"},
 	})
 }
 
@@ -215,7 +223,7 @@ func createMinTar() {
 	runPrint("cp", "bin/snmpcollector", filepath.Join(packageRoot, "/opt/snmpcollector/bin"))
 	runPrint("cp", "bin/snmpcollector.md5", filepath.Join(packageRoot, "/opt/snmpcollector/bin"))
 	runPrint("cp", "-a", filepath.Join(workingDir, "public")+"/.", filepath.Join(packageRoot, "/opt/snmpcollector/public"))
-	runPrint("tar", "zcvf", "snmpcollector-"+version+"-"+getGitSha()+".tar.gz", "-C", packageRoot, ".")
+	runPrint("tar", "zcvf", "dist/snmpcollector-"+version+"-"+getGitSha()+".tar.gz", "-C", packageRoot, ".")
 	runPrint("rm", "-rf", packageRoot)
 }
 
@@ -231,7 +239,7 @@ func createFpmPackage(options linuxPackageOptions) {
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/sbin"))
 
 	// copy binary
-	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+serverBinaryName), filepath.Join(packageRoot, options.binPath))
+	runPrint("cp", "-p", filepath.Join(workingDir, "bin/"+serverBinaryName), filepath.Join(packageRoot, options.binPath))
 	// copy init.d script
 	runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
 	// copy environment var file
@@ -239,15 +247,15 @@ func createFpmPackage(options linuxPackageOptions) {
 	// copy systemd filerunPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
 	runPrint("cp", "-p", options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath))
 	// copy release files
-	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
+	runPrint("cp", "-a", filepath.Join(workingDir+"/public"), filepath.Join(packageRoot, options.homeDir))
 	// remove bin path
 	runPrint("rm", "-rf", filepath.Join(packageRoot, options.homeDir, "bin"))
 	// copy sample ini file to /etc/snmpcollector
-	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, options.configFilePath))
+	runPrint("cp", "conf/sample.config.toml", filepath.Join(packageRoot, options.configFilePath))
 
 	args := []string{
 		"-s", "dir",
-		"--description", "snmpcollector",
+		"--description", "A full featured Generic SNMP data collector with Web Administration Interface",
 		"-C", packageRoot,
 		"--vendor", "snmpcollector",
 		"--url", "http://github.org/toni-moreno/snmpcollector",
@@ -308,12 +316,9 @@ func ChangeWorkingDir(dir string) {
 	os.Chdir(dir)
 }
 
-/*func grunt(params ...string) {
-	runPrint("./node_modules/grunt-cli/bin/grunt", params...)
-}*/
-
 func setup() {
 	runPrint("go", "get", "-v", "github.com/tools/godep")
+	//pending to check if these following 3 lines are really needed
 	runPrint("go", "get", "-v", "github.com/blang/semver")
 	runPrint("go", "get", "-v", "github.com/mattn/go-sqlite3")
 	runPrint("go", "install", "-v", "github.com/mattn/go-sqlite3")
@@ -376,7 +381,7 @@ func rmr(paths ...string) {
 func clean() {
 	//	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
 	rmr("dist")
-	rmr("tmp")
+	//rmr("tmp")
 	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/toni-moreno/snmpcollector", goos, goarch)))
 }
 
@@ -474,6 +479,41 @@ func md5File(file string) error {
 	}
 
 	out, err := os.Create(file + ".md5")
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(out, "%x\n", h.Sum(nil))
+	if err != nil {
+		return err
+	}
+
+	return out.Close()
+}
+
+func sha1FilesInDist() {
+	filepath.Walk("./dist", func(path string, f os.FileInfo, err error) error {
+		if strings.Contains(path, ".sha1") == false {
+			sha1File(path)
+		}
+		return nil
+	})
+}
+
+func sha1File(file string) error {
+	fd, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	h := sha1.New()
+	_, err = io.Copy(h, fd)
+	if err != nil {
+		return err
+	}
+
+	out, err := os.Create(file + ".sha1")
 	if err != nil {
 		return err
 	}

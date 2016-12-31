@@ -1,0 +1,25 @@
+[Unit]
+Description=SnmpCollector Agent
+Documentation=http://github.com/toni-moreno/snmpcollector
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/default/snmpcollector
+User=snmpcol
+Group=snmpcol
+Type=simple
+Restart=on-failure
+WorkingDirectory=/usr/share/snmpcollector
+ExecStart=/usr/sbin/snmpcollector                    \
+                            --pidfile=${PID_FILE}     \
+                            --config=${CONF_FILE}     \
+                            --logs=${LOG_DIR}         \
+                            --home=${HOME_DIR}        \
+                            --data=${DATA_DIR}
+LimitNOFILE=10000
+TimeoutStopSec=20
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+SNMPCOL_USER=snmpcol
+
+SNMPCOL_GROUP=snmpcol
+
+SNMPCOL_HOME=/usr/share/snmpcollector
+
+LOG_DIR=/var/log/snmpcollector
+
+DATA_DIR=/var/lib/snmpcollector
+
+MAX_OPEN_FILES=10000
+
+CONF_DIR=/etc/snmpcollector
+
+CONF_FILE=/etc/snmpcollector/config.toml
+
+RESTART_ON_UPGRADE=false

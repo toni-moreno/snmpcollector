@@ -1,0 +1,71 @@
+#!/bin/sh
+
+set -e
+
+[ -f /etc/default/snmpcollector ] && . /etc/default/snmpcollector
+
+startSnmpcollector() {
+  if [ -x /bin/systemctl ]; then
+    /bin/systemctl daemon-reload
+    /bin/systemctl restart snmpcollector
+	elif [ -x "/etc/init.d/snmpcollector" ]; then
+		if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+			invoke-rc.d snmpcollector restart || true
+		else
+			/etc/init.d/snmpcollector restart || true
+		fi
+	fi
+}
+
+case "$1" in
+	configure)
+	[ -z "$SNMPCOL_USER" ] && SNMPCOL_USER="snmpcol"
+	[ -z "$SNMPCOL_GROUP" ] && SNMPCOL_GROUP="snmpcol"
+	if ! getent group "$SNMPCOL_GROUP" > /dev/null 2>&1 ; then
+	    addgroup --system "$SNMPCOL_GROUP" --quiet
+	fi
+	if ! id $SNMPCOL_USER > /dev/null 2>&1 ; then
+	    adduser --system --home /usr/share/snmpcollector --no-create-home \
+		--ingroup "$SNMPCOL_GROUP" --disabled-password --shell /bin/false \
+		"$SNMPCOL_USER"
+	fi
+
+  if [ -x /opt/snmpcollector/ ]; then
+    echo "### Upgrading Notice ### "
+    echo "-- New snmpcollector install home is /usr/share/snmpcollector"
+    #echo "-- Please move sqlite3 database to /var/lib/snmpcollector/"
+    echo "-- Notice: service name && binary changed to snmpcollector"
+  fi
+
+	# Set user permissions on /var/log/snmpcollector, /var/lib/snmpcollector
+	mkdir -p /var/log/snmpcollector /var/lib/snmpcollector
+	chown -R $SNMPCOL_USER:$SNMPCOL_GROUP /var/log/snmpcollector /var/lib/snmpcollector
+	chmod 755 /var/log/snmpcollector /var/lib/snmpcollector
+
+	# configuration files should not be modifiable by snmpcollector user, as this can be a security issue
+	chown -Rh root:$SNMPCOL_GROUP /etc/snmpcollector/*
+	chmod 755 /etc/snmpcollector
+	find /etc/snmpcollector -type f -exec chmod 640 {} ';'
+	find /etc/snmpcollector -type d -exec chmod 755 {} ';'
+
+	# if $2 is set, this is an upgrade
+	if ( [ -n $2 ] && [ "$RESTART_ON_UPGRADE" = "true" ] ) ; then
+		startSnmpcollector
+	# this is a fresh installation
+	elif [ -z $2 ] ; then
+        if [ -x /bin/systemctl ] ; then
+            echo "### NOT starting on installation, please execute the following statements to configure snmpcollector to start automatically using systemd"
+            echo " sudo /bin/systemctl daemon-reload"
+            echo " sudo /bin/systemctl enable snmpcollector"
+            echo "### You can start snmpcollector by executing"
+            echo " sudo /bin/systemctl start snmpcollector"
+
+        elif [ -x /usr/sbin/update-rc.d ] ; then
+            echo "### NOT starting snmpcollector by default on bootup, please execute"
+            echo " sudo update-rc.d snmpcollector defaults 95 10"
+            echo "### In order to start snmpcollector, execute"
+            echo " sudo service snmpcollector start"
+        fi
+	fi
+	;;
+esac
