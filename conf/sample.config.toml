@@ -4,14 +4,18 @@
 ############################
 
 [general]
- #InstanceID will be a string identifiing the collector , It will be usefull when
+ # InstanceID will be a string identifying the collector , It will be useful when
  # more than one running on the same server, this ID will be shown in the WebUI.
  instanceID = "WAN Communicactions"
- #there are as many logs as devices configured and
- #logdir set the Directory path for each device individual log
- logdir = "./log"
- #NOTE: main process log is now sent to standar ouput
- # logLevel set de main process log level
+ # datadir set the directory where the data will be placed , also sqlite db if set as db engine
+ # if not set the default datadir will be placed in the configuration directory
+ # datadir = "/var/lib/snmpcollector"
+
+ # there are as many logs as devices configured
+ # logdir set the Directory path for each device individual log, default is /var/log/snmpcollector
+ # logdir = "/var/log/somelogpath"
+ # NOTE: main process log is now sent to standard output 
+ # logLevel set the main process log level
  # valid values: panic,fatal,error,warn,info,debug
  logLevel = "warn"
 
@@ -29,7 +33,7 @@
 # password = ""
 # name sets the database name
  name = "snmpcollector"
-#sqllogfile sets the name for a file in the log/ direcotry where sql backend will write all SQL transactions
+#sqllogfile sets the name for a file in the log/ directory where sql backend will write all SQL transactions
 #sqllogfile = "sql.log"
  # debug adds extra verbosity to the SQL log
  debug = false
@@ -59,7 +63,7 @@
  freq = 60
  #prefix for measurement naming
  prefix = ""
- #adds extra tags to the measurement sent
+ #adds extra tags to the measurement config should be set as a csv - tag=value1,tag2=value2,...,tagN=valN
  extratags = [ "instance=snmpcollector01" ]
 
 ############################
@@ -67,10 +71,10 @@
 ############################
 
 [http]
- #port where webserver will listen waitting for connections
+ #port where webserver will listen waiting for connections
  port   = 8090
  #Admin credentials to access to the SnmpCollector agent
  adminuser = "adm1"
  adminpassword = "adm1pass"
- #When more than one instance you will need customize the cookie_id allowing navigate to all isntances
+ #When more than one instance you will need customize the cookie_id allowing navigate to all instances
  cookieid ="my_instance_cookie"
