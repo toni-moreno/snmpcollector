@@ -124,8 +124,8 @@ import { Subscription } from "rxjs";
                 <div class="panel-heading">
                   <h4>
                     Query OID: {{queryResult.OID}}
-                    <label [ngClass]="(queryResult.QueryResult[0].Type != 'Error' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance') ? ['label label-primary'] : ['label label-danger']" style="padding-top: 0.5em; margin:0px">
-                      {{queryResult.QueryResult[0].Type != 'Error' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance' ? queryResult.QueryResult.length +' results': '0 results - '+queryResult.QueryResult[0].Type}}
+                    <label [ngClass]="(queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance') ? ['label label-primary'] : ['label label-danger']" style="padding-top: 0.5em; margin:0px">
+                      {{queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance' ? queryResult.QueryResult.length +' results': '0 results - '+queryResult.QueryResult[0].Type}}
                     </label>
                     <i [ngClass]="maximized ? ['pull-right glyphicon glyphicon-resize-full']: ['pull-right glyphicon glyphicon-resize-small']" style="margin-left: 10px;" (click)="maximizeQueryResults()"></i>
                     <span class="pull-right">  elapsed: {{queryResult.TimeTaken}} s </span>
