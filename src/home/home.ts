@@ -18,81 +18,66 @@ export class Home {
   api: string;
   item_type: string;
   version: any;
+  menuItems : Array<any> = [
+  {'title': 'Influx Servers', 'selector' : 'influxserver'},
+  {'title': 'SNMP Metrics', 'selector' : 'snmpmetric'},
+  {'title': 'Influx Measurements', 'selector' : 'influxmeas'},
+  {'title': 'Measurement Groups', 'selector' : 'measgroup'},
+  {'title': 'Measurement Filters', 'selector' : 'measfilter'},
+  {'title': 'SNMP Devices', 'selector' : 'snmpdevice'},
+  {'title': 'Runtime', 'selector' : 'runtime'},
+  ];
 
   constructor(public router: Router, public httpAPI: HttpAPI) {
+    this.item_type= "runtime";
     this.getFooterInfo();
   }
 
   logout() {
     this.httpAPI.post('/logout','')
-      .subscribe(
-        response => {
-          this.router.navigate(['/login']);
-        },
-        error => {
-          alert(error.text());
-          console.log(error.text());
-        }
-      );
+    .subscribe(
+    response => {
+      this.router.navigate(['/login']);
+    },
+    error => {
+      alert(error.text());
+      console.log(error.text());
+    }
+    );
+  }
+
+  clickMenu(selected : string) : void {
+    this.item_type = "";
+    this.item_type = selected;
   }
 
   reloadConfig() {
     this.httpAPI.get('/runtime/agent/reloadconf')
-      .subscribe(
-        response => {
-            alert(response.json())
-        },
-        error => {
-          alert(error.text());
-          console.log(error.text());
-        }
-      );
+    .subscribe(
+    response => {
+      alert(response.json())
+    },
+    error => {
+      alert(error.text());
+      console.log(error.text());
+    }
+    );
   }
-
-  InfluxServers() {
-	  this.item_type = "influxserver";
-  }
-
-  SNMPMetrics () {
-	  this.item_type = "snmpmetric";
-  }
-
-  InfluxMeasurements() {
-    this.item_type = "influxmeas";
-  }
-
-  MeasGroups() {
-    this.item_type = "measgroup";
-  }
-
-  MeasFilters() {
-    this.item_type = "measfilter";
-  }
-
-  SNMPDevices() {
-	  this.item_type = "snmpdevice";
-  }
-
-  Runtime() {
-    this.item_type = "runtime";
-  }
-
 
   getFooterInfo() {
     this.getInfo(null)
     .subscribe(data => {
       this.version = data;
-      this.item_type= "runtime";
     },
-     err => console.error(err),
-     () =>  {}
-     );
+    err => console.error(err),
+    () =>  {}
+    );
   }
 
   getInfo(filter_s: string) {
-      // return an observable
-      return this.httpAPI.get('/runtime/version')
-      .map( (responseData) => {
-          return responseData.json()});
+    // return an observable
+    return this.httpAPI.get('/runtime/version')
+    .map( (responseData) => {
+      return responseData.json()});
+    }
   }
-}
