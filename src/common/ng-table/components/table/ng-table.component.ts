@@ -1,5 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { TooltipModule } from 'ng2-bootstrap';
+
 
 @Component({
   selector: 'ng-table',
@@ -32,11 +34,24 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
       </tr>
         <tr *ngFor="let row of rows">
           <td *ngIf="showCustom == true">
-          <i class="glyphicon glyphicon-eye-open" (click)="viewItem(row)"></i>
-					<i class="glyphicon glyphicon-edit"  (click)="editItem(row)"></i>
-    			<i class="glyphicon glyphicon glyphicon-remove"  (click)="removeItem(row)"></i>
+          <i class="glyphicon glyphicon-eye-open" [tooltip]="'View item'" (click)="viewItem(row)"></i>
+					<i class="glyphicon glyphicon-edit"  [tooltip]="'Edit item'" (click)="editItem(row)"></i>
+    			<i class="glyphicon glyphicon glyphicon-remove"  [tooltip]="'Remove Item'" (click)="removeItem(row)"></i>
           </td>
-          <td (click)="cellClick(row, column.name)" *ngFor="let column of columns" [innerHtml]="sanitize(getData(row, column.name))" style="text-align:right"></td>
+          <td (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(getData(row, column.name))" style="text-align:right">
+          <template #tooltipValues>
+            <h6>Index:{{row.Index }}</h6>
+            <h6>Metric:{{column.name}}</h6>
+            <hr>
+            <div *ngFor="let test of (getData(row.tooltipInfo, column.name) | keyParser)" style="text-align:left !important">
+            <span class="text-left" style="paddint-left: 10px"><b>{{test.key}}</b></span>
+            <span class="text-right" *ngIf="test.key === 'CurTime'"> {{test.value | date:'d/M/y H:m:s'}}</span>
+            <span class="text-right" *ngIf="test.key === 'LastTime'"> {{test.value | date:'d/M/y H:m:s'}}</span>
+            <span class="text-right" *ngIf="test.key !== 'CurTime' && test.key !== 'LastTime'">{{test.value}} </span>
+            </div>
+          </template>
+
+          </td>
         </tr>
       </tbody>
     </table>
@@ -70,6 +85,7 @@ export class NgTableComponent {
 
   @Input()
   public set columns(values:Array<any>) {
+    this._columns =  [];
     values.forEach((value:any) => {
       if (value.filtering) {
         this.showFilterRow = true;
