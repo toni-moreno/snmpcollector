@@ -7,7 +7,7 @@
         <h5 *ngIf="version" class="instance">{{version.InstanceID}}</h5>
       </li>
       <li *ngFor="let menuItem of menuItems; let last=last" [ngClass]="last ? 'last-li' : ''">
-        <a (click)="clickMenu(menuItem.selector)" role="button" [ngClass]="item_type === menuItem.selector ? 'active' : ''">{{menuItem.title}}</a>
+        <a (click)="clickMenu(menuItem.selector)" role="button" [ngClass]="item_type === menuItem.selector ? 'active-menu' : ''">{{menuItem.title}}</a>
       </li>
       <li class="last-li">
         <a class="btn btn-primary" style="text-align:left" (click)="reloadConfig()"> <i class="glyphicon glyphicon-refresh" style="display: inline; padding-left: 0px"> </i>Reload Config</a>
