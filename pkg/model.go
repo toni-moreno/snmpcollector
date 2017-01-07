@@ -128,6 +128,7 @@ type SnmpDevFilters struct {
 type MGroupsCfg struct {
 	ID           string   `xorm:"'id' unique"`
 	Measurements []string `xorm:"-"`
+	Description  string   `xorm:"description"`
 }
 
 //MGroupsMeasurements measurements contained on each Measurement Group
