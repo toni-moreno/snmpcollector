@@ -200,7 +200,6 @@ func init() {
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	log.Formatter = customFormatter
 	customFormatter.FullTimestamp = true
-	//----
 
 	// parse first time to see if config file is being specified
 	f := flags()
@@ -237,6 +236,9 @@ func init() {
 	if len(cfg.General.LogDir) > 0 {
 		logDir = cfg.General.LogDir
 		os.Mkdir(logDir, 0755)
+		//Log output
+		f, _ := os.OpenFile(logDir+"/snmpcollector.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+		log.Out = f
 	}
 	if len(cfg.General.LogLevel) > 0 {
 		l, _ := logrus.ParseLevel(cfg.General.LogLevel)

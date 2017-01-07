@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/go-macaron/session"
 	"gopkg.in/macaron.v1"
 	"time"
@@ -17,7 +16,6 @@ var startSessionGC func()
 var getSessionCount func() int
 
 func init() {
-	fmt.Println("init session")
 	startSessionGC = func() {
 		sessionManager.GC()
 		time.AfterFunc(time.Duration(sessionOptions.Gclifetime)*time.Second, startSessionGC)
