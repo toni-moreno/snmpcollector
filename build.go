@@ -94,6 +94,8 @@ func main() {
 		case "sha1-dist":
 			sha1FilesInDist()
 		case "latest":
+			os.Mkdir("./dist", 0755)
+			createLinuxPackages()
 			makeLatestDistCopies()
 			sha1FilesInDist()
 
