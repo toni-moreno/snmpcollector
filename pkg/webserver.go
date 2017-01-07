@@ -6,6 +6,7 @@ import (
 	"github.com/go-macaron/session"
 	"github.com/go-macaron/toolbox"
 	"gopkg.in/macaron.v1"
+	"os"
 
 	//	"html/template"
 	"crypto/md5"
@@ -42,8 +43,9 @@ func webServer(publicPath string, port int) {
 		// Important to avoid security issues described here: https://auth0.com/blog/2015/03/31/critical-vulnerabilities-in-json-web-token-libraries/
 		SigningMethod: jwt.SigningMethodHS256,
 	})*/
-	// initiate the app
-	m := macaron.New()
+
+	f, _ := os.OpenFile(logDir+"/http_access.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	m := macaron.NewWithLogger(f)
 	m.Use(macaron.Logger())
 	m.Use(macaron.Recovery())
 	m.Use(toolbox.Toolboxer(m))
@@ -903,7 +905,7 @@ func GetInfluxAffectOnDel(ctx *Context) {
 /****************/
 
 func myLoginHandler(ctx *Context, user UserLogin) {
-	fmt.Printf("USER LOGIN: USER: +%#v (Config: %#v)", user, cfg.HTTP)
+	//fmt.Printf("USER LOGIN: USER: +%#v (Config: %#v)", user, cfg.HTTP)
 	if user.UserName == cfg.HTTP.AdminUser && user.Password == cfg.HTTP.AdminPassword {
 		ctx.SignedInUser = user.UserName
 		ctx.IsSignedIn = true
