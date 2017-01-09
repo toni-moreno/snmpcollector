@@ -1,15 +1,34 @@
+# v 0.6.2 (Not Yet Released)
+### New Features
+* Metric Type standarization according to RFC2578 SMIv2.
+
+### fixes
+
+### breaking changes
+
+* Database measurement type changes standarized to the RFC2578 (https://tools.ietf.org/html/rfc2578#section-7.1)
+```sql
+update snmp_metric_cfg set datasrctype='Gauge32' where datasrctype = 'GAUGE32';
+update snmp_metric_cfg set datasrctype='Gauge32' where datasrctype = 'GAUGE';
+update snmp_metric_cfg set datasrctype='Integer32' where datasrctype  = 'INTEGER32';
+update snmp_metric_cfg set datasrctype='OCTETSTRING' where datasrctype  = 'STRING';
+update snmp_metric_cfg set datasrctype='IpAddress' where datasrctype  = 'IPADDR';
+```
+
 # v 0.6.1
 ### New Features
 * upgraded to angular 2.4.1/router 3.4.1/ng2-bootstrap 1.1.16-9/angular-cli 1.0.0-beta.24/ zone.js 0.7.4 /rxjs 5.0.1
 * new bundle system based on angular-cli and npm
 * added new indexed with indirec tag measurement type , implements #67
-
+* added --data --pidfile --home as agent parameters
+* Added  deb and rpm packaging files and option to the building process
+* Default agent log set to $LOGDIR/snmpcollector.log
+* Default HTTP log  set to $LOGDIR/http_access.log
 
 ### fixes
-* fix for issue #81, #83 #85, #87
+* fix for issue #81, #83 #85, #87, #90
 
 ### breaking changes
-
 
 # v 0.6.0
 ### New Features

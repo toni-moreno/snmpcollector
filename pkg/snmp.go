@@ -284,6 +284,43 @@ func pduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 	return val
 }
 
+func pduVal2UInt64(pdu gosnmp.SnmpPDU) uint64 {
+	value := pdu.Value
+	var val uint64
+	//revisar esta asignación
+	switch value := value.(type) { // shadow
+	case int:
+		val = uint64(value)
+	case int8:
+		val = uint64(value)
+	case int16:
+		val = uint64(value)
+	case int32:
+		val = uint64(value)
+	case int64:
+		val = uint64(value)
+	case uint:
+		val = uint64(value)
+	case uint8:
+		val = uint64(value)
+	case uint16:
+		val = uint64(value)
+	case uint32:
+		val = uint64(value)
+	case uint64:
+		val = uint64(value)
+	case string:
+		// for testing and other apps - numbers may appear as strings
+		var err error
+		if val, err = strconv.ParseUint(value, 10, 64); err != nil {
+			return val
+		}
+	default:
+		return 0
+	}
+	return val
+}
+
 func pduVal2Hwaddr(pdu gosnmp.SnmpPDU) (string, error) {
 	value := pdu.Value
 	switch vt := value.(type) {

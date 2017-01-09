@@ -13,21 +13,6 @@ import (
 	"time"
 )
 
-//https://collectd.org/wiki/index.php/Data_source
-// http://stackoverflow.com/questions/14572006/net-snmp-returned-types
-
-/*const (
-	GAUGE = 0 << iota //value is simply stored as-is
-	INTEGER
-	COUNTER32
-	COUNTER64
-	STRING
-	HWADDR
-	IPADDR
-	STRINGPARSER
-	STRINGEVAL
-)*/
-
 /*
 3.- Check minimal data is set  (pending)
 name, BaseOID BaseOID begining with "."
@@ -42,20 +27,19 @@ func (m *SnmpMetricCfg) Init() error {
 	if len(m.BaseOID) == 0 && m.DataSrcType != "STRINGEVAL" {
 		return fmt.Errorf("BaseOid not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
 	}
-
+	//https://tools.ietf.org/html/rfc2578 (SMIv2)
+	//https://tools.ietf.org/html/rfc2579 (Textual Conventions for SMIv2)
+	//https://tools.ietf.org/html/rfc2851 (Textual Conventions for Internet Network Address)
 	switch m.DataSrcType {
-	case "GAUGE":
-	case "GAUGE32":
-	case "INTEGER":
-	case "INTEGER32":
-	case "UINTEGER32":
-	case "COUNTER32":
-	case "COUNTER64":
-	case "TIMETICKS":
+	case "INTEGER", "Integer32":
+	case "Gauge32":
+	case "UInteger32", "Unsigned32":
+	case "Counter32", "COUNTER32": //raw and cooked increment of Counter32
+	case "Counter64", "COUNTER64": //raw and Cooked increment of Counter34
+	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
 	case "OCTETSTRING":
-	case "STRING":
 	case "HWADDR":
-	case "IPADDR":
+	case "IpAddress":
 	case "STRINGPARSER":
 	case "STRINGEVAL":
 	default:
@@ -95,8 +79,8 @@ type SnmpMetric struct {
 	cfg         *SnmpMetricCfg
 	ID          string
 	CookedValue interface{}
-	CurValue    int64
-	LastValue   int64
+	CurValue    interface{}
+	LastValue   interface{}
 	CurTime     time.Time
 	LastTime    time.Time
 	ElapsedTime float64
@@ -138,29 +122,37 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 		}
 	}
 	switch s.cfg.DataSrcType {
-	case "TIMETICKS":
+	case "TIMETICKS": //Cooked TimeTicks
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := pduVal2Int64(pdu)
 			s.CookedValue = float64(val / 100) //now data in secoonds
 			s.CurTime = now
 			s.Scale()
 		}
-	case "GAUGE", "GAUGE32", "INTEGER", "INTEGER32", "UINTEGER32":
+		//Signed Integers
+	case "INTEGER", "Integer32":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := pduVal2Int64(pdu)
 			s.CookedValue = float64(val)
 			s.CurTime = now
-			//s.Compute()
 			s.Scale()
 		}
-	case "COUNTER32":
+		//Unsigned Integers
+	case "Counter32", "Gauge32", "Counter64", "TimeTicks", "UInteger32", "Unsigned32":
+		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			val := pduVal2UInt64(pdu)
+			s.CookedValue = float64(val)
+			s.CurTime = now
+			s.Scale()
+		}
+	case "COUNTER32": //Increment computed
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			//first time only set values and reassign itself to the complete method this will avoi to send invalid data
-			val := pduVal2Int64(pdu)
+			val := pduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
 			s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-				val := pduVal2Int64(pdu)
+				val := pduVal2UInt64(pdu)
 				s.LastTime = s.CurTime
 				s.LastValue = s.CurValue
 				s.CurValue = val
@@ -172,32 +164,32 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 		if s.cfg.GetRate == true {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue < s.LastValue {
-					s.CookedValue = float64(math.MaxInt32-s.LastValue+s.CurValue) / s.ElapsedTime
+				if s.CurValue.(uint64) < s.LastValue.(uint64) {
+					s.CookedValue = float64(math.MaxInt32-s.LastValue.(uint64)+s.CurValue.(uint64)) / s.ElapsedTime
 				} else {
-					s.CookedValue = float64(s.CurValue-s.LastValue) / s.ElapsedTime
+					s.CookedValue = float64(s.CurValue.(uint64)-s.LastValue.(uint64)) / s.ElapsedTime
 				}
 			}
 		} else {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue < s.LastValue {
-					s.CookedValue = float64(math.MaxInt32 - s.LastValue + s.CurValue)
+				if s.CurValue.(uint64) < s.LastValue.(uint64) {
+					s.CookedValue = float64(math.MaxInt32 - s.LastValue.(uint64) + s.CurValue.(uint64))
 				} else {
-					s.CookedValue = float64(s.CurValue - s.LastValue)
+					s.CookedValue = float64(s.CurValue.(uint64) - s.LastValue.(uint64))
 				}
 			}
 		}
-	case "COUNTER64":
+	case "COUNTER64": //Increment computed
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			//log.Debugf("========================================>COUNTER64: first time :%s ", s.RealOID)
 			//first time only set values and reassign itself to the complete method
-			val := pduVal2Int64(pdu)
+			val := pduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
 			s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				//log.Debugf("========================================>COUNTER64: the other time:%s", s.RealOID)
-				val := pduVal2Int64(pdu)
+				val := pduVal2UInt64(pdu)
 				s.LastTime = s.CurTime
 				s.LastValue = s.CurValue
 				s.CurValue = val
@@ -210,29 +202,29 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				//duration := s.CurTime.Sub(s.LastTime)
-				if s.CurValue < s.LastValue {
-					s.CookedValue = float64(math.MaxInt64-s.LastValue+s.CurValue) / s.ElapsedTime
+				if s.CurValue.(uint64) < s.LastValue.(uint64) {
+					s.CookedValue = float64(math.MaxInt64-s.LastValue.(uint64)+s.CurValue.(uint64)) / s.ElapsedTime
 				} else {
-					s.CookedValue = float64(s.CurValue-s.LastValue) / s.ElapsedTime
+					s.CookedValue = float64(s.CurValue.(uint64)-s.LastValue.(uint64)) / s.ElapsedTime
 				}
 			}
 		} else {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue < s.LastValue {
-					s.CookedValue = float64(math.MaxInt64 - s.LastValue + s.CurValue)
+				if s.CurValue.(uint64) < s.LastValue.(uint64) {
+					s.CookedValue = float64(math.MaxInt64 - s.LastValue.(uint64) + s.CurValue.(uint64))
 				} else {
-					s.CookedValue = float64(s.CurValue - s.LastValue)
+					s.CookedValue = float64(s.CurValue.(uint64) - s.LastValue.(uint64))
 				}
 			}
 
 		}
-	case "STRING", "OCTETSTRING":
+	case "OCTETSTRING":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue = pduVal2str(pdu)
 			s.CurTime = now
 		}
-	case "IPADDR":
+	case "IpAddress":
 		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue, _ = pduVal2IPaddr(pdu)
 			s.CurTime = now

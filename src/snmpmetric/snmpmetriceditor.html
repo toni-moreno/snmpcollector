@@ -67,20 +67,22 @@
         <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
           <select formControlName="DataSrcType" id="DataSrcType">
-            <option value="GAUGE">(SNMP Asn1 Type) Gauge</option>
-            <option value="GAUGE32">(SNMP Asn1 Type) Gauge32</option>
-            <option value="INTEGER">(SNMP Asn1 Type) Integer</option>
-            <option value="INTEGER32">(SNMP Asn1 Type) Integer32</option>
-            <option value="UINTEGER32">(SNMP Asn1 Type) UInteger32</option>
-            <option value="COUNTER32">(SNMP Asn1 Type) Counter-32 [compute increments]</option>
-            <option value="COUNTER64">(SNMP Asn1 Type) Counter-64 [compute increments]</option>
-            <option value="TIMETICKS">(SNMP Asn1 Type) TimeTicks [translate to seconds]</option>
-            <option value="OCTETSTRING">(SNMP Asn1 Type) OctetString</option>
-            <option value="STRING">(SNMP Asn1 Type) String</option>
-            <option value="IPADDR">(SNMP Asn1 Type) IPAddress</option>
-            <option value="HWADDR">(Internal) Hardware Address (MAC)</option>
-            <option value="STRINGPARSER">(Internal) String Parser</option>
-            <option value="STRINGEVAL">(Internal) Evaluated Expression [Computed data]</option>
+            <option value="INTEGER">(SNMP SMI Type) INTEGER</option>
+            <option value="Integer32">(SNMP SMI Type) Integer32</option>
+            <option value="Gauge32">(SNMP SMI Type) Gauge32</option>
+            <option value="UInteger32">(SNMP SMI Type) UInteger32</option>
+            <option value="Unsigned32">(SNMP SMI Type) Unsigned32</option>
+            <option value="Counter32">(SNMP SMI Type) Counter32 </option>
+            <option value="Counter64">(SNMP SMI Type) Counter64 </option>
+            <option value="TimeTicks">(SNMP SMI Type) TimeTicks</option>
+            <option value="OCTETSTRING">(SNMP SMI Type) OCTETSTRING</option>
+            <option value="IpAddress">(SNMP SMI Type) IpAddress</option>
+            <option value="TIMETICKS">(Cooked type) TIMETICKS [Compute TimeTicks to seconds]</option>
+            <option value="COUNTER32">(Cooked type) COUNTER32 [Compute increments]</option>
+            <option value="COUNTER64">(Cooked type) COUNTER64 [Compute increments]</option>
+            <option value="HWADDR">(Cooked type) HWADDR [ Translate Hardware Address (MAC) from STRING]</option>
+            <option value="STRINGPARSER">(Cooked type) STRINGPARSER [ Compute values from Regex ]</option>
+            <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate data from]</option>
           </select>
           <!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
           <control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
@@ -190,20 +192,22 @@
         <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
           <select formControlName="DataSrcType" id="DataSrcType" [ngModel]="testsnmpmetric.DataSrcType">
-            <option value="GAUGE">(SNMP Asn1 Type) Gauge</option>
-            <option value="GAUGE32">(SNMP Asn1 Type) Gauge32</option>
-            <option value="INTEGER">(SNMP Asn1 Type) Integer</option>
-            <option value="INTEGER32">(SNMP Asn1 Type) Integer32</option>
-            <option value="UINTEGER32">(SNMP Asn1 Type) UInteger32</option>
-            <option value="COUNTER32">(SNMP Asn1 Type) Counter-32 [compute increments]</option>
-            <option value="COUNTER64">(SNMP Asn1 Type) Counter-64 [compute increments]</option>
-            <option value="TIMETICKS">(SNMP Asn1 Type) TimeTicks [translate to seconds]</option>
-            <option value="OCTETSTRING">(SNMP Asn1 Type) OctetString</option>
-            <option value="STRING">(SNMP Asn1 Type) String</option>
-            <option value="IPADDR">(SNMP Asn1 Type) IPAddress</option>
-            <option value="HWADDR">(Internal) Hardware Address (MAC)</option>
-            <option value="STRINGPARSER">(Internal) String Parser</option>
-            <option value="STRINGEVAL">(Internal) Evaluated Expression [Computed data]</option>
+            <option value="INTEGER">(SNMP SMI Type) INTEGER</option>
+            <option value="Integer32">(SNMP SMI Type) Integer32</option>
+            <option value="Gauge32">(SNMP SMI Type) Gauge32</option>
+            <option value="UInteger32">(SNMP SMI Type) UInteger32</option>
+            <option value="Unsigned32">(SNMP SMI Type) Unsigned32</option>
+            <option value="Counter32">(SNMP SMI Type) Counter32 </option>
+            <option value="Counter64">(SNMP SMI Type) Counter64 </option>
+            <option value="TimeTicks">(SNMP SMI Type) TimeTicks</option>
+            <option value="OCTETSTRING">(SNMP SMI Type) OCTETSTRING</option>
+            <option value="IpAddress">(SNMP SMI Type) IpAddress</option>
+            <option value="TIMETICKS">(Cooked type) TIMETICKS [Compute TimeTicks to seconds]</option>
+            <option value="COUNTER32">(Cooked type) COUNTER32 [Compute increments]</option>
+            <option value="COUNTER64">(Cooked type) COUNTER64 [Compute increments]</option>
+            <option value="HWADDR">(Cooked type) HWADDR [ Translate Hardware Address (MAC) from STRING]</option>
+            <option value="STRINGPARSER">(Cooked type) STRINGPARSER [ Compute values from Regex ]</option>
+            <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate data from]</option>
           </select>
           <!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
           <control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
