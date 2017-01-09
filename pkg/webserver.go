@@ -910,10 +910,10 @@ func myLoginHandler(ctx *Context, user UserLogin) {
 		ctx.SignedInUser = user.UserName
 		ctx.IsSignedIn = true
 		ctx.Session.Set(SESS_KEY_USERID, user.UserName)
-		log.Println("OK")
+		log.Println("Admin login OK")
 		ctx.JSON(200, cookie)
 	} else {
-		log.Println("ERROR")
+		log.Println("Admin login ERROR")
 		ctx.JSON(400, "ERROR user or password not match")
 	}
 }
