@@ -77,12 +77,22 @@
           </div>
         </div>
 
+
         <div class="form-group">
           <label class="control-label col-sm-2" for="IndexTag">IndexTag</label>
           <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag name that will be sent after data gathered"></i>
           <div class="col-sm-9">
             <input formControlName="IndexTag" id="IndexTag" />
             <control-messages [control]="influxmeasForm.controls.IndexTag"></control-messages>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="IndexTag">IndexTagFormat</label>
+          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag value will be sent parametrized with $IDX1 , $VAL1 (default $VAL1 on direct indexed) and $IDX2, $VAL2 (default $VAL2 on indirect indexed) "></i>
+          <div class="col-sm-9">
+            <input formControlName="IndexTagFormat" id="IndexTagFormat" />
+            <control-messages [control]="influxmeasForm.controls.IndexTagFormat"></control-messages>
           </div>
         </div>
 
@@ -203,6 +213,15 @@
           <div class="col-sm-9">
             <input formControlName="IndexTag" id="IndexTag" [ngModel]="testinfluxmeas.IndexTag" />
             <control-messages [control]="influxmeasForm.controls.IndexTag"></control-messages>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="IndexTag">IndexTagFormat</label>
+          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag value will be sent parametrized with $IDX1 , $VAL1 (default $VAL1 on direct indexed) and $IDX2, $VAL2 (default $VAL2 on indirect indexed) "></i>
+          <div class="col-sm-9">
+            <input formControlName="IndexTagFormat" id="IndexTagFormat" [ngModel]="testinfluxmeas.IndexTagFormat" />
+            <control-messages [control]="influxmeasForm.controls.IndexTagFormat"></control-messages>
           </div>
         </div>
 

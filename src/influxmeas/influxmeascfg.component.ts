@@ -40,6 +40,7 @@ export class InfluxMeasCfgComponent {
 	{title: 'Index OID', name: 'IndexOID'},
 	{title: 'Tag OID', name: 'TagOID'},
 	{title: 'Index Tag', name: 'IndexTag'},
+	{title: 'Index Tag Format', name: 'IndexTagFormat'},
 	{title: 'Index as Value', name: 'IndexAsValue'},
 	{title: 'Metric Fields', name: 'Fields'}
 	];
@@ -68,6 +69,7 @@ export class InfluxMeasCfgComponent {
 			IndexOID: [''],
 			TagOID: [''],
 			IndexTag: [''],
+			IndexTagFormat: [''],
 			IndexAsValue: ['false'],
 			Fields: builder.array([
 			]),

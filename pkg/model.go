@@ -84,12 +84,13 @@ type InfluxMeasurementCfg struct {
 	ID   string `xorm:"'id' unique"`
 	Name string `xorm:"name"`
 
-	GetMode      string `xorm:"getmode"`  //value ,indexed  (direct tag), indexed_it ( indirect_tag)
-	IndexOID     string `xorm:"indexoid"` //only valid if Indexed (direct or indirect)
-	TagOID       string `xorm:"tagoid"`   //only valid if inderecta TAG indexeded
-	IndexTag     string `xorm:"indextag"`
-	IndexAsValue bool   `xorm:"'indexasvalue' default 0"`
-	Fields       []struct {
+	GetMode        string `xorm:"getmode"`  //value ,indexed  (direct tag), indexed_it ( indirect_tag)
+	IndexOID       string `xorm:"indexoid"` //only valid if Indexed (direct or indirect)
+	TagOID         string `xorm:"tagoid"`   //only valid if inderecta TAG indexeded
+	IndexTag       string `xorm:"indextag"`
+	IndexTagFormat string `xorm:"indextagformat"`
+	IndexAsValue   bool   `xorm:"'indexasvalue' default 0"`
+	Fields         []struct {
 		ID     string
 		Report bool
 	} `xorm:"-"` //Got from MeasurementFieldCfg table
@@ -156,15 +157,15 @@ type DatabaseCfg struct {
 	numChanges int64 `toml:"-"`
 }
 
-func (d *DatabaseCfg) resetChanges() {
-	atomic.StoreInt64(&d.numChanges, 0)
+func (dbc *DatabaseCfg) resetChanges() {
+	atomic.StoreInt64(&dbc.numChanges, 0)
 }
 
-func (d *DatabaseCfg) addChanges(n int64) {
-	atomic.AddInt64(&d.numChanges, n)
+func (dbc *DatabaseCfg) addChanges(n int64) {
+	atomic.AddInt64(&dbc.numChanges, n)
 }
-func (d *DatabaseCfg) getChanges() int64 {
-	return atomic.LoadInt64(&d.numChanges)
+func (dbc *DatabaseCfg) getChanges() int64 {
+	return atomic.LoadInt64(&dbc.numChanges)
 }
 
 //DbObjAction measurement groups to asign to devices
@@ -256,6 +257,7 @@ SNMP Metric
 	-UpdateSnmpMetricCfg
   -GetSnmpMetricCfgAffectOnDel
 ***********************************/
+
 /*GetSnmpMetricCfgByID get metric data by id*/
 func (dbc *DatabaseCfg) GetSnmpMetricCfgByID(id string) (SnmpMetricCfg, error) {
 	cfgarray, err := cfg.Database.GetSnmpMetricCfgArray("id='" + id + "'")
@@ -423,6 +425,7 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 	-UpdateInfluxMeasurementCfg
   -GetInfluxMeasurementCfgAffectOnDel
 ***********************************/
+
 /*GetInfluxMeasurementCfgByID get metric data by id*/
 func (dbc *DatabaseCfg) GetInfluxMeasurementCfgByID(id string) (InfluxMeasurementCfg, error) {
 	cfgarray, err := cfg.Database.GetInfluxMeasurementCfgArray("id='" + id + "'")
@@ -684,6 +687,7 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjA
 	-UpdateMeasFilterCfg
   -GetMeasFilterCfgAffectOnDel
 ***********************************/
+
 /*GetMeasFilterCfgByID get metric data by id*/
 func (dbc *DatabaseCfg) GetMeasFilterCfgByID(id string) (MeasFilterCfg, error) {
 	cfgarray, err := cfg.Database.GetMeasFilterCfgArray("id='" + id + "'")
@@ -839,6 +843,7 @@ MEASUREMENT GROUPS
 	-UpdateMGroupsCfg
   -GetMGroupsCfgAffectOnDel
 ***********************************/
+
 /*GetMGroupsCfgByID get metric data by id*/
 func (dbc *DatabaseCfg) GetMGroupsCfgByID(id string) (MGroupsCfg, error) {
 	cfgarray, err := cfg.Database.GetMGroupsCfgArray("id='" + id + "'")
@@ -1273,6 +1278,7 @@ func (dbc *DatabaseCfg) GeSnmpDeviceCfgAffectOnDel(id string) ([]*DbObjAction, e
 	-UpdateInfluxCfg
   -GetInfluxCfgAffectOnDel
 ***********************************/
+
 /*GetInfluxCfgByID get device data by id*/
 func (dbc *DatabaseCfg) GetInfluxCfgByID(id string) (InfluxCfg, error) {
 	cfgarray, err := cfg.Database.GetInfluxCfgArray("id='" + id + "'")

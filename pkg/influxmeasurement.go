@@ -58,6 +58,11 @@ func (mc *InfluxMeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error
 		if !strings.HasPrefix(mc.IndexOID, ".") {
 			return errors.New("Bad BaseOid format:" + mc.IndexOID + " in metric Config " + mc.ID)
 		}
+		if mc.GetMode == "indexed_it" {
+			if !strings.HasPrefix(mc.TagOID, ".") {
+				return errors.New("Bad BaseOid format:" + mc.TagOID + "  for  indirect TAG OID in metric Config " + mc.ID)
+			}
+		}
 
 	case "value":
 	default:
@@ -137,6 +142,8 @@ type InfluxMeasurement struct {
 	AllIndexedLabels map[string]string      //`json:"-"` //all available values on the remote device
 	CurIndexedLabels map[string]string      //`json:"-"`
 	idxPosInOID      int
+	idx2PosInOID     int
+	curIdxPos        int //used in Walk functions could be variable depending on the Index (or IndexTag)
 	Filter           *MeasFilterCfg
 	log              *logrus.Logger
 	snmpClient       *gosnmp.GoSNMP
@@ -177,6 +184,9 @@ func (m *InfluxMeasurement) Init() error {
 	//loading all posible values in 	m.AllIndexedLabels
 	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" {
 		m.idxPosInOID = len(m.cfg.IndexOID)
+		if (m.cfg.GetMode) == "indexed_it" {
+			m.idx2PosInOID = len(m.cfg.TagOID)
+		}
 		m.log.Infof("Loading Indexed values in : %s", m.cfg.ID)
 		m.AllIndexedLabels, err = m.loadIndexedLabels()
 		if err != nil {
@@ -792,6 +802,17 @@ func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
 	return sent, errs, nil
 }
 
+func formatTag(format string, data map[string]string, def string) string {
+	if len(format) == 0 {
+		return data[def]
+	}
+	final := format
+	for k, v := range data {
+		final = strings.Replace(final, k, v, -1)
+	}
+	return final
+}
+
 func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 
 	m.log.Debugf("Looking up column names %s ", m.cfg.IndexOID)
@@ -804,12 +825,12 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 			m.log.Warnf("no value retured by pdu :%+v", pdu)
 			return nil //if error return the bulk process will stop
 		}
-		if len(pdu.Name) < m.idxPosInOID {
-			m.log.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", m.idxPosInOID, pdu)
+		if len(pdu.Name) < m.curIdxPos {
+			m.log.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", m.curIdxPos, pdu)
 			return nil //if error return the bulk process will stop
 		}
 		//i := strings.LastIndex(pdu.Name, ".")
-		suffix := pdu.Name[m.idxPosInOID+1:]
+		suffix := pdu.Name[m.curIdxPos+1:]
 
 		if m.cfg.IndexAsValue == true {
 			allindex[suffix] = suffix
@@ -820,7 +841,10 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 		case gosnmp.OctetString:
 			name = string(pdu.Value.([]byte))
 			m.log.Debugf("Got the following OctetString index for [%s/%s]", suffix, name)
-		case gosnmp.Integer, gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
+		case gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
+			name = strconv.FormatUint(pduVal2UInt64(pdu), 10)
+			m.log.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
+		case gosnmp.Integer:
 			name = strconv.FormatInt(pduVal2Int64(pdu), 10)
 			m.log.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
 		default:
@@ -829,68 +853,60 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 		allindex[suffix] = name
 		return nil
 	}
+	//needed to get data for different indexes
+	m.curIdxPos = m.idxPosInOID
 	err := m.Walk(m.cfg.IndexOID, setRawData)
 	if err != nil {
 		m.log.Errorf("SNMP WALK error: %s", err)
 		return allindex, err
 	}
 	if m.cfg.GetMode != "indexed_it" {
+		for k, v := range allindex {
+			allindex[k] = formatTag(m.cfg.IndexTagFormat, map[string]string{"$IDX1": k, "$VAL1": v}, "$VAL1")
+		}
 		return allindex, nil
 	}
 	// INDIRECT INDEXED
-
-	tagOIDArray := []string{}
-	allindex_it := make(map[string]string) //with Indirect Tag
-	//we need to get Tag Names from other OID
-	for _, v := range allindex {
-		tagOIDArray = append(tagOIDArray, m.cfg.TagOID+"."+v)
+	//backup old index
+	allindexOrigin := make(map[string]string, len(allindex))
+	for k, v := range allindex {
+		allindexOrigin[k] = v
 	}
-	//GET again all names from other OID with index from previous walk
-	l := len(tagOIDArray)
-	for i := 0; i < l; i += maxOids {
-		end := i + maxOids
-		if end > l {
-			end = len(tagOIDArray)
-		}
-		m.log.Debugf("Getting snmp indexed for TAGS from %d to %d", i, end)
-		pkt, err := m.snmpClient.Get(tagOIDArray[i:end])
-		if err != nil {
-			m.log.Debugf("selected OIDS %+v", tagOIDArray[i:end])
-			m.log.Errorf("SNMP (%s) for OIDs (%d/%d) get error: %s\n", m.snmpClient.Target, i, end, err)
-			continue
-		}
 
-		for _, pdu := range pkt.Variables {
-			if pdu.Value == nil {
-				continue
-			}
+	//initialize allindex again
+	allindex = make(map[string]string)
+	m.curIdxPos = m.idx2PosInOID
+	err = m.Walk(m.cfg.TagOID, setRawData)
+	if err != nil {
+		m.log.Errorf("SNMP WALK over IndexOID error: %s", err)
+		return allindex, err
+	}
 
-			i := strings.LastIndex(pdu.Name, ".")
-			idx := pdu.Name[i+1:]
-			for k, v := range allindex {
-				if v == idx { //the index for TagOID received is the value on the previous IndexOID
-					var name string
-					switch pdu.Type {
-					case gosnmp.OctetString:
-						name = string(pdu.Value.([]byte))
-						m.log.Debugf("Got the following OctetString - index/index value/indirect value - [%s/%s/%s]", k, idx, name)
-					case gosnmp.Integer, gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
-						name = strconv.FormatInt(pduVal2Int64(pdu), 10)
-						m.log.Debugf("Got the following Numeric -index/index value/indirect value- [%s/%s/%s]", k, idx, name)
-					default:
-						m.log.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric Value", m.cfg.IndexOID)
-					}
-					allindex_it[k] = name
-					m.log.Debugf("Change Index TAG from [%s] to [%s] in OID: %s ", idx, name, pdu.Name)
-					break
-				}
-			}
+	//At this point we have Indirect indexes on allindex_origin and values on allindex
+	// Example:
+	// allindexOrigin["1"]="9008"
+	//    key1="1"
+	//    val1="9008"
+	// allindex["9008"]="eth0"
+	//    key2="9008"
+	//    val2="eth0"
+	m.log.Debugf("ORIGINAL INDEX: %+v", allindexOrigin)
+	m.log.Debugf("INDIRECT  INDEX : %+v", allindex)
+
+	allindexIt := make(map[string]string)
+	for key1, val1 := range allindexOrigin {
+		if val2, ok := allindex[val1]; ok {
+			allindexIt[key1] = formatTag(m.cfg.IndexTagFormat, map[string]string{"$IDX1": key1, "$VAL1": val1, "$IDX2": val1, "$VAL2": val2}, "$VAL2")
+		} else {
+			m.log.Warnf("There is not valid index : %s on TagOID : %s", val1, m.cfg.TagOID)
 		}
 	}
-	if len(allindex) != len(allindex_it) {
-		m.log.Warn("Not adll indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindex, allindex_it)
+	//-----------------------------------
+
+	if len(allindexOrigin) != len(allindexIt) {
+		m.log.Warn("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexIt)
 	}
-	return allindex_it, nil
+	return allindexIt, nil
 }
 
 /*
@@ -973,6 +989,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 				return nil
 			}
 			vci = int64(vc)
+			//TODO review types
 			value = pduVal2Int64(pdu)
 			fallthrough
 		case typeCond == "neq":
@@ -991,7 +1008,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 		}
 		if cond == true {
 			if len(pdu.Name) < idxPosInOID {
-				m.log.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", m.idxPosInOID, pdu)
+				m.log.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", idxPosInOID, pdu)
 				return nil //if error return the bulk process will stop
 			}
 			suffix := pdu.Name[idxPosInOID+1:]
