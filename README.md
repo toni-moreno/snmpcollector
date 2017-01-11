@@ -1,6 +1,6 @@
 # SnmpCollector
 
-SnmpCollector is an Open Source tool an  is full featured Generic SNMP data collector with Web Administration Interface witch has as main goal simplify  the configuration for getting data from any  device witch snmp protocol support and send resulting data to a influxdb.
+SnmpCollector is a full featured Generic SNMP data collector with Web Administration Interface Open Source tool witch has as main goal simplify  the configuration for getting data from any  device witch snmp protocol support and send resulting data to an influxdb backend.
 
 For complete information on installation from  binary package and configuration you could  read the [snmpcollector wiki](https://github.com/toni-moreno/snmpcollector/wiki).
 
