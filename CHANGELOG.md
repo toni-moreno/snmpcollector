@@ -1,8 +1,10 @@
 # v 0.6.2 (Not Yet Released)
 ### New Features
 * Metric Type standarization according to RFC2578 SMIv2.
+* new IndexTagFormat to the measurement enabling custom Tag names
 
 ### fixes
+* fix for #91
 
 ### breaking changes
 
