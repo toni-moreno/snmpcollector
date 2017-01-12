@@ -34,8 +34,9 @@ type SnmpDevice struct {
 	SysInfo *SysInfo
 	//runtime built TagMap
 	TagMap map[string]string
+	//Refresh data to show in the frontend
+	Freq int
 	//Measurements array
-
 	Measurements []*InfluxMeasurement
 
 	//SNMP and Influx Clients config
@@ -303,6 +304,8 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 	if len(d.cfg.DeviceTagName) == 0 {
 		d.cfg.DeviceTagName = "device"
 	}
+
+	d.Freq = d.cfg.Freq
 
 	var val string
 
