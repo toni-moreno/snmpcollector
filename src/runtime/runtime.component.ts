@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component,ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
 import { RuntimeService } from './runtime.service';
 
@@ -9,8 +9,11 @@ import { RuntimeService } from './runtime.service';
   styleUrls: ['./runtimeeditor.css'],
 })
 
-export class RuntimeComponent {
+export class RuntimeComponent implements OnDestroy {
   @ViewChild('filterValue') public filterValue: any;
+
+
+  public isRefreshing: boolean = true;
 
   public oneAtATime: boolean = true;
   editmode: string; //list , create, modify
@@ -43,6 +46,12 @@ export class RuntimeComponent {
   public finalColumns: Array<Array<any>> = [];
   public tmpcolumns: Array<any> = [];
 
+  public refreshRuntime: any = {
+    'Running': false,
+    'LastUpdate': new Date()
+  }
+  public intervalStatus: any
+
   public rows: Array<any> = [];
   public page: number = 1;
   public itemsPerPage: number = 10;
@@ -57,10 +66,6 @@ export class RuntimeComponent {
     filtering: { filterString: '' },
     className: ['table-striped', 'table-bordered']
   };
-
-  viewItem(snmpdev) {
-    this.runtime_dev = snmpdev;
-  }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
     let start = (page.page - 1) * page.itemsPerPage;
@@ -153,10 +158,43 @@ export class RuntimeComponent {
     console.log(data);
   }
 
-  onResetFilter() : void {
+  onResetFilter(): void {
     this.filterValue.nativeElement.value = '';
-    this.config.filtering = {filtering: { filterString: '' }};
+    this.config.filtering = { filtering: { filterString: '' } };
     this.onChangeTable(this.config);
+  }
+
+  initRuntimeInfo(id: string) {
+    //Reset params
+    this.isRefreshing = false;
+    this.refreshRuntime.Running = false;
+    clearInterval(this.intervalStatus);
+    this.loadRuntimeById(id, this.measActive);
+  }
+
+  updateRuntimeInfo(id: string, selectedMeas: number, status: boolean) {
+    clearInterval(this.intervalStatus);
+    this.refreshRuntime.Running = status;
+    this.measActive = selectedMeas || this.measActive;
+    if (this.refreshRuntime.Running) {
+      this.isRefreshing = true;
+      this.refreshRuntime.LastUpdate = new Date();
+      //Cargamos interval y dejamos actualizando la información:
+      this.intervalStatus = setInterval(() => {
+        //this.refreshing = !this.refreshing;
+        this.isRefreshing = false;
+        setTimeout(() => {
+          this.isRefreshing = true;
+        }, 2000);
+        this.refreshRuntime.LastUpdate = new Date();
+        this.loadRuntimeById(id, this.measActive);
+        this.ref.markForCheck();
+      }, this.runtime_dev['Freq'] * 1000);
+    } else {
+      this.isRefreshing = false;
+      clearInterval(this.intervalStatus);
+    }
+    //this.loadRuntimeById(id,this.measActive);
   }
 
   loadRuntimeById(id: string, selectedMeas: number) {
@@ -173,19 +211,19 @@ export class RuntimeComponent {
             //Generate the Coluns array, go over it only once using break
             //Save it as array of arrays on finalColumns
             if (Object.keys(measKey['MetricTable']).length !== 0) {
-            for (let indexKey in measKey['MetricTable']) {
-              this.tmpcolumns = [];
-              this.tmpcolumns.push({ title: 'Index', name: 'Index' });
-              for (let metricId in measKey['MetricTable'][indexKey]) {
-                let tmpColumn: any = { title: metricId, name: metricId }
-                this.tmpcolumns.push(tmpColumn);
+              for (let indexKey in measKey['MetricTable']) {
+                this.tmpcolumns = [];
+                this.tmpcolumns.push({ title: 'Index', name: 'Index' });
+                for (let metricId in measKey['MetricTable'][indexKey]) {
+                  let tmpColumn: any = { title: metricId, name: metricId }
+                  this.tmpcolumns.push(tmpColumn);
+                }
+                this.finalColumns.push(this.tmpcolumns);
+                break;
               }
-              this.finalColumns.push(this.tmpcolumns);
-              break;
+            } else {
+              this.finalColumns.push([]);
             }
-          } else {
-            this.finalColumns.push([]);
-          }
             //Go over the array again and get the DATA
             //indexKey contains the Index, must generate the same on multiples arrays
             for (let indexKey in measKey['MetricTable']) {
@@ -202,6 +240,7 @@ export class RuntimeComponent {
           }
           this.showTable(selectedMeas ? this.measActive : 0);
         }
+        if (!this.refreshRuntime.Running) this.updateRuntimeInfo(id, this.measActive, true);
       },
       err => console.error(err),
       () => console.log('DONE')
@@ -336,12 +375,20 @@ saveAs(blob,id+".log");
       );
   }
 
-  constructor(public runtimeService: RuntimeService, builder: FormBuilder) {
+  constructor(public runtimeService: RuntimeService, builder: FormBuilder, private ref: ChangeDetectorRef) {
     this.editmode = 'list';
+
+
     this.reloadData();
   }
 
   onFilter() {
     this.reloadData();
   }
+
+  ngOnDestroy() {
+    clearInterval(this.intervalStatus);
+  }
+
+
 }

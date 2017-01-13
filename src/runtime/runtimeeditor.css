@@ -19,6 +19,13 @@ label {
   display: block;
 }*/
 
+.refresh-transition {
+  -webkit-transition: all 1s linear !important;
+  -moz-transition: all 1s linear !important;
+  -o-transition: all 1s linear !important;
+  transition: all 1s linear !important;
+}
+
 .customClass {
   color: #880000;
   background-color: #ffff66;

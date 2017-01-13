@@ -1,27 +1,22 @@
 <h2>Runtime</h2>
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <hr>
-<div class="row-fluid">
-  <h4>{{ errorhandler }} </h4>
-  <div class="col-md-9">
-    <input type="text" class="form-control" [(ngModel)]="filter">
-    <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
-  </div>
-</div>
+
 <div class="col-md-12">
-  <hr>
-  <br>
   <div class="col-md-4">
     <h4>
       <li class="glyphicon glyphicon-refresh" (click)="onFilter()"> </li>
       SNMP Devices list
     </h4>
+    <input type="text" style="width:auto" class="form-control" [(ngModel)]="filter">
+    <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
     <hr>
     <ul class="list-group" style="max-height:400px; overflow-y:auto">
+
       <li class="list-group-item" *ngFor="let dev of runtime_devs">
         <label style="display: inline; margin-right:2px" container="body" [tooltip]="dev.value.DeviceActive ?  'Active' : 'Not active'" [ngClass]="dev.value.DeviceActive ?  'glyphicon glyphicon-play label label-success' : 'glyphicon glyphicon-pause label label-danger'"></label>
         <label style="display: inline; margin-right:2px" container="body" [tooltip]="dev.value.DeviceConnected ?  'Connected' : 'Not connected'" [ngClass]="dev.value.DeviceConnected ?  'glyphicon glyphicon-globe label label-success' : 'glyphicon glyphicon-warning-sign label label-danger'"></label>
-        <label style="display: inline; argin-right: 2px" container="body" [tooltip]="tooltipMetrics" class="label label-primary glyphicon glyphicon-eye-open" (click)="loadRuntimeById(dev.ID)"></label>
+        <label style="display: inline; argin-right: 2px" container="body" [tooltip]="tooltipMetrics" class="label label-primary glyphicon glyphicon-eye-open" (click)="initRuntimeInfo(dev.ID)"></label>
         - {{dev.ID}}
         <template #tooltipMetrics> View {{dev.ID }}
           <br/> #Metrics: {{dev.value.NumMetrics}}
@@ -31,11 +26,13 @@
   </div>
   <div class="col-md-8" *ngIf="runtime_dev">
     <h4>
-        <i class="glyphicon glyphicon-refresh" (click)="loadRuntimeById(runtime_dev.ID, measActive)"></i>
+        <i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID)"></i>
         <span> SNMP Device: </span>
         <span [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</span>
         <span *ngIf="runtime_dev['DeviceConnected'] == false" class="text-danger"> - Device is not connected</span>
       </h4>
+    <span>Tags: <label style="margin-left: 10px" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label> </span>
+
     <hr>
     <div class="row" *ngIf="runtime_dev['DeviceConnected'] !== false">
       <div class="col-md-6">
@@ -50,10 +47,25 @@
             </table>
           </div>
         </div>
+        <div class="panel panel-default">
+          <div class="panel-heading">Statistics SNMP Device</div>
+          <div class="panel-body">
+            <table class="table-striped table-bordered">
+              <tr>
+                <span style="padding-right:10px">Gets</span>
+                <td style="padding-left:10px">{{runtime_dev['Gets']}}</td>
+              </tr>
+              <tr>
+                <span style="padding-right:10px">Errors</span>
+                <td style="padding-left:10px">{{runtime_dev['Errors']}}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
       </div>
       <div class="col-md-6">
         <div class="panel panel-default" style="padding-bottom: 0px">
-          <div class="panel-heading">Runtime Options</div>
+          <div class="panel-heading">Runtime Operations</div>
           <div class="panel-body">
 
             <ul class="list-group">
@@ -128,28 +140,54 @@
   <div class="row" *ngIf="runtime_dev">
     <div *ngIf="runtime_dev['Measurements']" class="col-md-12" style="margin-left:10px">
       <br>
-      <h4>
-          <i class="glyphicon glyphicon-refresh" (click)="loadRuntimeById(runtime_dev.ID, measActive)"></i>
+      <div class="col-md-2">
+        <h4>
           Metrics Info
-          <span *ngIf="runtime_dev['Measurements'].length === 0" class="text-danger"> - No measurements associated with the device. Couldn't retrieve metric runtime info</span>
-        </h4>
-      <hr>
-      <div *ngIf="runtime_dev['Measurements'].length !== 0">
-        <div class="btn-group" role="group" aria-label="..." style="margin-bottom: 20px">
-          <h5 class="pull-left" style="margin-right:20px">Measurements:</h5>
-          <span class="input-group-btn">
+      </h4>
+      </div>
+      <div class="text-right col-md-10">
+        <h4>
+          <label style="display: inline; margin-right:2px; padding-top:5px" container=body [tooltip]="'Refreshing every ' +runtime_dev.Freq +' secs'" [ngClass]="isRefreshing ? 'label label-success refresh-transition' : 'label label-danger refresh-transition'">Last Refresh: {{refreshRuntime.LastUpdate | date : 'HH:mm:ss - Z'}}</label>
+          <label style="display: inline; margin-right:2px" [tooltip]="!refreshRuntime.Running ? 'Set auto-refresh' : 'Stop auto-refresh'" [ngClass]="!refreshRuntime.Running ?  'glyphicon glyphicon-play label label-success' : 'glyphicon glyphicon-pause label label-danger'" (click)="updateRuntimeInfo(runtime_dev.ID,measActive,!refreshRuntime.Running)"></label>
+          <label style="display: inline; margin-right:2px" [tooltip]="'Refresh now!'" container=body class="label label-primary glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID)"></label>
+
+          <span *ngIf="runtime_dev['Measurements'].length === 0" class="text-danger">- No measurements associated with the device. Couldn't retrieve metric runtime info</span>
+      </h4>
+      </div>
+      <div class="col-md-12">
+        <hr>
+        <div *ngIf="runtime_dev['Measurements'].length !== 0">
+          <div class="btn-group" role="group" aria-label="..." style="margin-bottom: 20px">
+            <h5 class="pull-left" style="margin-right:20px">Measurements:</h5>
+            <span class="input-group-btn" style="white-space: normal;">
               <button type="button" class="btn btn-default" *ngFor="let measurement of runtime_dev['Measurements']; let i = index" (click)="showTable(i)" [ngClass]="i === measActive ? 'btn-primary' : 'btn-default'">{{measurement.ID}} <span class="label label-warning">{{finalData[i].length}} index</span></button>
-          </span>
+            </span>
+          </div>
+          <br>
+          <div class="col-md-6 text-left">
+            <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()"><i class="glyphicon glyphicon-trash"></i></label>
+            <input #filterValue style="margin-bottom: 20px" *ngIf="config.filtering" placeholder="Filter all columns" [ngTableFiltering]="config.filtering" class="form-control" (tableChanged)="onChangeTable(config)" />
+            <span class="label label-info"> {{length}} Results </span>
+          </div>
+          <div class="col-md-6 text-right">
+            <span class="label label-danger" [tooltip]="filterInfo" style="margin-l>eft: 10px" *ngIf="runtime_dev['Measurements'][measActive].Filter"> Filter applied: {{runtime_dev['Measurements'][measActive].Filter.ID}}</span>
+            <template #filterInfo>
+              <div *ngFor="let run of runtime_dev['Measurements'][measActive].Filter | objectParser" style="text-align:left !important">
+                <span class="text-left" style="paddint-left: 10px"><b>{{run.key}}</b></span>
+                <span class="text-right">{{run.value ? run.value : '--'}}</span>
+              </div>
+            </template>
+          </div>
+          <div style="overflow-x: scroll" class="col-md-12">
+            <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (cellClicked)="onCellClick($event)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns">
+            </ng-table>
+          </div>
+          <div class="col-md-12">
+            <pagination *ngIf="config.paging" class="pagination-sm" [ngModel]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
+            </pagination>
+            <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+          </div>
         </div>
-        <br>
-        <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()"><i class="glyphicon glyphicon-trash"></i></label>
-        <input #filterValue style="margin-bottom: 20px" *ngIf="config.filtering" placeholder="Filter all columns" [ngTableFiltering]="config.filtering" class="form-control" (tableChanged)="onChangeTable(config)" />
-        <span class="label label-info"> {{length}} Results </span>
-        <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (cellClicked)="onCellClick($event)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns">
-        </ng-table>
-        <pagination *ngIf="config.paging" class="pagination-sm" [ngModel]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
-        </pagination>
-        <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
       </div>
     </div>
   </div>
