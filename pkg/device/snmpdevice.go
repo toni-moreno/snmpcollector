@@ -1,9 +1,9 @@
-package main
+package device
 
 import (
 	"fmt"
 	"io/ioutil"
-	olog "log"
+	"log"
 	"os"
 
 	"strings"
@@ -13,9 +13,16 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/measurement"
+	"github.com/toni-moreno/snmpcollector/pkg/output"
+	"github.com/toni-moreno/snmpcollector/pkg/selfmon"
+	"github.com/toni-moreno/snmpcollector/pkg/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/utils"
 )
 
-type devStat struct {
+// DevStat minimal info to show users
+type DevStat struct {
 	Requests           int64
 	Gets               int64
 	Errors             int64
@@ -26,22 +33,37 @@ type devStat struct {
 	NumMetrics         int
 }
 
+var (
+	cfg    *config.SQLConfig
+	logDir string
+)
+
+// SetDBConfg set agent config
+func SetDBConfig(c *config.SQLConfig) {
+	cfg = c
+}
+
+// SetLogDir set log dir
+func SetLogDir(l string) {
+	logDir = l
+}
+
 // SnmpDevice contains all runtime device related device configu ns and state
 type SnmpDevice struct {
-	cfg *SnmpDeviceCfg
+	cfg *config.SnmpDeviceCfg
 	log *logrus.Logger
 	//basic sistem info
-	SysInfo *SysInfo
+	SysInfo *snmp.SysInfo
 	//runtime built TagMap
 	TagMap map[string]string
 	//Refresh data to show in the frontend
 	Freq int
 	//Measurements array
-	Measurements []*InfluxMeasurement
+	Measurements []*measurement.InfluxMeasurement
 
 	//SNMP and Influx Clients config
 	snmpClient *gosnmp.GoSNMP
-	Influx     *InfluxDB
+	Influx     *output.InfluxDB
 	LastError  time.Time
 	//Runtime stats
 	Requests int64
@@ -61,14 +83,20 @@ type SnmpDevice struct {
 	chExit      chan bool
 	chFltUpdate chan bool
 	mutex       sync.Mutex
-	selfmon     *SelfMonConfig
+	selfmon     *selfmon.SelfMon
 	CurLogLevel string
 }
 
-func NewSnmpDevice(c *SnmpDeviceCfg) *SnmpDevice {
+// NewSnmpDevice create and Initialice a device Object
+func NewSnmpDevice(c *config.SnmpDeviceCfg) *SnmpDevice {
 	dev := SnmpDevice{}
 	dev.Init(c)
 	return &dev
+}
+
+// GetLogFilePath return current LogFile
+func (d *SnmpDevice) GetLogFilePath() string {
+	return d.cfg.LogFile
 }
 
 //ReloadLoopPending needs to be mutex excluded
@@ -93,14 +121,15 @@ func (d *SnmpDevice) decReloadLoopsPending() {
 	d.mutex.Unlock()
 }
 
-func (d *SnmpDevice) GetBasicStats() *devStat {
+// GetBasicStats get basic info for this device
+func (d *SnmpDevice) GetBasicStats() *DevStat {
 
 	sum := 0
 	for _, m := range d.Measurements {
 		sum += len(m.OidSnmpMap)
 	}
 
-	stat := &devStat{
+	stat := &DevStat{
 		Requests:           d.Requests,
 		Gets:               d.Gets,
 		Errors:             d.Errors,
@@ -113,8 +142,8 @@ func (d *SnmpDevice) GetBasicStats() *devStat {
 	return stat
 }
 
-//AttachOutDBs to get info
-func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*InfluxDB) (*InfluxDB, error) {
+// GetOutSenderFromMap to get info about the sender will use
+func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*output.InfluxDB) (*output.InfluxDB, error) {
 	if len(d.cfg.OutDB) == 0 {
 		d.log.Warnf("No OutDB configured on the device: %s", d.cfg.ID)
 	}
@@ -131,12 +160,12 @@ func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*InfluxDB) (*Influx
 	return d.Influx, nil
 }
 
-//RTActivate change activatio state in runtime
+// ForceFltUpdate send info to update the filter counter to the next execution
 func (d *SnmpDevice) ForceFltUpdate() {
 	d.chFltUpdate <- true
 }
 
-//RTActivate change activatio state in runtime
+// StopGather send signal to stop the Gathering process
 func (d *SnmpDevice) StopGather() {
 	d.chExit <- true
 }
@@ -151,7 +180,7 @@ func (d *SnmpDevice) RTActSnmpDebug(activate bool) {
 	d.chDebug <- activate
 }
 
-//RTSetLogLevel
+// RTSetLogLevel set the log level for this device
 func (d *SnmpDevice) RTSetLogLevel(level string) {
 	d.chLogLevel <- level
 }
@@ -167,13 +196,13 @@ InitDevMeasurements  does the following
 func (d *SnmpDevice) InitDevMeasurements() {
 
 	//Alloc array
-	d.Measurements = make([]*InfluxMeasurement, 0, 0)
+	d.Measurements = make([]*measurement.InfluxMeasurement, 0, 0)
 	d.log.Debugf("-----------------Init device measurements from groups %s------------------", d.cfg.Host)
 	//for this device get MeasurementGroups and search all measurements
 
 	for _, devMeas := range d.cfg.MeasurementGroups {
 		//Selecting all Metric Groups that matches with device.MeasurementGroups
-		selGroups := make(map[string]*MGroupsCfg, 0)
+		selGroups := make(map[string]*config.MGroupsCfg, 0)
 		//var RegExp = regexp.MustCompile(devMeas)
 		for key, val := range cfg.GetGroups {
 			if key == devMeas {
@@ -194,7 +223,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 			}
 		}
 		//remove duplicated measurements if needed
-		selMeasUniq := removeDuplicatesUnordered(selMeas)
+		selMeasUniq := utils.RemoveDuplicatesUnordered(selMeas)
 		//Now we know what measurements names  will send influx from this device
 
 		d.log.Debugln("DEVICE MEASUREMENT: ", devMeas, "HOST: ", d.cfg.Host)
@@ -206,7 +235,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 				d.log.Debugln("MEASUREMENT CFG KEY:", val, " VALUE ", mVal.Name)
 
 				//creating a new measurement runtime object and asigning to array
-				imeas, err := NewInfluxMeasurement(mVal, d.log, d.snmpClient, d.cfg.DisableBulk)
+				imeas, err := measurement.NewInfluxMeasurement(mVal, d.log, d.snmpClient, d.cfg.DisableBulk)
 				if err != nil {
 					d.log.Errorf("Error on measurement initialization on host %s: Error: %s", d.cfg.ID, err)
 					continue
@@ -220,7 +249,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 
 	for _, m := range d.Measurements {
 		//check for filters asociated with this measurement
-		var mfilter *MeasFilterCfg
+		var mfilter *config.MeasFilterCfg
 		for _, f := range d.cfg.MeasFilters {
 			//we seach if exist in the filter Database
 			if filter, ok := cfg.MFilters[f]; ok {
@@ -231,13 +260,13 @@ func (d *SnmpDevice) InitDevMeasurements() {
 			}
 		}
 		if mfilter != nil {
-			d.log.Debugf("filters %s found for device %s and measurement %s ", mfilter.ID, d.cfg.ID, m.cfg.ID)
+			d.log.Debugf("filters %s found for device %s and measurement %s ", mfilter.ID, d.cfg.ID, m.ID)
 			err := m.AddFilter(mfilter)
 			if err != nil {
-				d.log.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.cfg.ID, err)
+				d.log.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.ID, err)
 			}
 		} else {
-			d.log.Debugf("no filters found for device %s and measurement %s", d.cfg.ID, m.cfg.ID)
+			d.log.Debugf("no filters found for device %s and measurement %s", d.cfg.ID, m.ID)
 		}
 		//Initialize internal structs after
 		m.InitBuildRuntime()
@@ -257,19 +286,19 @@ Init  does the following
 - Initialize logfile for this device
 - Initialize comunication channels and initial device state
 */
-func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
+func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	if c == nil {
 		return fmt.Errorf("Error on initialice device, configuration struct is nil")
 	}
 	d.cfg = c
-	log.Infof("Initializing device %s\n", d.cfg.ID)
+	//log.Infof("Initializing device %s\n", d.cfg.ID)
 
 	//Init Logger
 	if d.cfg.Freq == 0 {
 		d.cfg.Freq = 60
 	}
 	if len(d.cfg.LogFile) == 0 {
-		d.cfg.LogFile = cfg.General.LogDir + "/" + d.cfg.ID + ".log"
+		d.cfg.LogFile = logDir + "/" + d.cfg.ID + ".log"
 
 	}
 	if len(d.cfg.LogLevel) == 0 {
@@ -338,6 +367,7 @@ func (d *SnmpDevice) Init(c *SnmpDeviceCfg) error {
 	return nil
 }
 
+// End The Oposite of Init() uninitialize all variables
 func (d *SnmpDevice) End() {
 	close(d.chDebug)
 	close(d.chEnabled)
@@ -349,14 +379,14 @@ func (d *SnmpDevice) End() {
 	//release snmp resources
 }
 
-func (d *SnmpDevice) SetSelfMonitoring(cfg *SelfMonConfig) {
+// SetSelfMonitoring set the ouput device where send monitoring metrics
+func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	d.selfmon = cfg
 }
 
-//InitSnmpConnect does the  SNMP client conection and retrieve system info
-
+// InitSnmpConnect does the  SNMP client conection and retrieve system info
 func (d *SnmpDevice) InitSnmpConnect() error {
-	client, sysinfo, err := SnmpClient(d.cfg, d.log)
+	client, sysinfo, err := snmp.GetClient(d.cfg, d.log)
 	if err != nil {
 		d.DeviceConnected = false
 		d.log.Errorf("Client connect error to device: %s  error :%s", d.cfg.ID, err)
@@ -369,28 +399,6 @@ func (d *SnmpDevice) InitSnmpConnect() error {
 	d.SysInfo = sysinfo
 	d.DeviceConnected = true
 	return nil
-}
-
-func (d *SnmpDevice) printConfig() {
-	if !d.DeviceActive {
-		fmt.Printf("Host: %s [NOT ACTIVE] skip config show\n", d.cfg.Host)
-		fmt.Printf("----------------------------------------------\n")
-		return
-	}
-	err := d.InitSnmpConnect()
-	if err != nil {
-		fmt.Printf("Host: %s [NOT SNMP CONNETION STABLISHED] Error: %s\n", d.cfg.Host, err)
-		fmt.Printf("----------------------------------------------\n")
-		return
-	}
-	d.InitDevMeasurements()
-	fmt.Printf("Host: %s Port: %d Version: %s\n", d.cfg.Host, d.cfg.Port, d.cfg.SnmpVersion)
-	fmt.Printf("----------------------------------------------\n")
-	for _, vM := range d.Measurements {
-		fmt.Printf(" Measurement : %s\n", vM.cfg.ID)
-		fmt.Printf(" ----------------------------------------------------------\n")
-		vM.printConfig()
-	}
 }
 
 func (d *SnmpDevice) incRequests() {
@@ -467,7 +475,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				if d.getReloadLoopsPending() == 0 {
 					startIdxUpdateStats := time.Now()
 					for _, m := range d.Measurements {
-						if m.cfg.GetMode == "value" {
+						if m.GetMode() == "value" {
 							continue
 						}
 						changed, err := m.UpdateFilter()
@@ -493,7 +501,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				bpts := d.Influx.BP()
 				startSnmpStats := time.Now()
 				for _, m := range d.Measurements {
-					d.log.Debugf("----------------Processing measurement : %s", m.cfg.ID)
+					d.log.Debugf("----------------Processing measurement : %s", m.ID)
 
 					nGets, nErrors, _ := m.GetData()
 					totalGets += nGets
@@ -552,10 +560,10 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				d.log.Infof("DEBUG  ACTIVE %s [%t] ", d.cfg.ID, debug)
 				if debug {
 					d.log.Info("Activating snmp debug for this device")
-					d.snmpClient.Logger = SnmpDebugLog(d.cfg.ID)
+					d.snmpClient.Logger = snmp.GetDebugLogger(d.cfg.ID)
 				} else {
 					d.log.Info("De Activating snmp debug for this device")
-					d.snmpClient.Logger = olog.New(ioutil.Discard, "", 0)
+					d.snmpClient.Logger = log.New(ioutil.Discard, "", 0)
 				}
 			case status := <-d.chEnabled:
 				d.DeviceActive = status
