@@ -463,35 +463,8 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					//device not initialized
 				}
 			} else {
-				//device actie and connected
-				/*******************************************
-				 *
-				 * Reload Indexes/Filters process(if needed)
-				 *
-				 *******************************************/
-				//Check if reload needed with d.ReloadLoopsPending if a posivive value on negative this will disabled
+				//device active and connected
 
-				d.decReloadLoopsPending()
-
-				if d.getReloadLoopsPending() == 0 {
-					startIdxUpdateStats := time.Now()
-					for _, m := range d.Measurements {
-						if m.GetMode() == "value" {
-							continue
-						}
-						changed, err := m.UpdateFilter()
-						if err != nil {
-							d.log.Errorf("Error on update Indexes/filter : ERR: %s", err)
-							continue
-						}
-						if changed {
-							m.InitBuildRuntime()
-						}
-					}
-					d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
-					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
-					d.log.Infof("snmpdevice [%s] Index reload took [%s]", d.cfg.ID, elapsedIdxUpdateStats)
-				}
 				/*************************
 				 *
 				 * SNMP Gather data process
@@ -542,6 +515,34 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				elapsedInfluxStats := time.Since(startInfluxStats)
 				d.log.Infof("snmpdevice [%s] influx send took [%s]", d.cfg.ID, elapsedInfluxStats)
 
+				/*******************************************
+				 *
+				 * Reload Indexes/Filters process(if needed)
+				 *
+				 *******************************************/
+				//Check if reload needed with d.ReloadLoopsPending if a posivive value on negative this will disabled
+
+				d.decReloadLoopsPending()
+
+				if d.getReloadLoopsPending() == 0 {
+					startIdxUpdateStats := time.Now()
+					for _, m := range d.Measurements {
+						if m.GetMode() == "value" {
+							continue
+						}
+						changed, err := m.UpdateFilter()
+						if err != nil {
+							d.log.Errorf("Error on update Indexes/filter : ERR: %s", err)
+							continue
+						}
+						if changed {
+							m.InitBuildRuntime()
+						}
+					}
+					d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
+					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
+					d.log.Infof("snmpdevice [%s] Index reload took [%s]", d.cfg.ID, elapsedIdxUpdateStats)
+				}
 			}
 		} else {
 			d.log.Infof("snmpdevice [%s] Gather process is dissabled", d.cfg.ID)
