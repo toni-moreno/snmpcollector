@@ -13,12 +13,12 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/measurement"
-	"github.com/toni-moreno/snmpcollector/pkg/output"
-	"github.com/toni-moreno/snmpcollector/pkg/selfmon"
-	"github.com/toni-moreno/snmpcollector/pkg/snmp"
-	"github.com/toni-moreno/snmpcollector/pkg/utils"
+	"github.com/toni-moreno/snmpcollector/pkg/data/measurement"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // DevStat minimal info to show users
@@ -59,7 +59,7 @@ type SnmpDevice struct {
 	//Refresh data to show in the frontend
 	Freq int
 	//Measurements array
-	Measurements []*measurement.InfluxMeasurement
+	Measurements []*measurement.Measurement
 
 	//SNMP and Influx Clients config
 	snmpClient *gosnmp.GoSNMP
@@ -87,8 +87,8 @@ type SnmpDevice struct {
 	CurLogLevel string
 }
 
-// NewSnmpDevice create and Initialice a device Object
-func NewSnmpDevice(c *config.SnmpDeviceCfg) *SnmpDevice {
+// New create and Initialice a device Object
+func New(c *config.SnmpDeviceCfg) *SnmpDevice {
 	dev := SnmpDevice{}
 	dev.Init(c)
 	return &dev
@@ -196,7 +196,7 @@ InitDevMeasurements  does the following
 func (d *SnmpDevice) InitDevMeasurements() {
 
 	//Alloc array
-	d.Measurements = make([]*measurement.InfluxMeasurement, 0, 0)
+	d.Measurements = make([]*measurement.Measurement, 0, 0)
 	d.log.Debugf("-----------------Init device measurements from groups %s------------------", d.cfg.Host)
 	//for this device get MeasurementGroups and search all measurements
 
@@ -229,13 +229,14 @@ func (d *SnmpDevice) InitDevMeasurements() {
 		d.log.Debugln("DEVICE MEASUREMENT: ", devMeas, "HOST: ", d.cfg.Host)
 		for _, val := range selMeasUniq {
 			//check if measurement exist
+			d.log.Debugf("RRRRRRRRRRRRRRRRRR +%v", cfg.Measurements)
 			if mVal, ok := cfg.Measurements[val]; !ok {
 				d.log.Warnln("no measurement configured with name ", val, "in host :", d.cfg.Host)
 			} else {
 				d.log.Debugln("MEASUREMENT CFG KEY:", val, " VALUE ", mVal.Name)
 
 				//creating a new measurement runtime object and asigning to array
-				imeas, err := measurement.NewInfluxMeasurement(mVal, d.log, d.snmpClient, d.cfg.DisableBulk)
+				imeas, err := measurement.New(mVal, d.log, d.snmpClient, d.cfg.DisableBulk)
 				if err != nil {
 					d.log.Errorf("Error on measurement initialization on host %s: Error: %s", d.cfg.ID, err)
 					continue

@@ -6,7 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"math"
 	"regexp"
 	"strconv"
@@ -54,8 +54,8 @@ func (s *SnmpMetric) GetFieldName() string {
 	return s.cfg.FieldName
 }
 
-// NewSnmpMetric constructor
-func NewSnmpMetric(c *config.SnmpMetricCfg) (*SnmpMetric, error) {
+// New constructor
+func New(c *config.SnmpMetricCfg) (*SnmpMetric, error) {
 	metric := &SnmpMetric{}
 	err := metric.Init(c)
 	return metric, err

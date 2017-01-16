@@ -122,7 +122,7 @@ type SnmpDevMGroups struct {
 // SQLConfig read from DB
 type SQLConfig struct {
 	Metrics      map[string]*SnmpMetricCfg
-	Measurements map[string]*InfluxMeasurementCfg
+	Measurements map[string]*MeasurementCfg
 	MFilters     map[string]*MeasFilterCfg
 	GetGroups    map[string]*MGroupsCfg
 	SnmpDevice   map[string]*SnmpDeviceCfg

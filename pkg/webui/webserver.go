@@ -9,7 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"os"
 
 	"gopkg.in/macaron.v1"
@@ -179,8 +179,8 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 
 	m.Group("/measurement", func() {
 		m.Get("/", reqSignedIn, GetMeas)
-		m.Post("/", reqSignedIn, bind(config.InfluxMeasurementCfg{}), AddMeas)
-		m.Put("/:id", reqSignedIn, bind(config.InfluxMeasurementCfg{}), UpdateMeas)
+		m.Post("/", reqSignedIn, bind(config.MeasurementCfg{}), AddMeas)
+		m.Put("/:id", reqSignedIn, bind(config.MeasurementCfg{}), UpdateMeas)
 		m.Delete("/:id", reqSignedIn, DeleteMeas)
 		m.Get("/:id", reqSignedIn, GetMeasByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetMeasAffectOnDel)
@@ -597,7 +597,7 @@ func GetMetricsAffectOnDel(ctx *Context) {
 
 // GetMeas Return measurements list to frontend
 func GetMeas(ctx *Context) {
-	cfgarray, err := agent.MainConfig.Database.GetInfluxMeasurementCfgArray("")
+	cfgarray, err := agent.MainConfig.Database.GetMeasurementCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Influx Measurements :%+s", err)
@@ -608,9 +608,9 @@ func GetMeas(ctx *Context) {
 }
 
 // AddMeas Insert new measurement to de internal BBDD --pending--
-func AddMeas(ctx *Context, dev config.InfluxMeasurementCfg) {
+func AddMeas(ctx *Context, dev config.MeasurementCfg) {
 	log.Printf("ADDING Measurement %+v", dev)
-	affected, err := agent.MainConfig.Database.AddInfluxMeasurementCfg(dev)
+	affected, err := agent.MainConfig.Database.AddMeasurementCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Measurement %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -621,10 +621,10 @@ func AddMeas(ctx *Context, dev config.InfluxMeasurementCfg) {
 }
 
 // UpdateMeas --pending--
-func UpdateMeas(ctx *Context, dev config.InfluxMeasurementCfg) {
+func UpdateMeas(ctx *Context, dev config.MeasurementCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
-	affected, err := agent.MainConfig.Database.UpdateInfluxMeasurementCfg(id, dev)
+	affected, err := agent.MainConfig.Database.UpdateMeasurementCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Measurement %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -638,7 +638,7 @@ func UpdateMeas(ctx *Context, dev config.InfluxMeasurementCfg) {
 func DeleteMeas(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
-	affected, err := agent.MainConfig.Database.DelInfluxMeasurementCfg(id)
+	affected, err := agent.MainConfig.Database.DelMeasurementCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete Measurement %s  , affected : %+v , error: %s", id, affected, err)
 		ctx.JSON(404, err.Error())
@@ -650,7 +650,7 @@ func DeleteMeas(ctx *Context) {
 //GetMeasByID --pending--
 func GetMeasByID(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := agent.MainConfig.Database.GetInfluxMeasurementCfgByID(id)
+	dev, err := agent.MainConfig.Database.GetMeasurementCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Measurement  for device %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -662,7 +662,7 @@ func GetMeasByID(ctx *Context) {
 //GetMeasAffectOnDel --pending--
 func GetMeasAffectOnDel(ctx *Context) {
 	id := ctx.Params(":id")
-	obarray, err := agent.MainConfig.Database.GetInfluxMeasurementCfgAffectOnDel(id)
+	obarray, err := agent.MainConfig.Database.GetMeasurementCfgAffectOnDel(id)
 	if err != nil {
 		log.Warningf("Error on get object array for Measurements %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())

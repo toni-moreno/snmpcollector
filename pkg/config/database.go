@@ -78,8 +78,8 @@ func (dbc *DatabaseCfg) InitDB() {
 	if err = dbc.x.Sync(new(SnmpMetricCfg)); err != nil {
 		log.Fatalf("Fail to sync database SnmpMetricCfg: %v\n", err)
 	}
-	if err = dbc.x.Sync(new(InfluxMeasurementCfg)); err != nil {
-		log.Fatalf("Fail to sync database InfluxMeasurementCfg: %v\n", err)
+	if err = dbc.x.Sync(new(MeasurementCfg)); err != nil {
+		log.Fatalf("Fail to sync database MeasurementCfg: %v\n", err)
 	}
 	if err = dbc.x.Sync(new(MeasFilterCfg)); err != nil {
 		log.Fatalf("Fail to sync database MeasurementFilterCfg : %v\n", err)
@@ -277,31 +277,31 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 
 /***************************
 	MEASUREMENTS
-	-GetInfluxMeasurementCfgByID(struct)
-	-GetInfluxMeasurementCfgMap (map - for interna config use
-	-GetInfluxMeasurementCfgArray(Array - for web ui use )
-	-AddInfluxMeasurementCfg
-	-DelInfluxMeasurementCfg
-	-UpdateInfluxMeasurementCfg
-  -GetInfluxMeasurementCfgAffectOnDel
+	-GetMeasurementCfgByID(struct)
+	-GetMeasurementCfgMap (map - for interna config use
+	-GetMeasurementCfgArray(Array - for web ui use )
+	-AddMeasurementCfg
+	-DelMeasurementCfg
+	-UpdateMeasurementCfg
+  -GetMeasurementCfgAffectOnDel
 ***********************************/
 
-/*GetInfluxMeasurementCfgByID get metric data by id*/
-func (dbc *DatabaseCfg) GetInfluxMeasurementCfgByID(id string) (InfluxMeasurementCfg, error) {
-	cfgarray, err := dbc.GetInfluxMeasurementCfgArray("id='" + id + "'")
+/*GetMeasurementCfgByID get metric data by id*/
+func (dbc *DatabaseCfg) GetMeasurementCfgByID(id string) (MeasurementCfg, error) {
+	cfgarray, err := dbc.GetMeasurementCfgArray("id='" + id + "'")
 	if err != nil {
-		return InfluxMeasurementCfg{}, err
+		return MeasurementCfg{}, err
 	}
 	if len(cfgarray) > 1 {
-		return InfluxMeasurementCfg{}, fmt.Errorf("Error %d results on get InfluxMeasurementCfg by id %s", len(cfgarray), id)
+		return MeasurementCfg{}, fmt.Errorf("Error %d results on get MeasurementCfg by id %s", len(cfgarray), id)
 	}
 	return *cfgarray[0], nil
 }
 
-/*GetInfluxMeasurementCfgMap  return data in map format*/
-func (dbc *DatabaseCfg) GetInfluxMeasurementCfgMap(filter string) (map[string]*InfluxMeasurementCfg, error) {
-	cfgarray, err := dbc.GetInfluxMeasurementCfgArray(filter)
-	cfgmap := make(map[string]*InfluxMeasurementCfg)
+/*GetMeasurementCfgMap  return data in map format*/
+func (dbc *DatabaseCfg) GetMeasurementCfgMap(filter string) (map[string]*MeasurementCfg, error) {
+	cfgarray, err := dbc.GetMeasurementCfgArray(filter)
+	cfgmap := make(map[string]*MeasurementCfg)
 	for _, val := range cfgarray {
 		cfgmap[val.ID] = val
 		log.Debugf("%+v", *val)
@@ -309,19 +309,19 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgMap(filter string) (map[string]*I
 	return cfgmap, err
 }
 
-/*GetInfluxMeasurementCfgArray generate an array of measurements with all its information */
-func (dbc *DatabaseCfg) GetInfluxMeasurementCfgArray(filter string) ([]*InfluxMeasurementCfg, error) {
+/*GetMeasurementCfgArray generate an array of measurements with all its information */
+func (dbc *DatabaseCfg) GetMeasurementCfgArray(filter string) ([]*MeasurementCfg, error) {
 	var err error
-	var devices []*InfluxMeasurementCfg
+	var devices []*MeasurementCfg
 	//Get Only data for selected measurements
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&devices); err != nil {
-			log.Warnf("Fail to get InfluxMeasurementCfg  data filteter with %s : %v\n", filter, err)
+			log.Warnf("Fail to get MeasurementCfg  data filteter with %s : %v\n", filter, err)
 			return nil, err
 		}
 	} else {
 		if err = dbc.x.Find(&devices); err != nil {
-			log.Warnf("Fail to get InfluxMeasurementCfg   data: %v\n", err)
+			log.Warnf("Fail to get MeasurementCfg   data: %v\n", err)
 			return nil, err
 		}
 	}
@@ -350,8 +350,8 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgArray(filter string) ([]*InfluxMe
 	return devices, nil
 }
 
-/*AddInfluxMeasurementCfg for adding new Metric*/
-func (dbc *DatabaseCfg) AddInfluxMeasurementCfg(dev InfluxMeasurementCfg) (int64, error) {
+/*AddMeasurementCfg for adding new Metric*/
+func (dbc *DatabaseCfg) AddMeasurementCfg(dev MeasurementCfg) (int64, error) {
 	var err error
 	var affected, newmf int64
 
@@ -395,8 +395,8 @@ func (dbc *DatabaseCfg) AddInfluxMeasurementCfg(dev InfluxMeasurementCfg) (int64
 	return affected, nil
 }
 
-/*DelInfluxMeasurementCfg for deleting influx databases from ID*/
-func (dbc *DatabaseCfg) DelInfluxMeasurementCfg(id string) (int64, error) {
+/*DelMeasurementCfg for deleting influx databases from ID*/
+func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 	var affectedfl, affectedmg, affectedft, affected int64
 	var err error
 
@@ -421,7 +421,7 @@ func (dbc *DatabaseCfg) DelInfluxMeasurementCfg(id string) (int64, error) {
 		return 0, fmt.Errorf("Error on Update FilterMeasurement on with id: %s, error: %s", id, err)
 	}
 
-	affected, err = session.Where("id='" + id + "'").Delete(&InfluxMeasurementCfg{})
+	affected, err = session.Where("id='" + id + "'").Delete(&MeasurementCfg{})
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -436,8 +436,8 @@ func (dbc *DatabaseCfg) DelInfluxMeasurementCfg(id string) (int64, error) {
 	return affected, nil
 }
 
-/*UpdateInfluxMeasurementCfg for adding new influxdb*/
-func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurementCfg) (int64, error) {
+/*UpdateMeasurementCfg for adding new influxdb*/
+func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int64, error) {
 	var affecteddev, newmf, affected int64
 	var err error
 	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
@@ -504,8 +504,8 @@ func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurem
 	return affected, nil
 }
 
-/*GetInfluxMeasurementCfgAffectOnDel for deleting devices from ID*/
-func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjAction, error) {
+/*GetMeasurementCfgAffectOnDel for deleting devices from ID*/
+func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction, error) {
 	var mf []*MeasurementFieldCfg
 	var mg []*MGroupsMeasurements
 	var obj []*DbObjAction
@@ -1300,7 +1300,7 @@ func (dbc *DatabaseCfg) LoadDbConfig(cfg *SQLConfig) {
 	}
 
 	//Load Measurements
-	cfg.Measurements, err = dbc.GetInfluxMeasurementCfgMap("")
+	cfg.Measurements, err = dbc.GetMeasurementCfgMap("")
 	if err != nil {
 		log.Warningf("Some errors on get Measurements  :%v", err)
 	}

@@ -3,10 +3,10 @@ package agent
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/device"
-	"github.com/toni-moreno/snmpcollector/pkg/output"
-	"github.com/toni-moreno/snmpcollector/pkg/selfmon"
 
 	"sync"
 	"time"
@@ -155,7 +155,7 @@ func ReleaseDevices() {
 
 func initSelfMonitoring(idb map[string]*output.InfluxDB) {
 	log.Debugf("INFLUXDB2: %+v", idb)
-	selfmonProc = selfmon.NewNotInitSelfMon(&MainConfig.Selfmon)
+	selfmonProc = selfmon.NewNotInit(&MainConfig.Selfmon)
 
 	if MainConfig.Selfmon.Enabled {
 		if val, ok := idb["default"]; ok {
@@ -199,7 +199,7 @@ func LoadConf() {
 
 	for k, c := range DBConfig.SnmpDevice {
 		//Inticialize each SNMP device and put pointer to the global map devices
-		dev := device.NewSnmpDevice(c)
+		dev := device.New(c)
 		dev.SetSelfMonitoring(selfmonProc)
 		//send db's map to initialize each one its own db if needed and not yet initialized
 

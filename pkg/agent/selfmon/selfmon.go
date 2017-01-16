@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/output"
 	"runtime"
 	"strings"
 	"sync"
@@ -37,8 +37,8 @@ type SelfMon struct {
 	imutex              sync.Mutex
 }
 
-// NewNotInitSelfMon create strut without initialization
-func NewNotInitSelfMon(c *config.SelfMonConfig) *SelfMon {
+// NewNotInit create strut without initialization
+func NewNotInit(c *config.SelfMonConfig) *SelfMon {
 	return &SelfMon{cfg: c}
 }
 

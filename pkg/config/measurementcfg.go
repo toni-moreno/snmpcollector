@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-//InfluxMeasurementCfg the measurement configuration
-type InfluxMeasurementCfg struct {
+//MeasurementCfg the measurement configuration
+type MeasurementCfg struct {
 	ID   string `xorm:"'id' unique"`
 	Name string `xorm:"name"`
 
@@ -26,7 +26,7 @@ type InfluxMeasurementCfg struct {
 	Description string           `xorm:"description"`
 }
 
-func (mc *InfluxMeasurementCfg) CheckComputedMetric() error {
+func (mc *MeasurementCfg) CheckComputedMetric() error {
 	parameters := make(map[string]interface{})
 	log.Debugf("Building check parrameters array for index measurement %s", mc.ID)
 	parameters["NR"] = 1                   //Number of rows (like awk)
@@ -48,7 +48,7 @@ func (mc *InfluxMeasurementCfg) CheckComputedMetric() error {
 }
 
 //Init initialize the measurement configuration
-func (mc *InfluxMeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error {
+func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error {
 	//mc.ID = name
 	//validate config values
 	if len(mc.Name) == 0 {

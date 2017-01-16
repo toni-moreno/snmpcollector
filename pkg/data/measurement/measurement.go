@@ -14,9 +14,9 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/metric"
-	"github.com/toni-moreno/snmpcollector/pkg/snmp"
-	"github.com/toni-moreno/snmpcollector/pkg/utils"
+	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 var (
@@ -29,8 +29,8 @@ func SetConfDir(dir string) {
 }
 
 //InfluxMeasurement the runtime measurement config
-type InfluxMeasurement struct {
-	cfg              *config.InfluxMeasurementCfg
+type Measurement struct {
+	cfg              *config.MeasurementCfg
 	ID               string
 	MetricTable      map[string]map[string]*metric.SnmpMetric //snmpMetric mapped with metric_names and Index
 	snmpOids         []string
@@ -49,9 +49,9 @@ type InfluxMeasurement struct {
 	Walk             func(string, gosnmp.WalkFunc) error `json:"-"`
 }
 
-//NewInfluxMeasurement creates object with config , log + goSnmp client
-func NewInfluxMeasurement(c *config.InfluxMeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool) (*InfluxMeasurement, error) {
-	m := &InfluxMeasurement{ID: c.ID, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
+//New  creates object with config , log + goSnmp client
+func New(c *config.MeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool) (*Measurement, error) {
+	m := &Measurement{ID: c.ID, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
 	err := m.Init()
 	return m, err
 }
@@ -61,7 +61,7 @@ func NewInfluxMeasurement(c *config.InfluxMeasurementCfg, l *logrus.Logger, cli 
  *Assign CurIndexedLabels to all Labels (until filters set)
  *init MetricTable
  */
-func (m *InfluxMeasurement) Init() error {
+func (m *Measurement) Init() error {
 
 	var err error
 	//Init snmp methods
@@ -103,153 +103,11 @@ func (m *InfluxMeasurement) Init() error {
 }
 
 // GetMode Returns mode info
-func (m *InfluxMeasurement) GetMode() string {
+func (m *Measurement) GetMode() string {
 	return m.cfg.GetMode
 }
 
-func (m *InfluxMeasurement) PushMetricTable(p map[string]string) error {
-	if m.cfg.GetMode == "value" {
-		return fmt.Errorf("Can not push new values in a measurement type value : %s", m.cfg.ID)
-	}
-	for key, label := range p {
-		idx := make(map[string]*metric.SnmpMetric)
-		m.log.Infof("initializing [indexed] metric cfg for [%s/%s]", key, label)
-		for k, smcfg := range m.cfg.FieldMetric {
-			metr, err := metric.NewSnmpMetric(smcfg)
-			if err != nil {
-				m.log.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
-				continue
-			}
-			metr.SetLogger(m.log)
-			metr.RealOID += "." + key
-			idx[smcfg.ID] = metr
-		}
-		for k, smcfg := range m.cfg.EvalMetric {
-			metr, err := metric.NewSnmpMetric(smcfg)
-			if err != nil {
-				m.log.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
-				continue
-			}
-			metr.SetLogger(m.log)
-			metr.RealOID = m.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
-			idx[smcfg.ID] = metr
-		}
-		//setup visibility on db for each metric
-		for k, v := range idx {
-			report := true
-			for _, r := range m.cfg.Fields {
-				if r.ID == k {
-					report = r.Report
-					break
-				}
-			}
-			v.Report = report
-		}
-		m.MetricTable[label] = idx
-	}
-	return nil
-}
-
-func (m *InfluxMeasurement) PopMetricTable(p map[string]string) error {
-	if m.cfg.GetMode == "value" {
-		return fmt.Errorf("Can not pop values in a measurement type value : %s", m.cfg.ID)
-	}
-	for key, label := range p {
-		m.log.Infof("removing [indexed] metric cfg for [%s/%s]", key, label)
-		delete(m.MetricTable, label)
-	}
-	return nil
-}
-
-/* InitMetricTable
- */
-func (m *InfluxMeasurement) InitMetricTable() {
-	m.MetricTable = make(map[string]map[string]*metric.SnmpMetric)
-
-	//create metrics.
-	switch m.cfg.GetMode {
-	case "value":
-		//for each field
-		idx := make(map[string]*metric.SnmpMetric)
-		for k, smcfg := range m.cfg.FieldMetric {
-			m.log.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
-			metr, err := metric.NewSnmpMetric(smcfg)
-			if err != nil {
-				m.log.Errorf("ERROR on create new [value] field metric %d : Error: %s ", k, err)
-				continue
-			}
-			metr.SetLogger(m.log)
-			idx[smcfg.ID] = metr
-		}
-		for k, smcfg := range m.cfg.EvalMetric {
-			m.log.Debugf("initializing [value] [evaluated] metric cfg %s", smcfg.ID)
-			metr, err := metric.NewSnmpMetric(smcfg)
-			if err != nil {
-				m.log.Errorf("ERROR on create new [value] [evaluated] field metric %d : Error: %s ", k, err)
-				continue
-			}
-			metr.SetLogger(m.log)
-			metr.RealOID = m.cfg.ID + "." + smcfg.ID
-			idx[smcfg.ID] = metr
-		}
-		//setup visibility on db for each metric
-		for k, v := range idx {
-			report := true
-			for _, r := range m.cfg.Fields {
-				if r.ID == k {
-					report = r.Report
-					break
-				}
-			}
-			v.Report = report
-		}
-		m.MetricTable["0"] = idx
-
-	case "indexed", "indexed_it":
-		//for each field an each index (previously initialized)
-		for key, label := range m.CurIndexedLabels {
-			idx := make(map[string]*metric.SnmpMetric)
-			m.log.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
-			for k, smcfg := range m.cfg.FieldMetric {
-				metr, err := metric.NewSnmpMetric(smcfg)
-				if err != nil {
-					m.log.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
-					continue
-				}
-				metr.SetLogger(m.log)
-				metr.RealOID += "." + key
-				idx[smcfg.ID] = metr
-			}
-			for k, smcfg := range m.cfg.EvalMetric {
-				metr, err := metric.NewSnmpMetric(smcfg)
-				if err != nil {
-					m.log.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
-					continue
-				}
-				metr.SetLogger(m.log)
-				metr.RealOID = m.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
-				idx[smcfg.ID] = metr
-			}
-			//setup visibility on db for each metric
-			for k, v := range idx {
-				report := true
-				for _, r := range m.cfg.Fields {
-					if r.ID == k {
-						report = r.Report
-						break
-					}
-				}
-				v.Report = report
-			}
-			m.MetricTable[label] = idx
-		}
-
-	default:
-		m.log.Errorf("Unknown Measurement GetMode Config :%s", m.cfg.GetMode)
-	}
-}
-
-func (m *InfluxMeasurement) InitBuildRuntime() {
+func (m *Measurement) InitBuildRuntime() {
 	m.snmpOids = []string{}
 	m.OidSnmpMap = make(map[string]*metric.SnmpMetric)
 	//metric level
@@ -270,7 +128,7 @@ func (m *InfluxMeasurement) InitBuildRuntime() {
 	}
 }
 
-func (m *InfluxMeasurement) AddFilter(filter *config.MeasFilterCfg) error {
+func (m *Measurement) AddFilter(filter *config.MeasFilterCfg) error {
 	var err error
 	if m.cfg.GetMode == "value" {
 		return fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
@@ -302,7 +160,7 @@ func (m *InfluxMeasurement) AddFilter(filter *config.MeasFilterCfg) error {
 	return err
 }
 
-func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
+func (m *Measurement) UpdateFilter() (bool, error) {
 	var err error
 	var newfilterlabels map[string]string
 
@@ -393,7 +251,7 @@ func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
 }
 
 //GetInfluxPoint get points from measuremnetsl
-func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client.Point {
+func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point {
 	var ptarray []*client.Point
 
 	switch m.cfg.GetMode {
@@ -506,7 +364,7 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 SnmpBulkData GetSNMP Data
 */
 
-func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
+func (m *Measurement) SnmpWalkData() (int64, int64, error) {
 
 	now := time.Now()
 	var sent int64
@@ -538,7 +396,7 @@ func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
 	return sent, errs, nil
 }
 
-func (m *InfluxMeasurement) ComputeEvaluatedMetrics() {
+func (m *Measurement) ComputeEvaluatedMetrics() {
 	if m.cfg.EvalMetric == nil {
 		m.log.Infof("Not EVAL metrics exist on measurement %s", m.cfg.ID)
 		return
@@ -608,7 +466,7 @@ func (m *InfluxMeasurement) ComputeEvaluatedMetrics() {
 GetSnmpData GetSNMP Data
 */
 
-func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
+func (m *Measurement) SnmpGetData() (int64, int64, error) {
 
 	now := time.Now()
 	var sent int64
@@ -662,7 +520,7 @@ func formatTag(format string, data map[string]string, def string) string {
 	return final
 }
 
-func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
+func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 
 	m.log.Debugf("Looking up column names %s ", m.cfg.IndexOID)
 
@@ -761,7 +619,7 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 /*
  filterIndexedLabels construct the final index array from all index and filters
 */
-func (m *InfluxMeasurement) filterIndexedLabels(f_mode string, L map[string]string) map[string]string {
+func (m *Measurement) filterIndexedLabels(f_mode string, L map[string]string) map[string]string {
 	curIndexedLabels := make(map[string]string, len(m.Filterlabels))
 
 	switch f_mode {
@@ -797,7 +655,7 @@ func (m *InfluxMeasurement) filterIndexedLabels(f_mode string, L map[string]stri
 	return curIndexedLabels
 }
 
-func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, valueCond string) (map[string]string, error) {
+func (m *Measurement) applyOIDCondFilter(oidCond string, typeCond string, valueCond string) (map[string]string, error) {
 
 	m.log.Debugf("Apply Condition Filter: Looking up column names in: Condition %s", oidCond)
 
@@ -875,7 +733,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 	return filterlabels, nil
 }
 
-func (m *InfluxMeasurement) applyFileFilter(file string, enableAlias bool) (map[string]string, error) {
+func (m *Measurement) applyFileFilter(file string, enableAlias bool) (map[string]string, error) {
 	m.log.Infof("apply File filter : %s Enable Alias: %t", file, enableAlias)
 	filterlabels := make(map[string]string)
 	if len(file) == 0 {

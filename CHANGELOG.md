@@ -2,6 +2,7 @@
 ### New Features
 * Metric Type standarization according to RFC2578 SMIv2.
 * new IndexTagFormat to the measurement enabling custom Tag names
+* Go code big refactor and reorganization
 
 ### fixes
 * fix for #91
@@ -15,6 +16,7 @@ update snmp_metric_cfg set datasrctype='Gauge32' where datasrctype = 'GAUGE';
 update snmp_metric_cfg set datasrctype='Integer32' where datasrctype  = 'INTEGER32';
 update snmp_metric_cfg set datasrctype='OCTETSTRING' where datasrctype  = 'STRING';
 update snmp_metric_cfg set datasrctype='IpAddress' where datasrctype  = 'IPADDR';
+alter table influx_measurement_cfg rename to measurement_cfg;
 ```
 
 # v 0.6.1
