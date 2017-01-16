@@ -1,8 +1,10 @@
-package main
+package output
 
 import (
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"math/rand"
 	"strings"
 	"sync"
@@ -10,9 +12,17 @@ import (
 	"time"
 )
 
+var (
+	log *logrus.Logger
+)
+
+func SetLogger(l *logrus.Logger) {
+	log = l
+}
+
 /*InfluxDB database export */
 type InfluxDB struct {
-	cfg         *InfluxCfg
+	cfg         *config.InfluxCfg
 	initialized bool
 	imutex      sync.Mutex
 	started     bool
@@ -26,7 +36,7 @@ type InfluxDB struct {
 	Errors int64
 }
 
-var influxdbDummy = &InfluxDB{
+var DummyDB = &InfluxDB{
 	cfg:         nil,
 	initialized: false,
 	started:     false,
@@ -139,7 +149,7 @@ func (db *InfluxDB) CheckAndSetInitialized() bool {
 	return retval
 }
 
-// CheckAndSetInitialized check if this thread is already working and set if not
+// CheckAndUnSetInitialized check if this thread is already working and set if not
 func (db *InfluxDB) CheckAndUnSetInitialized() bool {
 	db.imutex.Lock()
 	defer db.imutex.Unlock()
@@ -148,19 +158,16 @@ func (db *InfluxDB) CheckAndUnSetInitialized() bool {
 	return retval
 }
 
-/*/ IsInitialized check if this thread is already working
-func (db *InfluxDB) IsInitialized() bool {
-	db.imutex.Lock()
-	defer db.imutex.Unlock()
-	return db.initialized
+// NewNotInitInfluxDB Create Object in memory but not initialized until ready connection needed
+func NewNotInitInfluxDB(c *config.InfluxCfg) *InfluxDB {
+	return &InfluxDB{
+		cfg:     c,
+		dummy:   false,
+		started: false,
+		Sent:    0,
+		Errors:  0,
+	}
 }
-
-// SetInitializedAs change started state
-func (db *InfluxDB) SetInitialzedAs(ini bool) {
-	db.imutex.Lock()
-	defer db.imutex.Unlock()
-	db.initialized = ini
-}*/
 
 //Init initialies runtime info
 func (db *InfluxDB) Init() {

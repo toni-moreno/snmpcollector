@@ -1,25 +1,39 @@
-package main
+package webui
 
 import (
 	"fmt"
 	"github.com/go-macaron/binding"
 	"github.com/go-macaron/session"
 	"github.com/go-macaron/toolbox"
-	"gopkg.in/macaron.v1"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/agent"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"os"
 
+	"gopkg.in/macaron.v1"
 	//	"html/template"
 	"crypto/md5"
 	"net/http"
 	"time"
 )
 
-//HTTPConfig has webserver config options
-type HTTPConfig struct {
-	Port          int    `toml:"port"`
-	AdminUser     string `toml:"adminuser"`
-	AdminPassword string `toml:"adminpassword"`
-	CookieID      string `toml:"cookieid"`
+var (
+	logDir     string
+	log        *logrus.Logger
+	confHTTP   *config.HTTPConfig
+	instanceID string
+)
+
+// SetLogDir et dir for logs
+func SetLogDir(dir string) {
+	logDir = dir
+}
+
+// SetLogger set output log
+func SetLogger(l *logrus.Logger) {
+	log = l
 }
 
 //UserLogin for login purposes
@@ -30,7 +44,16 @@ type UserLogin struct {
 
 var cookie string
 
-func webServer(publicPath string, port int) {
+// WebServer the main process
+func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id string) {
+	confHTTP = cfg
+	instanceID = id
+	var port int
+	if cfg.Port > 0 {
+		port = cfg.Port
+	} else {
+		port = httpPort
+	}
 
 	bind := binding.Bind
 
@@ -69,10 +92,10 @@ func webServer(publicPath string, port int) {
 	//Cookie should be unique for each snmpcollector instance ,
 	//if cockie_id is not set it takes the instanceID value to generate a unique array with as a md5sum
 
-	cookie = cfg.HTTP.CookieID
+	cookie = confHTTP.CookieID
 
-	if len(cfg.HTTP.CookieID) == 0 {
-		currentsum := md5.Sum([]byte(cfg.General.InstanceID))
+	if len(confHTTP.CookieID) == 0 {
+		currentsum := md5.Sum([]byte(instanceID))
 		cookie = fmt.Sprintf("%x", currentsum)
 	}
 
@@ -147,8 +170,8 @@ func webServer(publicPath string, port int) {
 
 	m.Group("/metric", func() {
 		m.Get("/", reqSignedIn, GetMetrics)
-		m.Post("/", reqSignedIn, bind(SnmpMetricCfg{}), AddMetric)
-		m.Put("/:id", reqSignedIn, bind(SnmpMetricCfg{}), UpdateMetric)
+		m.Post("/", reqSignedIn, bind(config.SnmpMetricCfg{}), AddMetric)
+		m.Put("/:id", reqSignedIn, bind(config.SnmpMetricCfg{}), UpdateMetric)
 		m.Delete("/:id", reqSignedIn, DeleteMetric)
 		m.Get("/:id", reqSignedIn, GetMetricByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetMetricsAffectOnDel)
@@ -156,8 +179,8 @@ func webServer(publicPath string, port int) {
 
 	m.Group("/measurement", func() {
 		m.Get("/", reqSignedIn, GetMeas)
-		m.Post("/", reqSignedIn, bind(InfluxMeasurementCfg{}), AddMeas)
-		m.Put("/:id", reqSignedIn, bind(InfluxMeasurementCfg{}), UpdateMeas)
+		m.Post("/", reqSignedIn, bind(config.MeasurementCfg{}), AddMeas)
+		m.Put("/:id", reqSignedIn, bind(config.MeasurementCfg{}), UpdateMeas)
 		m.Delete("/:id", reqSignedIn, DeleteMeas)
 		m.Get("/:id", reqSignedIn, GetMeasByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetMeasAffectOnDel)
@@ -165,8 +188,8 @@ func webServer(publicPath string, port int) {
 
 	m.Group("/measgroups", func() {
 		m.Get("/", reqSignedIn, GetMeasGroup)
-		m.Post("/", reqSignedIn, bind(MGroupsCfg{}), AddMeasGroup)
-		m.Put("/:id", reqSignedIn, bind(MGroupsCfg{}), UpdateMeasGroup)
+		m.Post("/", reqSignedIn, bind(config.MGroupsCfg{}), AddMeasGroup)
+		m.Put("/:id", reqSignedIn, bind(config.MGroupsCfg{}), UpdateMeasGroup)
 		m.Delete("/:id", reqSignedIn, DeleteMeasGroup)
 		m.Get("/:id", reqSignedIn, GetMeasGroupByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetMeasGroupsAffectOnDel)
@@ -174,8 +197,8 @@ func webServer(publicPath string, port int) {
 
 	m.Group("/measfilters", func() {
 		m.Get("/", reqSignedIn, GetMeasFilter)
-		m.Post("/", reqSignedIn, bind(MeasFilterCfg{}), AddMeasFilter)
-		m.Put("/:id", reqSignedIn, bind(MeasFilterCfg{}), UpdateMeasFilter)
+		m.Post("/", reqSignedIn, bind(config.MeasFilterCfg{}), AddMeasFilter)
+		m.Put("/:id", reqSignedIn, bind(config.MeasFilterCfg{}), UpdateMeasFilter)
 		m.Delete("/:id", reqSignedIn, DeleteMeasFilter)
 		m.Get("/:id", reqSignedIn, GetMeasFilterByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetMeasFiltersAffectOnDel)
@@ -183,8 +206,8 @@ func webServer(publicPath string, port int) {
 
 	m.Group("/influxservers", func() {
 		m.Get("/", reqSignedIn, GetInfluxServer)
-		m.Post("/", reqSignedIn, bind(InfluxCfg{}), AddInfluxServer)
-		m.Put("/:id", reqSignedIn, bind(InfluxCfg{}), UpdateInfluxServer)
+		m.Post("/", reqSignedIn, bind(config.InfluxCfg{}), AddInfluxServer)
+		m.Put("/:id", reqSignedIn, bind(config.InfluxCfg{}), UpdateInfluxServer)
 		m.Delete("/:id", reqSignedIn, DeleteInfluxServer)
 		m.Get("/:id", reqSignedIn, GetInfluxServerByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetInfluxAffectOnDel)
@@ -193,8 +216,8 @@ func webServer(publicPath string, port int) {
 	// Data sources
 	m.Group("/snmpdevice", func() {
 		m.Get("/", reqSignedIn, GetSNMPDevices)
-		m.Post("/", reqSignedIn, bind(SnmpDeviceCfg{}), AddSNMPDevice)
-		m.Put("/:id", reqSignedIn, bind(SnmpDeviceCfg{}), UpdateSNMPDevice)
+		m.Post("/", reqSignedIn, bind(config.SnmpDeviceCfg{}), AddSNMPDevice)
+		m.Put("/:id", reqSignedIn, bind(config.SnmpDeviceCfg{}), UpdateSNMPDevice)
 		m.Delete("/:id", reqSignedIn, DeleteSNMPDevice)
 		m.Get("/:id", reqSignedIn, GetSNMPDeviceByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetSNMPDevicesAffectOnDel)
@@ -202,8 +225,8 @@ func webServer(publicPath string, port int) {
 
 	m.Group("/runtime", func() {
 		m.Get("/agent/reloadconf/", reqSignedIn, AgentReloadConf)
-		m.Post("/snmpping/", reqSignedIn, bind(SnmpDeviceCfg{}), PingSNMPDevice)
-		m.Post("/snmpquery/:getmode/:obtype/:data", reqSignedIn, bind(SnmpDeviceCfg{}), QuerySNMPDevice)
+		m.Post("/snmpping/", reqSignedIn, bind(config.SnmpDeviceCfg{}), PingSNMPDevice)
+		m.Post("/snmpquery/:getmode/:obtype/:data", reqSignedIn, bind(config.SnmpDeviceCfg{}), QuerySNMPDevice)
 		m.Get("/version/", reqSignedIn, RTGetVersion)
 		m.Get("/info/", reqSignedIn, RTGetInfo)
 		m.Get("/info/:id", reqSignedIn, RTGetInfo)
@@ -225,17 +248,17 @@ func webServer(publicPath string, port int) {
 /*Runtime Info
 /****************/
 
-/* Agent */
-
+// AgentReloadConf xx
 func AgentReloadConf(ctx *Context) {
 	log.Info("trying to reload configuration for all devices")
-	time := ReloadConf()
+	time := agent.ReloadConf()
 	ctx.JSON(200, time)
 }
 
+// RTForceFltUpdate xx
 func RTForceFltUpdate(ctx *Context) {
 	id := ctx.Params(":id")
-	d, err := GetDevice(id)
+	d, err := agent.GetDevice(id)
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		return
@@ -245,21 +268,22 @@ func RTForceFltUpdate(ctx *Context) {
 	ctx.JSON(200, "OK")
 }
 
+// RTGetLogFileDev get file dev
 func RTGetLogFileDev(ctx *Context) {
 	id := ctx.Params(":id")
-	d, err := GetDevice(id)
+	d, err := agent.GetDevice(id)
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		return
 	}
-	ctx.ServeFile(d.cfg.LogFile)
+	ctx.ServeFile(d.GetLogFilePath())
 }
 
 //PingSNMPDevice xx
-func PingSNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
+func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
-	_, sysinfo, err := SnmpClient(&cfg, log)
+	_, sysinfo, err := snmp.GetClient(&cfg, log)
 	if err != nil {
 		log.Debugf("ERROR  on query device : %s", err)
 		ctx.JSON(400, err.Error())
@@ -269,8 +293,8 @@ func PingSNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
 	}
 }
 
-//PingSNMPDevice xx
-func QuerySNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
+// QuerySNMPDevice xx
+func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	getmode := ctx.Params(":getmode")
 	obtype := ctx.Params(":obtype")
 	data := ctx.Params(":data")
@@ -283,14 +307,14 @@ func QuerySNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
 		return
 	}
 
-	snmpcli, info, err := SnmpClient(&cfg, log)
+	snmpcli, info, err := snmp.GetClient(&cfg, log)
 	if err != nil {
 		log.Debugf("ERROR  on open connection with device %s : %s", cfg.ID, err)
 		ctx.JSON(400, err.Error())
 		return
 	}
 	start := time.Now()
-	result, err := SNMPQuery(snmpcli, getmode, data)
+	result, err := snmp.Query(snmpcli, getmode, data)
 	elapsed := time.Since(start)
 	if err != nil {
 		log.Debugf("ERROR  on query device : %s", err)
@@ -299,10 +323,10 @@ func QuerySNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
 	}
 	log.Debugf("OK on query device ")
 	snmpdata := struct {
-		DeviceCfg   *SnmpDeviceCfg
+		DeviceCfg   *config.SnmpDeviceCfg
 		TimeTaken   float64
-		PingInfo    *SysInfo
-		QueryResult []EasyPDU
+		PingInfo    *snmp.SysInfo
+		QueryResult []snmp.EasyPDU
 	}{
 		&cfg,
 		elapsed.Seconds(),
@@ -316,7 +340,7 @@ func QuerySNMPDevice(ctx *Context, cfg SnmpDeviceCfg) {
 func RTSetLogLevelDev(ctx *Context) {
 	id := ctx.Params(":id")
 	level := ctx.Params(":level")
-	dev, err := GetDevice(id)
+	dev, err := agent.GetDevice(id)
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		return
@@ -330,7 +354,7 @@ func RTSetLogLevelDev(ctx *Context) {
 //RTActivateDev xx
 func RTActivateDev(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := GetDevice(id)
+	dev, err := agent.GetDevice(id)
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		return
@@ -343,7 +367,7 @@ func RTActivateDev(ctx *Context) {
 //RTDeactivateDev xx
 func RTDeactivateDev(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := GetDevice(id)
+	dev, err := agent.GetDevice(id)
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		return
@@ -357,7 +381,7 @@ func RTDeactivateDev(ctx *Context) {
 //RTActSnmpDebugDev xx
 func RTActSnmpDebugDev(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := GetDevice(id)
+	dev, err := agent.GetDevice(id)
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		return
@@ -370,7 +394,7 @@ func RTActSnmpDebugDev(ctx *Context) {
 //RTDeactSnmpDebugDev xx
 func RTDeactSnmpDebugDev(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := GetDevice(id)
+	dev, err := agent.GetDevice(id)
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		return
@@ -384,7 +408,7 @@ func RTDeactSnmpDebugDev(ctx *Context) {
 func RTGetInfo(ctx *Context) {
 	id := ctx.Params(":id")
 	if len(id) > 0 {
-		dev, err := GetDevice(id)
+		dev, err := agent.GetDevice(id)
 		if err != nil {
 			ctx.JSON(404, err.Error())
 			return
@@ -395,29 +419,15 @@ func RTGetInfo(ctx *Context) {
 
 		//get only one device info
 	} else {
-		devstats := GetDevStats()
+		devstats := agent.GetDevStats()
 		ctx.JSON(200, &devstats)
 	}
 	return
 }
 
-type RInfo struct {
-	InstanceID string
-	Version    string
-	Commit     string
-	Branch     string
-	BuildStamp string
-}
-
 //RTGetVersion xx
 func RTGetVersion(ctx *Context) {
-	info := &RInfo{
-		InstanceID: cfg.General.InstanceID,
-		Version:    version,
-		Commit:     commit,
-		Branch:     branch,
-		BuildStamp: buildstamp,
-	}
+	info := agent.GetRInfo()
 	ctx.JSON(200, &info)
 }
 
@@ -427,7 +437,7 @@ func RTGetVersion(ctx *Context) {
 
 // GetSNMPDevices Return snmpdevice list to frontend
 func GetSNMPDevices(ctx *Context) {
-	devcfgarray, err := cfg.Database.GetSnmpDeviceCfgArray("")
+	devcfgarray, err := agent.MainConfig.Database.GetSnmpDeviceCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Devices :%+s", err)
@@ -438,9 +448,9 @@ func GetSNMPDevices(ctx *Context) {
 }
 
 // AddSNMPDevice Insert new snmpdevice to de internal BBDD --pending--
-func AddSNMPDevice(ctx *Context, dev SnmpDeviceCfg) {
+func AddSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	log.Printf("ADDING DEVICE %+v", dev)
-	affected, err := cfg.Database.AddSnmpDeviceCfg(dev)
+	affected, err := agent.MainConfig.Database.AddSnmpDeviceCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert for device %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -451,10 +461,10 @@ func AddSNMPDevice(ctx *Context, dev SnmpDeviceCfg) {
 }
 
 // UpdateSNMPDevice --pending--
-func UpdateSNMPDevice(ctx *Context, dev SnmpDeviceCfg) {
+func UpdateSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
-	affected, err := cfg.Database.UpdateSnmpDeviceCfg(id, dev)
+	affected, err := agent.MainConfig.Database.UpdateSnmpDeviceCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update for device %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -468,7 +478,7 @@ func UpdateSNMPDevice(ctx *Context, dev SnmpDeviceCfg) {
 func DeleteSNMPDevice(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
-	affected, err := cfg.Database.DelSnmpDeviceCfg(id)
+	affected, err := agent.MainConfig.Database.DelSnmpDeviceCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete1 for device %s  , affected : %+v , error: %s", id, affected, err)
 		ctx.JSON(404, err.Error())
@@ -480,7 +490,7 @@ func DeleteSNMPDevice(ctx *Context) {
 //GetSNMPDeviceByID --pending--
 func GetSNMPDeviceByID(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := cfg.Database.GetSnmpDeviceCfgByID(id)
+	dev, err := agent.MainConfig.Database.GetSnmpDeviceCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Device  for device %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -492,7 +502,7 @@ func GetSNMPDeviceByID(ctx *Context) {
 //GetSNMPDevicesAffectOnDel --pending--
 func GetSNMPDevicesAffectOnDel(ctx *Context) {
 	id := ctx.Params(":id")
-	obarray, err := cfg.Database.GeSnmpDeviceCfgAffectOnDel(id)
+	obarray, err := agent.MainConfig.Database.GeSnmpDeviceCfgAffectOnDel(id)
 	if err != nil {
 		log.Warningf("Error on get object array for SNMP metrics %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -507,7 +517,7 @@ func GetSNMPDevicesAffectOnDel(ctx *Context) {
 
 // GetMetrics Return metrics list to frontend
 func GetMetrics(ctx *Context) {
-	cfgarray, err := cfg.Database.GetSnmpMetricCfgArray("")
+	cfgarray, err := agent.MainConfig.Database.GetSnmpMetricCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Metrics :%+s", err)
@@ -518,9 +528,9 @@ func GetMetrics(ctx *Context) {
 }
 
 // AddMetric Insert new metric to de internal BBDD --pending--
-func AddMetric(ctx *Context, dev SnmpMetricCfg) {
+func AddMetric(ctx *Context, dev config.SnmpMetricCfg) {
 	log.Printf("ADDING Metric %+v", dev)
-	affected, err := cfg.Database.AddSnmpMetricCfg(dev)
+	affected, err := agent.MainConfig.Database.AddSnmpMetricCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Metric %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -531,10 +541,10 @@ func AddMetric(ctx *Context, dev SnmpMetricCfg) {
 }
 
 // UpdateMetric --pending--
-func UpdateMetric(ctx *Context, dev SnmpMetricCfg) {
+func UpdateMetric(ctx *Context, dev config.SnmpMetricCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
-	affected, err := cfg.Database.UpdateSnmpMetricCfg(id, dev)
+	affected, err := agent.MainConfig.Database.UpdateSnmpMetricCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Metric %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -548,7 +558,7 @@ func UpdateMetric(ctx *Context, dev SnmpMetricCfg) {
 func DeleteMetric(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
-	affected, err := cfg.Database.DelSnmpMetricCfg(id)
+	affected, err := agent.MainConfig.Database.DelSnmpMetricCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete Metric %s  , affected : %+v , error: %s", id, affected, err)
 		ctx.JSON(404, err.Error())
@@ -560,7 +570,7 @@ func DeleteMetric(ctx *Context) {
 //GetMetricByID --pending--
 func GetMetricByID(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := cfg.Database.GetSnmpMetricCfgByID(id)
+	dev, err := agent.MainConfig.Database.GetSnmpMetricCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Metric  for device %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -572,7 +582,7 @@ func GetMetricByID(ctx *Context) {
 //GetMetricsAffectOnDel --pending--
 func GetMetricsAffectOnDel(ctx *Context) {
 	id := ctx.Params(":id")
-	obarray, err := cfg.Database.GetSnmpMetricCfgAffectOnDel(id)
+	obarray, err := agent.MainConfig.Database.GetSnmpMetricCfgAffectOnDel(id)
 	if err != nil {
 		log.Warningf("Error on get object array for SNMP metrics %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -587,7 +597,7 @@ func GetMetricsAffectOnDel(ctx *Context) {
 
 // GetMeas Return measurements list to frontend
 func GetMeas(ctx *Context) {
-	cfgarray, err := cfg.Database.GetInfluxMeasurementCfgArray("")
+	cfgarray, err := agent.MainConfig.Database.GetMeasurementCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Influx Measurements :%+s", err)
@@ -598,9 +608,9 @@ func GetMeas(ctx *Context) {
 }
 
 // AddMeas Insert new measurement to de internal BBDD --pending--
-func AddMeas(ctx *Context, dev InfluxMeasurementCfg) {
+func AddMeas(ctx *Context, dev config.MeasurementCfg) {
 	log.Printf("ADDING Measurement %+v", dev)
-	affected, err := cfg.Database.AddInfluxMeasurementCfg(dev)
+	affected, err := agent.MainConfig.Database.AddMeasurementCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Measurement %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -611,10 +621,10 @@ func AddMeas(ctx *Context, dev InfluxMeasurementCfg) {
 }
 
 // UpdateMeas --pending--
-func UpdateMeas(ctx *Context, dev InfluxMeasurementCfg) {
+func UpdateMeas(ctx *Context, dev config.MeasurementCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
-	affected, err := cfg.Database.UpdateInfluxMeasurementCfg(id, dev)
+	affected, err := agent.MainConfig.Database.UpdateMeasurementCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Measurement %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -628,7 +638,7 @@ func UpdateMeas(ctx *Context, dev InfluxMeasurementCfg) {
 func DeleteMeas(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
-	affected, err := cfg.Database.DelInfluxMeasurementCfg(id)
+	affected, err := agent.MainConfig.Database.DelMeasurementCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete Measurement %s  , affected : %+v , error: %s", id, affected, err)
 		ctx.JSON(404, err.Error())
@@ -640,7 +650,7 @@ func DeleteMeas(ctx *Context) {
 //GetMeasByID --pending--
 func GetMeasByID(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := cfg.Database.GetInfluxMeasurementCfgByID(id)
+	dev, err := agent.MainConfig.Database.GetMeasurementCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Measurement  for device %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -652,7 +662,7 @@ func GetMeasByID(ctx *Context) {
 //GetMeasAffectOnDel --pending--
 func GetMeasAffectOnDel(ctx *Context) {
 	id := ctx.Params(":id")
-	obarray, err := cfg.Database.GetInfluxMeasurementCfgAffectOnDel(id)
+	obarray, err := agent.MainConfig.Database.GetMeasurementCfgAffectOnDel(id)
 	if err != nil {
 		log.Warningf("Error on get object array for Measurements %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -667,7 +677,7 @@ func GetMeasAffectOnDel(ctx *Context) {
 
 // GetMeasGroup Return measurements groups list to frontend
 func GetMeasGroup(ctx *Context) {
-	cfgarray, err := cfg.Database.GetMGroupsCfgArray("")
+	cfgarray, err := agent.MainConfig.Database.GetMGroupsCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Measurement Group :%+s", err)
@@ -678,9 +688,9 @@ func GetMeasGroup(ctx *Context) {
 }
 
 // AddMeasGroup Insert new measurement groups to de internal BBDD --pending--
-func AddMeasGroup(ctx *Context, dev MGroupsCfg) {
+func AddMeasGroup(ctx *Context, dev config.MGroupsCfg) {
 	log.Printf("ADDING Measurement Group %+v", dev)
-	affected, err := cfg.Database.AddMGroupsCfg(dev)
+	affected, err := agent.MainConfig.Database.AddMGroupsCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Measurement Group %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -691,10 +701,10 @@ func AddMeasGroup(ctx *Context, dev MGroupsCfg) {
 }
 
 // UpdateMeasGroup --pending--
-func UpdateMeasGroup(ctx *Context, dev MGroupsCfg) {
+func UpdateMeasGroup(ctx *Context, dev config.MGroupsCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
-	affected, err := cfg.Database.UpdateMGroupsCfg(id, dev)
+	affected, err := agent.MainConfig.Database.UpdateMGroupsCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Measurement Group %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -708,7 +718,7 @@ func UpdateMeasGroup(ctx *Context, dev MGroupsCfg) {
 func DeleteMeasGroup(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
-	affected, err := cfg.Database.DelMGroupsCfg(id)
+	affected, err := agent.MainConfig.Database.DelMGroupsCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete Measurement Group %s  , affected : %+v , error: %s", id, affected, err)
 		ctx.JSON(404, err.Error())
@@ -720,7 +730,7 @@ func DeleteMeasGroup(ctx *Context) {
 //GetMeasGroupByID --pending--
 func GetMeasGroupByID(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := cfg.Database.GetMGroupsCfgByID(id)
+	dev, err := agent.MainConfig.Database.GetMGroupsCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Measurement Group for device %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -732,7 +742,7 @@ func GetMeasGroupByID(ctx *Context) {
 //GetMeasGroupsAffectOnDel --pending--
 func GetMeasGroupsAffectOnDel(ctx *Context) {
 	id := ctx.Params(":id")
-	obarray, err := cfg.Database.GetMGroupsCfgAffectOnDel(id)
+	obarray, err := agent.MainConfig.Database.GetMGroupsCfgAffectOnDel(id)
 	if err != nil {
 		log.Warningf("Error on get object array for Measurement Groups %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -747,7 +757,7 @@ func GetMeasGroupsAffectOnDel(ctx *Context) {
 
 // GetMeasFilter Return measurements groups list to frontend
 func GetMeasFilter(ctx *Context) {
-	cfgarray, err := cfg.Database.GetMeasFilterCfgArray("")
+	cfgarray, err := agent.MainConfig.Database.GetMeasFilterCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Measurement Filter :%+s", err)
@@ -758,9 +768,9 @@ func GetMeasFilter(ctx *Context) {
 }
 
 // AddMeasFilter Insert new measurement groups to de internal BBDD --pending--
-func AddMeasFilter(ctx *Context, dev MeasFilterCfg) {
+func AddMeasFilter(ctx *Context, dev config.MeasFilterCfg) {
 	log.Printf("ADDING measurement Filter %+v", dev)
-	affected, err := cfg.Database.AddMeasFilterCfg(dev)
+	affected, err := agent.MainConfig.Database.AddMeasFilterCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -771,10 +781,10 @@ func AddMeasFilter(ctx *Context, dev MeasFilterCfg) {
 }
 
 // UpdateMeasFilter --pending--
-func UpdateMeasFilter(ctx *Context, dev MeasFilterCfg) {
+func UpdateMeasFilter(ctx *Context, dev config.MeasFilterCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
-	affected, err := cfg.Database.UpdateMeasFilterCfg(id, dev)
+	affected, err := agent.MainConfig.Database.UpdateMeasFilterCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -788,7 +798,7 @@ func UpdateMeasFilter(ctx *Context, dev MeasFilterCfg) {
 func DeleteMeasFilter(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
-	affected, err := cfg.Database.DelMeasFilterCfg(id)
+	affected, err := agent.MainConfig.Database.DelMeasFilterCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete Measurement Filter %s  , affected : %+v , error: %s", id, affected, err)
 		ctx.JSON(404, err.Error())
@@ -800,7 +810,7 @@ func DeleteMeasFilter(ctx *Context) {
 //GetMeasFilterByID --pending--
 func GetMeasFilterByID(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := cfg.Database.GetMeasFilterCfgByID(id)
+	dev, err := agent.MainConfig.Database.GetMeasFilterCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Measurement Filter  for device %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -812,7 +822,7 @@ func GetMeasFilterByID(ctx *Context) {
 //GetMeasFiltersAffectOnDel --pending--
 func GetMeasFiltersAffectOnDel(ctx *Context) {
 	id := ctx.Params(":id")
-	obarray, err := cfg.Database.GetMeasFilterCfgAffectOnDel(id)
+	obarray, err := agent.MainConfig.Database.GetMeasFilterCfgAffectOnDel(id)
 	if err != nil {
 		log.Warningf("Error on get object array for Measurement filters %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -827,7 +837,7 @@ func GetMeasFiltersAffectOnDel(ctx *Context) {
 
 // GetInfluxServer Return Server Array
 func GetInfluxServer(ctx *Context) {
-	cfgarray, err := cfg.Database.GetInfluxCfgArray("")
+	cfgarray, err := agent.MainConfig.Database.GetInfluxCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get Influx db :%+s", err)
@@ -838,9 +848,9 @@ func GetInfluxServer(ctx *Context) {
 }
 
 // AddInfluxServer Insert new measurement groups to de internal BBDD --pending--
-func AddInfluxServer(ctx *Context, dev InfluxCfg) {
+func AddInfluxServer(ctx *Context, dev config.InfluxCfg) {
 	log.Printf("ADDING Influx Backend %+v", dev)
-	affected, err := cfg.Database.AddInfluxCfg(dev)
+	affected, err := agent.MainConfig.Database.AddInfluxCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert new Backend %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
@@ -851,10 +861,10 @@ func AddInfluxServer(ctx *Context, dev InfluxCfg) {
 }
 
 // UpdateInfluxServer --pending--
-func UpdateInfluxServer(ctx *Context, dev InfluxCfg) {
+func UpdateInfluxServer(ctx *Context, dev config.InfluxCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
-	affected, err := cfg.Database.UpdateInfluxCfg(id, dev)
+	affected, err := agent.MainConfig.Database.UpdateInfluxCfg(id, dev)
 	if err != nil {
 		log.Warningf("Error on update Influx db %s  , affected : %+v , error: %s", dev.ID, affected, err)
 	} else {
@@ -867,7 +877,7 @@ func UpdateInfluxServer(ctx *Context, dev InfluxCfg) {
 func DeleteInfluxServer(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
-	affected, err := cfg.Database.DelInfluxCfg(id)
+	affected, err := agent.MainConfig.Database.DelInfluxCfg(id)
 	if err != nil {
 		log.Warningf("Error on delete influx db %s  , affected : %+v , error: %s", id, affected, err)
 		ctx.JSON(404, err.Error())
@@ -879,7 +889,7 @@ func DeleteInfluxServer(ctx *Context) {
 //GetInfluxServerByID --pending--
 func GetInfluxServerByID(ctx *Context) {
 	id := ctx.Params(":id")
-	dev, err := cfg.Database.GetInfluxCfgByID(id)
+	dev, err := agent.MainConfig.Database.GetInfluxCfgByID(id)
 	if err != nil {
 		log.Warningf("Error on get Influx db data for device %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -891,7 +901,7 @@ func GetInfluxServerByID(ctx *Context) {
 //GetInfluxAffectOnDel --pending--
 func GetInfluxAffectOnDel(ctx *Context) {
 	id := ctx.Params(":id")
-	obarray, err := cfg.Database.GetInfluxCfgAffectOnDel(id)
+	obarray, err := agent.MainConfig.Database.GetInfluxCfgAffectOnDel(id)
 	if err != nil {
 		log.Warningf("Error on get object array for influx device %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
@@ -905,8 +915,8 @@ func GetInfluxAffectOnDel(ctx *Context) {
 /****************/
 
 func myLoginHandler(ctx *Context, user UserLogin) {
-	//fmt.Printf("USER LOGIN: USER: +%#v (Config: %#v)", user, cfg.HTTP)
-	if user.UserName == cfg.HTTP.AdminUser && user.Password == cfg.HTTP.AdminPassword {
+	//fmt.Printf("USER LOGIN: USER: +%#v (Config: %#v)", user, confHTTP)
+	if user.UserName == confHTTP.AdminUser && user.Password == confHTTP.AdminPassword {
 		ctx.SignedInUser = user.UserName
 		ctx.IsSignedIn = true
 		ctx.Session.Set(SESS_KEY_USERID, user.UserName)

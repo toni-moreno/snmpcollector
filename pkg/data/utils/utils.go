@@ -1,11 +1,11 @@
-package main
+package utils
 
 import (
 //	"fmt"
 //	"strings"
 )
 
-func removeDuplicatesUnordered(elements []string) []string {
+func RemoveDuplicatesUnordered(elements []string) []string {
 	encountered := map[string]bool{}
 
 	// Create a map of all unique elements.
@@ -52,7 +52,7 @@ func diffKeysInMap(X, Y map[string]string) map[string]string {
 	return diff
 }
 
-func diffKeyValuesInMap(X, Y map[string]string) map[string]string {
+func DiffKeyValuesInMap(X, Y map[string]string) map[string]string {
 
 	diff := map[string]string{}
 

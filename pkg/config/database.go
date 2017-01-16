@@ -1,161 +1,16 @@
-package main
+package config
 
 import (
 	"fmt"
+	// _ needed to mysql
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
+	// _ needed to sqlite3
 	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"sync/atomic"
 )
-
-// InfluxCfg is the main configuration for any InfluxDB TSDB
-type InfluxCfg struct {
-	ID          string `xorm:"'id' unique"`
-	Host        string `xorm:"host"`
-	Port        int    `xorm:"port"`
-	DB          string `xorm:"db"`
-	User        string `xorm:"user"`
-	Password    string `xorm:"password"`
-	Retention   string `xorm:"retention"`
-	Timeout     int    `xorm:"'timeout' default 30"`
-	UserAgent   string `xorm:"useragent"`
-	Description string `xorm:"description"`
-}
-
-// SnmpDeviceCfg contains all snmp related device definitions
-type SnmpDeviceCfg struct {
-	ID string `xorm:"'id' unique"`
-	//snmp connection config
-	Host    string `xorm:"host"`
-	Port    int    `xorm:"port"`
-	Retries int    `xorm:"retries"`
-	Timeout int    `xorm:"timeout"`
-	Repeat  int    `xorm:"repeat"`
-	Active  bool   `xorm:"'active' default 1"`
-	//snmp auth  config
-	SnmpVersion string `xorm:"snmpversion"`
-	Community   string `xorm:"community"`
-	V3SecLevel  string `xorm:"v3seclevel"`
-	V3AuthUser  string `xorm:"v3authuser"`
-	V3AuthPass  string `xorm:"v3authpass"`
-	V3AuthProt  string `xorm:"v3authprot"`
-	V3PrivPass  string `xorm:"v3privpass"`
-	V3PrivProt  string `xorm:"v3privprot"`
-	//snmp workarround for some devices
-	DisableBulk bool `xorm:"'disablebulk' default 0"`
-	//snmp runtime config
-	Freq          int `xorm:"'freq' default 60"`
-	UpdateFltFreq int `xorm:"'update_flt_freq' default 60"`
-
-	OutDB    string `xorm:"outdb"`
-	LogLevel string `xorm:"loglevel"`
-	LogFile  string `xorm:"logfile"`
-
-	SnmpDebug bool `xorm:"snmpdebug"`
-	//influx tags
-	DeviceTagName  string   `xorm:"devicetagname"`
-	DeviceTagValue string   `xorm:"devicetagvalue"`
-	ExtraTags      []string `xorm:"extra-tags"`
-	Description    string   `xorm:"description"`
-
-	//Filters for measurements
-	MeasurementGroups []string `xorm:"-"`
-	MeasFilters       []string `xorm:"-"`
-}
-
-//SnmpMetricCfg Metric config
-type SnmpMetricCfg struct {
-	ID          string  `xorm:"'id' unique"` //name of the key in the config array
-	FieldName   string  `xorm:"field_name"`
-	Description string  `xorm:"description"`
-	BaseOID     string  `xorm:"baseoid"`
-	DataSrcType string  `xorm:"datasrctype"`
-	GetRate     bool    `xorm:"getrate"` //ony Valid with COUNTERS
-	Scale       float64 `xorm:"scale"`
-	Shift       float64 `xorm:"shift"`
-	IsTag       bool    `xorm:"'istag' default 0"`
-	ExtraData   string  `xorm:"extradata"` //Only Valid with STRINGPARSER and STRINGEVAL
-}
-
-//InfluxMeasurementCfg the measurement configuration
-type InfluxMeasurementCfg struct {
-	ID   string `xorm:"'id' unique"`
-	Name string `xorm:"name"`
-
-	GetMode        string `xorm:"getmode"`  //value ,indexed  (direct tag), indexed_it ( indirect_tag)
-	IndexOID       string `xorm:"indexoid"` //only valid if Indexed (direct or indirect)
-	TagOID         string `xorm:"tagoid"`   //only valid if inderecta TAG indexeded
-	IndexTag       string `xorm:"indextag"`
-	IndexTagFormat string `xorm:"indextagformat"`
-	IndexAsValue   bool   `xorm:"'indexasvalue' default 0"`
-	Fields         []struct {
-		ID     string
-		Report bool
-	} `xorm:"-"` //Got from MeasurementFieldCfg table
-	fieldMetric []*SnmpMetricCfg `xorm:"-"`
-	evalMetric  []*SnmpMetricCfg `xorm:"-"`
-	Description string           `xorm:"description"`
-}
-
-//MeasurementFieldCfg the metrics contained on each measurement (to initialize on the fieldMetric array)
-type MeasurementFieldCfg struct {
-	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
-	IDMetricCfg      string `xorm:"id_metric_cfg"`
-	Report           bool   `xorm:"'report' default 1"`
-}
-
-//MeasFilterCfg the filter configuration
-type MeasFilterCfg struct {
-	ID               string `xorm:"'id' unique"`
-	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
-	FType            string `xorm:"filter_type"`  //file/OIDCondition
-	FileName         string `xorm:"file_name"`    //only vaid if file
-	EnableAlias      bool   `xorm:"enable_alias"` //only valid if file
-	OIDCond          string `xorm:"cond_oid"`
-	CondType         string `xorm:"cond_type"`
-	CondValue        string `xorm:"cond_value"`
-	Description      string `xorm:"description"`
-}
-
-//SnmpDevFilters filters to use with indexed measurement
-type SnmpDevFilters struct {
-	IDSnmpDev string `xorm:"id_snmpdev"`
-	IDFilter  string `xorm:"id_filter"`
-}
-
-//MGroupsCfg measurement groups to asign to devices
-type MGroupsCfg struct {
-	ID           string   `xorm:"'id' unique"`
-	Measurements []string `xorm:"-"`
-	Description  string   `xorm:"description"`
-}
-
-//MGroupsMeasurements measurements contained on each Measurement Group
-type MGroupsMeasurements struct {
-	IDMGroupCfg      string `xorm:"id_mgroup_cfg"`
-	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
-}
-
-//SnmpDevMGroups Mgroups defined on each SnmpDevice
-type SnmpDevMGroups struct {
-	IDSnmpDev   string `xorm:"id_snmpdev"`
-	IDMGroupCfg string `xorm:"id_mgroup_cfg"`
-}
-
-//DatabaseCfg de configuration for the database
-type DatabaseCfg struct {
-	Type       string `toml:"type"`
-	Host       string `toml:"host"`
-	Name       string `toml:"name"`
-	User       string `toml:"user"`
-	Pass       string `toml:"password"`
-	SQLLogFile string `toml:"sqllogfile"`
-	Debug      string `toml:"debug"`
-	x          *xorm.Engine
-	numChanges int64 `toml:"-"`
-}
 
 func (dbc *DatabaseCfg) resetChanges() {
 	atomic.StoreInt64(&dbc.numChanges, 0)
@@ -176,7 +31,7 @@ type DbObjAction struct {
 }
 
 //InitDB initialize de BD configuration
-func InitDB(dbc *DatabaseCfg) {
+func (dbc *DatabaseCfg) InitDB() {
 	// Create ORM engine and database
 	var err error
 	var dbtype string
@@ -223,8 +78,8 @@ func InitDB(dbc *DatabaseCfg) {
 	if err = dbc.x.Sync(new(SnmpMetricCfg)); err != nil {
 		log.Fatalf("Fail to sync database SnmpMetricCfg: %v\n", err)
 	}
-	if err = dbc.x.Sync(new(InfluxMeasurementCfg)); err != nil {
-		log.Fatalf("Fail to sync database InfluxMeasurementCfg: %v\n", err)
+	if err = dbc.x.Sync(new(MeasurementCfg)); err != nil {
+		log.Fatalf("Fail to sync database MeasurementCfg: %v\n", err)
 	}
 	if err = dbc.x.Sync(new(MeasFilterCfg)); err != nil {
 		log.Fatalf("Fail to sync database MeasurementFilterCfg : %v\n", err)
@@ -244,7 +99,12 @@ func InitDB(dbc *DatabaseCfg) {
 	if err = dbc.x.Sync(new(SnmpDevFilters)); err != nil {
 		log.Fatalf("Fail to sync database SnmpDevFilters: %v\n", err)
 	}
-
+	if err = dbc.x.Sync(new(CustomFilterCfg)); err != nil {
+		log.Fatalf("Fail to sync database CustomFilterCfg: %v\n", err)
+	}
+	if err = dbc.x.Sync(new(OidConditionCfg)); err != nil {
+		log.Fatalf("Fail to sync database CustomFilterCfg: %v\n", err)
+	}
 }
 
 /***************************
@@ -260,7 +120,7 @@ SNMP Metric
 
 /*GetSnmpMetricCfgByID get metric data by id*/
 func (dbc *DatabaseCfg) GetSnmpMetricCfgByID(id string) (SnmpMetricCfg, error) {
-	cfgarray, err := cfg.Database.GetSnmpMetricCfgArray("id='" + id + "'")
+	cfgarray, err := dbc.GetSnmpMetricCfgArray("id='" + id + "'")
 	if err != nil {
 		return SnmpMetricCfg{}, err
 	}
@@ -363,7 +223,7 @@ func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64
 	var affecteddev, affected int64
 	var err error
 	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
-	_, err = NewSnmpMetric(&dev)
+	err = dev.Init()
 	if err != nil {
 		return 0, err
 	}
@@ -417,31 +277,31 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 
 /***************************
 	MEASUREMENTS
-	-GetInfluxMeasurementCfgByID(struct)
-	-GetInfluxMeasurementCfgMap (map - for interna config use
-	-GetInfluxMeasurementCfgArray(Array - for web ui use )
-	-AddInfluxMeasurementCfg
-	-DelInfluxMeasurementCfg
-	-UpdateInfluxMeasurementCfg
-  -GetInfluxMeasurementCfgAffectOnDel
+	-GetMeasurementCfgByID(struct)
+	-GetMeasurementCfgMap (map - for interna config use
+	-GetMeasurementCfgArray(Array - for web ui use )
+	-AddMeasurementCfg
+	-DelMeasurementCfg
+	-UpdateMeasurementCfg
+  -GetMeasurementCfgAffectOnDel
 ***********************************/
 
-/*GetInfluxMeasurementCfgByID get metric data by id*/
-func (dbc *DatabaseCfg) GetInfluxMeasurementCfgByID(id string) (InfluxMeasurementCfg, error) {
-	cfgarray, err := cfg.Database.GetInfluxMeasurementCfgArray("id='" + id + "'")
+/*GetMeasurementCfgByID get metric data by id*/
+func (dbc *DatabaseCfg) GetMeasurementCfgByID(id string) (MeasurementCfg, error) {
+	cfgarray, err := dbc.GetMeasurementCfgArray("id='" + id + "'")
 	if err != nil {
-		return InfluxMeasurementCfg{}, err
+		return MeasurementCfg{}, err
 	}
 	if len(cfgarray) > 1 {
-		return InfluxMeasurementCfg{}, fmt.Errorf("Error %d results on get InfluxMeasurementCfg by id %s", len(cfgarray), id)
+		return MeasurementCfg{}, fmt.Errorf("Error %d results on get MeasurementCfg by id %s", len(cfgarray), id)
 	}
 	return *cfgarray[0], nil
 }
 
-/*GetInfluxMeasurementCfgMap  return data in map format*/
-func (dbc *DatabaseCfg) GetInfluxMeasurementCfgMap(filter string) (map[string]*InfluxMeasurementCfg, error) {
-	cfgarray, err := dbc.GetInfluxMeasurementCfgArray(filter)
-	cfgmap := make(map[string]*InfluxMeasurementCfg)
+/*GetMeasurementCfgMap  return data in map format*/
+func (dbc *DatabaseCfg) GetMeasurementCfgMap(filter string) (map[string]*MeasurementCfg, error) {
+	cfgarray, err := dbc.GetMeasurementCfgArray(filter)
+	cfgmap := make(map[string]*MeasurementCfg)
 	for _, val := range cfgarray {
 		cfgmap[val.ID] = val
 		log.Debugf("%+v", *val)
@@ -449,19 +309,19 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgMap(filter string) (map[string]*I
 	return cfgmap, err
 }
 
-/*GetInfluxMeasurementCfgArray generate an array of measurements with all its information */
-func (dbc *DatabaseCfg) GetInfluxMeasurementCfgArray(filter string) ([]*InfluxMeasurementCfg, error) {
+/*GetMeasurementCfgArray generate an array of measurements with all its information */
+func (dbc *DatabaseCfg) GetMeasurementCfgArray(filter string) ([]*MeasurementCfg, error) {
 	var err error
-	var devices []*InfluxMeasurementCfg
+	var devices []*MeasurementCfg
 	//Get Only data for selected measurements
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&devices); err != nil {
-			log.Warnf("Fail to get InfluxMeasurementCfg  data filteter with %s : %v\n", filter, err)
+			log.Warnf("Fail to get MeasurementCfg  data filteter with %s : %v\n", filter, err)
 			return nil, err
 		}
 	} else {
 		if err = dbc.x.Find(&devices); err != nil {
-			log.Warnf("Fail to get InfluxMeasurementCfg   data: %v\n", err)
+			log.Warnf("Fail to get MeasurementCfg   data: %v\n", err)
 			return nil, err
 		}
 	}
@@ -490,8 +350,8 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgArray(filter string) ([]*InfluxMe
 	return devices, nil
 }
 
-/*AddInfluxMeasurementCfg for adding new Metric*/
-func (dbc *DatabaseCfg) AddInfluxMeasurementCfg(dev InfluxMeasurementCfg) (int64, error) {
+/*AddMeasurementCfg for adding new Metric*/
+func (dbc *DatabaseCfg) AddMeasurementCfg(dev MeasurementCfg) (int64, error) {
 	var err error
 	var affected, newmf int64
 
@@ -535,8 +395,8 @@ func (dbc *DatabaseCfg) AddInfluxMeasurementCfg(dev InfluxMeasurementCfg) (int64
 	return affected, nil
 }
 
-/*DelInfluxMeasurementCfg for deleting influx databases from ID*/
-func (dbc *DatabaseCfg) DelInfluxMeasurementCfg(id string) (int64, error) {
+/*DelMeasurementCfg for deleting influx databases from ID*/
+func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 	var affectedfl, affectedmg, affectedft, affected int64
 	var err error
 
@@ -561,7 +421,7 @@ func (dbc *DatabaseCfg) DelInfluxMeasurementCfg(id string) (int64, error) {
 		return 0, fmt.Errorf("Error on Update FilterMeasurement on with id: %s, error: %s", id, err)
 	}
 
-	affected, err = session.Where("id='" + id + "'").Delete(&InfluxMeasurementCfg{})
+	affected, err = session.Where("id='" + id + "'").Delete(&MeasurementCfg{})
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -576,8 +436,8 @@ func (dbc *DatabaseCfg) DelInfluxMeasurementCfg(id string) (int64, error) {
 	return affected, nil
 }
 
-/*UpdateInfluxMeasurementCfg for adding new influxdb*/
-func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurementCfg) (int64, error) {
+/*UpdateMeasurementCfg for adding new influxdb*/
+func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int64, error) {
 	var affecteddev, newmf, affected int64
 	var err error
 	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
@@ -644,8 +504,8 @@ func (dbc *DatabaseCfg) UpdateInfluxMeasurementCfg(id string, dev InfluxMeasurem
 	return affected, nil
 }
 
-/*GetInfluxMeasurementCfgAffectOnDel for deleting devices from ID*/
-func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjAction, error) {
+/*GetMeasurementCfgAffectOnDel for deleting devices from ID*/
+func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction, error) {
 	var mf []*MeasurementFieldCfg
 	var mg []*MGroupsMeasurements
 	var obj []*DbObjAction
@@ -690,7 +550,7 @@ func (dbc *DatabaseCfg) GetInfluxMeasurementCfgAffectOnDel(id string) ([]*DbObjA
 
 /*GetMeasFilterCfgByID get metric data by id*/
 func (dbc *DatabaseCfg) GetMeasFilterCfgByID(id string) (MeasFilterCfg, error) {
-	cfgarray, err := cfg.Database.GetMeasFilterCfgArray("id='" + id + "'")
+	cfgarray, err := dbc.GetMeasFilterCfgArray("id='" + id + "'")
 	if err != nil {
 		return MeasFilterCfg{}, err
 	}
@@ -846,7 +706,7 @@ MEASUREMENT GROUPS
 
 /*GetMGroupsCfgByID get metric data by id*/
 func (dbc *DatabaseCfg) GetMGroupsCfgByID(id string) (MGroupsCfg, error) {
-	cfgarray, err := cfg.Database.GetMGroupsCfgArray("id='" + id + "'")
+	cfgarray, err := dbc.GetMGroupsCfgArray("id='" + id + "'")
 	if err != nil {
 		return MGroupsCfg{}, err
 	}
@@ -1054,7 +914,7 @@ func (dbc *DatabaseCfg) GetMGroupsCfgAffectOnDel(id string) ([]*DbObjAction, err
 
 /*GetSnmpDeviceCfgByID get device data by id*/
 func (dbc *DatabaseCfg) GetSnmpDeviceCfgByID(id string) (SnmpDeviceCfg, error) {
-	devcfgarray, err := cfg.Database.GetSnmpDeviceCfgArray("id='" + id + "'")
+	devcfgarray, err := dbc.GetSnmpDeviceCfgArray("id='" + id + "'")
 	if err != nil {
 		return SnmpDeviceCfg{}, err
 	}
@@ -1281,7 +1141,7 @@ func (dbc *DatabaseCfg) GeSnmpDeviceCfgAffectOnDel(id string) ([]*DbObjAction, e
 
 /*GetInfluxCfgByID get device data by id*/
 func (dbc *DatabaseCfg) GetInfluxCfgByID(id string) (InfluxCfg, error) {
-	cfgarray, err := cfg.Database.GetInfluxCfgArray("id='" + id + "'")
+	cfgarray, err := dbc.GetInfluxCfgArray("id='" + id + "'")
 	if err != nil {
 		return InfluxCfg{}, err
 	}
@@ -1423,8 +1283,8 @@ func (dbc *DatabaseCfg) GetInfluxCfgAffectOnDel(id string) ([]*DbObjAction, erro
 	return obj, nil
 }
 
-//LoadConfig get data from database
-func (dbc *DatabaseCfg) LoadConfig() {
+//LoadDbConfig get data from database
+func (dbc *DatabaseCfg) LoadDbConfig(cfg *SQLConfig) {
 	var err error
 
 	//Load Influxdb databases
@@ -1440,7 +1300,7 @@ func (dbc *DatabaseCfg) LoadConfig() {
 	}
 
 	//Load Measurements
-	cfg.Measurements, err = dbc.GetInfluxMeasurementCfgMap("")
+	cfg.Measurements, err = dbc.GetMeasurementCfgMap("")
 	if err != nil {
 		log.Warningf("Some errors on get Measurements  :%v", err)
 	}

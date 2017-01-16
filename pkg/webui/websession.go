@@ -1,4 +1,4 @@
-package main
+package webui
 
 import (
 	"github.com/go-macaron/session"

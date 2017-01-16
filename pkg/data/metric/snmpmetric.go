@@ -1,82 +1,21 @@
-package main
+package metric
 
 import (
-	"errors"
 	"fmt"
 	"github.com/Knetic/govaluate"
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"math"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 )
 
-/*
-3.- Check minimal data is set  (pending)
-name, BaseOID BaseOID begining with "."
-fieldname != null
-*/
-// Init initialize metrics
-func (m *SnmpMetricCfg) Init() error {
-	//valIDate config values
-	if len(m.FieldName) == 0 {
-		return errors.New("FieldName not set in metric Config " + m.ID)
-	}
-	if len(m.BaseOID) == 0 && m.DataSrcType != "STRINGEVAL" {
-		return fmt.Errorf("BaseOid not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
-	}
-	//https://tools.ietf.org/html/rfc2578 (SMIv2)
-	//https://tools.ietf.org/html/rfc2579 (Textual Conventions for SMIv2)
-	//https://tools.ietf.org/html/rfc2851 (Textual Conventions for Internet Network Address)
-	switch m.DataSrcType {
-	case "INTEGER", "Integer32":
-	case "Gauge32":
-	case "UInteger32", "Unsigned32":
-	case "Counter32", "COUNTER32": //raw and cooked increment of Counter32
-	case "Counter64", "COUNTER64": //raw and Cooked increment of Counter34
-	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
-	case "OCTETSTRING":
-	case "HWADDR":
-	case "IpAddress":
-	case "STRINGPARSER":
-	case "STRINGEVAL":
-	default:
-		return errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
-	}
-	if m.DataSrcType != "STRINGEVAL" && !strings.HasPrefix(m.BaseOID, ".") {
-		return errors.New("Bad BaseOid format:" + m.BaseOID + " in metric Config " + m.ID)
-	}
-	if m.DataSrcType == "STRINGPARSER" && len(m.ExtraData) == 0 {
-		return errors.New("STRINGPARSER type requires extradata to work " + m.ID)
-	}
-	if m.DataSrcType == "STRINGEVAL" && len(m.ExtraData) == 0 {
-		return fmt.Errorf("ExtraData not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
-	}
-	return nil
-}
-
-func (m SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
-	if m.DataSrcType != "STRINGEVAL" {
-		return nil
-	}
-	expression, err := govaluate.NewEvaluableExpression(m.ExtraData)
-	if err != nil {
-		//log.Errorf("Error on initialice STRINGEVAL on metric %s evaluation : %s : ERROR : %s", m.ID, m.ExtraData, err)
-		return err
-	}
-	_, err = expression.Evaluate(parameters)
-	if err != nil {
-		//log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", m.ID, m.ExtraData, err)
-		return err
-	}
-	return nil
-}
-
 //SnmpMetric type to metric runtime
 type SnmpMetric struct {
-	cfg         *SnmpMetricCfg
+	cfg         *config.SnmpMetricCfg
 	ID          string
 	CookedValue interface{}
 	CurValue    interface{}
@@ -84,9 +23,9 @@ type SnmpMetric struct {
 	CurTime     time.Time
 	LastTime    time.Time
 	ElapsedTime float64
-	Compute     func(arg ...interface{}) `json:"-"`
-	Scale       func()                   `json:"-"`
-	setRawData  func(pdu gosnmp.SnmpPDU, now time.Time)
+	Compute     func(arg ...interface{})                `json:"-"`
+	Scale       func()                                  `json:"-"`
+	SetRawData  func(pdu gosnmp.SnmpPDU, now time.Time) `json:"-"`
 	RealOID     string
 	Report      bool //if false this metric won't be sent to the ouput buffer (is just taken as a coomputed input for other metrics)
 	//for STRINGPARSER
@@ -95,8 +34,28 @@ type SnmpMetric struct {
 	log  *logrus.Logger
 }
 
-// NewSnmpMetric constructor
-func NewSnmpMetric(c *SnmpMetricCfg) (*SnmpMetric, error) {
+// GetDataSrcType get needed data
+func (s *SnmpMetric) GetDataSrcType() string {
+	return s.cfg.DataSrcType
+}
+
+// PrintDebugCfg helps users get data about metric configuration
+func (s *SnmpMetric) PrintDebugCfg() {
+	s.log.Debugf("DEBUG METRIC  CONFIG %+v", s.cfg)
+}
+
+// IsTag needed to generate Influx measurements
+func (s *SnmpMetric) IsTag() bool {
+	return s.cfg.IsTag
+}
+
+// GetFieldName  needed to generate Influx measurements
+func (s *SnmpMetric) GetFieldName() string {
+	return s.cfg.FieldName
+}
+
+// New constructor
+func New(c *config.SnmpMetricCfg) (*SnmpMetric, error) {
 	metric := &SnmpMetric{}
 	err := metric.Init(c)
 	return metric, err
@@ -106,7 +65,7 @@ func (s *SnmpMetric) SetLogger(l *logrus.Logger) {
 	s.log = l
 }
 
-func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
+func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	if c == nil {
 		return fmt.Errorf("Error on initialice device, configuration struct is nil")
 	}
@@ -123,36 +82,36 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 	}
 	switch s.cfg.DataSrcType {
 	case "TIMETICKS": //Cooked TimeTicks
-		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			val := pduVal2Int64(pdu)
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			val := snmp.PduVal2Int64(pdu)
 			s.CookedValue = float64(val / 100) //now data in secoonds
 			s.CurTime = now
 			s.Scale()
 		}
 		//Signed Integers
 	case "INTEGER", "Integer32":
-		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			val := pduVal2Int64(pdu)
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			val := snmp.PduVal2Int64(pdu)
 			s.CookedValue = float64(val)
 			s.CurTime = now
 			s.Scale()
 		}
 		//Unsigned Integers
 	case "Counter32", "Gauge32", "Counter64", "TimeTicks", "UInteger32", "Unsigned32":
-		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			val := pduVal2UInt64(pdu)
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			val := snmp.PduVal2UInt64(pdu)
 			s.CookedValue = float64(val)
 			s.CurTime = now
 			s.Scale()
 		}
 	case "COUNTER32": //Increment computed
-		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			//first time only set values and reassign itself to the complete method this will avoi to send invalid data
-			val := pduVal2UInt64(pdu)
+			val := snmp.PduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
-			s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-				val := pduVal2UInt64(pdu)
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+				val := snmp.PduVal2UInt64(pdu)
 				s.LastTime = s.CurTime
 				s.LastValue = s.CurValue
 				s.CurValue = val
@@ -181,15 +140,15 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 			}
 		}
 	case "COUNTER64": //Increment computed
-		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			//log.Debugf("========================================>COUNTER64: first time :%s ", s.RealOID)
 			//first time only set values and reassign itself to the complete method
-			val := pduVal2UInt64(pdu)
+			val := snmp.PduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
-			s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				//log.Debugf("========================================>COUNTER64: the other time:%s", s.RealOID)
-				val := pduVal2UInt64(pdu)
+				val := snmp.PduVal2UInt64(pdu)
 				s.LastTime = s.CurTime
 				s.LastValue = s.CurValue
 				s.CurValue = val
@@ -220,18 +179,18 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 
 		}
 	case "OCTETSTRING":
-		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue = pduVal2str(pdu)
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			s.CookedValue = snmp.PduVal2str(pdu)
 			s.CurTime = now
 		}
 	case "IpAddress":
-		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue, _ = pduVal2IPaddr(pdu)
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			s.CookedValue, _ = snmp.PduVal2IPaddr(pdu)
 			s.CurTime = now
 		}
 	case "HWADDR":
-		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue, _ = pduVal2Hwaddr(pdu)
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			s.CookedValue, _ = snmp.PduVal2Hwaddr(pdu)
 			s.CurTime = now
 		}
 	case "STRINGPARSER":
@@ -242,8 +201,8 @@ func (s *SnmpMetric) Init(c *SnmpMetricCfg) error {
 		}
 		s.re = re
 		//set Process Data
-		s.setRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			str := pduVal2str(pdu)
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			str := snmp.PduVal2str(pdu)
 			retarray := s.re.FindStringSubmatch(str)
 			if len(retarray) < 2 {
 				s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] without capturing group", s.cfg.ID, s.cfg.ExtraData, str)

@@ -1,4 +1,4 @@
-package main
+package measurement
 
 import (
 	"errors"
@@ -13,138 +13,35 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/soniah/gosnmp"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
-func (mc *InfluxMeasurementCfg) CheckComputedMetric() error {
-	parameters := make(map[string]interface{})
-	log.Debugf("Building check parrameters array for index measurement %s", mc.ID)
-	parameters["NR"] = 1                   //Number of rows (like awk)
-	parameters["NF"] = len(mc.fieldMetric) //Number of fields ( like awk)
-	//getting all values to the array
-	for _, v := range mc.fieldMetric {
-		parameters[v.FieldName] = float64(1)
-	}
-	log.Debugf("PARAMETERS: %+v", parameters)
-	//compute Evalutated metrics
-	for _, v := range mc.evalMetric {
-		err := v.CheckEvalCfg(parameters)
-		if err != nil {
-			return fmt.Errorf("Error on metric %s evaluation ERROR : %s", v.ID, err)
-		}
-		parameters[v.FieldName] = float64(1)
-	}
-	return nil
-}
+var (
+	confDir string //Needed to get File Filters measurments
+)
 
-//Init initialize the measurement configuration
-func (mc *InfluxMeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error {
-	//mc.ID = name
-	//validate config values
-	if len(mc.Name) == 0 {
-		return errors.New("Name not set in measurement Config " + mc.ID)
-	}
-	if len(mc.Fields) == 0 {
-		return errors.New("No Fields added to measurement " + mc.ID)
-	}
-
-	switch mc.GetMode {
-	case "indexed", "indexed_it":
-		if len(mc.IndexOID) == 0 {
-			return errors.New("Indexed measurement with no IndexOID in measurement Config " + mc.ID)
-		}
-		if len(mc.IndexTag) == 0 {
-			return errors.New("Indexed measurement with no IndexTag configuredin measurement " + mc.ID)
-		}
-		if !strings.HasPrefix(mc.IndexOID, ".") {
-			return errors.New("Bad BaseOid format:" + mc.IndexOID + " in metric Config " + mc.ID)
-		}
-		if mc.GetMode == "indexed_it" {
-			if !strings.HasPrefix(mc.TagOID, ".") {
-				return errors.New("Bad BaseOid format:" + mc.TagOID + "  for  indirect TAG OID in metric Config " + mc.ID)
-			}
-		}
-
-	case "value":
-	default:
-		return errors.New("Unknown GetMode" + mc.GetMode + " in measurement Config " + mc.ID)
-	}
-
-	log.Infof("processing measurement key: %s ", mc.ID)
-	log.Debugf("%+v", mc)
-
-	for _, f_val := range mc.Fields {
-		log.Debugf("looking for measurement %s : fields: %s : Report %t", mc.Name, f_val.ID, f_val.Report)
-		if val, ok := (*MetricCfg)[f_val.ID]; ok {
-			if val.DataSrcType == "STRINGEVAL" {
-				mc.evalMetric = append(mc.evalMetric, val)
-				log.Debugf("EVAL metric found measurement %s : fields: %s ", mc.Name, f_val.ID)
-			} else {
-
-				log.Debugf("found Metric configuration: %s/ %s", f_val.ID, val.BaseOID)
-				mc.fieldMetric = append(mc.fieldMetric, val)
-			}
-		} else {
-			log.Warnf("measurement field  %s NOT FOUND in Metrics Database !", f_val.ID)
-		}
-	}
-	//check if there is any field ( should be at least one!!)
-	if len(mc.fieldMetric) == 0 {
-		return fmt.Errorf("There is no any Field metrics in measurement Config  %s (should be at least one)", mc.ID)
-	}
-	//Check if duplicated oids
-	oidcheckarray := make(map[string]string)
-	for _, v := range mc.fieldMetric {
-		//check if the OID has already used as metric in the same measurement
-		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.BaseOID, v.ID)
-		if v2, ok := oidcheckarray[v.BaseOID]; ok {
-			//oid has already inserted
-			return fmt.Errorf("This measurement has duplicated OID[%s] in metric [%s/%s] ", v.BaseOID, v.ID, v2)
-		}
-		oidcheckarray[v.BaseOID] = v.ID
-	}
-	//Check if duplicated fieldNames in any of field/eval Metrics
-	fieldnamecheckarray := make(map[string]string)
-	for _, v := range mc.fieldMetric {
-		//check if the OID has already used as metric in the same measurement
-		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
-		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
-			//oid has already inserted
-			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
-		}
-		oidcheckarray[v.FieldName] = v.ID
-	}
-	for _, v := range mc.evalMetric {
-		//check if the OID has already used as metric in the same measurement
-		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
-		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
-			//oid has already inserted
-			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
-		}
-		oidcheckarray[v.FieldName] = v.ID
-	}
-	//Check if all evaluated metrics has well defined its parameters as FieldNames
-	err := mc.CheckComputedMetric()
-	if err != nil {
-		return err
-	}
-
-	return nil
+// SetConfDir  enable load File Filters from anywhere in the our FS.
+func SetConfDir(dir string) {
+	confDir = dir
 }
 
 //InfluxMeasurement the runtime measurement config
-type InfluxMeasurement struct {
-	cfg              *InfluxMeasurementCfg
+type Measurement struct {
+	cfg              *config.MeasurementCfg
 	ID               string
-	MetricTable      map[string]map[string]*SnmpMetric //snmpMetric mapped with metric_names and Index
+	MetricTable      map[string]map[string]*metric.SnmpMetric //snmpMetric mapped with metric_names and Index
 	snmpOids         []string
-	OidSnmpMap       map[string]*SnmpMetric //snmpMetric mapped with real OID's
-	Filterlabels     map[string]string      // `json:"-"`
-	AllIndexedLabels map[string]string      //`json:"-"` //all available values on the remote device
-	CurIndexedLabels map[string]string      //`json:"-"`
+	OidSnmpMap       map[string]*metric.SnmpMetric //snmpMetric mapped with real OID's
+	Filterlabels     map[string]string             // `json:"-"`
+	AllIndexedLabels map[string]string             //`json:"-"` //all available values on the remote device
+	CurIndexedLabels map[string]string             //`json:"-"`
 	idxPosInOID      int
 	idx2PosInOID     int
 	curIdxPos        int //used in Walk functions could be variable depending on the Index (or IndexTag)
-	Filter           *MeasFilterCfg
+	Filter           *config.MeasFilterCfg
 	log              *logrus.Logger
 	snmpClient       *gosnmp.GoSNMP
 	DisableBulk      bool
@@ -152,9 +49,9 @@ type InfluxMeasurement struct {
 	Walk             func(string, gosnmp.WalkFunc) error `json:"-"`
 }
 
-//NewInfluxMeasurement creates object with config , log + goSnmp client
-func NewInfluxMeasurement(c *InfluxMeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool) (*InfluxMeasurement, error) {
-	m := &InfluxMeasurement{ID: c.ID, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
+//New  creates object with config , log + goSnmp client
+func New(c *config.MeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool) (*Measurement, error) {
+	m := &Measurement{ID: c.ID, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
 	err := m.Init()
 	return m, err
 }
@@ -164,7 +61,7 @@ func NewInfluxMeasurement(c *InfluxMeasurementCfg, l *logrus.Logger, cli *gosnmp
  *Assign CurIndexedLabels to all Labels (until filters set)
  *init MetricTable
  */
-func (m *InfluxMeasurement) Init() error {
+func (m *Measurement) Init() error {
 
 	var err error
 	//Init snmp methods
@@ -205,163 +102,21 @@ func (m *InfluxMeasurement) Init() error {
 	return nil
 }
 
-/*func (m *InfluxMeasurement) SetDisableBulk(disable bool) {
-	m.DisableBulk = disable
-	m.log.Debugf("Disable Snmp Bulk Queries to measurment %s: %t", m.cfg.ID, disable)
-}*/
-
-func (m *InfluxMeasurement) PushMetricTable(p map[string]string) error {
-	if m.cfg.GetMode == "value" {
-		return fmt.Errorf("Can not push new values in a measurement type value : %s", m.cfg.ID)
-	}
-	for key, label := range p {
-		idx := make(map[string]*SnmpMetric)
-		m.log.Infof("initializing [indexed] metric cfg for [%s/%s]", key, label)
-		for k, smcfg := range m.cfg.fieldMetric {
-			metric, err := NewSnmpMetric(smcfg)
-			if err != nil {
-				m.log.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
-				continue
-			}
-			metric.SetLogger(m.log)
-			metric.RealOID += "." + key
-			idx[smcfg.ID] = metric
-		}
-		for k, smcfg := range m.cfg.evalMetric {
-			metric, err := NewSnmpMetric(smcfg)
-			if err != nil {
-				m.log.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
-				continue
-			}
-			metric.SetLogger(m.log)
-			metric.RealOID = m.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
-			idx[smcfg.ID] = metric
-		}
-		//setup visibility on db for each metric
-		for k, v := range idx {
-			report := true
-			for _, r := range m.cfg.Fields {
-				if r.ID == k {
-					report = r.Report
-					break
-				}
-			}
-			v.Report = report
-		}
-		m.MetricTable[label] = idx
-	}
-	return nil
+// GetMode Returns mode info
+func (m *Measurement) GetMode() string {
+	return m.cfg.GetMode
 }
 
-func (m *InfluxMeasurement) PopMetricTable(p map[string]string) error {
-	if m.cfg.GetMode == "value" {
-		return fmt.Errorf("Can not pop values in a measurement type value : %s", m.cfg.ID)
-	}
-	for key, label := range p {
-		m.log.Infof("removing [indexed] metric cfg for [%s/%s]", key, label)
-		delete(m.MetricTable, label)
-	}
-	return nil
-}
-
-/* InitMetricTable
- */
-func (m *InfluxMeasurement) InitMetricTable() {
-	m.MetricTable = make(map[string]map[string]*SnmpMetric)
-
-	//create metrics.
-	switch m.cfg.GetMode {
-	case "value":
-		//for each field
-		idx := make(map[string]*SnmpMetric)
-		for k, smcfg := range m.cfg.fieldMetric {
-			m.log.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
-			metric, err := NewSnmpMetric(smcfg)
-			if err != nil {
-				m.log.Errorf("ERROR on create new [value] field metric %d : Error: %s ", k, err)
-				continue
-			}
-			metric.SetLogger(m.log)
-			idx[smcfg.ID] = metric
-		}
-		for k, smcfg := range m.cfg.evalMetric {
-			m.log.Debugf("initializing [value] [evaluated] metric cfg %s", smcfg.ID)
-			metric, err := NewSnmpMetric(smcfg)
-			if err != nil {
-				m.log.Errorf("ERROR on create new [value] [evaluated] field metric %d : Error: %s ", k, err)
-				continue
-			}
-			metric.SetLogger(m.log)
-			metric.RealOID = m.cfg.ID + "." + smcfg.ID
-			idx[smcfg.ID] = metric
-		}
-		//setup visibility on db for each metric
-		for k, v := range idx {
-			report := true
-			for _, r := range m.cfg.Fields {
-				if r.ID == k {
-					report = r.Report
-					break
-				}
-			}
-			v.Report = report
-		}
-		m.MetricTable["0"] = idx
-
-	case "indexed", "indexed_it":
-		//for each field an each index (previously initialized)
-		for key, label := range m.CurIndexedLabels {
-			idx := make(map[string]*SnmpMetric)
-			m.log.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
-			for k, smcfg := range m.cfg.fieldMetric {
-				metric, err := NewSnmpMetric(smcfg)
-				if err != nil {
-					m.log.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
-					continue
-				}
-				metric.SetLogger(m.log)
-				metric.RealOID += "." + key
-				idx[smcfg.ID] = metric
-			}
-			for k, smcfg := range m.cfg.evalMetric {
-				metric, err := NewSnmpMetric(smcfg)
-				if err != nil {
-					m.log.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
-					continue
-				}
-				metric.SetLogger(m.log)
-				metric.RealOID = m.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
-				idx[smcfg.ID] = metric
-			}
-			//setup visibility on db for each metric
-			for k, v := range idx {
-				report := true
-				for _, r := range m.cfg.Fields {
-					if r.ID == k {
-						report = r.Report
-						break
-					}
-				}
-				v.Report = report
-			}
-			m.MetricTable[label] = idx
-		}
-
-	default:
-		m.log.Errorf("Unknown Measurement GetMode Config :%s", m.cfg.GetMode)
-	}
-}
-
-func (m *InfluxMeasurement) InitBuildRuntime() {
+func (m *Measurement) InitBuildRuntime() {
 	m.snmpOids = []string{}
-	m.OidSnmpMap = make(map[string]*SnmpMetric)
+	m.OidSnmpMap = make(map[string]*metric.SnmpMetric)
 	//metric level
 	for kIdx, vIdx := range m.MetricTable {
 		m.log.Debugf("KEY iDX %s", kIdx)
 		//index level
 		for kM, vM := range vIdx {
 			m.log.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
-			if vM.cfg.DataSrcType != "STRINGEVAL" {
+			if vM.GetDataSrcType() != "STRINGEVAL" {
 				//this array is used in SnmpGetData to send IOD's to the end device
 				// so it can not contain any other thing than OID's
 				// on string eval it contains a identifier not OID
@@ -373,7 +128,7 @@ func (m *InfluxMeasurement) InitBuildRuntime() {
 	}
 }
 
-func (m *InfluxMeasurement) AddFilter(filter *MeasFilterCfg) error {
+func (m *Measurement) AddFilter(filter *config.MeasFilterCfg) error {
 	var err error
 	if m.cfg.GetMode == "value" {
 		return fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
@@ -405,7 +160,7 @@ func (m *InfluxMeasurement) AddFilter(filter *MeasFilterCfg) error {
 	return err
 }
 
-func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
+func (m *Measurement) UpdateFilter() (bool, error) {
 	var err error
 	var newfilterlabels map[string]string
 
@@ -423,8 +178,8 @@ func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
 	if m.Filter == nil {
 		m.log.Debugf("There is no filter configured in this measurement %s", m.cfg.ID)
 		//check if curindexed different of AllIndexed
-		delIndexes := diffKeyValuesInMap(m.CurIndexedLabels, m.AllIndexedLabels)
-		newIndexes := diffKeyValuesInMap(m.AllIndexedLabels, m.CurIndexedLabels)
+		delIndexes := utils.DiffKeyValuesInMap(m.CurIndexedLabels, m.AllIndexedLabels)
+		newIndexes := utils.DiffKeyValuesInMap(m.AllIndexedLabels, m.CurIndexedLabels)
 
 		if len(newIndexes) == 0 && len(delIndexes) == 0 {
 			//no changes on the Filter
@@ -470,8 +225,8 @@ func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
 	//Loading final Values to query with snmp
 	newIndexedLabels := m.filterIndexedLabels(m.Filter.FType, newfilterlabels)
 
-	delIndexes := diffKeyValuesInMap(m.CurIndexedLabels, newIndexedLabels)
-	newIndexes := diffKeyValuesInMap(newIndexedLabels, m.CurIndexedLabels)
+	delIndexes := utils.DiffKeyValuesInMap(m.CurIndexedLabels, newIndexedLabels)
+	newIndexes := utils.DiffKeyValuesInMap(newIndexedLabels, m.CurIndexedLabels)
 
 	if len(newIndexes) == 0 && len(delIndexes) == 0 {
 		//no changes on the Filter
@@ -495,57 +250,8 @@ func (m *InfluxMeasurement) UpdateFilter() (bool, error) {
 	return true, nil
 }
 
-func (m *InfluxMeasurement) printConfig() {
-	if m.cfg.GetMode == "indexed" {
-		fmt.Printf("-----------------------------------------------------------\n")
-		fmt.Printf(" ** Indexed by OID: %s (TagName: %s) **\n", m.cfg.IndexOID, m.cfg.IndexTag)
-		fmt.Printf("-----------------------------------------------------------\n")
-	}
-	if m.cfg.GetMode == "indexed_it" {
-		fmt.Printf("-----------------------------------------------------------\n")
-		fmt.Printf(" ** Indexed  by OID: %s (TagName: %s in INDIRECT TAG OID :%s ) **\n", m.cfg.IndexOID, m.cfg.IndexTag, m.cfg.TagOID)
-		fmt.Printf("-----------------------------------------------------------\n")
-	}
-
-	if m.Filter != nil {
-		switch m.Filter.FType {
-		case "file":
-			fmt.Printf(" ----------------------------------------------------------\n")
-			fmt.Printf(" File Filter: %s ( EnableAlias: %t)\n [ TOTAL: %d| NON FILTERED: %d]", m.Filter.FileName, m.Filter.EnableAlias, len(m.AllIndexedLabels), len(m.Filterlabels))
-			fmt.Printf(" ----------------------------------------------------------\n")
-		case "OIDCondition":
-			fmt.Printf(" ----------------------------------------------------------\n")
-			fmt.Printf(" OID Condition Filter: %s ( [%s] %s) [ TOTAL: %d| NON FILTERED: %d] \n", m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue, len(m.AllIndexedLabels), len(m.Filterlabels))
-			fmt.Printf(" ----------------------------------------------------------\n")
-		}
-	}
-
-	for _, v := range m.cfg.fieldMetric {
-		if v.IsTag == true {
-			fmt.Printf("\t*TAG[%s]\tTagName[%s]\tOID:%s\t(%s) \n", v.ID, v.FieldName, v.BaseOID, v.DataSrcType)
-		} else {
-			fmt.Printf("\t*Metric[%s]\tName[%s]\tOID:%s\t(%s) \n", v.ID, v.FieldName, v.BaseOID, v.DataSrcType)
-		}
-	}
-
-	for _, v := range m.cfg.evalMetric {
-		if v.IsTag == true {
-			fmt.Printf("\t*EVALUATED TAG[%s]\tTagName[%s]\t(%s)EVAL:%s \n", v.ID, v.FieldName, v.DataSrcType, v.ExtraData)
-		} else {
-			fmt.Printf("\t*EVALUATED Metric[%s]\tName[%s]\t(%s)EVAL:%s \n", v.ID, v.FieldName, v.DataSrcType, v.ExtraData)
-		}
-	}
-
-	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" {
-		fmt.Printf(" ---------------------------------------------------------\n")
-		for k, v := range m.CurIndexedLabels {
-			fmt.Printf("\t\tIndex[%s / %s]\n", k, v)
-		}
-	}
-}
-
 //GetInfluxPoint get points from measuremnetsl
-func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client.Point {
+func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point {
 	var ptarray []*client.Point
 
 	switch m.cfg.GetMode {
@@ -555,16 +261,16 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 		Fields := make(map[string]interface{})
 		for _, v_mtr := range k {
 			if v_mtr.CookedValue == nil {
-				m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, hostTags, v_mtr)
+				m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, hostTags, v_mtr)
 				continue
 			}
 			if v_mtr.Report == false {
-				m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.cfg.ID, m.cfg.ID)
+				m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
 				continue
 			}
-			m.log.Debugf("generating field for %s value %f ", v_mtr.cfg.FieldName, v_mtr.CookedValue)
+			m.log.Debugf("generating field for %s value %f ", v_mtr.GetFieldName(), v_mtr.CookedValue)
 			m.log.Debugf("DEBUG METRIC %+v", v_mtr)
-			Fields[v_mtr.cfg.FieldName] = v_mtr.CookedValue
+			Fields[v_mtr.GetFieldName()] = v_mtr.CookedValue
 			t = v_mtr.CurTime
 		}
 		m.log.Debug("FIELDS:%+v", Fields)
@@ -595,14 +301,15 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 			m.log.Debugf("IDX :%+v", v_idx)
 			Fields := make(map[string]interface{})
 			for _, v_mtr := range v_idx {
-				m.log.Debugf("DEBUG METRIC %+v", v_mtr.cfg)
-				if v_mtr.cfg.IsTag == true {
+				v_mtr.PrintDebugCfg()
+
+				if v_mtr.IsTag() == true {
 					if v_mtr.CookedValue == nil {
-						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, Tags, v_mtr)
+						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, Tags, v_mtr)
 						continue
 					}
 					if v_mtr.Report == false {
-						m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.cfg.ID, m.cfg.ID)
+						m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
 						continue
 					}
 
@@ -615,19 +322,19 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 						//assume string
 						tag = v.(string)
 					}
-					m.log.Debugf("generating Tag for Metric: %s : tagname: %s", v_mtr.cfg.FieldName, tag)
-					Tags[v_mtr.cfg.FieldName] = tag
+					m.log.Debugf("generating Tag for Metric: %s : tagname: %s", v_mtr.GetFieldName(), tag)
+					Tags[v_mtr.GetFieldName()] = tag
 				} else {
 					if v_mtr.CookedValue == nil {
-						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.cfg.ID, m.cfg.ID, Tags, v_mtr)
+						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, Tags, v_mtr)
 						continue
 					}
 					if v_mtr.Report == false {
-						m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.cfg.ID, m.cfg.ID)
+						m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
 						continue
 					}
-					m.log.Debugf("generating field for Metric: %s : value %f", v_mtr.cfg.FieldName, v_mtr.CookedValue.(float64))
-					Fields[v_mtr.cfg.FieldName] = v_mtr.CookedValue
+					m.log.Debugf("generating field for Metric: %s : value %f", v_mtr.GetFieldName(), v_mtr.CookedValue.(float64))
+					Fields[v_mtr.GetFieldName()] = v_mtr.CookedValue
 				}
 
 				t = v_mtr.CurTime
@@ -657,7 +364,7 @@ func (m *InfluxMeasurement) GetInfluxPoint(hostTags map[string]string) []*client
 SnmpBulkData GetSNMP Data
 */
 
-func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
+func (m *Measurement) SnmpWalkData() (int64, int64, error) {
 
 	now := time.Now()
 	var sent int64
@@ -671,16 +378,16 @@ func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
 			errs++
 			return nil //if error return the bulk process will stop
 		}
-		if metric, ok := m.OidSnmpMap[pdu.Name]; ok {
+		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
 			m.log.Debugln("OK measurement ", m.cfg.ID, "SNMP RESULT OID", pdu.Name, "MetricFound", pdu.Value)
-			metric.setRawData(pdu, now)
+			metr.SetRawData(pdu, now)
 		} else {
-			m.log.Debugf("returned OID from device: %s  Not Found in measurement /metric list: %+v", pdu.Name, m.cfg.ID)
+			m.log.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v", pdu.Name, m.cfg.ID)
 		}
 		return nil
 	}
 
-	for _, v := range m.cfg.fieldMetric {
+	for _, v := range m.cfg.FieldMetric {
 		if err := m.Walk(v.BaseOID, setRawData); err != nil {
 			m.log.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
 		}
@@ -689,8 +396,8 @@ func (m *InfluxMeasurement) SnmpWalkData() (int64, int64, error) {
 	return sent, errs, nil
 }
 
-func (m *InfluxMeasurement) ComputeEvaluatedMetrics() {
-	if m.cfg.evalMetric == nil {
+func (m *Measurement) ComputeEvaluatedMetrics() {
+	if m.cfg.EvalMetric == nil {
 		m.log.Infof("Not EVAL metrics exist on measurement %s", m.cfg.ID)
 		return
 	}
@@ -699,24 +406,24 @@ func (m *InfluxMeasurement) ComputeEvaluatedMetrics() {
 		parameters := make(map[string]interface{})
 		m.log.Debugf("Building parrameters array for index measurement %s", m.cfg.ID)
 		parameters["NR"] = len(m.CurIndexedLabels) //Number of rows (like awk)
-		parameters["NF"] = len(m.cfg.fieldMetric)  //Number of fields ( like awk)
+		parameters["NF"] = len(m.cfg.FieldMetric)  //Number of fields ( like awk)
 		//getting all values to the array
-		for _, v := range m.cfg.fieldMetric {
-			if metric, ok := m.OidSnmpMap[v.BaseOID]; ok {
-				m.log.Debugf("OK Field metric found %s with FieldName %s", metric.cfg.ID, metric.cfg.FieldName)
-				parameters[v.FieldName] = metric.CookedValue
+		for _, v := range m.cfg.FieldMetric {
+			if metr, ok := m.OidSnmpMap[v.BaseOID]; ok {
+				m.log.Debugf("OK Field metric found %s with FieldName %s", metr.ID, metr.GetFieldName())
+				parameters[v.FieldName] = metr.CookedValue
 			} else {
 				m.log.Debugf("Evaluated metric not Found for Eval key %s", v.BaseOID)
 			}
 		}
 		m.log.Debugf("PARAMETERS: %+v", parameters)
 		//compute Evalutated metrics
-		for _, v := range m.cfg.evalMetric {
+		for _, v := range m.cfg.EvalMetric {
 			evalkey := m.cfg.ID + "." + v.ID
-			if metric, ok := m.OidSnmpMap[evalkey]; ok {
+			if metr, ok := m.OidSnmpMap[evalkey]; ok {
 				m.log.Debugln("OK Evaluated metric found", m.cfg.ID, "Eval KEY", evalkey)
-				metric.Compute(parameters)
-				parameters[v.FieldName] = metric.CookedValue
+				metr.Compute(parameters)
+				parameters[v.FieldName] = metr.CookedValue
 			} else {
 				m.log.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 			}
@@ -727,26 +434,26 @@ func (m *InfluxMeasurement) ComputeEvaluatedMetrics() {
 			parameters := make(map[string]interface{})
 			m.log.Debugf("Building parrameters array for index %s/%s", key, val)
 			parameters["NR"] = len(m.CurIndexedLabels) //Number of rows (like awk)
-			parameters["NF"] = len(m.cfg.fieldMetric)  //Number of fields ( like awk)
+			parameters["NF"] = len(m.cfg.FieldMetric)  //Number of fields ( like awk)
 			//TODO: add other common variables => Elapsed , etc
 			//getting all values to the array
-			for _, v := range m.cfg.fieldMetric {
-				if metric, ok := m.OidSnmpMap[v.BaseOID+"."+key]; ok {
-					m.log.Debugf("OK Field metric found %s with FieldName %s", metric.cfg.ID, metric.cfg.FieldName)
+			for _, v := range m.cfg.FieldMetric {
+				if metr, ok := m.OidSnmpMap[v.BaseOID+"."+key]; ok {
+					m.log.Debugf("OK Field metric found %s with FieldName %s", metr.ID, metr.GetFieldName())
 					//TODO: validate all posibles values of CookedValue
-					parameters[v.FieldName] = metric.CookedValue
+					parameters[v.FieldName] = metr.CookedValue
 				} else {
 					m.log.Debugf("Evaluated metric not Found for Eval key %s")
 				}
 			}
 			m.log.Debugf("PARAMETERS: %+v", parameters)
 			//compute Evalutated metrics
-			for _, v := range m.cfg.evalMetric {
+			for _, v := range m.cfg.EvalMetric {
 				evalkey := m.cfg.ID + "." + v.ID + "." + key
-				if metric, ok := m.OidSnmpMap[evalkey]; ok {
+				if metr, ok := m.OidSnmpMap[evalkey]; ok {
 					m.log.Debugln("OK Evaluated metric found", m.cfg.ID, "Eval KEY", evalkey)
-					metric.Compute(parameters)
-					parameters[v.ID] = metric.CookedValue
+					metr.Compute(parameters)
+					parameters[v.ID] = metr.CookedValue
 				} else {
 					m.log.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 				}
@@ -759,14 +466,14 @@ func (m *InfluxMeasurement) ComputeEvaluatedMetrics() {
 GetSnmpData GetSNMP Data
 */
 
-func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
+func (m *Measurement) SnmpGetData() (int64, int64, error) {
 
 	now := time.Now()
 	var sent int64
 	var errs int64
 	l := len(m.snmpOids)
-	for i := 0; i < l; i += maxOids {
-		end := i + maxOids
+	for i := 0; i < l; i += snmp.MaxOids {
+		end := i + snmp.MaxOids
 		if end > l {
 			end = len(m.snmpOids)
 			sent += (int64(end) - int64(i))
@@ -790,9 +497,9 @@ func (m *InfluxMeasurement) SnmpGetData() (int64, int64, error) {
 			}
 			oid := pdu.Name
 			val := pdu.Value
-			if metric, ok := m.OidSnmpMap[oid]; ok {
+			if metr, ok := m.OidSnmpMap[oid]; ok {
 				m.log.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %+v ", m.cfg.ID, oid, val)
-				metric.setRawData(pdu, now)
+				metr.SetRawData(pdu, now)
 			} else {
 				m.log.Errorln("OID", oid, "Not Found in measurement", m.cfg.ID)
 			}
@@ -813,7 +520,7 @@ func formatTag(format string, data map[string]string, def string) string {
 	return final
 }
 
-func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
+func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 
 	m.log.Debugf("Looking up column names %s ", m.cfg.IndexOID)
 
@@ -842,10 +549,10 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 			name = string(pdu.Value.([]byte))
 			m.log.Debugf("Got the following OctetString index for [%s/%s]", suffix, name)
 		case gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
-			name = strconv.FormatUint(pduVal2UInt64(pdu), 10)
+			name = strconv.FormatUint(snmp.PduVal2UInt64(pdu), 10)
 			m.log.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
 		case gosnmp.Integer:
-			name = strconv.FormatInt(pduVal2Int64(pdu), 10)
+			name = strconv.FormatInt(snmp.PduVal2Int64(pdu), 10)
 			m.log.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
 		default:
 			m.log.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric Value", m.cfg.IndexOID)
@@ -912,7 +619,7 @@ func (m *InfluxMeasurement) loadIndexedLabels() (map[string]string, error) {
 /*
  filterIndexedLabels construct the final index array from all index and filters
 */
-func (m *InfluxMeasurement) filterIndexedLabels(f_mode string, L map[string]string) map[string]string {
+func (m *Measurement) filterIndexedLabels(f_mode string, L map[string]string) map[string]string {
 	curIndexedLabels := make(map[string]string, len(m.Filterlabels))
 
 	switch f_mode {
@@ -948,7 +655,7 @@ func (m *InfluxMeasurement) filterIndexedLabels(f_mode string, L map[string]stri
 	return curIndexedLabels
 }
 
-func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, valueCond string) (map[string]string, error) {
+func (m *Measurement) applyOIDCondFilter(oidCond string, typeCond string, valueCond string) (map[string]string, error) {
 
 	m.log.Debugf("Apply Condition Filter: Looking up column names in: Condition %s", oidCond)
 
@@ -969,14 +676,14 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 		switch {
 		case typeCond == "notmatch":
 			//m.log.Debugf("PDU: %+v", pdu)
-			str := pduVal2str(pdu)
+			str := snmp.PduVal2str(pdu)
 			var re = regexp.MustCompile(valueCond)
 			matched := re.MatchString(str)
 			m.log.Debugf("Evaluated notmatch condition  value: %s | filter: %s | result : %t", str, valueCond, !matched)
 			cond = !matched
 		case typeCond == "match":
 			//m.log.Debugf("PDU: %+v", pdu)
-			str := pduVal2str(pdu)
+			str := snmp.PduVal2str(pdu)
 			var re = regexp.MustCompile(valueCond)
 			matched := re.MatchString(str)
 			m.log.Debugf("Evaluated match condition  value: %s | filter: %s | result : %t", str, valueCond, matched)
@@ -990,7 +697,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 			}
 			vci = int64(vc)
 			//TODO review types
-			value = pduVal2Int64(pdu)
+			value = snmp.PduVal2Int64(pdu)
 			fallthrough
 		case typeCond == "neq":
 			cond = (value == vci)
@@ -1026,7 +733,7 @@ func (m *InfluxMeasurement) applyOIDCondFilter(oidCond string, typeCond string, 
 	return filterlabels, nil
 }
 
-func (m *InfluxMeasurement) applyFileFilter(file string, enableAlias bool) (map[string]string, error) {
+func (m *Measurement) applyFileFilter(file string, enableAlias bool) (map[string]string, error) {
 	m.log.Infof("apply File filter : %s Enable Alias: %t", file, enableAlias)
 	filterlabels := make(map[string]string)
 	if len(file) == 0 {

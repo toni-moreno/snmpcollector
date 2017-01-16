@@ -1,21 +1,30 @@
-package main
+package selfmon
 
 import (
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
 )
 
-//SelfMonConfig configuration for self monitoring
-type SelfMonConfig struct {
-	Enabled             bool     `toml:"enabled"`
-	Freq                int      `toml:"freq"`
-	Prefix              string   `toml:"prefix"`
-	ExtraTags           []string `toml:"extra-tags"`
-	Influx              *InfluxDB
+var (
+	log *logrus.Logger
+)
+
+// SetLogger set log output
+func SetLogger(l *logrus.Logger) {
+	log = l
+}
+
+//SelfMon configuration for self monitoring
+type SelfMon struct {
+	cfg                 *config.SelfMonConfig
+	Influx              *output.InfluxDB
 	runtimeStatsRunning bool
 	TagMap              map[string]string
 	Fields              map[string]interface{}
@@ -28,17 +37,22 @@ type SelfMonConfig struct {
 	imutex              sync.Mutex
 }
 
+// NewNotInit create strut without initialization
+func NewNotInit(c *config.SelfMonConfig) *SelfMon {
+	return &SelfMon{cfg: c}
+}
+
 // Init Initialize the Object data and check for consistence
-func (sm *SelfMonConfig) Init() {
+func (sm *SelfMon) Init() {
 	if sm.CheckAndSetInitialized() == true {
 		log.Info("Self monitoring thread  already Initialized (skipping Initialization)")
 		return
 	}
 
 	//Init extra tags
-	if len(sm.ExtraTags) > 0 {
+	if len(sm.cfg.ExtraTags) > 0 {
 		sm.TagMap = make(map[string]string)
-		for _, tag := range sm.ExtraTags {
+		for _, tag := range sm.cfg.ExtraTags {
 			s := strings.Split(tag, "=")
 			if len(s) == 2 {
 				key, value := s[0], s[1]
@@ -51,9 +65,9 @@ func (sm *SelfMonConfig) Init() {
 	// Measurement Names
 	sm.rt_meas_name = "selfmon_rt"
 	sm.gvm_meas_name = "selfmon_gvm"
-	if len(sm.Prefix) > 0 {
-		sm.rt_meas_name = fmt.Sprintf("%sselfmon_rt", sm.Prefix)
-		sm.gvm_meas_name = fmt.Sprintf("%sselfmon_gvm", sm.Prefix)
+	if len(sm.cfg.Prefix) > 0 {
+		sm.rt_meas_name = fmt.Sprintf("%sselfmon_rt", sm.cfg.Prefix)
+		sm.gvm_meas_name = fmt.Sprintf("%sselfmon_gvm", sm.cfg.Prefix)
 	}
 
 	//Init Measurment Fields.
@@ -74,7 +88,8 @@ func (sm *SelfMonConfig) Init() {
 
 }
 
-func (sm *SelfMonConfig) CheckAndSetInitialized() bool {
+// CheckAndSetInitialized set
+func (sm *SelfMon) CheckAndSetInitialized() bool {
 	sm.imutex.Lock()
 	defer sm.imutex.Unlock()
 	retval := sm.initialized
@@ -82,7 +97,8 @@ func (sm *SelfMonConfig) CheckAndSetInitialized() bool {
 	return retval
 }
 
-func (sm *SelfMonConfig) CheckAndUnSetInitialized() bool {
+// CheckAndUnSetInitialized unset
+func (sm *SelfMon) CheckAndUnSetInitialized() bool {
 	sm.imutex.Lock()
 	defer sm.imutex.Unlock()
 	retval := sm.initialized
@@ -91,13 +107,14 @@ func (sm *SelfMonConfig) CheckAndUnSetInitialized() bool {
 }
 
 // IsInitialized check if this thread is already working
-func (sm *SelfMonConfig) IsInitialized() bool {
+func (sm *SelfMon) IsInitialized() bool {
 	sm.imutex.Lock()
 	defer sm.imutex.Unlock()
 	return sm.initialized
 }
 
-func (sm *SelfMonConfig) setOutput(val *InfluxDB) {
+// SetOutput set out data
+func (sm *SelfMon) SetOutput(val *output.InfluxDB) {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
 	sm.Influx = val
@@ -105,7 +122,7 @@ func (sm *SelfMonConfig) setOutput(val *InfluxDB) {
 	sm.bps = sm.Influx.BP()
 }
 
-func (sm *SelfMonConfig) sendData() {
+func (sm *SelfMon) sendData() {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
 	sm.Influx.Send(sm.bps)
@@ -113,14 +130,15 @@ func (sm *SelfMonConfig) sendData() {
 	sm.bps = sm.Influx.BP()
 }
 
-func (sm *SelfMonConfig) addDataPoint(pt *client.Point) {
+func (sm *SelfMon) addDataPoint(pt *client.Point) {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
 	(*sm.bps).AddPoint(pt)
 
 }
 
-func (sm *SelfMonConfig) AddDeviceMetrics(deviceid string, fields map[string]interface{}) {
+// AddDeviceMetrics add data from devices
+func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface{}) {
 	if !sm.IsInitialized() {
 		return
 	}
@@ -142,15 +160,15 @@ func (sm *SelfMonConfig) AddDeviceMetrics(deviceid string, fields map[string]int
 	(*sm.bps).AddPoint(pt)
 }
 
-func (sm *SelfMonConfig) End() {
+func (sm *SelfMon) End() {
 	if sm.CheckAndUnSetInitialized() {
 		close(sm.chExit)
 	}
 }
 
 // StartGather for stopping selfmonitori goroutine
-func (sm *SelfMonConfig) StartGather(wg *sync.WaitGroup) {
-	if !sm.Enabled {
+func (sm *SelfMon) StartGather(wg *sync.WaitGroup) {
+	if !sm.cfg.Enabled {
 		log.Info("SELFMON: disabled, skipping start gather")
 		return
 	}
@@ -165,13 +183,13 @@ func (sm *SelfMonConfig) StartGather(wg *sync.WaitGroup) {
 }
 
 // StopGather for stopping selfmonitori goroutine
-func (sm *SelfMonConfig) StopGather() {
-	if sm.Enabled {
+func (sm *SelfMon) StopGather() {
+	if sm.cfg.Enabled {
 		sm.chExit <- true
 	}
 }
 
-func (sm *SelfMonConfig) reportRuntimeStats(wg *sync.WaitGroup) {
+func (sm *SelfMon) reportRuntimeStats(wg *sync.WaitGroup) {
 	defer wg.Done()
 	wg.Add(1)
 	log.Info("SELFMON: Beginning  selfmonitor process for device")
@@ -182,7 +200,7 @@ func (sm *SelfMonConfig) reportRuntimeStats(wg *sync.WaitGroup) {
 	var lastNumGc uint32 = 0
 
 	nsInMs := float64(time.Millisecond)
-	s := time.Tick(time.Duration(sm.Freq) * time.Second)
+	s := time.Tick(time.Duration(sm.cfg.Freq) * time.Second)
 	for {
 
 		runtime.ReadMemStats(memStats)
@@ -199,7 +217,7 @@ func (sm *SelfMonConfig) reportRuntimeStats(wg *sync.WaitGroup) {
 
 		if lastPauseNs > 0 {
 			pauseSinceLastSample := memStats.PauseTotalNs - lastPauseNs
-			sm.Fields["gc.pause_per_second"] = float64(pauseSinceLastSample) / nsInMs / time.Duration(sm.Freq).Seconds()
+			sm.Fields["gc.pause_per_second"] = float64(pauseSinceLastSample) / nsInMs / time.Duration(sm.cfg.Freq).Seconds()
 			sm.Fields["gc.pause_per_interval"] = float64(pauseSinceLastSample) / nsInMs
 		}
 		lastPauseNs = memStats.PauseTotalNs

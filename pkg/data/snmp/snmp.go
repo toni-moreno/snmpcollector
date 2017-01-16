@@ -1,11 +1,12 @@
-package main
+package snmp
 
 import (
 	ers "errors"
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
-	olog "log"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -13,6 +14,21 @@ import (
 	"strings"
 	"time"
 )
+
+var (
+	mainlog *logrus.Logger
+	logDir  string
+)
+
+// SetLogger xx
+func SetLogger(l *logrus.Logger) {
+	mainlog = l
+}
+
+// SetLogDir xx
+func SetLogDir(dir string) {
+	logDir = dir
+}
 
 // SysInfo basic information for any SNMP device
 type SysInfo struct {
@@ -23,6 +39,7 @@ type SysInfo struct {
 	SysLocation string
 }
 
+// PduVal2Cooked to get data from any defined type in gosnmp
 func PduVal2Cooked(pdu gosnmp.SnmpPDU) interface{} {
 	switch pdu.Type {
 	case gosnmp.EndOfContents:
@@ -30,35 +47,35 @@ func PduVal2Cooked(pdu gosnmp.SnmpPDU) interface{} {
 	case gosnmp.Boolean:
 		return pdu.Value
 	case gosnmp.Integer:
-		return pduVal2Int64(pdu)
+		return PduVal2Int64(pdu)
 	case gosnmp.BitString:
-		return pduVal2str(pdu)
+		return PduVal2str(pdu)
 	case gosnmp.OctetString:
-		return pduVal2str(pdu)
+		return PduVal2str(pdu)
 	case gosnmp.Null:
 		return pdu.Value
 	case gosnmp.ObjectIdentifier:
 		//	log.Debugf("DEBUG ObjectIdentifier :%s", pdu.Value)
 		return pdu.Value
 	case gosnmp.ObjectDescription:
-		return pduVal2str(pdu)
+		return PduVal2str(pdu)
 	case gosnmp.IPAddress:
-		ip, _ := pduVal2IPaddr(pdu)
+		ip, _ := PduVal2IPaddr(pdu)
 		return ip
 	case gosnmp.Counter32:
-		return pduVal2Int64(pdu)
+		return PduVal2Int64(pdu)
 	case gosnmp.Gauge32:
-		return pduVal2Int64(pdu)
+		return PduVal2Int64(pdu)
 	case gosnmp.TimeTicks:
-		return pduVal2Int64(pdu)
+		return PduVal2Int64(pdu)
 	case gosnmp.Opaque:
 		return pdu.Value
 	case gosnmp.NsapAddress:
-		return pduVal2str(pdu)
+		return PduVal2str(pdu)
 	case gosnmp.Counter64:
-		return pduVal2Int64(pdu)
+		return PduVal2Int64(pdu)
 	case gosnmp.Uinteger32:
-		return pduVal2Int64(pdu)
+		return PduVal2Int64(pdu)
 	case gosnmp.NoSuchObject:
 		return pdu.Value
 	case gosnmp.NoSuchInstance:
@@ -70,7 +87,7 @@ func PduVal2Cooked(pdu gosnmp.SnmpPDU) interface{} {
 	}
 }
 
-// PduType2Str
+// PduType2Str  type to string
 func PduType2Str(pdutype gosnmp.Asn1BER) string {
 	switch pdutype {
 	case gosnmp.EndOfContents: // 	case gosnmp.UnknownType
@@ -114,22 +131,24 @@ func PduType2Str(pdutype gosnmp.Asn1BER) string {
 	default:
 		return "--"
 	}
-	return "--"
+
 }
 
+// EasyPDU enable user interface Info for OID data
 type EasyPDU struct {
 	Name  string
 	Type  string
 	Value interface{}
 }
 
-func SNMPQuery(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error) {
+// Query enable arbitrary SNMP querys over the client
+func Query(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error) {
 	var result []EasyPDU
 	switch mode {
 	case "get":
 		pkt, err := client.Get([]string{oid})
 		if err != nil {
-			log.Errorf("SNMP (%s) for OIDs get error: %s\n", client.Target, err)
+			mainlog.Errorf("SNMP (%s) for OIDs get error: %s\n", client.Target, err)
 			return result, err
 		}
 		for _, pdu := range pkt.Variables {
@@ -138,7 +157,7 @@ func SNMPQuery(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error
 	case "walk":
 		setRawData := func(pdu gosnmp.SnmpPDU) error {
 			if pdu.Value == nil {
-				log.Warnf("no value retured by pdu :%+v", pdu)
+				mainlog.Warnf("no value retured by pdu :%+v", pdu)
 				return nil //if error return the bulk process will stop
 			}
 			result = append(result, EasyPDU{Name: pdu.Name, Type: PduType2Str(pdu.Type), Value: PduVal2Cooked(pdu)})
@@ -146,7 +165,7 @@ func SNMPQuery(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error
 		}
 		err := client.Walk(oid, setRawData)
 		if err != nil {
-			log.Errorf("SNMP WALK error: %s", err)
+			mainlog.Errorf("SNMP WALK error: %s", err)
 			return result, err
 		}
 	default:
@@ -158,11 +177,11 @@ func SNMPQuery(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error
 	return result, nil
 }
 
-// SnmpDebugLog returns a logger handler for snmp debug data
-func SnmpDebugLog(filename string) *olog.Logger {
+// GetDebugLogger returns a logger handler for snmp debug data
+func GetDebugLogger(filename string) *log.Logger {
 	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(filename, ".", "-", -1)+".log")
 	if l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644); err == nil {
-		return olog.New(l, "", 0)
+		return log.New(l, "", 0)
 	} else {
 		fmt.Fprintln(os.Stderr, err)
 		return nil
@@ -238,16 +257,17 @@ func SnmpGetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo
 	return info, nil
 }
 
-func pduVal2str(pdu gosnmp.SnmpPDU) string {
+// PduVal2str transform PDU data to string
+func PduVal2str(pdu gosnmp.SnmpPDU) string {
 	value := pdu.Value
 	if pdu.Type == gosnmp.OctetString {
 		return string(value.([]byte))
-	} else {
-		return ""
 	}
+	return ""
 }
 
-func pduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
+// PduVal2Int64 transform PDU data to Int64
+func PduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 	value := pdu.Value
 	var val int64
 	//revisar esta asignación
@@ -284,7 +304,8 @@ func pduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 	return val
 }
 
-func pduVal2UInt64(pdu gosnmp.SnmpPDU) uint64 {
+// PduVal2UInt64 transform data to Uint64
+func PduVal2UInt64(pdu gosnmp.SnmpPDU) uint64 {
 	value := pdu.Value
 	var val uint64
 	//revisar esta asignación
@@ -321,7 +342,8 @@ func pduVal2UInt64(pdu gosnmp.SnmpPDU) uint64 {
 	return val
 }
 
-func pduVal2Hwaddr(pdu gosnmp.SnmpPDU) (string, error) {
+// PduVal2Hwaddr transform data to MAC address
+func PduVal2Hwaddr(pdu gosnmp.SnmpPDU) (string, error) {
 	value := pdu.Value
 	switch vt := value.(type) {
 	case string:
@@ -334,7 +356,8 @@ func pduVal2Hwaddr(pdu gosnmp.SnmpPDU) (string, error) {
 	return string(value.([]byte)), nil
 }
 
-func pduVal2IPaddr(pdu gosnmp.SnmpPDU) (string, error) {
+// PduVal2IPaddr transform data o IP address
+func PduVal2IPaddr(pdu gosnmp.SnmpPDU) (string, error) {
 	var ipbs []byte
 	value := pdu.Value
 	switch vt := value.(type) {
@@ -357,10 +380,11 @@ func pduVal2IPaddr(pdu gosnmp.SnmpPDU) (string, error) {
 }
 
 const (
-	maxOids = 60 // const in gosnmp
+	MaxOids = 60 // const in gosnmp
 )
 
-func SnmpClient(s *SnmpDeviceCfg, l *logrus.Logger) (*gosnmp.GoSNMP, *SysInfo, error) {
+// GetClient xx
+func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger) (*gosnmp.GoSNMP, *SysInfo, error) {
 	var client *gosnmp.GoSNMP
 	hostIPs, err := net.LookupHost(s.Host)
 	if err != nil {
@@ -502,7 +526,7 @@ func SnmpClient(s *SnmpDeviceCfg, l *logrus.Logger) (*gosnmp.GoSNMP, *SysInfo, e
 		return nil, nil, ers.New("Error on snmp Version")
 	}
 	if s.SnmpDebug {
-		client.Logger = SnmpDebugLog(s.ID)
+		client.Logger = GetDebugLogger(s.ID)
 	}
 	//first connect
 	err = client.Connect()
