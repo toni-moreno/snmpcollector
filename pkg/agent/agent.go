@@ -96,7 +96,7 @@ func GetDevice(id string) (*device.SnmpDevice, error) {
 		return nil, fmt.Errorf("there is not any device with id %s running", id)
 	}
 	mutex.Unlock()
-	return dev, nil
+	return dev.GetSelfThreadSafe(), nil
 }
 
 // GetDevStats xx

@@ -8,7 +8,6 @@ import (
 
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -63,12 +62,16 @@ type SnmpDevice struct {
 
 	//SNMP and Influx Clients config
 	snmpClient *gosnmp.GoSNMP
-	Influx     *output.InfluxDB
+	Influx     *output.InfluxDB `json:"-"`
 	LastError  time.Time
 	//Runtime stats
-	Requests int64
-	Gets     int64
-	Errors   int64
+	Requests              int64
+	Gets                  int64
+	Errors                int64
+	LastGatherTime        time.Time
+	LastGatherDuration    time.Duration
+	LastFltUpdateTime     time.Time
+	LastFltUpdateDuration time.Duration
 	//runtime controls
 
 	ReloadLoopsPending int
@@ -99,6 +102,20 @@ func (d *SnmpDevice) GetLogFilePath() string {
 	return d.cfg.LogFile
 }
 
+func (d *SnmpDevice) setGatherStats(start time.Time, duration time.Duration) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.LastGatherTime = start
+	d.LastGatherDuration = duration
+}
+
+func (d *SnmpDevice) setFltUpdateStats(start time.Time, duration time.Duration) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.LastFltUpdateTime = start
+	d.LastFltUpdateDuration = duration
+}
+
 //ReloadLoopPending needs to be mutex excluded
 
 func (d *SnmpDevice) setReloadLoopsPending(val int) {
@@ -121,6 +138,12 @@ func (d *SnmpDevice) decReloadLoopsPending() {
 	d.mutex.Unlock()
 }
 
+func (d *SnmpDevice) GetSelfThreadSafe() *SnmpDevice {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	return d
+}
+
 // GetBasicStats get basic info for this device
 func (d *SnmpDevice) GetBasicStats() *DevStat {
 
@@ -128,17 +151,18 @@ func (d *SnmpDevice) GetBasicStats() *DevStat {
 	for _, m := range d.Measurements {
 		sum += len(m.OidSnmpMap)
 	}
-
+	d.mutex.Lock()
 	stat := &DevStat{
 		Requests:           d.Requests,
 		Gets:               d.Gets,
 		Errors:             d.Errors,
-		ReloadLoopsPending: d.getReloadLoopsPending(),
+		ReloadLoopsPending: d.ReloadLoopsPending,
 		DeviceActive:       d.DeviceActive,
 		DeviceConnected:    d.DeviceConnected,
 		NumMeasurements:    len(d.Measurements),
 		NumMetrics:         sum,
 	}
+	d.mutex.Unlock()
 	return stat
 }
 
@@ -277,7 +301,6 @@ func (d *SnmpDevice) InitDevMeasurements() {
 	//Initialize all snmpMetrics  objects and OID array
 	//get data first time
 	// useful to inicialize counter all value and test device snmp availability
-
 }
 
 /*
@@ -402,28 +425,22 @@ func (d *SnmpDevice) InitSnmpConnect() error {
 	return nil
 }
 
-func (d *SnmpDevice) incRequests() {
-	atomic.AddInt64(&d.Requests, 1)
-}
-
 func (d *SnmpDevice) addRequests(n int64) {
-	atomic.AddInt64(&d.Requests, n)
-}
-
-func (d *SnmpDevice) incGets() {
-	atomic.AddInt64(&d.Gets, 1)
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.Requests += n
 }
 
 func (d *SnmpDevice) addGets(n int64) {
-	atomic.AddInt64(&d.Gets, 1)
-}
-
-func (d *SnmpDevice) incErrors() {
-	atomic.AddInt64(&d.Errors, 1)
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.Gets += n
 }
 
 func (d *SnmpDevice) addErrors(n int64) {
-	atomic.AddInt64(&d.Errors, n)
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.Errors += n
 }
 
 // StartGather Main GoRutine method to begin snmp data collecting
@@ -440,6 +457,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 		startSnmp := time.Now()
 		d.InitDevMeasurements()
 		elapsedSnmp := time.Since(startSnmp)
+		d.setFltUpdateStats(startSnmp, elapsedSnmp)
 		d.log.Infof("snmpdevice [%s] snmp INIT runtime measurements/filters took [%s] ", d.cfg.ID, elapsedSnmp)
 	} else {
 		d.log.Infof("Can not initialize this device: Is Active: %t  |  Conection Active: %t ", d.DeviceActive, d.snmpClient != nil)
@@ -496,6 +514,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 
 				elapsedSnmpStats := time.Since(startSnmpStats)
 				d.log.Infof("snmpdevice [%s] snmp pooling took [%s] SNMP: Gets [%d] Errors [%d]", d.cfg.ID, elapsedSnmpStats, totalGets, totalErrors)
+				d.setGatherStats(startSnmpStats, elapsedSnmpStats)
 				if d.selfmon != nil {
 					fields := map[string]interface{}{
 						"process_t": elapsedSnmpStats.Seconds(),
@@ -541,6 +560,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					}
 					d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
 					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
+					d.setFltUpdateStats(startIdxUpdateStats, elapsedIdxUpdateStats)
 					d.log.Infof("snmpdevice [%s] Index reload took [%s]", d.cfg.ID, elapsedIdxUpdateStats)
 				}
 			}
