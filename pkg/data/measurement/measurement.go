@@ -28,7 +28,7 @@ func SetConfDir(dir string) {
 	confDir = dir
 }
 
-//InfluxMeasurement the runtime measurement config
+//Measurement the runtime measurement config
 type Measurement struct {
 	cfg              *config.MeasurementCfg
 	ID               string
@@ -264,9 +264,15 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 				m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, hostTags, v_mtr)
 				continue
 			}
-			if v_mtr.Report == false {
+			if v_mtr.Report == metric.NeverReport {
 				m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
 				continue
+			}
+			if v_mtr.Report == metric.OnNonZeroReport {
+				if v_mtr.CookedValue == 0.0 {
+					m.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
+					continue
+				}
 			}
 			m.log.Debugf("generating field for %s value %f ", v_mtr.GetFieldName(), v_mtr.CookedValue)
 			m.log.Debugf("DEBUG METRIC %+v", v_mtr)
@@ -302,13 +308,12 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 			Fields := make(map[string]interface{})
 			for _, v_mtr := range v_idx {
 				v_mtr.PrintDebugCfg()
-
 				if v_mtr.IsTag() == true {
 					if v_mtr.CookedValue == nil {
 						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, Tags, v_mtr)
 						continue
 					}
-					if v_mtr.Report == false {
+					if v_mtr.Report == metric.NeverReport {
 						m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
 						continue
 					}
@@ -322,6 +327,13 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 						//assume string
 						tag = v.(string)
 					}
+					if v_mtr.Report == metric.OnNonZeroReport {
+						if tag == "0" {
+							m.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
+							continue
+						}
+					}
+
 					m.log.Debugf("generating Tag for Metric: %s : tagname: %s", v_mtr.GetFieldName(), tag)
 					Tags[v_mtr.GetFieldName()] = tag
 				} else {
@@ -329,9 +341,15 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 						m.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, Tags, v_mtr)
 						continue
 					}
-					if v_mtr.Report == false {
+					if v_mtr.Report == metric.NeverReport {
 						m.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
 						continue
+					}
+					if v_mtr.Report == metric.OnNonZeroReport {
+						if v_mtr.CookedValue == 0.0 {
+							m.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
+							continue
+						}
 					}
 					m.log.Debugf("generating field for Metric: %s : value %f", v_mtr.GetFieldName(), v_mtr.CookedValue.(float64))
 					Fields[v_mtr.GetFieldName()] = v_mtr.CookedValue

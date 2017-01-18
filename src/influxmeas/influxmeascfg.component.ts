@@ -80,11 +80,15 @@ export class InfluxMeasCfgComponent {
 	onChangeMetricArray(id){
 		this.metricArray = [];
 		for (let a of id) {
-			this.metricArray.push({ID: a, Report: true});
+			this.metricArray.push({ID: a, Report: 1});
 		}
 	}
 	onCheckMetric(index) {
-		this.metricArray[index]['Report'] = !this.metricArray[index]['Report'];
+		if (this.metricArray[index]['Report'] == 1 ) {
+			this.metricArray[index]['Report']=0
+		} else {
+			this.metricArray[index]['Report']=1
+		}
 	}
 
 	public changePage(page:any, data:Array<any> = this.data):Array<any> {

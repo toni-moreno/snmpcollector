@@ -119,6 +119,9 @@ export class NgTableComponent {
             if (typeof item[item2] === 'boolean') {
                 if (item[item2]) test += ' <i class="glyphicon glyphicon-arrow-right"></i>'
                 else test += ' <i class="glyphicon glyphicon-alert"></i>'
+            } else if (typeof item[item2] === 'number') {
+                if (item[item2]==1) test += ' <i class="glyphicon glyphicon-arrow-right"></i>'
+                else test += ' <i class="glyphicon glyphicon-alert"></i>'
             } else test += item[item2];
           }
           test += "</li>";

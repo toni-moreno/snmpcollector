@@ -338,7 +338,7 @@ func (dbc *DatabaseCfg) GetMeasurementCfgArray(filter string) ([]*MeasurementCfg
 			if mm.IDMeasurementCfg == mVal.ID {
 				data := struct {
 					ID     string
-					Report bool
+					Report int
 				}{
 					mm.IDMetricCfg,
 					mm.Report,

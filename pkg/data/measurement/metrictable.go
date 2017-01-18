@@ -35,7 +35,7 @@ func (m *Measurement) PushMetricTable(p map[string]string) error {
 		}
 		//setup visibility on db for each metric
 		for k, v := range idx {
-			report := true
+			report := metric.AlwaysReport
 			for _, r := range m.cfg.Fields {
 				if r.ID == k {
 					report = r.Report
@@ -94,7 +94,7 @@ func (m *Measurement) InitMetricTable() {
 		}
 		//setup visibility on db for each metric
 		for k, v := range idx {
-			report := true
+			report := metric.AlwaysReport
 			for _, r := range m.cfg.Fields {
 				if r.ID == k {
 					report = r.Report
@@ -132,7 +132,7 @@ func (m *Measurement) InitMetricTable() {
 			}
 			//setup visibility on db for each metric
 			for k, v := range idx {
-				report := true
+				report := metric.AlwaysReport
 				for _, r := range m.cfg.Fields {
 					if r.ID == k {
 						report = r.Report

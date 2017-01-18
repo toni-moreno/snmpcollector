@@ -13,6 +13,13 @@ import (
 	"time"
 )
 
+const (
+	NeverReport     = 0
+	AlwaysReport    = 1
+	OnNonZeroReport = 2
+	OnChangedReport = 3
+)
+
 //SnmpMetric type to metric runtime
 type SnmpMetric struct {
 	cfg         *config.SnmpMetricCfg
@@ -27,7 +34,7 @@ type SnmpMetric struct {
 	Scale       func()                                  `json:"-"`
 	SetRawData  func(pdu gosnmp.SnmpPDU, now time.Time) `json:"-"`
 	RealOID     string
-	Report      bool //if false this metric won't be sent to the ouput buffer (is just taken as a coomputed input for other metrics)
+	Report      int //if false this metric won't be sent to the ouput buffer (is just taken as a coomputed input for other metrics)
 	//for STRINGPARSER
 	re   *regexp.Regexp
 	expr *govaluate.EvaluableExpression

@@ -75,7 +75,7 @@ type MeasFilterCfg struct {
 type MeasurementFieldCfg struct {
 	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
 	IDMetricCfg      string `xorm:"id_metric_cfg"`
-	Report           bool   `xorm:"'report' default 1"`
+	Report           int    `xorm:"'report' default 1"`
 }
 
 // CustomFilterCfg table with user custom choosed indexes

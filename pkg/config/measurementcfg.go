@@ -19,7 +19,7 @@ type MeasurementCfg struct {
 	IndexAsValue   bool   `xorm:"'indexasvalue' default 0"`
 	Fields         []struct {
 		ID     string
-		Report bool
+		Report int
 	} `xorm:"-"` //Got from MeasurementFieldCfg table
 	FieldMetric []*SnmpMetricCfg `xorm:"-"`
 	EvalMetric  []*SnmpMetricCfg `xorm:"-"`
@@ -84,7 +84,7 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error {
 	log.Debugf("%+v", mc)
 
 	for _, f_val := range mc.Fields {
-		log.Debugf("looking for measurement %s : fields: %s : Report %t", mc.Name, f_val.ID, f_val.Report)
+		log.Debugf("looking for measurement %s : fields: %s : Report %d", mc.Name, f_val.ID, f_val.Report)
 		if val, ok := (*MetricCfg)[f_val.ID]; ok {
 			if val.DataSrcType == "STRINGEVAL" {
 				mc.EvalMetric = append(mc.EvalMetric, val)
