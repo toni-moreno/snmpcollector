@@ -89,7 +89,7 @@
 				</div>
 			</div>
 
-			<div class="form-group">
+			<div class="form-group" *ngIf="measfilterForm.value.FType == 'OIDCondition'">
 				<label class="control-label col-sm-2" for="CondValue">Condition type</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Possible condition type to apply on the filter"></i>
 				<div class="col-sm-9">
@@ -106,7 +106,7 @@
 				</div>
 			</div>
 
-			<div class="form-group">
+			<div class="form-group" *ngIf="measfilterForm.value.FType == 'OIDCondition'">
 				<label class="control-label col-sm-2" for="CondValue">Value</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The value to match the condition"></i>
 				<div class="col-sm-9">
@@ -202,7 +202,7 @@
 				</div>
 			</div>
 
-			<div class="form-group">
+			<div class="form-group" *ngIf="measfilterForm.value.FType == 'OIDCondition'">
 				<label class="control-label col-sm-2" for="CondType">Condition type</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Possible condition type to apply on the filter"></i>
 				<div class="col-sm-9">
@@ -219,7 +219,7 @@
 				</div>
 			</div>
 
-			<div class="form-group">
+			<div class="form-group" *ngIf="measfilterForm.value.FType == 'OIDCondition'">
 				<label class="control-label col-sm-2" for="CondValue">Value</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The value to match the condition"></i>
 				<div class="col-sm-9">
