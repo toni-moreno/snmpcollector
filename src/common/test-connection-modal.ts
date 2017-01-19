@@ -187,9 +187,7 @@ export class TestConnectionModal implements OnInit  {
     Mode: ['get', Validators.required],
     OID: ['', Validators.required]
     });
-  this.getMetricsforModal();
-  this.getMeasforModal();
-  this.getFiltersforModal();
+
   }
 
   //History OIDs
@@ -237,6 +235,9 @@ export class TestConnectionModal implements OnInit  {
     }
 
   show() {
+      this.getMetricsforModal();
+      this.getMeasforModal();
+      this.getFiltersforModal();
     //reset var values
     this.alertHandler = {};
     this.queryResult = null;
@@ -249,6 +250,7 @@ export class TestConnectionModal implements OnInit  {
 
   hide() {
     this.childModal.hide();
+    if (this.myObservable) this.myObservable.unsubscribe();
   }
 
   getMetricsforModal(){
@@ -326,7 +328,6 @@ export class TestConnectionModal implements OnInit  {
    }
 
    ngOnDestroy() {
-     console.log("UNSUBSCRIBING");
-     this.myObservable.unsubscribe();
+    if (this.myObservable) this.myObservable.unsubscribe();
    }
 }

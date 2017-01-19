@@ -25,7 +25,7 @@
     <form [formGroup]="measgroupForm" class="form-horizontal" (ngSubmit)="saveMeasGroup()">
       <div class="form-group">
         <label class="control-label col-sm-2" for="id">id</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Group"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Group"></i>
         <div class="col-sm-9">
           <input formControlName="id" id="id" />
           <control-messages [control]="measgroupForm.controls.id"></control-messages>
@@ -34,16 +34,16 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Measurements">Measurements</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of measurements ready to be attached on {{measgroupForm.controls.id.value}}"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of measurements ready to be attached on {{measgroupForm.controls.id.value}}"></i>
         <div class="col-sm-9">
-          <ss-multiselect-dropdown [options]="selectmeas" [texts]="myTexts" [settings]="mySettings" [ngModel] [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)"></ss-multiselect-dropdown>
+          <ss-multiselect-dropdown [options]="selectmeas" formControlName="Measurements" [texts]="myTexts" [settings]="mySettings"></ss-multiselect-dropdown>
           <control-messages [control]="measgroupForm.controls.Measurements"></control-messages>
         </div>
       </div>
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Device"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Device"></i>
         <div class="col-sm-9">
           <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
           <control-messages [control]="measgroupForm.controls.Description"></control-messages>
@@ -62,7 +62,7 @@
     <form [formGroup]="measgroupForm" class="form-horizontal" (ngSubmit)="updateMeasGroup(testmeasgroups.ID)">
       <div class="form-group">
         <label class="control-label col-sm-2" for="id">id</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to the Device by SNMP protocol"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to the Device by SNMP protocol"></i>
         <div class="col-sm-9">
           <input formControlName="id" id="id" [ngModel]="testmeasgroups.ID" />
           <control-messages [control]="measgroupForm.controls.id"></control-messages>
@@ -71,16 +71,16 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Measurements">Measurements</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to the Device by SNMP protocol"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to the Device by SNMP protocol"></i>
         <div class="col-sm-9">
-          <ss-multiselect-dropdown [texts]="myTexts" [settings]="mySettings" [options]="selectmeas" [ngModel]="testmeasgroups.Measurements" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChange($event)"></ss-multiselect-dropdown>
+          <ss-multiselect-dropdown [options]="selectmeas" formControlName="Measurements" [texts]="myTexts" [settings]="mySettings" [ngModel]="testmeasgroups.Measurements"></ss-multiselect-dropdown>
           <control-messages [control]="measgroupForm.controls.Measurements"></control-messages>
         </div>
       </div>
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Group"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Group"></i>
         <div class="col-sm-9">
           <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='testmeasgroups.Description'> </textarea>
           <control-messages [control]="measgroupForm.controls.Description"></control-messages>
