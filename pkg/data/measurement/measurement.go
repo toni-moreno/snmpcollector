@@ -1,11 +1,8 @@
 package measurement
 
 import (
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
-	"regexp"
+
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +11,7 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/measurement/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
@@ -26,22 +24,24 @@ var (
 // SetConfDir  enable load File Filters from anywhere in the our FS.
 func SetConfDir(dir string) {
 	confDir = dir
+	filter.SetConfDir(dir)
 }
 
 //Measurement the runtime measurement config
 type Measurement struct {
-	cfg              *config.MeasurementCfg
-	ID               string
-	MetricTable      map[string]map[string]*metric.SnmpMetric //snmpMetric mapped with metric_names and Index
-	snmpOids         []string
-	OidSnmpMap       map[string]*metric.SnmpMetric //snmpMetric mapped with real OID's
-	Filterlabels     map[string]string             // `json:"-"`
-	AllIndexedLabels map[string]string             //`json:"-"` //all available values on the remote device
-	CurIndexedLabels map[string]string             //`json:"-"`
+	cfg         *config.MeasurementCfg
+	ID          string
+	MetricTable map[string]map[string]*metric.SnmpMetric //snmpMetric mapped with metric_names and Index
+	snmpOids    []string
+	OidSnmpMap  map[string]*metric.SnmpMetric //snmpMetric mapped with real OID's
+	//Filterlabels     map[string]string             // `json:"-"`
+	AllIndexedLabels map[string]string //`json:"-"` //all available values on the remote device
+	CurIndexedLabels map[string]string //`json:"-"`
 	idxPosInOID      int
 	idx2PosInOID     int
 	curIdxPos        int //used in Walk functions could be variable depending on the Index (or IndexTag)
-	Filter           *config.MeasFilterCfg
+	FilterCfg        *config.MeasFilterCfg
+	Filter           filter.Filter
 	log              *logrus.Logger
 	snmpClient       *gosnmp.GoSNMP
 	DisableBulk      bool
@@ -128,41 +128,39 @@ func (m *Measurement) InitBuildRuntime() {
 	}
 }
 
-func (m *Measurement) AddFilter(filter *config.MeasFilterCfg) error {
+func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 	var err error
 	if m.cfg.GetMode == "value" {
 		return fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
 	}
-	if filter == nil {
+	if f == nil {
 		return fmt.Errorf("Error invalid  NIL  filter on measurment %s ", m.cfg.ID)
 	}
 
-	m.Filter = filter
-	switch m.Filter.FType {
+	m.FilterCfg = f
+	switch m.FilterCfg.FType {
 	case "file":
-		m.Filterlabels, err = m.applyFileFilter(m.Filter.FileName, m.Filter.EnableAlias)
-		if err != nil {
-			m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
-		}
+		m.Filter = filter.NewFileFilter(m.FilterCfg.FileName, m.FilterCfg.EnableAlias, m.log)
 	case "OIDCondition":
-		m.Filterlabels, err = m.applyOIDCondFilter(m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue)
-		if err != nil {
-			m.log.Errorf("Error while trying to apply condition Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
-		}
+		m.Filter = filter.NewOidFilter(m.FilterCfg.OIDCond, m.FilterCfg.CondType, m.FilterCfg.CondValue, m.log)
 	default:
-		return fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
+		return fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.FilterCfg.FType, m.cfg.ID)
 	}
+	err = m.Filter.Compute(m.Walk)
+	if err != nil {
+		m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
+	}
+
 	//now we have the 	m.Filterlabels array initialized with only those values which we will need
 	//Loading final Values to query with snmp
-	m.CurIndexedLabels = m.filterIndexedLabels(m.Filter.FType, m.Filterlabels)
-
+	m.CurIndexedLabels = m.Filter.MapLabels(m.AllIndexedLabels)
 	m.InitMetricTable()
 	return err
 }
 
 func (m *Measurement) UpdateFilter() (bool, error) {
 	var err error
-	var newfilterlabels map[string]string
+	//var newfilterlabels map[string]string
 
 	if m.cfg.GetMode == "value" {
 		return false, fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
@@ -200,44 +198,34 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 		return true, nil
 	}
 	//----------------
-	m.log.Infof("Applying filter : [ %s ] on measurement [ %s ]", m.Filter.ID, m.cfg.ID)
-	switch m.Filter.FType {
-	case "file":
-		newfilterlabels, err = m.applyFileFilter(m.Filter.FileName, m.Filter.EnableAlias)
-		if err != nil {
-			m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
-		}
-	case "OIDCondition":
-		newfilterlabels, err = m.applyOIDCondFilter(m.Filter.OIDCond, m.Filter.CondType, m.Filter.CondValue)
-		if err != nil {
-			m.log.Errorf("Error while trying to apply condition Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
-		}
-	default:
-		return false, fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.Filter.FType, m.cfg.ID)
+	m.log.Infof("Applying filter : [ %s ] on measurement [ %s ]", m.FilterCfg.ID, m.cfg.ID)
+
+	err = m.Filter.Compute(m.Walk)
+	if err != nil {
+		m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
 	}
 	//check if all values have been filtered to send a warnign message.
-	if len(newfilterlabels) == 0 {
+	if m.Filter.Count() == 0 {
 		m.log.Warnf("WARNING after applying filter no values on this measurement will be sent")
 	}
 	//check if newfilterlabels are diferent than previous.
 
 	//now we have the 	m.Filter,m.ls array initialized with only those values which we will need
 	//Loading final Values to query with snmp
-	newIndexedLabels := m.filterIndexedLabels(m.Filter.FType, newfilterlabels)
+	newIndexedLabels := m.Filter.MapLabels(m.AllIndexedLabels)
 
 	delIndexes := utils.DiffKeyValuesInMap(m.CurIndexedLabels, newIndexedLabels)
 	newIndexes := utils.DiffKeyValuesInMap(newIndexedLabels, m.CurIndexedLabels)
 
 	if len(newIndexes) == 0 && len(delIndexes) == 0 {
 		//no changes on the Filter
-		m.log.Infof("No changes on the filter %s for measurement: %s", m.Filter.FType, m.cfg.ID)
+		m.log.Infof("No changes on the filter %s for measurement: %s", m.FilterCfg.FType, m.cfg.ID)
 		return false, nil
 	}
 
 	m.log.Debug("NEW INDEXES: %+v", newIndexes)
 	m.log.Debug("DELETED INDEXES: %+v", delIndexes)
 
-	m.Filterlabels = newfilterlabels
 	m.CurIndexedLabels = newIndexedLabels
 
 	if len(delIndexes) > 0 {
@@ -414,6 +402,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, error) {
 	return sent, errs, nil
 }
 
+// ComputeEvaluatedMetrics take evaluated metrics and computes them from the other values
 func (m *Measurement) ComputeEvaluatedMetrics() {
 	if m.cfg.EvalMetric == nil {
 		m.log.Infof("Not EVAL metrics exist on measurement %s", m.cfg.ID)
@@ -632,162 +621,4 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		m.log.Warn("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexIt)
 	}
 	return allindexIt, nil
-}
-
-/*
- filterIndexedLabels construct the final index array from all index and filters
-*/
-func (m *Measurement) filterIndexedLabels(f_mode string, L map[string]string) map[string]string {
-	curIndexedLabels := make(map[string]string, len(m.Filterlabels))
-
-	switch f_mode {
-	case "file":
-		//file filter should compare with all indexed labels with the value (name)
-		for k_f, v_f := range L {
-			for k_l, v_l := range m.AllIndexedLabels {
-				if k_f == v_l {
-					if len(v_f) > 0 {
-						// map[k_l]v_f (alias to key of the label
-						curIndexedLabels[k_l] = v_f
-					} else {
-						//map[k_l]v_l (original name)
-						curIndexedLabels[k_l] = v_l
-					}
-
-				}
-			}
-		}
-
-	case "OIDCondition":
-		for k_f, _ := range L {
-			for k_l, v_l := range m.AllIndexedLabels {
-				if k_f == k_l {
-					curIndexedLabels[k_l] = v_l
-				}
-			}
-		}
-
-		//confition filter should comapre with all indexed label with the key (number)
-	}
-	//could be posible to a delete of the non needed arrays  m.AllIndexedLabels //m.Filterlabels
-	return curIndexedLabels
-}
-
-func (m *Measurement) applyOIDCondFilter(oidCond string, typeCond string, valueCond string) (map[string]string, error) {
-
-	m.log.Debugf("Apply Condition Filter: Looking up column names in: Condition %s", oidCond)
-
-	idxPosInOID := len(oidCond)
-
-	filterlabels := make(map[string]string)
-
-	setRawData := func(pdu gosnmp.SnmpPDU) error {
-		m.log.Debugf("received SNMP  pdu:%+v", pdu)
-		if pdu.Value == nil {
-			m.log.Warnf("no value retured by pdu :%+v", pdu)
-			return nil //if error return the bulk process will stop
-		}
-		var vci int64
-		var value int64
-		var cond bool
-
-		switch {
-		case typeCond == "notmatch":
-			//m.log.Debugf("PDU: %+v", pdu)
-			str := snmp.PduVal2str(pdu)
-			var re = regexp.MustCompile(valueCond)
-			matched := re.MatchString(str)
-			m.log.Debugf("Evaluated notmatch condition  value: %s | filter: %s | result : %t", str, valueCond, !matched)
-			cond = !matched
-		case typeCond == "match":
-			//m.log.Debugf("PDU: %+v", pdu)
-			str := snmp.PduVal2str(pdu)
-			var re = regexp.MustCompile(valueCond)
-			matched := re.MatchString(str)
-			m.log.Debugf("Evaluated match condition  value: %s | filter: %s | result : %t", str, valueCond, matched)
-			cond = matched
-		case strings.Contains(typeCond, "n"):
-			//undesrstand valueCondition as numeric
-			vc, err := strconv.Atoi(valueCond)
-			if err != nil {
-				m.log.Warnf("only accepted numeric value as value condition  current : %s  for TypeCond %s", valueCond, typeCond)
-				return nil
-			}
-			vci = int64(vc)
-			//TODO review types
-			value = snmp.PduVal2Int64(pdu)
-			fallthrough
-		case typeCond == "neq":
-			cond = (value == vci)
-		case typeCond == "nlt":
-			cond = (value < vci)
-		case typeCond == "ngt":
-			cond = (value > vci)
-		case typeCond == "nge":
-			cond = (value >= vci)
-		case typeCond == "nle":
-			cond = (value <= vci)
-
-		default:
-			m.log.Errorf("Error in Condition filter OidCondition: %s Type: %s ValCond: %s ", oidCond, typeCond, valueCond)
-		}
-		if cond == true {
-			if len(pdu.Name) < idxPosInOID {
-				m.log.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", idxPosInOID, pdu)
-				return nil //if error return the bulk process will stop
-			}
-			suffix := pdu.Name[idxPosInOID+1:]
-			filterlabels[suffix] = ""
-		}
-
-		return nil
-	}
-	err := m.Walk(oidCond, setRawData)
-	if err != nil {
-		m.log.Errorf("SNMP version-1 walk error : %s", err)
-		return filterlabels, err
-	}
-
-	return filterlabels, nil
-}
-
-func (m *Measurement) applyFileFilter(file string, enableAlias bool) (map[string]string, error) {
-	m.log.Infof("apply File filter : %s Enable Alias: %t", file, enableAlias)
-	filterlabels := make(map[string]string)
-	if len(file) == 0 {
-		return filterlabels, errors.New("No file configured error ")
-	}
-	data, err := ioutil.ReadFile(filepath.Join(confDir, file))
-	if err != nil {
-		m.log.Errorf("ERROR on open file %s: error: %s", filepath.Join(confDir, file), err)
-		return filterlabels, err
-	}
-
-	for l_num, line := range strings.Split(string(data), "\n") {
-		//		log.Println("LINIA:", line)
-		// strip comments
-		comment := strings.Index(line, "#")
-		if comment >= 0 {
-			line = line[:comment]
-		}
-		if len(line) == 0 {
-			continue
-		}
-		f := strings.Fields(line)
-		switch len(f) {
-		case 1:
-			filterlabels[f[0]] = ""
-
-		case 2:
-			if enableAlias {
-				filterlabels[f[0]] = f[1]
-			} else {
-				filterlabels[f[0]] = ""
-			}
-
-		default:
-			m.log.Warnf("wrong number of parameters in file: %s Lnum: %s num : %s line: %s", file, l_num, len(f), line)
-		}
-	}
-	return filterlabels, nil
 }

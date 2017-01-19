@@ -59,6 +59,15 @@
                 <span style="padding-right:10px">Errors</span>
                 <td style="padding-left:10px">{{runtime_dev['Errors']}}</td>
               </tr>
+              <tr>
+                <span style="padding-right:10px">Last Gather Duration</span>
+                <td style="padding-left:10px">{{runtime_dev['LastGatherDuration'] / 1000000000  }}</td>
+              </tr>
+              <tr>
+                <span style="padding-right:10px">Last Filter Duration</span>
+                <td style="padding-left:10px">{{runtime_dev['LastFltUpdateDuration'] / 1000000000 }}</td>
+              </tr>
+
             </table>
           </div>
         </div>
@@ -170,7 +179,7 @@
             <span class="label label-info"> {{length}} Results </span>
           </div>
           <div class="col-md-6 text-right">
-            <span class="label label-danger" [tooltip]="filterInfo" style="margin-l>eft: 10px" *ngIf="runtime_dev['Measurements'][measActive].Filter"> Filter applied: {{runtime_dev['Measurements'][measActive].Filter.ID}}</span>
+            <span class="label label-danger" [tooltip]="filterInfo" style="margin-l>eft: 10px" *ngIf="runtime_dev['Measurements'][measActive].Filter"> Filter applied: {{runtime_dev['Measurements'][measActive].FilterCfg.ID}}</span>
             <template #filterInfo>
               <div *ngFor="let run of runtime_dev['Measurements'][measActive].Filter | objectParser" style="text-align:left !important">
                 <span class="text-left" style="paddint-left: 10px"><b>{{run.key}}</b></span>
