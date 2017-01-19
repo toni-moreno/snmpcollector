@@ -6,7 +6,7 @@
  * https://github.com/softsimon/angular-2-dropdown-multiselect
  */
 
-import { NgModule, Component, Pipe, OnInit, DoCheck, HostListener, Input, ElementRef, Output, EventEmitter, forwardRef, IterableDiffers } from '@angular/core';
+import { NgModule, Component, Pipe, OnInit, DoCheck, AfterContentInit, HostListener, Input, ElementRef, Output, EventEmitter, forwardRef, IterableDiffers } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs/Rx';
 import { FormsModule, NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
@@ -97,7 +97,7 @@ export class MultiSelectSearchFilter {
         </div>
     `
 })
-export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccessor {
+export class MultiselectDropdown implements OnInit, DoCheck, /*AfterContentInit,*/ ControlValueAccessor {
 
     @Input() options: Array<IMultiSelectOption>;
     @Input() settings: IMultiSelectSettings;
@@ -173,11 +173,17 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
         this.onModelTouched = fn;
     }
 
+    ngAfterContentInit() {
+        this.ngDoCheck();
+    }
+
     ngDoCheck() {
-        let changes = this.differ.diff(this.model);
-        if (changes) {
-            this.updateNumSelected();
-            this.updateTitle();
+        if(this.model){
+            let changes = this.differ.diff(this.model);
+            if (changes) {
+                this.updateNumSelected();
+                this.updateTitle();
+            }
         }
     }
 
