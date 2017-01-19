@@ -25,7 +25,7 @@
     <form [formGroup]="snmpmetForm" class="form-horizontal" (ngSubmit)="saveSnmpMet()">
       <div class="form-group">
         <label class="control-label col-sm-2" for="id">id</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique metric identifier"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique metric identifier"></i>
         <div class="col-sm-9">
           <input formControlName="id" id="id" />
           <control-messages [control]="snmpmetForm.controls.id"></control-messages>
@@ -34,7 +34,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="FieldName">Field Name</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement's Field name"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement's Field name"></i>
         <div class="col-sm-9">
           <input formControlName="FieldName" id="FieldName" />
           <control-messages [control]="snmpmetForm.controls.FieldName"></control-messages>
@@ -43,7 +43,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="IsTag">IsTag</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
         <div class="col-sm-9">
           <select formControlName="IsTag" id="IsTag">
             <option value="true">(true) Use data as Tag</option>
@@ -55,7 +55,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="BaseOID">Base OID</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
         <div class="col-sm-9">
           <input formControlName="BaseOID" id="BaseOID" />
           <control-messages [control]="snmpmetForm.controls.BaseOID"></control-messages>
@@ -64,7 +64,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="DataSrcType">DataSrcType</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
           <select formControlName="DataSrcType" id="DataSrcType">
             <option value="INTEGER">(SNMP SMI Type) INTEGER</option>
@@ -91,7 +91,7 @@
 
       <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'COUNTER32' || snmpmetForm.value.DataSrcType == 'COUNTER64'">
         <label class="control-label col-sm-2" for="GetRate">GetRate</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Normalize the returned value by time"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Normalize the returned value by time"></i>
         <div class="col-sm-9">
           <select formControlName="GetRate" id="GetRate">
             <option value="true" selected="selected">True</option>
@@ -103,7 +103,7 @@
 
       <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' ">
         <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
         <div class="col-sm-9">
           <input formControlName="ExtraData" id="ExtraData" />
           <control-messages [control]="snmpmetForm.controls.ExtraData"></control-messages>
@@ -112,7 +112,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Scale">Scale</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
         <div class="col-sm-9">
           <input formControlName="Scale" id="Scale" />
           <control-messages [control]="snmpmetForm.controls.Scale"></control-messages>
@@ -121,7 +121,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Shift">Shift</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Add a num to the returned (scaled) value "></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Add a num to the returned (scaled) value "></i>
         <div class="col-sm-9">
           <input formControlName="Shift" id="Shift" />
           <control-messages [control]="snmpmetForm.controls.Shift"></control-messages>
@@ -130,7 +130,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Metric"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Metric"></i>
         <div class="col-sm-9">
           <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
           <control-messages [control]="snmpmetForm.controls.Description"></control-messages>
@@ -150,7 +150,7 @@
     <form [formGroup]="snmpmetForm" class="form-horizontal" (ngSubmit)="updateSnmpMet(testsnmpmetric.ID)">
       <div class="form-group">
         <label class="control-label col-sm-2" for="id">id</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique metric identifier"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique metric identifier"></i>
         <div class="col-sm-9">
           <input formControlName="id" id="id" [ngModel]="testsnmpmetric.ID" />
           <control-messages [control]="snmpmetForm.controls.id"></control-messages>
@@ -159,7 +159,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="FieldName">Field Name</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement's Field name"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement's Field name"></i>
         <div class="col-sm-9">
           <input formControlName="FieldName" id="FieldName" [ngModel]="testsnmpmetric.FieldName" />
           <control-messages [control]="snmpmetForm.controls.FieldName"></control-messages>
@@ -168,7 +168,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="IsTag">IsTag</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
         <div class="col-sm-9">
           <select formControlName="IsTag" id="IsTag" [ngModel]="testsnmpmetric.IsTag">
             <option value="true">(true) Use data as Tag</option>
@@ -180,7 +180,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="BaseOID">Base OID</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
         <div class="col-sm-9">
           <input formControlName="BaseOID" id="BaseOID" [ngModel]="testsnmpmetric.BaseOID" />
           <control-messages [control]="snmpmetForm.controls.BaseOID"></control-messages>
@@ -189,7 +189,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="DataSrcType">DataSrcType</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
           <select formControlName="DataSrcType" id="DataSrcType" [ngModel]="testsnmpmetric.DataSrcType">
             <option value="INTEGER">(SNMP SMI Type) INTEGER</option>
@@ -217,7 +217,7 @@
       <div *ngIf="snmpmetForm.value.DataSrcType == 'COUNTER32' || snmpmetForm.value.DataSrcType == 'COUNTER64'">
         <div class="form-group">
           <label class="control-label col-sm-2" for="GetRate">GetRate</label>
-          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Normalize the returned value by time"></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Normalize the returned value by time"></i>
           <div class="col-sm-9">
             <select formControlName="GetRate" id="GetRate" [ngModel]="testsnmpmetric.GetRate">
               <option value="true" selected="selected">True</option>
@@ -230,7 +230,7 @@
 
       <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' ">
         <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
         <div class="col-sm-9">
           <input formControlName="ExtraData" id="ExtraData" [ngModel]="testsnmpmetric.ExtraData" />
           <control-messages [control]="snmpmetForm.controls.ExtraData"></control-messages>
@@ -239,7 +239,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Scale">Scale</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
         <div class="col-sm-9">
           <input formControlName="Scale" id="Scale" [ngModel]="testsnmpmetric.Scale" />
           <control-messages [control]="snmpmetForm.controls.Scale"></control-messages>
@@ -248,7 +248,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Shift">Shift</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Add a num to the returned (scaled) value "></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Add a num to the returned (scaled) value "></i>
         <div class="col-sm-9">
           <input formControlName="Shift" id="Shift" [ngModel]="testsnmpmetric.Shift" />
           <control-messages [control]="snmpmetForm.controls.Shift"></control-messages>
@@ -257,7 +257,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Metric"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Metric"></i>
         <div class="col-sm-9">
           <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='testsnmpmetric.Description'> </textarea>
           <control-messages [control]="snmpmetForm.controls.Description"></control-messages>

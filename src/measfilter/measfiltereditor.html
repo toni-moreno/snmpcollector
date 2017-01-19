@@ -25,7 +25,7 @@
 		<form [formGroup]="measfilterForm" class="form-horizontal" (ngSubmit)="saveMeasFilter()">
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="id">id</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Filters "></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Filters "></i>
 				<div class="col-sm-9">
 					<input formControlName="id" id="id" />
 					<control-messages [control]="measfilterForm.controls.id"></control-messages>
@@ -34,7 +34,7 @@
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="IDMeasurementCfg">Measurements</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of Measurements to attach the filter"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of Measurements to attach the filter"></i>
 				<div class="col-sm-9">
 					<select formControlName="IDMeasurementCfg" id="IDMeasurementCfg">
 						<option *ngFor="let measurement of influxmeas" [value]="measurement.ID"> {{measurement.ID}}
@@ -46,7 +46,7 @@
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="FType">Filter type</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Filter input source: file or condiction OID"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Filter input source: file or condiction OID"></i>
 				<div class="col-sm-9">
 					<select formControlName="FType" id="FType">
 						<option value="file">File</option>
@@ -59,7 +59,7 @@
 			<div *ngIf="measfilterForm.value.FType == 'file'">
 				<div class="form-group">
 					<label class="control-label col-sm-2" for="FileName">File Name</label>
-					<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid filename cointained in the conf/ directory"></i>
+					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid filename cointained in the conf/ directory"></i>
 					<div class="col-sm-9">
 						<input formControlName="FileName" id="FileName" />
 						<control-messages [control]="measfilterForm.controls.FileName"></control-messages>
@@ -67,7 +67,7 @@
 				</div>
 				<div class="form-group">
 					<label class="control-label col-sm-2" for="EnableAlias">Enable alias</label>
-					<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Allow get measurement tag from alias in the file"></i>
+					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Allow get measurement tag from alias in the file"></i>
 					<div class="col-sm-9">
 						<select formControlName="EnableAlias" id="EnableAlias">
 							<option value="true">Enable</option>
@@ -81,7 +81,7 @@
 			<div *ngIf="measfilterForm.value.FType == 'OIDCondition'">
 				<div class="form-group">
 					<label class="control-label col-sm-2" for="OIDCond">OID</label>
-					<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid OID to filter by"></i>
+					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid OID to filter by"></i>
 					<div class="col-sm-9">
 						<input formControlName="OIDCond" id="OIDCond" />
 						<control-messages [control]="measfilterForm.controls.OIDCond"></control-messages>
@@ -91,7 +91,7 @@
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="CondValue">Condition type</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Possible condition type to apply on the filter"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Possible condition type to apply on the filter"></i>
 				<div class="col-sm-9">
 					<select formControlName="CondType" id="CondType">
 						<option value="neq">Equal than</option>
@@ -108,7 +108,7 @@
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="CondValue">Value</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The value to match the condition"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The value to match the condition"></i>
 				<div class="col-sm-9">
 					<input formControlName="CondValue" id="CondValue" />
 					<control-messages [control]="measfilterForm.controls.CondValue"></control-messages>
@@ -116,7 +116,7 @@
 			</div>
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="Description">Description</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Device"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Device"></i>
 				<div class="col-sm-9">
 					<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
 					<control-messages [control]="measfilterForm.controls.Description"></control-messages>
@@ -137,7 +137,7 @@
 		<form [formGroup]="measfilterForm" class="form-horizontal" (ngSubmit)="updateMeasFilter(testmeasfilters.ID)">
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="id">id</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Filters "></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Filters "></i>
 				<div class="col-sm-9">
 					<input formControlName="id" id="id" [ngModel]="testmeasfilters.ID" />
 					<control-messages [control]="measfilterForm.controls.id"></control-messages>
@@ -146,7 +146,7 @@
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="IDMeasurementCfg">Measurements</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of Measurements to attach the filter"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of Measurements to attach the filter"></i>
 				<div class="col-sm-9">
 					<select formControlName="IDMeasurementCfg" id="IDMeasurementCfg" [ngModel]="testmeasfilters.IDMeasurementCfg">
 						<option *ngFor="let measurement of influxmeas" [value]="measurement.ID"> {{measurement.ID}}
@@ -158,7 +158,7 @@
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="FType">Filter type</label>"
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Filter input source: file or condiction OID"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Filter input source: file or condiction OID"></i>
 				<div class="col-sm-9">
 					<select formControlName="FType" id="FType" [ngModel]="testmeasfilters.FType">
 						<option value="file">File</option>
@@ -171,7 +171,7 @@
 			<div *ngIf="measfilterForm.value.FType == 'file'">
 				<div class="form-group">
 					<label class="control-label col-sm-2" for="FileName">File Name</label>
-					<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid filename cointained in the conf/ directory"></i>
+					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid filename cointained in the conf/ directory"></i>
 					<div class="col-sm-9">
 						<input formControlName="FileName" id="FileName" [ngModel]="testmeasfilters.FileName" />
 						<control-messages [control]="measfilterForm.controls.FileName"></control-messages>
@@ -180,7 +180,7 @@
 
 				<div class="form-group">
 					<label class="control-label col-sm-2" for="EnableAlias">Enable alias</label>
-					<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Allow get measurement tag from alias in the file"></i>
+					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Allow get measurement tag from alias in the file"></i>
 					<div class="col-sm-9">
 						<select formControlName="EnableAlias" id="EnableAlias" [ngModel]="testmeasfilters.EnableAlias">
 							<option value="true">Enable</option>
@@ -194,7 +194,7 @@
 			<div *ngIf="measfilterForm.value.FType == 'OIDCondition'">
 				<div class="form-group">
 					<label class="control-label col-sm-2" for="OIDCond">OID</label>
-					<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid OID to filter by"></i>
+					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid OID to filter by"></i>
 					<div class="col-sm-9">
 						<input formControlName="OIDCond" id="OIDCond" [ngModel]="testmeasfilters.OIDCond" />
 						<control-messages [control]="measfilterForm.controls.OIDCond"></control-messages>
@@ -204,7 +204,7 @@
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="CondType">Condition type</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Possible condition type to apply on the filter"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Possible condition type to apply on the filter"></i>
 				<div class="col-sm-9">
 					<select formControlName="CondType" id="CondType" [ngModel]="testmeasfilters.CondType">
 						<option value="neq">Equal than</option>
@@ -221,7 +221,7 @@
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="CondValue">Value</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The value to match the condition"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The value to match the condition"></i>
 				<div class="col-sm-9">
 					<input formControlName="CondValue" id="CondValue" [ngModel]="testmeasfilters.CondValue" />
 					<control-messages [control]="measfilterForm.controls.CondValue"></control-messages>
@@ -230,7 +230,7 @@
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="Description">Description</label>
-				<i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Filter"></i>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Filter"></i>
 				<div class="col-sm-9">
 					<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='testmeasfilters.Description'> </textarea>
 					<control-messages [control]="measfilterForm.controls.Description"></control-messages>
