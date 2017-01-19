@@ -26,7 +26,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="id">id</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of measurement"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of measurement"></i>
         <div class="col-sm-9">
           <input formControlName="id" id="id" />
           <control-messages [control]="influxmeasForm.controls.id"></control-messages>
@@ -34,7 +34,7 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label col-sm-2" for="Name">Name</label> <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement name used on InfluxDB server"></i>
+        <label class="control-label col-sm-2" for="Name">Name</label> <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement name used on InfluxDB server"></i>
         <div class="col-sm-9">
           <input formControlName="Name" id="Name" />
           <control-messages [control]="influxmeasForm.controls.Name"></control-messages>
@@ -43,7 +43,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="GetMode">GetMode</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Different mode to get the values. On 'value' the measurement collects many values as fields have. On 'indexed' the measurement collects many values as many fields finds on the indexOID request"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Different mode to get the values. On 'value' the measurement collects many values as fields have. On 'indexed' the measurement collects many values as many fields finds on the indexOID request"></i>
         <div class="col-sm-9">
           <select formControlName="GetMode" id="GetMode">
             <option value="value">(snmp scalar) Direct Value</option>
@@ -58,7 +58,7 @@
 
         <div class="form-group">
           <label class="control-label col-sm-2" for="IndexOID">IndexOID</label>
-          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The index OID to get the all real OID's to query data"></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The index OID to get the all real OID's to query data"></i>
           <div class="col-sm-9">
             <input formControlName="IndexOID" id="IndexOID" />
             <control-messages [control]="influxmeasForm.controls.IndexOID"></control-messages>
@@ -69,7 +69,7 @@
 
           <div class="form-group">
             <label class="control-label col-sm-2" for="TagOID">TagOID</label>
-            <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The Tag OID will allow us to get real Tag Name not provided in the IndexOID"></i>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The Tag OID will allow us to get real Tag Name not provided in the IndexOID"></i>
             <div class="col-sm-9">
               <input formControlName="TagOID" id="TagOID" />
               <control-messages [control]="influxmeasForm.controls.TagOID"></control-messages>
@@ -80,7 +80,7 @@
 
         <div class="form-group">
           <label class="control-label col-sm-2" for="IndexTag">IndexTag</label>
-          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag name that will be sent after data gathered"></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag name that will be sent after data gathered"></i>
           <div class="col-sm-9">
             <input formControlName="IndexTag" id="IndexTag" />
             <control-messages [control]="influxmeasForm.controls.IndexTag"></control-messages>
@@ -89,7 +89,7 @@
 
         <div class="form-group">
           <label class="control-label col-sm-2" for="IndexTag">IndexTagFormat</label>
-          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag value will be sent parametrized with $IDX1 , $VAL1 (default $VAL1 on direct indexed) and $IDX2, $VAL2 (default $VAL2 on indirect indexed) "></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag value will be sent parametrized with $IDX1 , $VAL1 (default $VAL1 on direct indexed) and $IDX2, $VAL2 (default $VAL2 on indirect indexed) "></i>
           <div class="col-sm-9">
             <input formControlName="IndexTagFormat" id="IndexTagFormat" />
             <control-messages [control]="influxmeasForm.controls.IndexTagFormat"></control-messages>
@@ -98,7 +98,7 @@
 
         <div class="form-group">
           <label class="control-label col-sm-2" for="IndexAsValue">IndexAsValue</label>
-          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If set to true the value for the TAG will be the indexnum , else will be the value , remember in SNMP Indexed Tables we will get data on this form snmpget(IndexOID.Indexnum) = value "></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If set to true the value for the TAG will be the indexnum , else will be the value , remember in SNMP Indexed Tables we will get data on this form snmpget(IndexOID.Indexnum) = value "></i>
           <div class="col-sm-9">
             <select formControlName="IndexAsValue" id="IndexAsValue">
               <option value="false">false</option>
@@ -111,7 +111,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Fields">Fields</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
         <div class="col-sm-9">
           <div>
             <ss-multiselect-dropdown [options]="selectmetrics" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="selectedMetrics" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeMetricArray($event)"></ss-multiselect-dropdown>
@@ -122,14 +122,24 @@
 
       <div class="form-group" *ngIf="metricArray.length > 0">
         <label class="control-label col-sm-2" for="Report">Report Fields</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
         <div class="col-sm-9">
           <div class="input-group list-group">
             <div *ngFor="let metric of metricArray; let i = index">
-              <span class="input-group-addon ">
-              <input type="checkbox" style="width: auto" (click)="onCheckMetric(i)" [checked]="metricArray[i].Report" >
-            </span>
-              <div class="input-group-addon" style="background: none"><span [ngClass]="metric.Report ? ['text-success'] : ['text-danger']">{{metric.ID}}</span></div>
+              <div class="input-group" style="background: none">
+                <div dropdown class="input-group-addon">
+                  <h5 role="button" [ngClass]="[reportMetricStatus[metric.Report].icon, reportMetricStatus[metric.Report].class]" tooltip="{{reportMetricStatus[metric.Report].name}}" class="dropdown-toggle-split" type="button" dropdownToggle></h5>
+                  <ul class="dropdown-menu" dropdownMenu role="menu" aria-labelledby="split-button">
+                    <li role="menuitem" *ngFor="let reportArray of reportMetricStatus; let reportIndex = index" [ngClass]="">
+                      <span role="button" (click)="onCheckMetric(i,reportIndex)" class="dropdown-item" [ngClass]="reportArray.class"><i style="padding-left: 5px; margin-right: 5px" [ngClass]="reportArray.icon"></i>{{reportArray.name}}</span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="input-group-addon" style="background: none">
+                  <span [ngClass]="[reportMetricStatus[metric.Report].class]">{{metric.ID}}</span>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -137,7 +147,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Group"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Group"></i>
         <div class="col-sm-9">
           <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
           <control-messages [control]="influxmeasForm.controls.Description"></control-messages>
@@ -156,7 +166,7 @@
     <form [formGroup]="influxmeasForm" class="form-horizontal" (ngSubmit)="updateInfluxMeas(testinfluxmeas.ID)">
       <div class="form-group">
         <label class="control-label col-sm-2" for="id">id</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of measurement"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of measurement"></i>
         <div class="col-sm-9">
           <input formControlName="id" id="id" [ngModel]="testinfluxmeas.ID" />
           <control-messages [control]="influxmeasForm.controls.id"></control-messages>
@@ -165,7 +175,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Name">Name</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement name used on InfluxDB server"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement name used on InfluxDB server"></i>
         <div class="col-sm-9">
           <input formControlName="Name" id="Name" [ngModel]="testinfluxmeas.Name" />
           <control-messages [control]="influxmeasForm.controls.Name"></control-messages>
@@ -174,7 +184,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="GetMode">GetMode</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Different mode to get the values. On 'value' the measurement collects many values as fields have. On 'indexed' the measurement collects many values as many fields finds on the indexOID request"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Different mode to get the values. On 'value' the measurement collects many values as fields have. On 'indexed' the measurement collects many values as many fields finds on the indexOID request"></i>
         <div class="col-sm-9">
           <select formControlName="GetMode" id="GetMode" [ngModel]="testinfluxmeas.GetMode">
             <option value="value">(snmp scalar) Direct Value</option>
@@ -189,7 +199,7 @@
       <div *ngIf="influxmeasForm.value.GetMode == 'indexed'  || influxmeasForm.value.GetMode == 'indexed_it'">
         <div class="form-group">
           <label class="control-label col-sm-2" for="IndexOID">IndexOID</label>
-          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The index OID to get the all real OID's to query data"></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The index OID to get the all real OID's to query data"></i>
           <div class="col-sm-9">
             <input formControlName="IndexOID" id="IndexOID" [ngModel]="testinfluxmeas.IndexOID" />
             <control-messages [control]="influxmeasForm.controls.IndexOID"></control-messages>
@@ -199,7 +209,7 @@
         <div *ngIf="influxmeasForm.value.GetMode == 'indexed_it'">
           <div class="form-group">
             <label class="control-label col-sm-2" for="TagOID">TagOID</label>
-            <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The Tag OID will allow us to get real Tag Name not provided in the IndexOID"></i>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The Tag OID will allow us to get real Tag Name not provided in the IndexOID"></i>
             <div class="col-sm-9">
               <input formControlName="TagOID" id="TagOID" [ngModel]="testinfluxmeas.TagOID" />
               <control-messages [control]="influxmeasForm.controls.TagOID"></control-messages>
@@ -209,7 +219,7 @@
 
         <div class="form-group">
           <label class="control-label col-sm-2" for="IndexTag">IndexTag</label>
-          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag name that will be sent after data gathered"></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag name that will be sent after data gathered"></i>
           <div class="col-sm-9">
             <input formControlName="IndexTag" id="IndexTag" [ngModel]="testinfluxmeas.IndexTag" />
             <control-messages [control]="influxmeasForm.controls.IndexTag"></control-messages>
@@ -218,7 +228,7 @@
 
         <div class="form-group">
           <label class="control-label col-sm-2" for="IndexTag">IndexTagFormat</label>
-          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag value will be sent parametrized with $IDX1 , $VAL1 (default $VAL1 on direct indexed) and $IDX2, $VAL2 (default $VAL2 on indirect indexed) "></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag value will be sent parametrized with $IDX1 , $VAL1 (default $VAL1 on direct indexed) and $IDX2, $VAL2 (default $VAL2 on indirect indexed) "></i>
           <div class="col-sm-9">
             <input formControlName="IndexTagFormat" id="IndexTagFormat" [ngModel]="testinfluxmeas.IndexTagFormat" />
             <control-messages [control]="influxmeasForm.controls.IndexTagFormat"></control-messages>
@@ -227,7 +237,7 @@
 
         <div class="form-group">
           <label class="control-label col-sm-2" for="IndexAsValue">IndexAsValue</label>
-          <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If set to true the value for the TAG will be the indexnum , else will be the value , remember in SNMP Indexed Tables we will get data on this form snmpget(IndexOID.Indexnum) = value "></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If set to true the value for the TAG will be the indexnum , else will be the value , remember in SNMP Indexed Tables we will get data on this form snmpget(IndexOID.Indexnum) = value "></i>
           <div class="col-sm-9">
             <select formControlName="IndexAsValue" id="IndexAsValue" [ngModel]="testinfluxmeas.IndexAsValue">
               <option value="false">false</option>
@@ -240,7 +250,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Fields">Fields</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
         <div class="col-sm-9">
           <div>
             <ss-multiselect-dropdown [options]="selectmetrics" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="selectedMetrics" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangeMetricArray($event)"></ss-multiselect-dropdown>
@@ -250,14 +260,24 @@
       </div>
       <div class="form-group" *ngIf="metricArray.length > 0">
         <label class="control-label col-sm-2" for="Report">Report Fields</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of metrics to associate with the measurement {{influxmeasForm.value.ID}}"></i>
         <div class="col-sm-9">
           <div class="input-group list-group">
             <div *ngFor="let metric of metricArray; let i = index">
-              <span class="input-group-addon ">
-              <input type="checkbox" style="width: auto" (click)="onCheckMetric(i)" [checked]="metricArray[i].Report" >
-            </span>
-              <div class="input-group-addon" style="background: none"><span [ngClass]="metric.Report ? ['text-success'] : ['text-danger']">{{metric.ID}}</span></div>
+              <div class="input-group" style="background: none">
+                <div dropdown class="input-group-addon">
+                  <h5 [ngClass]="[reportMetricStatus[metric.Report].icon, reportMetricStatus[metric.Report].class]" role="button" tooltip="{{reportMetricStatus[metric.Report].name}}" class="dropdown-toggle-split" type="button" dropdownToggle></h5>
+                  <ul class="dropdown-menu" dropdownMenu role="menu" aria-labelledby="split-button">
+                    <li role="menuitem" *ngFor="let reportArray of reportMetricStatus; let reportIndex = index">
+                      <span role="button" (click)="onCheckMetric(i,reportIndex)" role="button" class="dropdown-item" [ngClass]="reportArray.class"><i style="padding-left: 5px; margin-right: 5px" [ngClass]="reportArray.icon"></i>{{reportArray.name}}</span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="input-group-addon" style="background: none">
+                  <span [ngClass]="[reportMetricStatus[metric.Report].class]">{{metric.ID}}</span>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -265,7 +285,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
-        <i tooltipPlacement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Group"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Group"></i>
         <div class="col-sm-9">
           <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='testinfluxmeas.Description'> </textarea>
           <control-messages [control]="influxmeasForm.controls.Description"></control-messages>

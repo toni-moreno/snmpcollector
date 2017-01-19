@@ -55,15 +55,21 @@ import { TooltipModule } from 'ng2-bootstrap';
         </tr>
       </tbody>
     </table>
-  `
+  `,
+  styles: [`
+    :host >>> .displayinline{
+      display: inline !important;
+      padding-left: 5px;
+    }
+`]
 })
 export class NgTableComponent {
   // Table values
-  @Input() public rows:Array<any> = [];
+  @Input() public rows: Array<any> = [];
   @Input() public showCustom: boolean;
 
   @Input()
-  public set config(conf:any) {
+  public set config(conf: any) {
     if (!conf.className) {
       conf.className = 'table-striped table-bordered';
     }
@@ -73,27 +79,33 @@ export class NgTableComponent {
     this._config = conf;
   }
 
+  public reportMetricStatus: Array<Object> = [
+    { value: 0, name: 'Never Report', icon: 'glyphicon glyphicon-remove-circle', class: 'text-danger' },
+    { value: 1, name: 'Report', icon: 'glyphicon glyphicon-ok-circle', class: 'text-success' },
+    { value: 2, name: 'Report if not zero', icon: 'glyphicon glyphicon-ban-circle', class: 'text-warning' }
+  ];
+
   // Outputs (Events)
-  @Output() public tableChanged:EventEmitter<any> = new EventEmitter();
-  @Output() public cellClicked:EventEmitter<any> = new EventEmitter();
-  @Output() public viewedItem:EventEmitter<any> = new EventEmitter();
-  @Output() public editedItem:EventEmitter<any> = new EventEmitter();
-  @Output() public removedItem:EventEmitter<any> = new EventEmitter();
+  @Output() public tableChanged: EventEmitter<any> = new EventEmitter();
+  @Output() public cellClicked: EventEmitter<any> = new EventEmitter();
+  @Output() public viewedItem: EventEmitter<any> = new EventEmitter();
+  @Output() public editedItem: EventEmitter<any> = new EventEmitter();
+  @Output() public removedItem: EventEmitter<any> = new EventEmitter();
 
 
-  public showFilterRow:Boolean = false;
+  public showFilterRow: Boolean = false;
 
   @Input()
-  public set columns(values:Array<any>) {
-    this._columns =  [];
-    values.forEach((value:any) => {
+  public set columns(values: Array<any>) {
+    this._columns = [];
+    values.forEach((value: any) => {
       if (value.filtering) {
         this.showFilterRow = true;
       }
       if (value.className && value.className instanceof Array) {
         value.className = value.className.join(' ');
       }
-      let column = this._columns.find((col:any) => col.name === value.name);
+      let column = this._columns.find((col: any) => col.name === value.name);
       if (column) {
         Object.assign(column, value);
       }
@@ -103,86 +115,85 @@ export class NgTableComponent {
     });
   }
 
-  private _columns:Array<any> = [];
-  private _config:any = {};
+  private _columns: Array<any> = [];
+  private _config: any = {};
 
-  public constructor(private sanitizer:DomSanitizer) {
+  public constructor(private sanitizer: DomSanitizer) {
   }
 
-  public sanitize(html:string):SafeHtml {
-    if ( typeof html === 'object') {
+  public sanitize(html: string): SafeHtml {
+    if (typeof html === 'object') {
       var test: any = '<ul class="list-unstyled">';
       for (var item of html) {
-        if(typeof item === 'object') {
+        if (typeof item === 'object') {
           test += "<li>";
           for (var item2 in Object(item)) {
             if (typeof item[item2] === 'boolean') {
-                if (item[item2]) test += ' <i class="glyphicon glyphicon-arrow-right"></i>'
-                else test += ' <i class="glyphicon glyphicon-alert"></i>'
+              if (item[item2]) test += ' <i class="glyphicon glyphicon-arrow-right"></i>'
+              else test += ' <i class="glyphicon glyphicon-alert"></i>'
             } else if (typeof item[item2] === 'number') {
-                if (item[item2]==1) test += ' <i class="glyphicon glyphicon-arrow-right"></i>'
-                else test += ' <i class="glyphicon glyphicon-alert"></i>'
+              test += '<i class="' + this.reportMetricStatus[item[item2]]['icon'] + ' ' + this.reportMetricStatus[item[item2]]['class'] + ' displayinline"></i>'
             } else test += item[item2];
           }
           test += "</li>";
         } else {
-          test += "<li>"+item+"</li>";
+          test += "<li>" + item + "</li>";
         }
       }
-      test+="</ul>"
+      test += "</ul>"
       return test;
     } else if (typeof html === 'boolean') {
-        if (html) return '<i class="glyphicon glyphicon-ok"></i>'
-        else return '<i class="glyphicon glyphicon-remove"></i>'
+      if (html) return '<i class="glyphicon glyphicon-ok"></i>'
+      else return '<i class="glyphicon glyphicon-remove"></i>'
     }
     else {
-    return this.sanitizer.bypassSecurityTrustHtml(html);
-  }
+      return this.sanitizer.bypassSecurityTrustHtml(html);
+    }
   }
 
-  public get columns():Array<any> {
+  public get columns(): Array<any> {
     return this._columns;
   }
 
-  public get config():any {
+  public get config(): any {
     return this._config;
   }
 
-  public get configColumns():any {
-    let sortColumns:Array<any> = [];
+  public get configColumns(): any {
+    let sortColumns: Array<any> = [];
 
-    this.columns.forEach((column:any) => {
+    this.columns.forEach((column: any) => {
       if (column.sort) {
         sortColumns.push(column);
       }
     });
 
-    return {columns: sortColumns};
+    return { columns: sortColumns };
   }
 
-  public onChangeTable(column:any):void {
-    this._columns.forEach((col:any) => {
+  public onChangeTable(column: any): void {
+    this._columns.forEach((col: any) => {
       if (col.name !== column.name && col.sort !== false) {
         col.sort = '';
       }
     });
-    this.tableChanged.emit({sorting: this.configColumns});
+    this.tableChanged.emit({ sorting: this.configColumns });
   }
 
-  public getData(row:any, propertyName:string):string {
-    return propertyName.split('.').reduce((prev:any, curr:string) => prev[curr], row);
+  public getData(row: any, propertyName: string): string {
+    return propertyName.split('.').reduce((prev: any, curr: string) => prev[curr], row);
   }
 
-  public cellClick(row:any, column:any):void {
-    this.cellClicked.emit({row, column});
+  public cellClick(row: any, column: any): void {
+    this.cellClicked.emit({ row, column });
   }
-  public viewItem(row:any):void {
+  public viewItem(row: any): void {
     this.viewedItem.emit(row);
   }
-  public editItem(row:any):void {
+  public editItem(row: any): void {
     this.editedItem.emit(row);
   }
-  public removeItem(row:any):void {
+  public removeItem(row: any): void {
     this.removedItem.emit(row);
   }
 }

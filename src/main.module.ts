@@ -4,6 +4,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { HttpModule } from '@angular/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DropdownModule } from 'ng2-bootstrap';
 
 // external libs
 
@@ -72,6 +73,7 @@ import { SpinnerComponent } from './common/spinner';
     ModalModule.forRoot(),
     PaginationModule.forRoot(),
     TabsModule.forRoot(),
+    DropdownModule.forRoot(),
     Ng2TableModule,
     RouterModule.forRoot(routes, {
     //  useHash: true
