@@ -253,7 +253,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 		d.log.Debugln("DEVICE MEASUREMENT: ", devMeas, "HOST: ", d.cfg.Host)
 		for _, val := range selMeasUniq {
 			//check if measurement exist
-			d.log.Debugf("RRRRRRRRRRRRRRRRRR +%v", cfg.Measurements)
+			//d.log.Debugf("RRRRRRRRRRRRRRRRRR +%v", cfg.Measurements)
 			if mVal, ok := cfg.Measurements[val]; !ok {
 				d.log.Warnln("no measurement configured with name ", val, "in host :", d.cfg.Host)
 			} else {
@@ -431,6 +431,13 @@ func (d *SnmpDevice) addRequests(n int64) {
 	d.Requests += n
 }
 
+func (d *SnmpDevice) resetCounters() {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.Gets = 0
+	d.Errors = 0
+}
+
 func (d *SnmpDevice) addGets(n int64) {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
@@ -459,6 +466,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 		elapsedSnmp := time.Since(startSnmp)
 		d.setFltUpdateStats(startSnmp, elapsedSnmp)
 		d.log.Infof("snmpdevice [%s] snmp INIT runtime measurements/filters took [%s] ", d.cfg.ID, elapsedSnmp)
+
 	} else {
 		d.log.Infof("Can not initialize this device: Is Active: %t  |  Conection Active: %t ", d.DeviceActive, d.snmpClient != nil)
 	}
@@ -477,6 +485,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					startSnmp := time.Now()
 					d.InitDevMeasurements()
 					elapsedSnmp := time.Since(startSnmp)
+					d.setFltUpdateStats(startSnmp, elapsedSnmp)
 					d.log.Infof("snmpdevice [%s] snmp INIT runtime measurements/filters took [%s] ", d.cfg.ID, elapsedSnmp)
 					//device not initialized
 				}
@@ -488,6 +497,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				 * SNMP Gather data process
 				 *
 				 ***************************/
+				d.resetCounters()
 				var totalGets int64
 				var totalErrors int64
 				bpts := d.Influx.BP()
