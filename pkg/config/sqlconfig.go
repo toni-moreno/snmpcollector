@@ -63,12 +63,15 @@ type MeasFilterCfg struct {
 	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
 	FType            string `xorm:"filter_type"`       //file/OIDCondition/CustomFilter
 	FileName         string `xorm:"file_name"`         //only valid if  type=file
-	CustomID         string `xorm:"'customid' unique"` //only valid if type = CustomFilter
-	EnableAlias      bool   `xorm:"enable_alias"`      //only valid if file/CustomFilter
+	CustomID         string `xorm:"'customid' unique"` //only valid if type = Custom
+	EnableAlias      bool   `xorm:"enable_alias"`      //only valid if file/Custom
 	OIDCond          string `xorm:"cond_oid"`
 	CondType         string `xorm:"cond_type"`
 	CondValue        string `xorm:"cond_value"`
-	Description      string `xorm:"description"`
+	ExtraData        string `xorm:"extra_data"`
+	// Adds extra info depending o the filter type
+	// type: Custom => Extradata will have the origin device where has been edited from
+	Description string `xorm:"description"`
 }
 
 //MeasurementFieldCfg the metrics contained on each measurement (to initialize on the fieldMetric array)
@@ -80,9 +83,9 @@ type MeasurementFieldCfg struct {
 
 // CustomFilterCfg table with user custom choosed indexes
 type CustomFilterCfg struct {
-	customid string `xorm:"customid"`
-	tagid    string `xorm:"tagid"`
-	alias    string `xorm:"alias"`
+	CustomID string `xorm:"customid"`
+	TagID    string `xorm:"tagid"`
+	Alias    string `xorm:"alias"`
 }
 
 // OidConditionCfg condition config for filters and metrics

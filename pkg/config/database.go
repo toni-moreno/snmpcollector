@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strconv"
 	// _ needed to mysql
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -103,8 +104,52 @@ func (dbc *DatabaseCfg) InitDB() {
 		log.Fatalf("Fail to sync database CustomFilterCfg: %v\n", err)
 	}
 	if err = dbc.x.Sync(new(OidConditionCfg)); err != nil {
-		log.Fatalf("Fail to sync database CustomFilterCfg: %v\n", err)
+		log.Fatalf("Fail to sync database OidConditionCfg: %v\n", err)
 	}
+}
+
+//LoadDbConfig get data from database
+func (dbc *DatabaseCfg) LoadDbConfig(cfg *SQLConfig) {
+	var err error
+
+	//Load Influxdb databases
+	cfg.Influxdb, err = dbc.GetInfluxCfgMap("")
+	if err != nil {
+		log.Warningf("Some errors on get Influx db's :%v", err)
+	}
+
+	//Load metrics
+	cfg.Metrics, err = dbc.GetSnmpMetricCfgMap("")
+	if err != nil {
+		log.Warningf("Some errors on get Metrics  :%v", err)
+	}
+
+	//Load Measurements
+	cfg.Measurements, err = dbc.GetMeasurementCfgMap("")
+	if err != nil {
+		log.Warningf("Some errors on get Measurements  :%v", err)
+	}
+
+	//Load Measurement Filters
+	cfg.MFilters, err = dbc.GetMeasFilterCfgMap("")
+	if err != nil {
+		log.Warningf("Some errors on get Measurement Filters  :%v", err)
+	}
+
+	//Load measourement Groups
+
+	cfg.GetGroups, err = dbc.GetMGroupsCfgMap("")
+	if err != nil {
+		log.Warningf("Some errors on get Measurements Groups  :%v", err)
+	}
+
+	//Device
+
+	cfg.SnmpDevice, err = dbc.GetSnmpDeviceCfgMap("")
+	if err != nil {
+		log.Warningf("Some errors on get SnmpDeviceConf :%v", err)
+	}
+	dbc.resetChanges()
 }
 
 /***************************
@@ -1283,46 +1328,130 @@ func (dbc *DatabaseCfg) GetInfluxCfgAffectOnDel(id string) ([]*DbObjAction, erro
 	return obj, nil
 }
 
-//LoadDbConfig get data from database
-func (dbc *DatabaseCfg) LoadDbConfig(cfg *SQLConfig) {
+/***************************
+SNMP Metric
+	-GetCustomFilterCfgCfgByID(struct)
+	-GetCustomFilterCfgMap (map - for interna config use
+	-GetCustomFilterCfgArray(Array - for web ui use )
+	-AddCustomFilterCfg
+	-DelCustomFilterCfg
+	-UpdateCustomFilterCfg
+  -GetCustomFilterCfgAffectOnDel
+***********************************/
+
+/*GetCustomFilterCfgByID get metric data by id*/
+func (dbc *DatabaseCfg) GetCustomFilterCfgByID(id string) (map[string]*CustomFilterCfg, error) {
+	cfgmap, err := dbc.GetCustomFilterCfgMap("customid='" + id + "'")
+	if err != nil {
+		return nil, err
+	}
+	return cfgmap, nil
+}
+
+/*GetCustomFilterCfgMap  return data in map format*/
+func (dbc *DatabaseCfg) GetCustomFilterCfgMap(filter string) (map[string]*CustomFilterCfg, error) {
+	cfgarray, err := dbc.GetCustomFilterCfgArray(filter)
+	cfgmap := make(map[string]*CustomFilterCfg)
+	i := 0
+	for _, val := range cfgarray {
+		cfgmap[val.CustomID+"#"+strconv.Itoa(i)] = val
+		log.Debugf("%+v", *val)
+		i++
+	}
+	return cfgmap, err
+}
+
+/*GetCustomFilterCfgArray generate an array of metrics with all its information */
+func (dbc *DatabaseCfg) GetCustomFilterCfgArrayByID(id string) ([]*CustomFilterCfg, error) {
+	cfgarray, err := dbc.GetCustomFilterCfgArray("customid='" + id + "'")
+	if err != nil {
+		return nil, err
+	}
+	return cfgarray, nil
+}
+
+/*GetCustomFilterCfgArray generate an array of metrics with all its information */
+func (dbc *DatabaseCfg) GetCustomFilterCfgArray(filter string) ([]*CustomFilterCfg, error) {
+	var err error
+	var devices []*CustomFilterCfg
+	//Get Only data for selected metrics
+	if len(filter) > 0 {
+		if err = dbc.x.Where(filter).Find(&devices); err != nil {
+			log.Warnf("Fail to get CustomFilterCfg  data filteter with %s : %v\n", filter, err)
+			return nil, err
+		}
+	} else {
+		if err = dbc.x.Find(&devices); err != nil {
+			log.Warnf("Fail to get CustomFilterCfg   data: %v\n", err)
+			return nil, err
+		}
+	}
+	return devices, nil
+}
+
+/*AddCustomFilterCfg for adding new Metric*/
+func (dbc *DatabaseCfg) AddCustomFilterCfg(dev []CustomFilterCfg) (int64, error) {
+	var err error
+	var affected int64
+	// create CustomFilterCfg to check if any configuration issue found before persist to database.
+	// initialize data persistence
+	session := dbc.x.NewSession()
+	defer session.Close()
+	// first we will remove all previous entries
+	affected, err = session.Where("customid='" + dev[0].CustomID + "'").Delete(&CustomFilterCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Addignew filter config inputs with id on add MeasurementFieldCfg with id: %s, error: %s", dev[0].CustomID, err)
+	}
+	//inserting new ones
+	for _, v := range dev {
+		affected, err = session.Insert(v)
+		if err != nil {
+			session.Rollback()
+			return 0, err
+		}
+	}
+
+	//no other relation
+	err = session.Commit()
+	if err != nil {
+		return 0, err
+	}
+	log.Infof("Added new CustomFilterCfg Successfully with id %s ", dev[0].CustomID)
+	dbc.addChanges(affected)
+	return affected, nil
+}
+
+/*DelCustomFilterCfg for deleting influx databases from ID*/
+func (dbc *DatabaseCfg) DelCustomFilterCfg(id string) (int64, error) {
+	var affecteddev, affected int64
 	var err error
 
-	//Load Influxdb databases
-	cfg.Influxdb, err = dbc.GetInfluxCfgMap("")
+	session := dbc.x.NewSession()
+	defer session.Close()
+	// deleting references in Measurements
+
+	affected, err = session.Where("customid='" + id + "'").Delete(&CustomFilterCfg{})
 	if err != nil {
-		log.Warningf("Some errors on get Influx db's :%v", err)
+		session.Rollback()
+		return 0, err
 	}
 
-	//Load metrics
-	cfg.Metrics, err = dbc.GetSnmpMetricCfgMap("")
+	err = session.Commit()
 	if err != nil {
-		log.Warningf("Some errors on get Metrics  :%v", err)
+		return 0, err
 	}
+	log.Infof("Deleted Successfully Metricdb with ID %s [ %d Measurements Affected  ]", id, affecteddev)
+	dbc.addChanges(affecteddev)
+	return affected, nil
+}
 
-	//Load Measurements
-	cfg.Measurements, err = dbc.GetMeasurementCfgMap("")
-	if err != nil {
-		log.Warningf("Some errors on get Measurements  :%v", err)
-	}
+/*UpdateCustomFilterCfg for adding new influxdb*/
+func (dbc *DatabaseCfg) UpdateCustomFilterCfg(id string, dev []CustomFilterCfg) (int64, error) {
+	return dbc.AddCustomFilterCfg(dev)
+}
 
-	//Load Measurement Filters
-	cfg.MFilters, err = dbc.GetMeasFilterCfgMap("")
-	if err != nil {
-		log.Warningf("Some errors on get Measurement Filters  :%v", err)
-	}
-
-	//Load measourement Groups
-
-	cfg.GetGroups, err = dbc.GetMGroupsCfgMap("")
-	if err != nil {
-		log.Warningf("Some errors on get Measurements Groups  :%v", err)
-	}
-
-	//Device
-
-	cfg.SnmpDevice, err = dbc.GetSnmpDeviceCfgMap("")
-	if err != nil {
-		log.Warningf("Some errors on get SnmpDeviceConf :%v", err)
-	}
-	dbc.resetChanges()
+/*GetCustomFilterCfgAffectOnDel for deleting devices from ID*/
+func (dbc *DatabaseCfg) GetCustomFilterCfgAffectOnDel(id string) ([]*DbObjAction, error) {
+	return nil, nil
 }

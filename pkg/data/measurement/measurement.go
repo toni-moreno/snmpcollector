@@ -18,13 +18,18 @@ import (
 )
 
 var (
-	confDir string //Needed to get File Filters measurments
+	confDir string              //Needed to get File Filters data
+	dbc     *config.DatabaseCfg //Needed to get Custom Filter  data
 )
 
 // SetConfDir  enable load File Filters from anywhere in the our FS.
 func SetConfDir(dir string) {
 	confDir = dir
-	filter.SetConfDir(dir)
+}
+
+// SetDB load database config to load data if needed (used in filters)
+func SetDB(db *config.DatabaseCfg) {
+	dbc = db
 }
 
 //Measurement the runtime measurement config
@@ -128,6 +133,7 @@ func (m *Measurement) InitBuildRuntime() {
 	}
 }
 
+// AddFilter attach a filtering process to the measurement
 func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 	var err error
 	if m.cfg.GetMode == "value" {
@@ -141,12 +147,18 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 	switch m.FilterCfg.FType {
 	case "file":
 		m.Filter = filter.NewFileFilter(m.FilterCfg.FileName, m.FilterCfg.EnableAlias, m.log)
+		m.Filter.Init(confDir)
 	case "OIDCondition":
 		m.Filter = filter.NewOidFilter(m.FilterCfg.OIDCond, m.FilterCfg.CondType, m.FilterCfg.CondValue, m.log)
+		m.Filter.Init(m.Walk)
+	case "custom":
+		m.Filter = filter.NewCustomFilter(m.FilterCfg.CustomID, m.FilterCfg.EnableAlias, m.FilterCfg.ExtraData, m.log)
+		m.Filter.Init(dbc)
 	default:
 		return fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.FilterCfg.FType, m.cfg.ID)
 	}
-	err = m.Filter.Compute(m.Walk)
+
+	err = m.Filter.Update()
 	if err != nil {
 		m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
 	}
@@ -200,7 +212,7 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 	//----------------
 	m.log.Infof("Applying filter : [ %s ] on measurement [ %s ]", m.FilterCfg.ID, m.cfg.ID)
 
-	err = m.Filter.Compute(m.Walk)
+	err = m.Filter.Update()
 	if err != nil {
 		m.log.Errorf("Error while trying to apply file Filter  for measurement %s: ERROR: %s", m.cfg.ID, err)
 	}

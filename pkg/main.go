@@ -169,6 +169,7 @@ func main() {
 	//Init BD config
 
 	agent.MainConfig.Database.InitDB()
+	measurement.SetDB(&agent.MainConfig.Database)
 
 	agent.LoadConf()
 
