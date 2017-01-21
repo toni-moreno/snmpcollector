@@ -1,11 +1,22 @@
-# v 0.6.2 (Not Yet Released)
+# v 0.6.3 (Not Yet Released)
+### New Features
+* Measurement Filters refactor , added CustomFilter
+
+### fixes
+* fix for #105
+
+### breaking changes
+
+
+# v 0.6.2
 ### New Features
 * Metric Type standarization according to RFC2578 SMIv2.
 * new IndexTagFormat to the measurement enabling custom Tag names
 * Go code big refactor and reorganization
+* Added conditional send "On non zero"
 
 ### fixes
-* fix for #91
+* fix for #91, #97, #100
 
 ### breaking changes
 
