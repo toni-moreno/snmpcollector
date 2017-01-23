@@ -26,6 +26,7 @@ export class MeasGroupCfgComponent {
   influxmeas: Array<any>;
   selectmeas: IMultiSelectOption[] = [];
 
+  myFilterValue: any;
   //Initialization data, rows, colunms for Table
   private data: Array<any> = [];
   public rows: Array<any> = [];
@@ -72,6 +73,12 @@ export class MeasGroupCfgComponent {
       () => console.log('DONE')
       );
   }
+
+  onResetFilter() : void {
+		this.myFilterValue = "";
+		this.config.filtering = {filtering: { filterString: '' }};
+		this.onChangeTable(this.config);
+	}
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
     let start = (page.page - 1) * page.itemsPerPage;

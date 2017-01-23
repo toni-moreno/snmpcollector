@@ -8,9 +8,19 @@
 						[showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteMeasFilter($event)">
 		</test-modal>
 		<div class="row">
-			<div class="col-md-6">
-				<input *ngIf="config.filtering" placeholder="Filter all columns" [ngTableFiltering]="config.filtering" class="form-control" (tableChanged)="onChangeTable(config)" />
-				<button type="button" (click)="newMeasFilter()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+			<div class="col-md-6 text-left">
+				<label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()" style="margin-top: 10px"><i class="glyphicon glyphicon-trash text-primary"></i></label>
+				<input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
+				<label [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']">{{length}} Results</label>
+				<button style ="margin-top: -5px;" type="button" (click)="newMeasFilter()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+			</div>
+			<div class="col-md-6 text-right">
+				<span style="margin-left: 20px"> Items per page: </span>
+				<select class="select-pages" style="width:auto" [(ngModel)]="itemsPerPage" (ngModelChange)="onChangeTable(config)">
+					<option style="padding-left:2px" [value]="10">10</option>
+					<option style="padding-left:2px" [value]="15">15</option>
+					<option style="padding-left:2px" [value]="20">20</option>
+				</select>
 			</div>
 		</div>
 		<br>

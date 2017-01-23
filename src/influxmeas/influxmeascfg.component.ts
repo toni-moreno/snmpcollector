@@ -25,7 +25,6 @@ export class InfluxMeasCfgComponent {
   testinfluxmeas: any;
   snmpmetrics: Array<any>;
   selectmetrics: IMultiSelectOption[] = [];
-  deleteobject: Object;
   metricArray: Array<Object> = [];
   selectedMetrics: any = [];
 
@@ -55,6 +54,7 @@ export class InfluxMeasCfgComponent {
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
+  myFilterValue: any;
 
   //Set config
   public config: any = {
@@ -206,6 +206,12 @@ export class InfluxMeasCfgComponent {
       err => console.error(err),
       () => { console.log('DONE'); }
       );
+  }
+
+  onResetFilter(): void {
+    this.myFilterValue = "";
+    this.config.filtering = { filtering: { filterString: '' } };
+    this.onChangeTable(this.config);
   }
 
   onFilter() {
