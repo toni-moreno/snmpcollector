@@ -569,7 +569,7 @@
         <label class="control-label col-sm-2" for="MeasFilters">Measurement Filters</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Selection of filters to use with the device {{snmpdevForm.value.id}}"></i>
         <div class="col-sm-9">
-          <ss-multiselect-dropdown [options]="selectfilters" formControlName="MeasFilters" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="testsnmpdev.MeasFilters"></ss-multiselect-dropdown>
+          <ss-multiselect-dropdown [options]="selectfilters" formControlName="MeasFilters" [texts]="myTexts" [settings]="mySettings" [ngModel]="testsnmpdev.MeasFilters"></ss-multiselect-dropdown>
           <control-messages [control]="snmpdevForm.controls.MeasFilters"></control-messages>
         </div>
       </div>

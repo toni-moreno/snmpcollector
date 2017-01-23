@@ -27,11 +27,6 @@ export class SnmpDeviceService {
             key == 'SnmpDebug' ||
             key == 'DisableBulk' ) return ( value === "true" || value === true);
             if ( key == 'Extratags' ) return  String(value).split(',');
-            if ( key == 'MeasFilters' ||
-            key == 'MetricGroups') {
-                if (value != null) return String(value).split(',');
-                else return null;
-            }
             return value;
         }))
         .map( (responseData) => responseData.json());
@@ -53,11 +48,6 @@ export class SnmpDeviceService {
             key == 'SnmpDebug' ||
             key == 'DisableBulk' ) return ( value === "true" || value === true);
             if ( key == 'Extratags' ) return  String(value).split(',');
-            if ( key == 'MeasFilters' ||
-            key == 'MetricGroups') {
-                if (value != null) return String(value).split(',');
-                else return null;
-            }
             return value;
         }))
         .map( (responseData) => responseData.json());

@@ -14,12 +14,7 @@ export class InfluxMeasService {
 
     addMeas(dev) {
         return this.httpAPI.post('/measurement',JSON.stringify(dev,function (key,value) {
-            if ( key == 'Fields' ) {
-              if (value == null || value == "")  return null;
-              else {
-                return value; //String(value).split(',');
-              }
-            }
+
             if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
             return value;
         }))
@@ -29,12 +24,7 @@ export class InfluxMeasService {
     editMeas(dev, id) {
         console.log("DEV: ",dev);
         return this.httpAPI.put('/measurement/'+id,JSON.stringify(dev,function (key,value) {
-          if ( key == 'Fields' ) {
-            if (value == null || value == "")  return null;
-            else {
-                return value;
-            }
-          }
+
           if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
           return value;
 

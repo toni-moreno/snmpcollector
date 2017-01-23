@@ -13,11 +13,7 @@ export class MeasGroupService {
 
     addMeasGroup(dev) {
         return this.httpAPI.post('/measgroups',JSON.stringify(dev,function (key,value) {
-            if ( key == 'Measurements' ) {
-              if (value != null) return String(value).split(',');
-              else return null;
-            }
-                return value;
+            return value;
         }))
         .map( (responseData) => responseData.json());
     }
@@ -26,10 +22,6 @@ export class MeasGroupService {
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.httpAPI.put('/measgroups/'+id,JSON.stringify(dev,function (key,value) {
-            if ( key == 'Measurements' ) {
-              if (value != null) return String(value).split(',');
-              else return null;
-            }
             return value;
         }))
         .map( (responseData) => responseData.json());
