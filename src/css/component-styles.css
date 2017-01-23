@@ -58,11 +58,26 @@ input:focus.ng-invalid,select:focus.ng-invalid, textarea:focus.ng-invalid {
   border: 1px solid #a94442;
   border-left: 5px solid #a94442
 }
+input:focus.ng-valid[required], select:focus.ng-valid[required]{
+  box-shadow: 0 0 5px #42A948;
+  border: 1px solid #42A948;
+  border-left:5px solid #42A948;
+}
 
 input:focus.ng-valid, select:focus.ng-valid{
   box-shadow: 0 0 5px #42A948;
   border: 1px solid #42A948;
   border-left:5px solid #42A948;
+}
+
+.select-pages {
+  border-left:5px solid #337ab7 !important;
+
+}
+.select-pages:focus{
+  box-shadow: 0 0 5px #337ab7 !important;
+  border: 1px solid #337ab7 !important;
+  border-left:5px solid #337ab7 !important;
 }
 
 .ng-invalid:not(form)  {

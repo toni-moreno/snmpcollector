@@ -41,6 +41,9 @@ export class SnmpDeviceCfgComponent {
   selectfilters: IMultiSelectOption[] = [];
   alertHandler: any = [];
 
+  myFilterValue: any;
+
+
   //Initialization data, rows, colunms for Table
   private data: Array<any> = [];
   public rows: Array<any> = [];
@@ -124,6 +127,12 @@ export class SnmpDeviceCfgComponent {
       err => console.error(err),
       () => console.log('DONE')
       );
+  }
+
+  onResetFilter() : void {
+    this.myFilterValue = "";
+    this.config.filtering = {filtering: { filterString: '' }};
+    this.onChangeTable(this.config);
   }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
