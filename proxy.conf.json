@@ -34,5 +34,10 @@
   "/snmpdevice": {
     "target": "http://localhost:8090",
     "secure": false
+  },
+  "/customfilter": {
+    "target": "http://localhost:8090",
+    "secure": false
   }
+
 }

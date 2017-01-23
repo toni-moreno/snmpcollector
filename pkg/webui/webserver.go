@@ -179,6 +179,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 
 	m.Group("/measurement", func() {
 		m.Get("/", reqSignedIn, GetMeas)
+		m.Get("/type/:type", reqSignedIn, GetMeasByType)
 		m.Post("/", reqSignedIn, bind(config.MeasurementCfg{}), AddMeas)
 		m.Put("/:id", reqSignedIn, bind(config.MeasurementCfg{}), UpdateMeas)
 		m.Delete("/:id", reqSignedIn, DeleteMeas)
@@ -221,6 +222,15 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 		m.Delete("/:id", reqSignedIn, DeleteSNMPDevice)
 		m.Get("/:id", reqSignedIn, GetSNMPDeviceByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetSNMPDevicesAffectOnDel)
+	})
+
+	m.Group("/customfilter", func() {
+		m.Get("/", reqSignedIn, GetCustomFilter)
+		m.Post("/", reqSignedIn, bind(config.CustomFilterCfg{}), AddCustomFilter)
+		m.Put("/:id", reqSignedIn, bind(config.CustomFilterCfg{}), UpdateCustomFilter)
+		m.Delete("/:id", reqSignedIn, DeleteCustomFilter)
+		m.Get("/:id", reqSignedIn, GetCustomFilterByID)
+		m.Get("/checkondel/:id", reqSignedIn, GetCustomFiltersAffectOnDel)
 	})
 
 	m.Group("/runtime", func() {
@@ -607,6 +617,19 @@ func GetMeas(ctx *Context) {
 	log.Debugf("Getting Measurements %+v", &cfgarray)
 }
 
+// GetMeasByType Return measurements list to frontend
+func GetMeasByType(ctx *Context) {
+	t := ctx.Params(":type")
+	cfgarray, err := agent.MainConfig.Database.GetMeasurementCfgArray("getmode like '%" + t + "%'")
+	if err != nil {
+		ctx.JSON(404, err.Error())
+		log.Errorf("Error on get Influx Measurements :%+s", err)
+		return
+	}
+	ctx.JSON(200, &cfgarray)
+	log.Debugf("Getting Measurements %+v", &cfgarray)
+}
+
 // AddMeas Insert new measurement to de internal BBDD --pending--
 func AddMeas(ctx *Context, dev config.MeasurementCfg) {
 	log.Printf("ADDING Measurement %+v", dev)
@@ -904,6 +927,86 @@ func GetInfluxAffectOnDel(ctx *Context) {
 	obarray, err := agent.MainConfig.Database.GetInfluxCfgAffectOnDel(id)
 	if err != nil {
 		log.Warningf("Error on get object array for influx device %s  , error: %s", id, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, &obarray)
+	}
+}
+
+/********************/
+/*CUSTOM FILTER API
+/********************/
+
+// GetCustomFilter Return measurements groups list to frontend
+func GetCustomFilter(ctx *Context) {
+	cfgarray, err := agent.MainConfig.Database.GetCustomFilterCfgArray("")
+	if err != nil {
+		ctx.JSON(404, err.Error())
+		log.Errorf("Error on get Custom Filter :%+s", err)
+		return
+	}
+	ctx.JSON(200, &cfgarray)
+	log.Debugf("Getting Measurement Filter %+v", &cfgarray)
+}
+
+// AddCustomFilter Insert new measurement groups to de internal BBDD --pending--
+func AddCustomFilter(ctx *Context, dev config.CustomFilterCfg) {
+	log.Printf("ADDING measurement Filter %+v", dev)
+	affected, err := agent.MainConfig.Database.AddCustomFilterCfg(dev)
+	if err != nil {
+		log.Warningf("Error on insert Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		//TODO: review if needed return data  or affected
+		ctx.JSON(200, &dev)
+	}
+}
+
+// UpdateCustomFilter --pending--
+func UpdateCustomFilter(ctx *Context, dev config.CustomFilterCfg) {
+	id := ctx.Params(":id")
+	log.Debugf("Tying to update: %+v", dev)
+	affected, err := agent.MainConfig.Database.UpdateCustomFilterCfg(id, dev)
+	if err != nil {
+		log.Warningf("Error on update Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		//TODO: review if needed return device data
+		ctx.JSON(200, &dev)
+	}
+}
+
+//DeleteCustomFilter --pending--
+func DeleteCustomFilter(ctx *Context) {
+	id := ctx.Params(":id")
+	log.Debugf("Tying to delete: %+v", id)
+	affected, err := agent.MainConfig.Database.DelCustomFilterCfg(id)
+	if err != nil {
+		log.Warningf("Error on delete Measurement Filter %s  , affected : %+v , error: %s", id, affected, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, "deleted")
+	}
+}
+
+//GetCustomFilterByID --pending--
+func GetCustomFilterByID(ctx *Context) {
+	id := ctx.Params(":id")
+	dev, err := agent.MainConfig.Database.GetCustomFilterCfgByID(id)
+	if err != nil {
+		log.Warningf("Error on get Measurement Filter  for device %s  , error: %s", id, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, &dev)
+	}
+}
+
+//GetCustomFiltersAffectOnDel --pending--
+func GetCustomFiltersAffectOnDel(ctx *Context) {
+	id := ctx.Params(":id")
+	obarray, err := agent.MainConfig.Database.GetCustomFilterCfgAffectOnDel(id)
+	if err != nil {
+		log.Warningf("Error on get object array for Measurement filters %s  , error: %s", id, err)
 		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &obarray)
