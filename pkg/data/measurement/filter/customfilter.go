@@ -10,15 +10,14 @@ type CustomFilter struct {
 	filterLabels map[string]string
 	CustomID     string
 	EnableAlias  bool
-	DeviceOrigin string
 	dbc          *config.DatabaseCfg
 
 	log *logrus.Logger
 }
 
 // NewCustomFilter creates a new CustomFilter
-func NewCustomFilter(cid string, enableAlias bool, orig string, l *logrus.Logger) *CustomFilter {
-	return &CustomFilter{CustomID: cid, EnableAlias: enableAlias, DeviceOrigin: orig, log: l}
+func NewCustomFilter(cid string, enableAlias bool, l *logrus.Logger) *CustomFilter {
+	return &CustomFilter{CustomID: cid, EnableAlias: enableAlias, log: l}
 }
 
 // Init Load Confiration before use them
@@ -60,13 +59,14 @@ func (cf *CustomFilter) Update() error {
 	// reset current filter
 	cf.filterLabels = make(map[string]string)
 
-	filter, err := cf.dbc.GetCustomFilterCfgArrayByID(cf.CustomID)
+	filter, err := cf.dbc.GetCustomFilterCfgByID(cf.CustomID)
+	cf.log.Debug("custom Filter %+v", filter)
 
 	if err != nil {
 		return err
 	}
 
-	for _, vf := range filter {
+	for _, vf := range filter.Items {
 		if cf.EnableAlias {
 			cf.filterLabels[vf.TagID] = vf.Alias
 		} else {

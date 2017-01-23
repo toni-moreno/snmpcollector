@@ -61,14 +61,14 @@ type InfluxCfg struct {
 type MeasFilterCfg struct {
 	ID               string `xorm:"'id' unique"`
 	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
-	FType            string `xorm:"filter_type"`       //file/OIDCondition/CustomFilter
-	FileName         string `xorm:"file_name"`         //only valid if  type=file
-	CustomID         string `xorm:"'customid' unique"` //only valid if type = Custom
-	EnableAlias      bool   `xorm:"enable_alias"`      //only valid if file/Custom
+	FType            string `xorm:"filter_type"`  //file/OIDCondition/CustomFilter
+	FileName         string `xorm:"file_name"`    //only valid if  type=file
+	CustomID         string `xorm:"'customid'"`   //only valid if type = Custom
+	EnableAlias      bool   `xorm:"enable_alias"` //only valid if file/Custom
 	OIDCond          string `xorm:"cond_oid"`
 	CondType         string `xorm:"cond_type"`
 	CondValue        string `xorm:"cond_value"`
-	ExtraData        string `xorm:"extra_data"`
+	//ExtraData        string `xorm:"extra_data"`
 	// Adds extra info depending o the filter type
 	// type: Custom => Extradata will have the origin device where has been edited from
 	Description string `xorm:"description"`
@@ -81,11 +81,24 @@ type MeasurementFieldCfg struct {
 	Report           int    `xorm:"'report' default 1"`
 }
 
-// CustomFilterCfg table with user custom choosed indexes
-type CustomFilterCfg struct {
+// CUSTOM FILTER TYPES
+
+// CustomFilterItems  list of items on each custom filter
+type CustomFilterItems struct {
 	CustomID string `xorm:"customid"`
 	TagID    string `xorm:"tagid"`
 	Alias    string `xorm:"alias"`
+}
+
+// CustomFilterCfg table with user custom choosed indexes
+type CustomFilterCfg struct {
+	ID          string `xorm:"'id' unique"`
+	Description string `xorm:"description"`
+	RelatedDev  string `xorm:"related_dev"`
+	Items       []struct {
+		TagID string
+		Alias string
+	} `xorm:"-"`
 }
 
 // OidConditionCfg condition config for filters and metrics

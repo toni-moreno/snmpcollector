@@ -152,7 +152,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 		m.Filter = filter.NewOidFilter(m.FilterCfg.OIDCond, m.FilterCfg.CondType, m.FilterCfg.CondValue, m.log)
 		m.Filter.Init(m.Walk)
 	case "custom":
-		m.Filter = filter.NewCustomFilter(m.FilterCfg.CustomID, m.FilterCfg.EnableAlias, m.FilterCfg.ExtraData, m.log)
+		m.Filter = filter.NewCustomFilter(m.FilterCfg.CustomID, m.FilterCfg.EnableAlias, m.log)
 		m.Filter.Init(dbc)
 	default:
 		return fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.FilterCfg.FType, m.cfg.ID)
