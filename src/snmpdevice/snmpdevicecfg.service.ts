@@ -27,6 +27,11 @@ export class SnmpDeviceService {
             key == 'SnmpDebug' ||
             key == 'DisableBulk' ) return ( value === "true" || value === true);
             if ( key == 'Extratags' ) return  String(value).split(',');
+            if ( key == 'MeasFilters' ||
+            key == 'MeasurementGroups') {
+                if (value == "") return null;
+                else return value;
+            }
             return value;
         }))
         .map( (responseData) => responseData.json());
@@ -48,6 +53,11 @@ export class SnmpDeviceService {
             key == 'SnmpDebug' ||
             key == 'DisableBulk' ) return ( value === "true" || value === true);
             if ( key == 'Extratags' ) return  String(value).split(',');
+            if ( key == 'MeasFilters' ||
+            key == 'MeasurementGroups') {
+                if (value == "") return null;
+                else return value;
+            }
             return value;
         }))
         .map( (responseData) => responseData.json());
@@ -131,9 +141,9 @@ export class SnmpDeviceService {
             key == 'DisableBulk' ) return ( value === "true" || value === true);
             if ( key == 'Extratags' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
-            key == 'MetricGroups') {
-                if (value != null) return String(value).split(',');
-                else return null;
+            key == 'MeasurementGroups') {
+                if (value == "") return null;
+                else return value;
             }
             return value;
         }))
@@ -154,9 +164,9 @@ export class SnmpDeviceService {
             key == 'DisableBulk' ) return ( value === "true" || value === true);
             if ( key == 'Extratags' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
-            key == 'MetricGroups') {
-                if (value != null) return String(value).split(',');
-                else return null;
+            key == 'MeasurementGroups') {
+                if (value == "") return null;
+                else return value;
             }
             return value;
         }))
