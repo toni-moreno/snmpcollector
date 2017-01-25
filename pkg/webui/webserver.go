@@ -168,7 +168,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 	m.Post("/login", bind(UserLogin{}), myLoginHandler)
 	m.Post("/logout", myLogoutHandler)
 
-	m.Group("/metric", func() {
+	m.Group("/api/cfg/metric", func() {
 		m.Get("/", reqSignedIn, GetMetrics)
 		m.Post("/", reqSignedIn, bind(config.SnmpMetricCfg{}), AddMetric)
 		m.Put("/:id", reqSignedIn, bind(config.SnmpMetricCfg{}), UpdateMetric)
@@ -177,7 +177,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 		m.Get("/checkondel/:id", reqSignedIn, GetMetricsAffectOnDel)
 	})
 
-	m.Group("/measurement", func() {
+	m.Group("/api/cfg/measurement", func() {
 		m.Get("/", reqSignedIn, GetMeas)
 		m.Get("/type/:type", reqSignedIn, GetMeasByType)
 		m.Post("/", reqSignedIn, bind(config.MeasurementCfg{}), AddMeas)
@@ -187,7 +187,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 		m.Get("/checkondel/:id", reqSignedIn, GetMeasAffectOnDel)
 	})
 
-	m.Group("/measgroups", func() {
+	m.Group("/api/cfg/measgroup", func() {
 		m.Get("/", reqSignedIn, GetMeasGroup)
 		m.Post("/", reqSignedIn, bind(config.MGroupsCfg{}), AddMeasGroup)
 		m.Put("/:id", reqSignedIn, bind(config.MGroupsCfg{}), UpdateMeasGroup)
@@ -196,7 +196,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 		m.Get("/checkondel/:id", reqSignedIn, GetMeasGroupsAffectOnDel)
 	})
 
-	m.Group("/measfilters", func() {
+	m.Group("/api/cfg/measfilters", func() {
 		m.Get("/", reqSignedIn, GetMeasFilter)
 		m.Post("/", reqSignedIn, bind(config.MeasFilterCfg{}), AddMeasFilter)
 		m.Put("/:id", reqSignedIn, bind(config.MeasFilterCfg{}), UpdateMeasFilter)
@@ -205,7 +205,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 		m.Get("/checkondel/:id", reqSignedIn, GetMeasFiltersAffectOnDel)
 	})
 
-	m.Group("/influxservers", func() {
+	m.Group("/api/cfg/influxservers", func() {
 		m.Get("/", reqSignedIn, GetInfluxServer)
 		m.Post("/", reqSignedIn, bind(config.InfluxCfg{}), AddInfluxServer)
 		m.Put("/:id", reqSignedIn, bind(config.InfluxCfg{}), UpdateInfluxServer)
@@ -215,7 +215,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 	})
 
 	// Data sources
-	m.Group("/snmpdevice", func() {
+	m.Group("/api/cfg/snmpdevice", func() {
 		m.Get("/", reqSignedIn, GetSNMPDevices)
 		m.Post("/", reqSignedIn, bind(config.SnmpDeviceCfg{}), AddSNMPDevice)
 		m.Put("/:id", reqSignedIn, bind(config.SnmpDeviceCfg{}), UpdateSNMPDevice)
@@ -224,7 +224,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 		m.Get("/checkondel/:id", reqSignedIn, GetSNMPDevicesAffectOnDel)
 	})
 
-	m.Group("/customfilter", func() {
+	m.Group("/api/cfg/customfilter", func() {
 		m.Get("/", reqSignedIn, GetCustomFilter)
 		m.Post("/", reqSignedIn, bind(config.CustomFilterCfg{}), AddCustomFilter)
 		m.Put("/:id", reqSignedIn, bind(config.CustomFilterCfg{}), UpdateCustomFilter)
@@ -233,20 +233,23 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 		m.Get("/checkondel/:id", reqSignedIn, GetCustomFiltersAffectOnDel)
 	})
 
-	m.Group("/runtime", func() {
-		m.Get("/agent/reloadconf/", reqSignedIn, AgentReloadConf)
-		m.Post("/snmpping/", reqSignedIn, bind(config.SnmpDeviceCfg{}), PingSNMPDevice)
-		m.Post("/snmpquery/:getmode/:obtype/:data", reqSignedIn, bind(config.SnmpDeviceCfg{}), QuerySNMPDevice)
-		m.Get("/version/", reqSignedIn, RTGetVersion)
+	m.Group("/api/rt/agent", func() {
+		m.Get("/reload/", reqSignedIn, AgentReloadConf)
+		m.Post("/snmpconsole/ping/", reqSignedIn, bind(config.SnmpDeviceCfg{}), PingSNMPDevice)
+		m.Post("/snmpconsole/query/:getmode/:obtype/:data", reqSignedIn, bind(config.SnmpDeviceCfg{}), QuerySNMPDevice)
+		m.Get("/info/version/", reqSignedIn, RTGetVersion)
+	})
+
+	m.Group("/api/rt/device", func() {
 		m.Get("/info/", reqSignedIn, RTGetInfo)
 		m.Get("/info/:id", reqSignedIn, RTGetInfo)
-		m.Put("/activatedev/:id", reqSignedIn, RTActivateDev)
-		m.Put("/deactivatedev/:id", reqSignedIn, RTDeactivateDev)
-		m.Put("/actsnmpdbg/:id", reqSignedIn, RTActSnmpDebugDev)
-		m.Put("/deactsnmpdbg/:id", reqSignedIn, RTDeactSnmpDebugDev)
-		m.Put("/setloglevel/:id/:level", reqSignedIn, RTSetLogLevelDev)
-		m.Get("/getdevicelog/:id", reqSignedIn, RTGetLogFileDev)
-		m.Get("/forcefltupdate/:id", reqSignedIn, RTForceFltUpdate)
+		m.Put("/status/activate/:id", reqSignedIn, RTActivateDev)
+		m.Put("/status/deactivate/:id", reqSignedIn, RTDeactivateDev)
+		m.Put("/debug/activate/:id", reqSignedIn, RTActSnmpDebugDev)
+		m.Put("/debug/deactivate/:id", reqSignedIn, RTDeactSnmpDebugDev)
+		m.Put("/log/setloglevel/:id/:level", reqSignedIn, RTSetLogLevelDev)
+		m.Get("/log/getdevicelog/:id", reqSignedIn, RTGetLogFileDev)
+		m.Get("/filter/forcefltupdate/:id", reqSignedIn, RTForceFltUpdate)
 	})
 
 	log.Printf("Server is running on localhost:%d...", port)

@@ -52,7 +52,7 @@ export class Home {
   }
 
   reloadConfig() {
-    this.httpAPI.get('/runtime/agent/reloadconf')
+    this.httpAPI.get('/api/rt/agent/reload/')
     .subscribe(
     response => {
       alert(response.json())
@@ -76,7 +76,7 @@ export class Home {
 
   getInfo(filter_s: string) {
     // return an observable
-    return this.httpAPI.get('/runtime/version')
+    return this.httpAPI.get('/api/rt/agent/info/version/')
     .map( (responseData) => {
       return responseData.json()});
     }

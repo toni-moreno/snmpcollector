@@ -12,7 +12,7 @@ export class MeasGroupService {
     }
 
     addMeasGroup(dev) {
-        return this.httpAPI.post('/measgroups',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/api/cfg/measgroup',JSON.stringify(dev,function (key,value) {
             return value;
         }))
         .map( (responseData) => responseData.json());
@@ -21,7 +21,7 @@ export class MeasGroupService {
     editMeasGroup(dev, id) {
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
-        return this.httpAPI.put('/measgroups/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/api/cfg/measgroup/'+id,JSON.stringify(dev,function (key,value) {
             return value;
         }))
         .map( (responseData) => responseData.json());
@@ -29,7 +29,7 @@ export class MeasGroupService {
 
     getMeasGroup(filter_s: string) {
         // return an observable
-        return this.httpAPI.get('/measgroups')
+        return this.httpAPI.get('/api/cfg/measgroup')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -57,13 +57,13 @@ export class MeasGroupService {
     getMeasGroupById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.httpAPI.get('/measgroups/'+id)
+        return this.httpAPI.get('/api/cfg/measgroup/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteMeasGroups(id : string){
-      return this.httpAPI.get('/measgroups/checkondel/'+id)
+      return this.httpAPI.get('/api/cfg/measgroup/checkondel/'+id)
       .map( (responseData) =>
        responseData.json()
       ).map((deleteobject) => {
@@ -84,7 +84,7 @@ export class MeasGroupService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/measgroups/'+id)
+        return this.httpAPI.delete('/api/cfg/measgroup/'+id)
         .map( (responseData) =>
          responseData.json()
         );

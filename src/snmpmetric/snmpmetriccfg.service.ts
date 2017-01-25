@@ -12,7 +12,7 @@ export class SnmpMetricService {
     }
 
     addMetric(dev) {
-        return this.httpAPI.post('/metric',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/api/cfg/metric',JSON.stringify(dev,function (key,value) {
             if (key == 'Scale' ||
             key == 'Shift') {
                 return parseFloat(value);
@@ -27,7 +27,7 @@ export class SnmpMetricService {
 
     editMetric(dev, id) {
         console.log("DEV: ",dev);
-        return this.httpAPI.put('/metric/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/api/cfg/metric/'+id,JSON.stringify(dev,function (key,value) {
             if (key == 'Scale' ||
             key == 'Shift') {
                 return parseFloat(value);
@@ -42,7 +42,7 @@ export class SnmpMetricService {
 
     getMetrics(filter_s: string) {
         // return an observable
-        return this.httpAPI.get('/metric')
+        return this.httpAPI.get('/api/cfg/metric')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -70,13 +70,13 @@ export class SnmpMetricService {
     getMetricsById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.httpAPI.get('/metric/'+id)
+        return this.httpAPI.get('/api/cfg/metric/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteMetric(id : string){
-      return this.httpAPI.get('/metric/checkondel/'+id)
+      return this.httpAPI.get('/api/cfg/metric/checkondel/'+id)
       .map( (responseData) =>
        responseData.json()
       ).map((deleteobject) => {
@@ -97,7 +97,7 @@ export class SnmpMetricService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/metric/'+id)
+        return this.httpAPI.delete('/api/cfg/metric/'+id)
         .map( (responseData) =>
          responseData.json()
         );
