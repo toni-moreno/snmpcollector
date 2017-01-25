@@ -12,7 +12,7 @@ export class SnmpDeviceService {
     }
 
     addDevice(dev) {
-        return this.httpAPI.post('/snmpdevice',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/api/cfg/snmpdevice',JSON.stringify(dev,function (key,value) {
             console.log("KEY: "+key+" Value: "+value);
             if ( key == 'Port' ||
             key == 'Retries' ||
@@ -35,7 +35,7 @@ export class SnmpDeviceService {
     editDevice(dev, id) {
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
-        return this.httpAPI.put('/snmpdevice/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/api/cfg/snmpdevice/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ||
             key == 'Retries' ||
             key == 'Timeout' ||
@@ -55,7 +55,7 @@ export class SnmpDeviceService {
 
     getDevices(filter_s: string) {
         // return an observable
-        return this.httpAPI.get('/snmpdevice')
+        return this.httpAPI.get('/api/cfg/snmpdevice')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -83,13 +83,13 @@ export class SnmpDeviceService {
     getDevicesById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.httpAPI.get('/snmpdevice/'+id)
+        return this.httpAPI.get('/api/cfg/snmpdevice/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteSNMPDevice(id : string){
-    return this.httpAPI.get('/influxservers/checkondel/'+id)
+    return this.httpAPI.get('/api/cfg/snmpdevice/checkondel/'+id)
     .map( (responseData) =>
      responseData.json()
     ).map((deleteobject) => {
@@ -110,7 +110,7 @@ export class SnmpDeviceService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/snmpdevice/'+id)
+        return this.httpAPI.delete('/api/cfg/snmpdevice/'+id)
         .map( (responseData) =>
          responseData.json()
         );
@@ -118,7 +118,7 @@ export class SnmpDeviceService {
 
     pingDevice(dev) {
         console.log(dev);
-        return this.httpAPI.post('/runtime/snmpping/',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/api/rt/agent/snmpconsole/ping/',JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ||
             key == 'Retries' ||
             key == 'Timeout' ||
@@ -141,7 +141,7 @@ export class SnmpDeviceService {
     }
 
     sendQuery(dev,getMode,oid) {
-        return this.httpAPI.post('/runtime/snmpquery/'+getMode+'/oid/'+oid,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/api/rt/agent/snmpconsole/query/'+getMode+'/oid/'+oid,JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ||
             key == 'Retries' ||
             key == 'Timeout' ||

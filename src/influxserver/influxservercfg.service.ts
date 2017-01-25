@@ -11,7 +11,7 @@ export class InfluxServerService {
     }
 
     addInfluxServer(dev) {
-        return this.httpAPI.post('/influxservers',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/api/cfg/influxservers',JSON.stringify(dev,function (key,value) {
                 if ( key == 'Port' ) {
                   return parseInt(value);
                 }
@@ -22,7 +22,7 @@ export class InfluxServerService {
     }
 
     editInfluxServer(dev, id) {
-        return this.httpAPI.put('/influxservers/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/api/cfg/influxservers/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ) {
               return parseInt(value);
             }
@@ -34,7 +34,7 @@ export class InfluxServerService {
 
     getInfluxServer(filter_s: string) {
         // return an observable
-        return this.httpAPI.get('/influxservers')
+        return this.httpAPI.get('/api/cfg/influxservers')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -62,13 +62,13 @@ export class InfluxServerService {
     getInfluxServerById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.httpAPI.get('/influxservers/'+id)
+        return this.httpAPI.get('/api/cfg/influxservers/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteInfluxServer(id : string){
-      return this.httpAPI.get('/influxservers/checkondel/'+id)
+      return this.httpAPI.get('/api/cfg/influxservers/checkondel/'+id)
       .map( (responseData) =>
        responseData.json()
       ).map((deleteobject) => {
@@ -89,7 +89,7 @@ export class InfluxServerService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/influxservers/'+id)
+        return this.httpAPI.delete('/api/cfg/influxservers/'+id)
         .map( (responseData) =>
          responseData.json()
         );

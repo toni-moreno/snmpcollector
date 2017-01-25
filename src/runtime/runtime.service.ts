@@ -13,7 +13,7 @@ export class RuntimeService {
 
     getRuntime(filter_s: string) {
         // return an observable
-        return this.httpAPI.get('/runtime/info')
+        return this.httpAPI.get('/api/rt/device/info')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -42,7 +42,7 @@ export class RuntimeService {
 
     getRuntimeById(id : string) {
         // return an observable
-        return this.httpAPI.get('/runtime/info/'+id)
+        return this.httpAPI.get('/api/rt/device/info/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
@@ -50,12 +50,12 @@ export class RuntimeService {
     changeDeviceActive(id : string, event : boolean) {
         // return an observable
         if (event) {
-            return this.httpAPI.put('/runtime/activatedev/'+id,id)
+            return this.httpAPI.put('/api/rt/device/status/activate/'+id,id)
             .map( (responseData) =>
                 responseData.json()
             )
         } else {
-            return this.httpAPI.put('/runtime/deactivatedev/'+id,id)
+            return this.httpAPI.put('/api/rt/device/status/deactivate/'+id,id)
             .map( (responseData) =>
                 responseData.json()
             )
@@ -65,12 +65,12 @@ export class RuntimeService {
     changeStateDebug(id : string, event : boolean) {
         // return an observable
         if (event) {
-            return this.httpAPI.put('/runtime/actsnmpdbg/'+id,id)
+            return this.httpAPI.put('/api/rt/device/debug/activate/'+id,id)
             .map( (responseData) =>
                 responseData.json()
             )
         } else {
-            return this.httpAPI.put('/runtime/deactsnmpdbg/'+id,id)
+            return this.httpAPI.put('/api/rt/device/debug/deactivate/'+id,id)
             .map( (responseData) =>
                 responseData.json()
             )
@@ -80,7 +80,7 @@ export class RuntimeService {
     changeLogLevel(id : string, level: string) {
         console.log(level);
         // return an observable
-            return this.httpAPI.put('/runtime/setloglevel/'+id+'/'+level,[id,level])
+            return this.httpAPI.put('api/rt/device/log/setloglevel/'+id+'/'+level,[id,level])
             .map( (responseData) =>
                 responseData.json()
             )
@@ -88,7 +88,7 @@ export class RuntimeService {
 
     downloadLogFile(id : string) {
         // return an observable
-        return this.httpAPI.get('/runtime/getdevicelog/'+id)
+        return this.httpAPI.get('/api/rt/device/log/getdevicelog/'+id)
         .map( (res) => {
             console.log("service_response",res)
             //return new Blob([res.arrayBuffer()],{type: "application/octet-stream" })
@@ -98,7 +98,7 @@ export class RuntimeService {
 
     forceFltUpdate(id : string) {
         // return an observable
-        return this.httpAPI.get('/runtime/forcefltupdate/'+id)
+        return this.httpAPI.get('/api/rt/device/filter/forcefltupdate/'+id)
         .map( (responseData) =>
             responseData.json()
         )

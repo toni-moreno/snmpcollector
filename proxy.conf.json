@@ -7,37 +7,8 @@
     "target": "http://localhost:8090",
     "secure": false
   },
-  "/runtime": {
-    "target": "http://localhost:8090",
-    "secure": false
-  },
-  "/metric": {
-    "target": "http://localhost:8090",
-    "secure": false
-  },
-  "/measurement": {
-    "target": "http://localhost:8090",
-    "secure": false
-  },
-  "/measgroups": {
-    "target": "http://localhost:8090",
-    "secure": false
-  },
-  "/measfilters": {
-    "target": "http://localhost:8090",
-    "secure": false
-  },
-  "/influxservers": {
-    "target": "http://localhost:8090",
-    "secure": false
-  },
-  "/snmpdevice": {
-    "target": "http://localhost:8090",
-    "secure": false
-  },
-  "/customfilter": {
+  "/api": {
     "target": "http://localhost:8090",
     "secure": false
   }
-
 }

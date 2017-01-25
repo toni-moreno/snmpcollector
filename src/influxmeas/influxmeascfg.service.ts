@@ -13,7 +13,7 @@ export class InfluxMeasService {
     }
 
     addMeas(dev) {
-        return this.httpAPI.post('/measurement',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/api/cfg/measurement',JSON.stringify(dev,function (key,value) {
 
             if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
             return value;
@@ -23,7 +23,7 @@ export class InfluxMeasService {
 
     editMeas(dev, id) {
         console.log("DEV: ",dev);
-        return this.httpAPI.put('/measurement/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/api/cfg/measurement/'+id,JSON.stringify(dev,function (key,value) {
 
           if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
           return value;
@@ -34,7 +34,7 @@ export class InfluxMeasService {
 
     getMeas(filter_s: string) {
         // return an observable
-        return this.httpAPI.get('/measurement')
+        return this.httpAPI.get('/api/cfg/measurement')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -63,13 +63,13 @@ export class InfluxMeasService {
     getMeasById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.httpAPI.get('/measurement/'+id)
+        return this.httpAPI.get('/api/cfg/measurement/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteInfluxMeas(id : string){
-      return this.httpAPI.get('/measurement/checkondel/'+id)
+      return this.httpAPI.get('/api/cfg/measurement/checkondel/'+id)
       .map( (responseData) =>
        responseData.json()
       ).map((deleteobject) => {
@@ -90,7 +90,7 @@ export class InfluxMeasService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/measurement/'+id)
+        return this.httpAPI.delete('/api/cfg/measurement/'+id)
         .map( (responseData) =>
          responseData.json()
         );

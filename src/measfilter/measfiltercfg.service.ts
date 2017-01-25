@@ -12,7 +12,7 @@ export class MeasFilterService {
     }
 
     addMeasFilter(dev) {
-        return this.httpAPI.post('/measfilters',JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.post('/api/cfg/measfilters',JSON.stringify(dev,function (key,value) {
                 if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
                 if ( key == 'IDMeasurementCfg') {
                     if ( value == "" ) return null
@@ -24,7 +24,7 @@ export class MeasFilterService {
 
     editMeasFilter(dev, id) {
         console.log("DEV: ",dev);
-        return this.httpAPI.put('/measfilters/'+id,JSON.stringify(dev,function (key,value) {
+        return this.httpAPI.put('/api/cfg/measfilters/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
             if ( key == 'IDMeasurementCfg') {
                 if ( value == "" ) return null
@@ -37,7 +37,7 @@ export class MeasFilterService {
 
     getMeasFilter(filter_s: string) {
         // return an observable
-        return this.httpAPI.get('/measfilters')
+        return this.httpAPI.get('/api/cfg/measfilters')
         .map( (responseData) => {
             return responseData.json();
         })
@@ -65,13 +65,13 @@ export class MeasFilterService {
     getMeasFilterById(id : string) {
         // return an observable
         console.log("ID: ",id);
-        return this.httpAPI.get('/measfilters/'+id)
+        return this.httpAPI.get('/api/cfg/measfilters/'+id)
         .map( (responseData) =>
             responseData.json()
     )};
 
     checkOnDeleteMeasFilter(id : string){
-      return this.httpAPI.get('/measfilters/checkondel/'+id)
+      return this.httpAPI.get('/api/cfg/measfilters/checkondel/'+id)
       .map( (responseData) =>
        responseData.json()
       ).map((deleteobject) => {
@@ -92,7 +92,7 @@ export class MeasFilterService {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/measfilters/'+id)
+        return this.httpAPI.delete('/api/cfg/measfilters/'+id)
         .map( (responseData) =>
          responseData.json()
         );
