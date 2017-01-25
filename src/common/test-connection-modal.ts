@@ -167,7 +167,7 @@ import { Subscription } from "rxjs";
 
 export class TestConnectionModal implements OnInit  {
   @ViewChild('childModal') public childModal: ModalDirective;
-  @Input() formValues : any;
+  //@Input() formValues : any;
   @Input() titleName : any;
   @Input() systemInfo: any;
   @Output() public validationClicked:EventEmitter<any> = new EventEmitter();
@@ -192,7 +192,7 @@ export class TestConnectionModal implements OnInit  {
 
   //History OIDs
   histArray : Array<string> = [];
-
+  formValues: any;
   //Sysinfo
    alertHandler : any = {};
    isRequesting : boolean ;
@@ -234,17 +234,18 @@ export class TestConnectionModal implements OnInit  {
         this.maximized = !this.maximized;
     }
 
-  show() {
+  show(_formValues) {
       this.getMetricsforModal();
       this.getMeasforModal();
       this.getFiltersforModal();
     //reset var values
+    this.formValues = _formValues;
     this.alertHandler = {};
     this.queryResult = null;
     this.maximized = false;
     this.isConnected = false;
     this.isRequesting = true;
-    this.pingDevice();
+    this.pingDevice(this.formValues);
     this.childModal.show();
   }
 
@@ -309,8 +310,8 @@ export class TestConnectionModal implements OnInit  {
 
 
   //WAIT
-   pingDevice(){
-    this.myObservable = this.snmpDeviceService.pingDevice(this.formValues)
+   pingDevice(formValues){
+    this.myObservable = this.snmpDeviceService.pingDevice(formValues)
     .subscribe(data => {
       this.alertHandler = {msg: 'Test succesfull '+data['SysDescr'], type: 'success', closable: true};
       this.isConnected = true;

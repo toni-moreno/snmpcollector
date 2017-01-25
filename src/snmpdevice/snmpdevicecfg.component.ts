@@ -314,7 +314,7 @@ export class SnmpDeviceCfgComponent {
 
   showTestConnectionModal() {
     if (this.snmpdevForm.valid) {
-      this.viewTestConnectionModal.show();
+      this.viewTestConnectionModal.show(this.snmpdevForm.value);
     }
   }
 
