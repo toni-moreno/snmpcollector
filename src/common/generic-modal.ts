@@ -29,9 +29,9 @@ import { ModalDirective } from 'ng2-bootstrap';
                       {{entry.value}}
                     </dd>
                     <div *ngIf="isArray(entry.value)" style="margin-bottom:10px">
-                      <div *ngFor="let val of entry.value">
+                      <div *ngFor="let val of entry.value; let i = index">
                         <div *ngIf="isObject(val)">
-                          <dd>{{val?.ID}} <i [ngClass]="val?.Report ? 'glyphicon glyphicon-arrow-right' : 'glyphicon glyphicon-alert'"></i>
+                          <dd [ngClass]="reportMetricStatus[val.Report]?.class">{{val?.ID}} <i [ngClass]="reportMetricStatus[val.Report]?.icon"></i>
                         </div>
                         <div *ngIf="!isObject(val)">
                           <dd> {{val}}</dd>
@@ -71,6 +71,12 @@ export class GenericModal {
   constructor() { }
   myObject: any = null;
   empty : any = false;
+
+  public reportMetricStatus: Array<Object> = [
+    { value: 0, name: 'Never Report', icon: 'glyphicon glyphicon-remove-circle', class: 'text-danger' },
+    { value: 1, name: 'Report', icon: 'glyphicon glyphicon-ok-circle', class: 'text-success' },
+    { value: 2, name: 'Report if not zero', icon: 'glyphicon glyphicon-ban-circle', class: 'text-warning' }
+  ];
 
   parseObject( myObject : any){
     this.myObject = myObject;
