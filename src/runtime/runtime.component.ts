@@ -164,11 +164,12 @@ export class RuntimeComponent implements OnDestroy {
     this.onChangeTable(this.config);
   }
 
-  initRuntimeInfo(id: string) {
+  initRuntimeInfo(id: string, meas: number) {
     //Reset params
     this.isRefreshing = false;
     this.refreshRuntime.Running = false;
     clearInterval(this.intervalStatus);
+    this.measActive = meas || 0;
     this.loadRuntimeById(id, this.measActive);
   }
 

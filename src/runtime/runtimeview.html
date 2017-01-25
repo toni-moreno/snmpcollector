@@ -26,7 +26,7 @@
   </div>
   <div class="col-md-8" *ngIf="runtime_dev">
     <h4>
-        <i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID)"></i>
+        <i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></i>
         <span> SNMP Device: </span>
         <span [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</span>
         <span *ngIf="runtime_dev['DeviceConnected'] == false" class="text-danger"> - Device is not connected</span>
@@ -158,7 +158,7 @@
         <h4>
           <label style="display: inline; margin-right:2px; padding-top:5px" container=body [tooltip]="'Refreshing every ' +runtime_dev.Freq +' secs'" [ngClass]="isRefreshing ? 'label label-success refresh-transition' : 'label label-danger refresh-transition'">Last Refresh: {{refreshRuntime.LastUpdate | date : 'HH:mm:ss - Z'}}</label>
           <label style="display: inline; margin-right:2px" [tooltip]="!refreshRuntime.Running ? 'Set auto-refresh' : 'Stop auto-refresh'" [ngClass]="!refreshRuntime.Running ?  'glyphicon glyphicon-play label label-success' : 'glyphicon glyphicon-pause label label-danger'" (click)="updateRuntimeInfo(runtime_dev.ID,measActive,!refreshRuntime.Running)"></label>
-          <label style="display: inline; margin-right:2px" [tooltip]="'Refresh now!'" container=body class="label label-primary glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID)"></label>
+          <label style="display: inline; margin-right:2px" [tooltip]="'Refresh now!'" container=body class="label label-primary glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></label>
 
           <span *ngIf="runtime_dev['Measurements'].length === 0" class="text-danger">- No measurements associated with the device. Couldn't retrieve metric runtime info</span>
       </h4>
@@ -167,9 +167,18 @@
         <hr>
         <div *ngIf="runtime_dev['Measurements'].length !== 0">
           <div class="btn-group" role="group" aria-label="..." style="margin-bottom: 20px">
-            <h5 class="pull-left" style="margin-right:20px">Measurements:</h5>
+            <h5 class="pull-left" style="margin-right:20px">Measurements <span class="badge">{{runtime_dev['Measurements'].length}}</span></h5>
             <span class="input-group-btn" style="white-space: normal;">
-              <button type="button" class="btn btn-default" *ngFor="let measurement of runtime_dev['Measurements']; let i = index" (click)="showTable(i)" [ngClass]="i === measActive ? 'btn-primary' : 'btn-default'">{{measurement.ID}} <span class="label label-warning">{{finalData[i].length}} index</span></button>
+              <button type="button" class="btn btn-default" *ngFor="let measurement of runtime_dev['Measurements']; let i = index" (click)="showTable(i)" [ngClass]="i === measActive ? 'btn-primary' : 'btn-default'" container=body [tooltip]="measInfo">
+                {{measurement.ID}}
+                <template #measInfo>
+                    <dl class="text-left">
+                      <p><dt class="margin-bottom:5px">Metrics <span class="badge">{{finalColumns[i].length-1}}</span></dt></p>
+                      <dd *ngFor="let metrics of finalColumns[i]"><span *ngIf="metrics.title !== 'Index'">{{metrics.title}}</span></dd>
+                    </dl>
+                </template>
+                <span [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData [i].length}} index</span>
+              </button>
             </span>
           </div>
           <br>
