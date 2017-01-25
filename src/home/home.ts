@@ -52,7 +52,7 @@ export class Home {
   }
 
   reloadConfig() {
-    this.httpAPI.get('/api/rt/agent/cfg/reload')
+    this.httpAPI.get('/api/rt/agent/reload/')
     .subscribe(
     response => {
       alert(response.json())

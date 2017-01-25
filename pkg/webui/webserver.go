@@ -234,7 +234,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 	})
 
 	m.Group("/api/rt/agent", func() {
-		m.Get("/cfg/reload/", reqSignedIn, AgentReloadConf)
+		m.Get("/reload/", reqSignedIn, AgentReloadConf)
 		m.Post("/snmpconsole/ping/", reqSignedIn, bind(config.SnmpDeviceCfg{}), PingSNMPDevice)
 		m.Post("/snmpconsole/query/:getmode/:obtype/:data", reqSignedIn, bind(config.SnmpDeviceCfg{}), QuerySNMPDevice)
 		m.Get("/info/version/", reqSignedIn, RTGetVersion)
