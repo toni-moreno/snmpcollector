@@ -21,9 +21,10 @@ type MeasurementCfg struct {
 		ID     string
 		Report int
 	} `xorm:"-"` //Got from MeasurementFieldCfg table
-	FieldMetric []*SnmpMetricCfg `xorm:"-"`
-	EvalMetric  []*SnmpMetricCfg `xorm:"-"`
-	Description string           `xorm:"description"`
+	FieldMetric   []*SnmpMetricCfg `xorm:"-"`
+	EvalMetric    []*SnmpMetricCfg `xorm:"-"`
+	OidCondMetric []*SnmpMetricCfg `xorm:"-"`
+	Description   string           `xorm:"description"`
 }
 
 func (mc *MeasurementCfg) CheckComputedMetric() error {
@@ -86,11 +87,14 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error {
 	for _, f_val := range mc.Fields {
 		log.Debugf("looking for measurement %s : fields: %s : Report %d", mc.Name, f_val.ID, f_val.Report)
 		if val, ok := (*MetricCfg)[f_val.ID]; ok {
-			if val.DataSrcType == "STRINGEVAL" {
+			switch val.DataSrcType {
+			case "STRINGEVAL":
 				mc.EvalMetric = append(mc.EvalMetric, val)
-				log.Debugf("EVAL metric found measurement %s : fields: %s ", mc.Name, f_val.ID)
-			} else {
-
+				log.Debugf("STRING EVAL metric found measurement %s : fields: %s ", mc.Name, f_val.ID)
+			case "CONDITIONEVAL":
+				mc.OidCondMetric = append(mc.OidCondMetric, val)
+				log.Debugf("OID CONDITION EVAL metric found measurement %s : fields: %s ", mc.Name, f_val.ID)
+			default:
 				log.Debugf("found Metric configuration: %s/ %s", f_val.ID, val.BaseOID)
 				mc.FieldMetric = append(mc.FieldMetric, val)
 			}
@@ -98,11 +102,18 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error {
 			log.Warnf("measurement field  %s NOT FOUND in Metrics Database !", f_val.ID)
 		}
 	}
-	//check if there is any field ( should be at least one!!)
-	if len(mc.FieldMetric) == 0 {
-		return fmt.Errorf("There is no any Field metrics in measurement Config  %s (should be at least one)", mc.ID)
+	//check for valid fields ( should be at least one!! Field in indexed measurements and at least one field or ) in
+	switch mc.GetMode {
+	case "indexed", "indexed_it":
+		if len(mc.FieldMetric) == 0 {
+			return fmt.Errorf("There is no any Field metrics in measurement type \"%s\" Config  %s (should be at least one)", mc.GetMode, mc.ID)
+		}
+	case "value":
+		if (len(mc.FieldMetric) + len(mc.OidCondMetric)) == 0 {
+			return fmt.Errorf("There is no any Field or OID conditional metrics in measurement type \"value\" Config  %s (should be at least one)", mc.ID)
+		}
 	}
-	//Check if duplicated oids
+	//Check if duplicated oids for Field metrics
 	oidcheckarray := make(map[string]string)
 	for _, v := range mc.FieldMetric {
 		//check if the OID has already used as metric in the same measurement

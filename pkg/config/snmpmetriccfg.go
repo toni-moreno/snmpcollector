@@ -33,7 +33,7 @@ func (m *SnmpMetricCfg) Init() error {
 	if len(m.FieldName) == 0 {
 		return errors.New("FieldName not set in metric Config " + m.ID)
 	}
-	if len(m.BaseOID) == 0 && m.DataSrcType != "STRINGEVAL" {
+	if len(m.BaseOID) == 0 && m.DataSrcType != "STRINGEVAL" && m.DataSrcType != "CONDITIONEVAL" {
 		return fmt.Errorf("BaseOid not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
 	}
 	//https://tools.ietf.org/html/rfc2578 (SMIv2)
@@ -51,16 +51,20 @@ func (m *SnmpMetricCfg) Init() error {
 	case "IpAddress":
 	case "STRINGPARSER":
 	case "STRINGEVAL":
+	case "CONDITIONEVAL":
 	default:
 		return errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
 	}
-	if m.DataSrcType != "STRINGEVAL" && !strings.HasPrefix(m.BaseOID, ".") {
+	if m.DataSrcType != "STRINGEVAL" && m.DataSrcType != "CONDITIONEVAL" && !strings.HasPrefix(m.BaseOID, ".") {
 		return errors.New("Bad BaseOid format:" + m.BaseOID + " in metric Config " + m.ID)
 	}
 	if m.DataSrcType == "STRINGPARSER" && len(m.ExtraData) == 0 {
 		return errors.New("STRINGPARSER type requires extradata to work " + m.ID)
 	}
 	if m.DataSrcType == "STRINGEVAL" && len(m.ExtraData) == 0 {
+		return fmt.Errorf("ExtraData not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
+	}
+	if m.DataSrcType == "CONDITIONEVAL" && len(m.ExtraData) == 0 {
 		return fmt.Errorf("ExtraData not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
 	}
 	return nil

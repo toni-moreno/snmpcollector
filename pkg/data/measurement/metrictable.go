@@ -92,6 +92,16 @@ func (m *Measurement) InitMetricTable() {
 			metr.RealOID = m.cfg.ID + "." + smcfg.ID
 			idx[smcfg.ID] = metr
 		}
+		for k, smcfg := range m.cfg.OidCondMetric {
+			m.log.Debugf("initializing [value] [oid condition evaluated] metric cfg %s", smcfg.ID)
+			metr, err := metric.NewWithLog(smcfg, m.log)
+			if err != nil {
+				m.log.Errorf("ERROR on create new [value] [oid condition evaluated] field metric %d : Error: %s ", k, err)
+				continue
+			}
+			metr.RealOID = m.cfg.ID + "." + smcfg.ID
+			idx[smcfg.ID] = metr
+		}
 		//setup visibility on db for each metric
 		for k, v := range idx {
 			report := metric.AlwaysReport

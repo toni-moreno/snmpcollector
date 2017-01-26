@@ -25,11 +25,13 @@ var (
 // SetConfDir  enable load File Filters from anywhere in the our FS.
 func SetConfDir(dir string) {
 	confDir = dir
+	metric.SetConfDir(dir)
 }
 
 // SetDB load database config to load data if needed (used in filters)
 func SetDB(db *config.DatabaseCfg) {
 	dbc = db
+	metric.SetDB(db)
 }
 
 //Measurement the runtime measurement config
@@ -70,18 +72,19 @@ func (m *Measurement) Init() error {
 
 	var err error
 	//Init snmp methods
-	if m.cfg.GetMode == "value" {
+	switch m.cfg.GetMode {
+	case "value":
 		m.GetData = m.SnmpGetData
-	} else {
+	default:
 		m.GetData = m.SnmpWalkData
-		switch {
-		case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
-			m.Walk = m.snmpClient.Walk
-		default:
-			m.Walk = m.snmpClient.BulkWalk
-		}
 	}
-	//
+
+	switch {
+	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
+		m.Walk = m.snmpClient.Walk
+	default:
+		m.Walk = m.snmpClient.BulkWalk
+	}
 
 	//loading all posible values in 	m.AllIndexedLabels
 	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" {
@@ -112,6 +115,7 @@ func (m *Measurement) GetMode() string {
 	return m.cfg.GetMode
 }
 
+// InitBuildRuntime init
 func (m *Measurement) InitBuildRuntime() {
 	m.snmpOids = []string{}
 	m.OidSnmpMap = make(map[string]*metric.SnmpMetric)
@@ -121,13 +125,15 @@ func (m *Measurement) InitBuildRuntime() {
 		//index level
 		for kM, vM := range vIdx {
 			m.log.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
-			if vM.GetDataSrcType() != "STRINGEVAL" {
+			t := vM.GetDataSrcType()
+			switch t {
+			case "STRINGEVAL", "CONDITIONEVAL":
+			default:
 				//this array is used in SnmpGetData to send IOD's to the end device
 				// so it can not contain any other thing than OID's
 				// on string eval it contains a identifier not OID
 				m.snmpOids = append(m.snmpOids, vM.RealOID)
 			}
-
 			m.OidSnmpMap[vM.RealOID] = vM
 		}
 	}
@@ -412,6 +418,29 @@ func (m *Measurement) SnmpWalkData() (int64, int64, error) {
 	}
 
 	return sent, errs, nil
+}
+
+// ComputeEvaluatedMetrics take evaluated metrics and computes them from the other values
+func (m *Measurement) ComputeOidConditionalMetrics() {
+	if m.cfg.OidCondMetric == nil {
+		m.log.Infof("Not Oid CONDITIONEVAL metrics exist on measurement %s", m.cfg.ID)
+		return
+	}
+	switch m.cfg.GetMode {
+	case "value":
+		//compute Evalutated metrics
+		for _, v := range m.cfg.OidCondMetric {
+			evalkey := m.cfg.ID + "." + v.ID
+			if metr, ok := m.OidSnmpMap[evalkey]; ok {
+				m.log.Debugln("OK OidCondition  metric found", m.cfg.ID, "Eval KEY", evalkey)
+				metr.Compute(m.Walk)
+			} else {
+				m.log.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
+			}
+		}
+	default:
+		m.log.Warnf("Warning there is CONDITIONAL metrics on indexed measurements!! %s", m.cfg.ID)
+	}
 }
 
 // ComputeEvaluatedMetrics take evaluated metrics and computes them from the other values

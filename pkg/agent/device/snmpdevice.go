@@ -510,6 +510,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					totalErrors += nErrors
 
 					m.ComputeEvaluatedMetrics()
+					m.ComputeOidConditionalMetrics()
 
 					if nGets > 0 {
 						d.addGets(nGets)

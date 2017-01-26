@@ -6,12 +6,28 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/measurement/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"math"
 	"regexp"
 	"strconv"
 	"time"
 )
+
+var (
+	confDir string              //Needed to get File Filters data
+	dbc     *config.DatabaseCfg //Needed to get Custom Filter  data
+)
+
+// SetConfDir  enable load File Filters from anywhere in the our FS.
+func SetConfDir(dir string) {
+	confDir = dir
+}
+
+// SetDB load database config to load data if needed (used in filters)
+func SetDB(db *config.DatabaseCfg) {
+	dbc = db
+}
 
 const (
 	NeverReport     = 0
@@ -38,7 +54,10 @@ type SnmpMetric struct {
 	//for STRINGPARSER
 	re   *regexp.Regexp
 	expr *govaluate.EvaluableExpression
-	log  *logrus.Logger
+	//for CONDITIONEVAL
+	condflt filter.Filter
+	// Logger
+	log *logrus.Logger
 }
 
 // GetDataSrcType get needed data
@@ -68,6 +87,12 @@ func New(c *config.SnmpMetricCfg) (*SnmpMetric, error) {
 	return metric, err
 }
 
+func NewWithLog(c *config.SnmpMetricCfg, l *logrus.Logger) (*SnmpMetric, error) {
+	metric := &SnmpMetric{log: l}
+	err := metric.Init(c)
+	return metric, err
+}
+
 func (s *SnmpMetric) SetLogger(l *logrus.Logger) {
 	s.log = l
 }
@@ -88,6 +113,26 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		}
 	}
 	switch s.cfg.DataSrcType {
+	case "CONDITIONEVAL":
+		//select
+		cond, err := dbc.GetOidConditionCfgByID(s.cfg.ExtraData)
+		if err != nil {
+			s.log.Errorf("Error getting CONDITIONEVAL [id: %s ] data : %s", s.cfg.ExtraData, err)
+		}
+		//get Regexp
+		s.condflt = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, s.log)
+
+		s.Compute = func(arg ...interface{}) {
+			//walk := arg[0].(func(string, gosnmp.WalkFunc) error)
+			//err := s.condflt.Init(walk)
+			s.condflt.Init(arg...)
+			s.condflt.Update()
+			s.CookedValue = s.condflt.Count()
+			s.CurTime = time.Now()
+			s.Scale()
+		}
+		//Sign
+		//set Process Data
 	case "TIMETICKS": //Cooked TimeTicks
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := snmp.PduVal2Int64(pdu)
@@ -95,6 +140,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.CurTime = now
 			s.Scale()
 		}
+
 		//Signed Integers
 	case "INTEGER", "Integer32":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {

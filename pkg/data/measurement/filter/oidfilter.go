@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
@@ -24,10 +25,13 @@ func NewOidFilter(oidcond string, typecond string, value string, l *logrus.Logge
 	return &OidFilter{OidCond: oidcond, TypeCond: typecond, ValueCond: value, log: l}
 }
 
-// Init initialize filter
+// Init initialize
 func (of *OidFilter) Init(arg ...interface{}) error {
 	of.filterLabels = make(map[string]string)
 	of.Walk = arg[0].(func(string, gosnmp.WalkFunc) error)
+	if of.Walk == nil {
+		return fmt.Errorf("Error when initializing oid cond %s", of.OidCond)
+	}
 	return nil
 }
 
