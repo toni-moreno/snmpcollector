@@ -123,8 +123,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		s.condflt = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, s.log)
 
 		s.Compute = func(arg ...interface{}) {
-			//walk := arg[0].(func(string, gosnmp.WalkFunc) error)
-			//err := s.condflt.Init(walk)
 			s.condflt.Init(arg...)
 			s.condflt.Update()
 			s.CookedValue = s.condflt.Count()
@@ -177,7 +175,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					s.CookedValue = float64(math.MaxInt32-s.LastValue.(uint64)+s.CurValue.(uint64)) / s.ElapsedTime
+					s.CookedValue = float64(math.MaxUint32-s.LastValue.(uint64)+s.CurValue.(uint64)) / s.ElapsedTime
 				} else {
 					s.CookedValue = float64(s.CurValue.(uint64)-s.LastValue.(uint64)) / s.ElapsedTime
 				}
@@ -186,7 +184,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					s.CookedValue = float64(math.MaxInt32 - s.LastValue.(uint64) + s.CurValue.(uint64))
+					s.CookedValue = float64(math.MaxUint32 - s.LastValue.(uint64) + s.CurValue.(uint64))
 				} else {
 					s.CookedValue = float64(s.CurValue.(uint64) - s.LastValue.(uint64))
 				}
@@ -215,7 +213,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				//duration := s.CurTime.Sub(s.LastTime)
 				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					s.CookedValue = float64(math.MaxInt64-s.LastValue.(uint64)+s.CurValue.(uint64)) / s.ElapsedTime
+					s.CookedValue = float64(math.MaxUint64-s.LastValue.(uint64)+s.CurValue.(uint64)) / s.ElapsedTime
 				} else {
 					s.CookedValue = float64(s.CurValue.(uint64)-s.LastValue.(uint64)) / s.ElapsedTime
 				}
@@ -224,7 +222,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					s.CookedValue = float64(math.MaxInt64 - s.LastValue.(uint64) + s.CurValue.(uint64))
+					s.CookedValue = float64(math.MaxUint64 - s.LastValue.(uint64) + s.CurValue.(uint64))
 				} else {
 					s.CookedValue = float64(s.CurValue.(uint64) - s.LastValue.(uint64))
 				}
