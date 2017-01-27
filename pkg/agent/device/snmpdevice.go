@@ -473,11 +473,11 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 
 	d.log.Infof("Beginning gather process for device %s (%s)", d.cfg.ID, d.cfg.Host)
 
-	s := time.Tick(time.Duration(d.cfg.Freq) * time.Second)
+	t := time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
 	for {
 		//if active
 		if d.DeviceActive {
-
+		FORCEINIT:
 			//check if device is online
 			if d.DeviceConnected == false {
 				err := d.InitSnmpConnect()
@@ -487,11 +487,16 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					elapsedSnmp := time.Since(startSnmp)
 					d.setFltUpdateStats(startSnmp, elapsedSnmp)
 					d.log.Infof("snmpdevice [%s] snmp INIT runtime measurements/filters took [%s] ", d.cfg.ID, elapsedSnmp)
-					//device not initialized
+					// Round collection to nearest interval by sleeping
+					utils.WaitAlignForNextCicle(d.cfg.Freq, d.log)
+					//reprogram the ticker to aligned starts
+					t.Stop()
+					t = time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
+					goto FORCEINIT //force one iteration now..after device has been connected  dont wait for next ticker (1 complete cicle)
 				}
 			} else {
 				//device active and connected
-
+				d.log.Info("Init gather cicle")
 				/*************************
 				 *
 				 * SNMP Gather data process
@@ -581,7 +586,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 	LOOP:
 		for {
 			select {
-			case <-s:
+			case <-t.C:
 				break LOOP
 			case <-d.chExit:
 				d.log.Infof("EXIT from SNMP Gather process for device %s ", d.cfg.ID)

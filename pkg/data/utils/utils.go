@@ -1,9 +1,16 @@
 package utils
 
 import (
-//	"fmt"
-//	"strings"
+	"github.com/Sirupsen/logrus"
+	"time"
 )
+
+func WaitAlignForNextCicle(SecPeriod int, l *logrus.Logger) {
+	i := int64(time.Duration(SecPeriod) * time.Second)
+	remain := i - (time.Now().UnixNano() % i)
+	l.Infof("Waiting %s to round until nearest interval... (Cicle = %d seconds)", time.Duration(remain).String(), SecPeriod)
+	time.Sleep(time.Duration(remain))
+}
 
 func RemoveDuplicatesUnordered(elements []string) []string {
 	encountered := map[string]bool{}
