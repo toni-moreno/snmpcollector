@@ -18,7 +18,7 @@ const MULTISELECT_VALUE_ACCESSOR: any = {
 };
 
 export interface IMultiSelectOption {
-    id: number;
+    id: any;
     name: string;
 }
 
@@ -33,6 +33,7 @@ export interface IMultiSelectSettings {
     showUncheckAll?: boolean;
     dynamicTitleMaxItems?: number;
     maxHeight?: string;
+    singleSelect?: boolean;
 }
 
 export interface IMultiSelectTexts {
@@ -119,7 +120,7 @@ export class MultiselectDropdown implements OnInit, DoCheck, /*AfterContentInit,
 
     protected onModelChange: Function = (_: any) => {};
     protected onModelTouched: Function = () => {};
-    protected model: number[];
+    protected model: any[];
     protected title: string;
     protected differ: any;
     protected numSelected: number = 0;
@@ -136,6 +137,7 @@ export class MultiselectDropdown implements OnInit, DoCheck, /*AfterContentInit,
         showUncheckAll: false,
         dynamicTitleMaxItems: 3,
         maxHeight: '300px',
+        singleSelect: false,
     };
     protected defaultTexts: IMultiSelectTexts = {
         checkAll: 'Check all',
@@ -179,10 +181,16 @@ export class MultiselectDropdown implements OnInit, DoCheck, /*AfterContentInit,
 
     ngDoCheck() {
         if(this.model){
-            let changes = this.differ.diff(this.model);
-            if (changes) {
+            if (this.settings.singleSelect) {
+                console.log("updating");
                 this.updateNumSelected();
                 this.updateTitle();
+            } else {
+                let changes = this.differ.diff(this.model);
+                if (changes) {
+                    this.updateNumSelected();
+                    this.updateTitle();
+                }
             }
         }
     }
@@ -196,40 +204,52 @@ export class MultiselectDropdown implements OnInit, DoCheck, /*AfterContentInit,
     }
 
     isSelected(option: IMultiSelectOption): boolean {
+        if (this.settings.singleSelect === true) return (this.model === option.id);
         return this.model && this.model.indexOf(option.id) > -1;
     }
 
     setSelected(event: Event, option: IMultiSelectOption) {
-        if (!this.model) this.model = [];
-        var index = this.model.indexOf(option.id);
-        if (index > -1) {
-            this.model.splice(index, 1);
+
+        if (this.settings.singleSelect === true) {
+            this.model = option.id;
         } else {
-            if (this.settings.selectionLimit === 0 || this.model.length < this.settings.selectionLimit) {
-                this.model.push(option.id);
+            if (!this.model) this.model = [];
+            var index = this.model.indexOf(option.id);
+            if (index > -1) {
+                this.model.splice(index, 1);
             } else {
-                this.selectionLimitReached.emit(this.model.length);
-                return;
+                if (this.settings.selectionLimit === 0 || this.model.length < this.settings.selectionLimit) {
+                    this.model.push(option.id);
+                } else {
+                    this.selectionLimitReached.emit(this.model.length);
+                    return;
+                }
             }
         }
         if (this.settings.closeOnSelect) {
-            this.toggleDropdown();
+        this.toggleDropdown();
         }
+
         this.onModelChange(this.model);
     }
 
     updateNumSelected() {
-        this.numSelected = this.model && this.model.length || 0;
+        if (this.settings.singleSelect) this.numSelected = 1;
+        else this.numSelected = this.model && this.model.length || 0;
     }
 
     updateTitle() {
         if (this.numSelected === 0) {
             this.title = this.texts.defaultTitle;
         } else if (this.settings.dynamicTitleMaxItems >= this.numSelected) {
-            this.title = this.options
+            if (this.settings.singleSelect === true) {
+                this.title = this.model.toString();
+            } else {
+                this.title = this.options
                 .filter((option: IMultiSelectOption) => this.model && this.model.indexOf(option.id) > -1)
                 .map((option: IMultiSelectOption) => option.name)
                 .join(', ');
+            }
         } else {
             this.title = this.numSelected + ' ' + (this.numSelected === 1 ? this.texts.checked : this.texts.checkedPlural);
         }
