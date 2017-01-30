@@ -55,7 +55,7 @@
         <label class="control-label col-sm-2" for="DataSrcType">DataSrcType</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
-          <select formControlName="DataSrcType" id="DataSrcType">
+          <select formControlName="DataSrcType" id="DataSrcType" (click)=" snmpmetForm.controls.DataSrcType.value === 'CONDITIONEVAL' ? getOidCond() : '' ">
             <option value="INTEGER">(SNMP SMI Type) INTEGER</option>
             <option value="Integer32">(SNMP SMI Type) Integer32</option>
             <option value="Gauge32">(SNMP SMI Type) Gauge32</option>
@@ -129,7 +129,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'">
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL' && snmpmetForm.value.DataSrcType != 'HWADDR' &&  snmpmetForm.value.DataSrcType != 'IpAddress' && snmpmetForm.value.DataSrcType != 'OCTETSTRING'">
         <label class="control-label col-sm-2" for="Scale">Scale</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
         <div class="col-sm-9">
@@ -138,7 +138,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'">
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL' && snmpmetForm.value.DataSrcType != 'HWADDR' && snmpmetForm.value.DataSrcType != 'IpAddress' && snmpmetForm.value.DataSrcType != 'OCTETSTRING'">
         <label class="control-label col-sm-2" for="Shift">Shift</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Add a num to the returned (scaled) value "></i>
         <div class="col-sm-9">
@@ -189,7 +189,7 @@
         <label class="control-label col-sm-2" for="DataSrcType">DataSrcType</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
-          <select formControlName="DataSrcType" id="DataSrcType" [ngModel]="testsnmpmetric.DataSrcType">
+          <select formControlName="DataSrcType" id="DataSrcType" [ngModel]="testsnmpmetric.DataSrcType" (click)=" snmpmetForm.controls.DataSrcType.value === 'CONDITIONEVAL' ? getOidCond() : '' ">
             <option value="INTEGER">(SNMP SMI Type) INTEGER</option>
             <option value="Integer32">(SNMP SMI Type) Integer32</option>
             <option value="Gauge32">(SNMP SMI Type) Gauge32</option>
@@ -266,7 +266,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'">
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL' && snmpmetForm.value.DataSrcType != 'HWADDR' && snmpmetForm.value.DataSrcType != 'IpAddress' && snmpmetForm.value.DataSrcType != 'OCTETSTRING'">
         <label class="control-label col-sm-2" for="Scale">Scale</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
         <div class="col-sm-9">
@@ -275,7 +275,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'">
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL' && snmpmetForm.value.DataSrcType != 'HWADDR' && snmpmetForm.value.DataSrcType != 'IpAddress' && snmpmetForm.value.DataSrcType != 'OCTETSTRING'">
         <label class="control-label col-sm-2" for="Shift">Shift</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Add a num to the returned (scaled) value "></i>
         <div class="col-sm-9">

@@ -127,7 +127,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.condflt.Update()
 			s.CookedValue = s.condflt.Count()
 			s.CurTime = time.Now()
-			s.Scale()
 		}
 		//Sign
 		//set Process Data

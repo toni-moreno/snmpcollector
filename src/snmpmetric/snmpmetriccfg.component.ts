@@ -28,6 +28,10 @@ export class SnmpMetricCfgComponent {
   //OID selector
   oidconditions: Array<any>;
   selectoidcond: IMultiSelectOption[] = [];
+  private mySettings: IMultiSelectSettings = {
+       singleSelect: true,
+ };
+
 
 
   //Initialization data, rows, colunms for Table
@@ -231,11 +235,12 @@ export class SnmpMetricCfgComponent {
   }
   newMetric() {
     this.editmode = "create";
-    this.getOidCond();
   }
   editMetric(row) {
     let id = row.ID;
-    this.getOidCond();
+    if ( row.DataSrcType === 'CONDITIONEVAL' ) {
+      this.getOidCond();
+    }
     this.snmpMetricService.getMetricsById(id)
       .subscribe(data => { this.testsnmpmetric = data },
       err => console.error(err),
