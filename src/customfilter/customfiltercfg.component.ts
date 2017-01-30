@@ -1,53 +1,42 @@
-import { Component, ChangeDetectionStrategy, ViewChild  } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
-import { MeasFilterService } from './measfiltercfg.service';
-import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
-import { CustomFilterService } from '../customfilter/customfilter.service';
+import { CustomFilterService } from './customfilter.service';
+import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 
 import { ValidationService } from '../common/validation.service'
-import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
-
 
 import { GenericModal } from '../common/generic-modal';
+import { TestFilterModal } from './test-filter-modal';
+
 
 @Component({
-  selector: 'measfilters',
-  providers: [MeasFilterService, InfluxMeasService, CustomFilterService],
-  templateUrl: './measfiltereditor.html',
+  selector: 'customfilters',
+  providers: [CustomFilterService, ValidationService, SnmpDeviceService],
+  templateUrl: './customfiltereditor.html',
   styleUrls: ['../css/component-styles.css']
 })
 
-export class MeasFilterCfgComponent {
+export class CustomFilterCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
+  @ViewChild('viewTestFilterModal') public viewTestFilterModal: TestFilterModal;
+
 
   editmode: string; //list , create, modify
-  measfilters: Array<any>;
+  customfilters: Array<any>;
   filter: string;
-  measfilterForm: any;
-  testmeasfilters: any;
-  influxmeas: Array<any>;
-  selectmeas: IMultiSelectOption[] = [];
-  selectCustomFilters:  IMultiSelectOption[] = [];
+  customfilterForm: any;
+  testinfluxservers: any;
   myFilterValue: any;
 
-  private mySettings: IMultiSelectSettings = {
-      singleSelect: true,
-  };
 
   //Initialization data, rows, colunms for Table
   private data: Array<any> = [];
   public rows: Array<any> = [];
   public columns: Array<any> = [
     { title: 'ID', name: 'ID' },
-    { title: 'Measurement ID', name: 'IDMeasurementCfg' },
-    { title: 'Filter Type', name: 'FType' },
-    { title: 'FileName', name: 'FileName' },
-    { title: 'EnableAlias', name: 'EnableAlias' },
-    { title: 'Custom Filter', name: 'CustomID' },
-    { title: 'OID Condition', name: 'OIDCond' },
-    { title: 'Condition Type', name: 'CondType' },
-    { title: 'Condition Value', name: 'CondValue' }
+    { title: 'RelatedDev', name: 'RelatedDev' },
+    { title: 'Items', name: 'Items' },
   ];
 
   public page: number = 1;
@@ -64,21 +53,29 @@ export class MeasFilterCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public customFilterService: CustomFilterService, public measFilterService: MeasFilterService, public measMeasFilterService: InfluxMeasService, builder: FormBuilder) {
+  constructor(public customFilterService: CustomFilterService, public snmpDeviceService: SnmpDeviceService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
-    this.measfilterForm = builder.group({
-      id: ['', Validators.required],
-      IDMeasurementCfg: ['', Validators.required],
-      FType: ['', Validators.required],
-      FileName: [''],
-      EnableAlias: [''],
-      OIDCond: ['', ValidationService.OIDValidator],
-      CondType: [''],
-      CondValue: [''],
-      CustomID: [''],
-      Description: ['']
-    });
+  }
+
+  reloadData() {
+    // now it's a simple subscription to the observable
+    this.customFilterService.getCustomFilter(null)
+      .subscribe(
+      data => {
+        this.customfilters = data
+        this.data = data;
+        this.onChangeTable(this.config)
+      },
+      err => console.error(err),
+      () => console.log('DONE')
+      );
+  }
+
+  onResetFilter(): void {
+    this.myFilterValue = "";
+    this.config.filtering = { filtering: { filterString: '' } };
+    this.onChangeTable(this.config);
   }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
@@ -147,7 +144,6 @@ export class MeasFilterCfgComponent {
         if (item[column.name].toString().match(this.config.filtering.filterString)) {
           flag = true;
         }
-
       });
       if (flag) {
         tempArray.push(item);
@@ -175,26 +171,6 @@ export class MeasFilterCfgComponent {
     console.log(data);
   }
 
-  reloadData() {
-    // now it's a simple subscription to the observable
-    this.measFilterService.getMeasFilter(this.filter)
-      .subscribe(
-      data => {
-        this.measfilters = data;
-        this.data = data;
-        this.onChangeTable(this.config);
-      },
-      err => console.error(err),
-      () => console.log('DONE')
-      );
-  }
-
-  onResetFilter(): void {
-    this.myFilterValue = "";
-    this.config.filtering = { filtering: { filterString: '' } };
-    this.onChangeTable(this.config);
-  }
-
   onFilter() {
     this.reloadData();
   }
@@ -207,7 +183,7 @@ export class MeasFilterCfgComponent {
   removeItem(row) {
     let id = row.ID;
     console.log('remove', id);
-    this.measFilterService.checkOnDeleteMeasFilter(id)
+    this.customFilterService.checkOnDeleteCustomFilter(id)
       .subscribe(
       data => {
         console.log(data);
@@ -218,28 +194,16 @@ export class MeasFilterCfgComponent {
       () => { }
       );
   }
-  newMeasFilter() {
-    this.editmode = "create";
-    this.getMeasforMeasFilters();
+  newCustomFilter() {
+    this.viewTestFilterModal.show(null);
   }
 
-  editMeasFilter(row) {
-    let id = row.ID;
-    this.getMeasforMeasFilters();
-    this.measFilterService.getMeasFilterById(id)
-      .subscribe(data => {
-        this.testmeasfilters = data;
-        console.log(this.testmeasfilters.FType);
-        if (this.testmeasfilters.FType="CustomFilter") this.getCustomFiltersforMeasFilters()
-        this.editmode = "modify"
-      },
-      err => console.error(err),
-      () => {console.log("DONE");},
-      );
-  }
+  editCustomFilter(row) {
+    alert("Not implemented yet");
+ 	}
 
-  deleteMeasFilter(id) {
-    this.measFilterService.deleteMeasFilter(id)
+  deleteCustomFilter(id) {
+    this.customFilterService.deleteCustomFilter(id)
       .subscribe(data => { },
       err => console.error(err),
       () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
@@ -249,65 +213,34 @@ export class MeasFilterCfgComponent {
   cancelEdit() {
     this.editmode = "list";
   }
-  saveMeasFilter() {
-    if (this.measfilterForm.dirty && this.measfilterForm.valid) {
-      this.measFilterService.addMeasFilter(this.measfilterForm.value)
+  saveCustomFilter() {
+    if (this.customfilterForm.dirty && this.customfilterForm.valid) {
+      this.customFilterService.addCustomFilter(this.customfilterForm.value)
         .subscribe(data => { console.log(data) },
-        err => console.error(err),
+        err => {
+          console.log(err);
+        },
         () => { this.editmode = "list"; this.reloadData() }
         );
     }
   }
 
-  updateMeasFilter(oldId) {
+  updateCustomFilter(oldId) {
     console.log(oldId);
-    console.log(this.measfilterForm.value.id);
-    if (this.measfilterForm.valid) {
+    console.log(this.customfilterForm.value.id);
+    if (this.customfilterForm.dirty && this.customfilterForm.valid) {
       var r = true;
-      if (this.measfilterForm.value.id != oldId) {
-        r = confirm("Changing Measurement Filter ID from " + oldId + " to " + this.measfilterForm.value.id + ". Proceed?");
+      if (this.customfilterForm.value.id != oldId) {
+        r = confirm("Changing Influx Server ID from " + oldId + " to " + this.customfilterForm.value.id + ". Proceed?");
       }
       if (r == true) {
-        this.measFilterService.editMeasFilter(this.measfilterForm.value, oldId)
+        this.customFilterService.editCustomFilter(this.customfilterForm.value, oldId)
           .subscribe(data => { console.log(data) },
           err => console.error(err),
           () => { this.editmode = "list"; this.reloadData() }
           );
       }
     }
-  }
-
-  getMeasforMeasFilters() {
-    this.measMeasFilterService.getMeas(null)
-      .subscribe(
-      data => {
-        this.influxmeas = data;
-        this.selectmeas = [];
-        for (let entry of data) {
-          console.log(entry)
-          this.selectmeas.push({ 'id': entry.ID, 'name': entry.ID });
-        }
-
-       },
-      err => console.error(err),
-      () => console.log('DONE')
-      );
-  }
-
-  getCustomFiltersforMeasFilters() {
-    console.log("HOLA");
-    this.customFilterService.getCustomFilter(null)
-      .subscribe(
-      data => {
-        this.selectCustomFilters = [];
-        for (let entry of data) {
-          console.log(entry)
-          this.selectCustomFilters.push({ 'id': entry.ID, 'name': entry.ID });
-        }
-       },
-      err => console.error(err),
-      () => console.log('DONE')
-      );
   }
 
 }

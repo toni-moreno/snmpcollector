@@ -28,6 +28,7 @@ import { MeasGroupCfgComponent } from './measgroup/measgroupcfg.component';
 import { MeasFilterCfgComponent } from './measfilter/measfiltercfg.component';
 import { InfluxServerCfgComponent } from './influxserver/influxservercfg.component';
 import { RuntimeComponent } from './runtime/runtime.component';
+import { CustomFilterCfgComponent } from './customfilter/customfiltercfg.component';
 
 import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap';
 import { TooltipModule } from 'ng2-bootstrap';
@@ -36,6 +37,8 @@ import { ModalDirective } from 'ng2-bootstrap';
 
 import { GenericModal } from './common/generic-modal';
 import { TestConnectionModal } from './common/test-connection-modal';
+import { TestFilterModal } from './customfilter/test-filter-modal';
+
 //others
 import { ValidationService } from './common/validation.service';
 //pipes
@@ -54,10 +57,12 @@ import { SpinnerComponent } from './common/spinner';
     MeasGroupCfgComponent,
     MeasFilterCfgComponent,
     InfluxServerCfgComponent,
+    CustomFilterCfgComponent,
     RuntimeComponent,
     GenericModal,
     SpinnerComponent,
     TestConnectionModal,
+    TestFilterModal,
     Home,
     Login,
     App,

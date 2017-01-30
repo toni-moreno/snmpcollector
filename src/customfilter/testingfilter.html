@@ -1,0 +1,261 @@
+<div bsModal #childModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" arisa-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" style="width: 80%">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" (click)="childModal.hide()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" *ngIf="showNewFilterForm === false">{{titleName}} <b>{{ formValues ? (formValues.id||formValues.ID) : 'Select a device' }}</b><i *ngIf="formValues && loadFromDevice === false" style="padding-left: 20px" class="glyphicon glyphicon-edit text-primary" (click)="formValues = null"></i></h4>
+        <h4 class="modal-title" *ngIf="showNewFilterForm === true">Assign <b>{{customFilterValues.ID}} to a new filter</b><i style="padding-left: 20px"></i></h4>
+      </div>
+
+      <div class="modal-body" style="display: flex !important" *ngIf="!formValues">
+        <div class="col-md-6">
+          <span> Select a device </span>
+          <div class="col-md-12">
+            <ss-multiselect-dropdown [options]="snmpdevs" [texts]="myTexts" [settings]="mySettings" ngModel (ngModelChange)="selectDevice($event)"></ss-multiselect-dropdown>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-body" style="display: flex !important" *ngIf="showNewFilterForm === true">
+        <div class="col-md-6">
+
+          <div *ngIf="alertHandler" style="margin-bottom: 20px">
+            <div [ngClass]="['panel-body', 'bg-'+alertHandler.type]">
+              {{alertHandler.msg}}
+            </div>
+          </div>
+          <div class="col-md-12">
+
+            <form [formGroup]="newFilterForm" class="form-horizontal" (ngSubmit)="saveMeasFilter()">
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="id">ID</label>
+                <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Filters "></i>
+                <div class="col-sm-9">
+                  <input formControlName="id" id="id" />
+                  <control-messages [control]="newFilterForm.controls.id"></control-messages>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="IDMeasurementCfg">Measurements</label>
+                <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of Measurements to attach the filter"></i>
+                <div class="col-sm-9">
+                  <input readonly formControlName="IDMeasurementCfg" [ngModel]="selectedMeas">
+                  <control-messages [control]="newFilterForm.controls.IDMeasurementCfg"></control-messages>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="FType">Filter type</label>
+                <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Filter input source: file or condiction OID"></i>
+                <div class="col-sm-9">
+                  <input readonly formControlName="FType" value="CustomFilter">
+                  <control-messages [control]="newFilterForm.controls.FType"></control-messages>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="CustomID">CustomID</label>
+                <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid OID to filter by"></i>
+                <div class="col-sm-9">
+                  <input readonly formControlName="CustomID" [ngModel]="customFilterValues.ID">
+                  <control-messages [control]="newFilterForm.controls.CustomID"></control-messages>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="EnableAlias">Enable alias</label>
+                <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Allow get measurement tag from alias in the file"></i>
+                <div class="col-sm-9">
+                  <select formControlName="EnableAlias" id="EnableAlias">
+                    <option value="true">Enable</option>
+                    <option value="false">Disable</option>
+                  </select>
+                  <control-messages [control]="newFilterForm.controls.EnableAlias"></control-messages>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="Description">Description</label>
+                <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Filter"></i>
+                <div class="col-sm-9">
+                  <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
+                  <control-messages [control]="newFilterForm.controls.Description"></control-messages>
+                </div>
+              </div>
+
+              <div class="col-sm-offset-4 col-sm-6">
+                <button type="submit" [disabled]="!newFilterForm.valid">Submit</button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="modal-body" style="display: flex !important" *ngIf="formValues && showNewFilterForm === false">
+        <div class="col-md-6">
+          <div class="col-md-12">
+            <div class="panel panel-primary">
+              <div class="panel-heading">Connection data</div>
+              <div class="panel-body">
+                <div class="col-md-5">
+                  <h5>Measurement Group</h5>
+                  <ss-multiselect-dropdown [options]="measGroups" [texts]="myTexts" [settings]="mySettings" [ngModel]="selectedMeasGroup" (ngModelChange)="selectMeasGroup($event)"></ss-multiselect-dropdown>
+                  <h5>Indexed OID</h5>
+                  <input style="display: inline; width: auto" type="text" class="form-control" placeholder="Text input" disabled [(ngModel)]="selectedOID" id="OID">
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group list-group">
+                    <span>Measurements <span class="badge">{{measOnMeasGroup ? measOnMeasGroup.length : '0'}}</span></span>
+                    <div *ngFor="let measurement of measOnMeasGroup; let i = index">
+                      <div class="input-group" style="background: none">
+                        <div dropdown class="input-group-addon">
+                          <span [ngClass]="selectedMeas === measurement ? ['text-success glyphicon  glyphicon glyphicon-eye-open'] : ['glyphicon glyphicon-eye-close']" type="button"></span>
+                        </div>
+                        <div class="input-group-addon" style="background: none">
+                          <span role="button" [ngClass]="selectedMeas === measurement ? ['text-success'] : ['text-default']" (click)="selectMeasOID(measurement)">{{measurement}}</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12 text-right">
+                  <button type="button" class="btn btn-primary text-right" style="margin-top:10px" [disabled]="!selectedOID || !isConnected" (click)="sendQuery()">Send query</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!--FILTERFORM-->
+          <div class="col-md-12" *ngIf="selectedOID">
+            <div class="panel panel-primary">
+              <div class="panel-heading">Filter Creation
+                <span [ngClass]="checkedResults.length > 0 ? ['label label-info'] : ['label label-danger']">{{checkedResults.length}} selected</span>
+              </div>
+              <div class="panel-body">
+                <div>
+                  <form [formGroup]="filterForm" (ngSubmit)="addCustomFilter()">
+                    <div class="form-group col-md-12">
+                      <label class="control-label col-sm-3" for="ID">ID</label>
+                      <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique custom filter ID to identify it"></i>
+                      <div class="col-sm-8">
+                        <input formControlName="ID" id="ID" />
+                      </div>
+                    </div>
+                    <div class="form-group col-md-12" style="margin-bottom: 50px">
+                      <label class="control-label col-sm-3" for="Description">Description</label>
+                      <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the description of this custom filter"></i>
+                      <div class="col-sm-8">
+                        <input formControlName="Description" id="Description" />
+                      </div>
+                    </div>
+
+                    <div formArrayName="Items">
+                      <div *ngFor="let filters of filterForm.controls.Items.controls; let i=index">
+                        <div [formGroupName]="i">
+                          <!--street-->
+                          <div class="form-group" class="panel">
+                            <div class="col-sm-2">
+                              <span class="control-label">Item {{i}} <i class="glyphicon glyphicon-remove-circle text-danger" role="button" (click)="removeOption(filterForm.controls.Items.controls[i].value.TagID)"></i></span>
+                            </div>
+                            <div class="input-group col-sm-6">
+                              <span class="input-group-addon">{{filterForm.controls.Items.controls[i].value.TagID}}</span>
+                              <input type="text" class="form-control" formControlName="Alias" placeholder="Set the alias">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-md-12 text-right">
+                      <button class="btn btn-primary" style="padding-top:10px" type="submit" [disabled]="!filterForm.valid || checkedResults.length == 0">Submit</button>
+                    </div>
+                  </form>
+                  <div *ngIf="showItemForm ===  true" class="col-md-8 panel panel-primary">
+                    <h4> Custom Values</h4>
+                    <form *ngIf="itemForm" [formGroup]="itemForm" (ngSubmit)="addCustomItem(itemForm.controls.TagID.value)">
+                      <div class="form-group">
+                        <label class="control-label col-sm-3" for="TagID">TagID</label>
+                        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the number of retries to attempt within timeout"></i>
+                        <div class="col-sm-8">
+                          <input formControlName="TagID" id="TagID" />
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label class="control-label col-sm-3" for="Alias">Alias</label>
+                        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the number of retries to attempt within timeout"></i>
+                        <div class="col-sm-8">
+                          <input formControlName="Alias" id="Alias" />
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <button class="btn btn-primary" style="padding-top:10px" type="submit">Add</button>
+                        <button class="btn btn-danger" style="padding-top:10px" type="cancel" (click)="showItemForm = false">Cancel</button>
+                      </div>
+                    </form>
+                  </div>
+                  <div>
+                    <span *ngIf="!showItemForm" role="button" class="btn btn-primary" (click)="showItemFormPanel()"><i class="glyphicon glyphicon-plus"></i>Add values</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <my-spinner [isRunning]="isRequesting"></my-spinner>
+
+          <div *ngIf="alertHandler">
+            <div [ngClass]="['panel-body', 'bg-'+alertHandler.type]">
+              {{alertHandler.msg}}
+            </div>
+          </div>
+          <div *ngIf="queryResult" class="panel panel-default">
+            <div class="panel-heading">
+              <h4>
+                Query OID: {{queryResult.OID}}
+                <label [ngClass]="(queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance') ? ['label label-primary'] : ['label label-danger']" style="padding-top: 0.5em; margin:0px">
+                  {{queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance' ? queryResult.QueryResult.length +' results': '0 results - '+queryResult.QueryResult[0].Type}}
+                </label>
+                <span class="pull-right">  elapsed: {{queryResult.TimeTaken}} s </span>
+
+              </h4>
+            </div>
+            <div class="panel-body" style="height:auto" *ngIf="(queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance')">
+              <table class="table table-hover table-striped table-condensed" style="width:100%">
+                <thead>
+                  <tr>
+                    <th>OID</th>
+                    <th>Type</th>
+                    <th>Value</th>
+                    <th>
+                      <span role="button" style="width:auto" (click)="selectAllOptions(all)">{{all? 'Select All' : 'Deselect All'}}</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tr *ngFor="let entry of queryResult.QueryResult; let i = index">
+                  <td>{{entry.Name}} </td>
+                  <td> {{entry.Type}}</td>
+                  <td>{{entry.Value}}</td>
+                  <td>
+                    <span id="blankCheckbox" style="width:auto" class="btn btn-default" (click)="selectOption(entry.Value)">
+                      <i [ngClass] = "entry.checked ? ['glyphicon glyphicon-ok text-success']: ['glyphicon glyphicon-remove text-danger']"></i>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="validationClick()">Close</button>
+      </div>
+    </div>
+  </div>

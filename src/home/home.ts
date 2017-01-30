@@ -24,6 +24,7 @@ export class Home {
   {'title': 'Influx Measurements', 'selector' : 'influxmeas'},
   {'title': 'Measurement Groups', 'selector' : 'measgroup'},
   {'title': 'Measurement Filters', 'selector' : 'measfilter'},
+  {'title': 'Custom Filters', 'selector' : 'customfilter'},
   {'title': 'SNMP Devices', 'selector' : 'snmpdevice'},
   {'title': 'Runtime', 'selector' : 'runtime'},
   ];
