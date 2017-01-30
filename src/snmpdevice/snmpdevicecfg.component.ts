@@ -12,6 +12,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { GenericModal } from '../common/generic-modal';
 import { TestConnectionModal } from '../common/test-connection-modal';
+import { TestFilterModal } from '../customfilter/test-filter-modal'
 
 
 @Component({
@@ -25,6 +26,7 @@ export class SnmpDeviceCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('viewTestConnectionModal') public viewTestConnectionModal: TestConnectionModal;
+  @ViewChild('viewTestFilterModal') public viewTestFilterModal: TestFilterModal;
 
 
   //ADDED
@@ -315,6 +317,12 @@ export class SnmpDeviceCfgComponent {
   showTestConnectionModal() {
     if (this.snmpdevForm.valid) {
       this.viewTestConnectionModal.show(this.snmpdevForm.value);
+    }
+  }
+
+  showFilterModal(){
+    if(this.snmpdevForm.valid) {
+      this.viewTestFilterModal.show(this.snmpdevForm.value);
     }
   }
 

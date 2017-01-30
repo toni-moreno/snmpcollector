@@ -305,11 +305,17 @@
         </div>
       </div>
 
-      <test-connection-modal #viewTestConnectionModal titleName='Test connection:'>
-      </test-connection-modal>
-      <div class="col-sm-2">
+      <div class="col-sm-2 col-md-offset-1">
         <button type="button" [disabled]="!snmpdevForm.valid" (click)="showTestConnectionModal()">Test Connection</button>
       </div>
+      <test-connection-modal #viewTestConnectionModal titleName='Test connection for:'>
+      </test-connection-modal>
+      <test-filter-modal #viewTestFilterModal titleName='Filter connection:' [formValues]="snmpdevForm.value">
+      </test-filter-modal>
+      <div class="col-sm-2">
+        <button type="button" [disabled]="!snmpdevForm.valid" (click)="showFilterModal()">Filter Connection</button>
+      </div>
+
 
       <div class="col-sm-offset-2 col-sm-3">
         <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
@@ -593,11 +599,17 @@
         </div>
       </div>
 
-      <div class="col-sm-2">
+      <div class="col-sm-2 col-md-offset-1">
         <button type="button" [disabled]="!snmpdevForm.valid" (click)="showTestConnectionModal()">Test Connection</button>
       </div>
       <test-connection-modal #viewTestConnectionModal titleName='Test connection for:'>
       </test-connection-modal>
+      <test-filter-modal #viewTestFilterModal titleName='Filter connection:' [formValues]="snmpdevForm.value">
+      </test-filter-modal>
+      <div class="col-sm-2">
+        <button type="button" [disabled]="!snmpdevForm.valid" (click)="showFilterModal()">Filter Connection</button>
+      </div>
+
       <div class="col-sm-offset-2 col-sm-3">
         <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
         <button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>

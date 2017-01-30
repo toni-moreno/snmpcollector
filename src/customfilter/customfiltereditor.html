@@ -1,0 +1,39 @@
+<h2>Custom Filters</h2>
+<h4 class="info-mode">{{ editmode | uppercase}} </h4>
+<hr>
+
+<test-filter-modal #viewTestFilterModal titleName='Filter connection:' (validationClicked)="reloadData()" [textValidation]="'Close'">
+</test-filter-modal>
+
+<p [ngSwitch]="editmode">
+  <template ngSwitchCase="list">
+    <test-modal #viewModal titleName='Custom Filters'></test-modal>
+    <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this Custom Filter will affect the following components','Deleting this Custom Filter will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
+        [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteCustomFilter($event)">
+    </test-modal>
+    <div class="row">
+      <div class="col-md-6 text-left">
+        <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()" style="margin-top: 10px"><i class="glyphicon glyphicon-trash text-primary"></i></label>
+        <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
+        <label [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']">{{length}} Results</label>
+        <button style ="margin-top: -5px;" type="button" (click)="newCustomFilter()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+    </div>
+      <div class="col-md-6 text-right">
+        <span style="margin-left: 20px"> Items per page: </span>
+        <select class="select-pages" style="width:auto" [(ngModel)]="itemsPerPage" (ngModelChange)="onChangeTable(config)">
+          <option style="padding-left:2px" [value]="10">10</option>
+          <option style="padding-left:2px" [value]="15">15</option>
+          <option style="padding-left:2px" [value]="20">20</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+      </div>
+    </div>
+    <br>
+    <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (cellClicked)="onCellClick($event)" (viewedItem)="viewItem($event)" (editedItem)="editCustomFilter($event)" (removedItem)="removeItem($event)" [showCustom]="true" [rows]="rows" [columns]="columns">
+    </ng-table>
+    <pagination *ngIf="config.paging" class="pagination-sm" [ngModel]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
+    </pagination>
+    <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+  </template>
+</p>

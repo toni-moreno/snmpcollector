@@ -133,7 +133,11 @@ export class NgTableComponent {
               else test += ' <i class="glyphicon glyphicon-alert"></i>'
             } else if (typeof item[item2] === 'number') {
               test += '<i class="' + this.reportMetricStatus[item[item2]]['icon'] + ' ' + this.reportMetricStatus[item[item2]]['class'] + ' displayinline"></i>'
-            } else test += item[item2];
+            } else if (item2 === 'TagID') {
+              test += '<h4 class="text-success displayinline">'+item[item2] +' - </h4>';
+            } else {
+              test +='<span>'+item[item2]+'</span>';
+            }
           }
           test += "</li>";
         } else {
