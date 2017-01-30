@@ -1540,7 +1540,7 @@ func (dbc *DatabaseCfg) GetCustomFilterCfgAffectOnDel(id string) ([]*DbObjAction
 
 /***************************
 Oid Condition Cfg
-	-GetOidConditionCfgCfgByID(struct)
+	-GetOidConditionCfgByID(struct)
 	-GetOidConditionCfgMap (map - for interna config use
 	-GetOidConditionCfgArray(Array - for web ui use )
 	-AddOidConditionCfg

@@ -20,6 +20,7 @@ export class Home {
   version: any;
   menuItems : Array<any> = [
   {'title': 'Influx Servers', 'selector' : 'influxserver'},
+  {'title': 'OID Conditions', 'selector' : 'oidcondition'},
   {'title': 'SNMP Metrics', 'selector' : 'snmpmetric'},
   {'title': 'Influx Measurements', 'selector' : 'influxmeas'},
   {'title': 'Measurement Groups', 'selector' : 'measgroup'},

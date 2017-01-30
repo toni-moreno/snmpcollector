@@ -22,6 +22,7 @@ import { MultiselectDropdownModule } from './common/multiselect-dropdown'
 //snmpcollector components
 
 import { SnmpDeviceCfgComponent } from './snmpdevice/snmpdevicecfg.component';
+import { OidConditionCfgComponent } from './oidcondition/oidconditioncfg.component';
 import { SnmpMetricCfgComponent } from './snmpmetric/snmpmetriccfg.component';
 import { InfluxMeasCfgComponent } from './influxmeas/influxmeascfg.component';
 import { MeasGroupCfgComponent } from './measgroup/measgroupcfg.component';
@@ -52,6 +53,7 @@ import { SpinnerComponent } from './common/spinner';
     ObjectParserPipe,
     ControlMessagesComponent,
     SnmpDeviceCfgComponent,
+    OidConditionCfgComponent,
     SnmpMetricCfgComponent,
     InfluxMeasCfgComponent,
     MeasGroupCfgComponent,
