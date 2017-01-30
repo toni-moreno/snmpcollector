@@ -52,27 +52,6 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label col-sm-2" for="IsTag">IsTag</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
-        <div class="col-sm-9">
-          <select formControlName="IsTag" id="IsTag">
-            <option value="true">(true) Use data as Tag</option>
-            <option value="false">(false) Use data as Field --default-- </option>
-          </select>
-          <control-messages [control]="snmpmetForm.controls.IsTag"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="BaseOID">Base OID</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
-        <div class="col-sm-9">
-          <input formControlName="BaseOID" id="BaseOID" />
-          <control-messages [control]="snmpmetForm.controls.BaseOID"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
         <label class="control-label col-sm-2" for="DataSrcType">DataSrcType</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
@@ -92,10 +71,31 @@
             <option value="COUNTER64">(Cooked type) COUNTER64 [Compute increments]</option>
             <option value="HWADDR">(Cooked type) HWADDR [ Translate Hardware Address (MAC) from STRING]</option>
             <option value="STRINGPARSER">(Cooked type) STRINGPARSER [ Compute values from Regex ]</option>
-            <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate data from]</option>
+            <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate math expressions from other Field names in the mesurement]</option>
+            <option value="CONDITIONEVAL">(Cooked type) CONDITIONEVAL [evaluate OID table with boolean conditions and get number of true values ]</option>
           </select>
-          <!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
           <control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="IsTag">IsTag</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
+        <div class="col-sm-9">
+          <select formControlName="IsTag" id="IsTag">
+            <option value="true">(true) Use data as Tag</option>
+            <option value="false">(false) Use data as Field --default-- </option>
+          </select>
+          <control-messages [control]="snmpmetForm.controls.IsTag"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'STRINGEVAL' && snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'" >
+        <label class="control-label col-sm-2" for="BaseOID">Base OID</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
+        <div class="col-sm-9">
+          <input formControlName="BaseOID" id="BaseOID" />
+          <control-messages [control]="snmpmetForm.controls.BaseOID"></control-messages>
         </div>
       </div>
 
@@ -120,7 +120,16 @@
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'CONDITIONEVAL'">
+        <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Selector of available OID conditions"></i>
+        <div class="col-sm-9">
+          <ss-multiselect-dropdown [options]="selectoidcond" formControlName="ExtraData" [texts]="myTexts" [settings]="mySettings"></ss-multiselect-dropdown>
+          <control-messages [control]="snmpmetForm.controls.ExtraData"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'">
         <label class="control-label col-sm-2" for="Scale">Scale</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
         <div class="col-sm-9">
@@ -129,7 +138,7 @@
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'">
         <label class="control-label col-sm-2" for="Shift">Shift</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Add a num to the returned (scaled) value "></i>
         <div class="col-sm-9">
@@ -177,27 +186,6 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label col-sm-2" for="IsTag">IsTag</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
-        <div class="col-sm-9">
-          <select formControlName="IsTag" id="IsTag" [ngModel]="testsnmpmetric.IsTag">
-            <option value="true">(true) Use data as Tag</option>
-            <option value="false">(false) Use data as Field --default-- </option>
-          </select>
-          <control-messages [control]="snmpmetForm.controls.IsTag"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="BaseOID">Base OID</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
-        <div class="col-sm-9">
-          <input formControlName="BaseOID" id="BaseOID" [ngModel]="testsnmpmetric.BaseOID" />
-          <control-messages [control]="snmpmetForm.controls.BaseOID"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
         <label class="control-label col-sm-2" for="DataSrcType">DataSrcType</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
@@ -217,10 +205,32 @@
             <option value="COUNTER64">(Cooked type) COUNTER64 [Compute increments]</option>
             <option value="HWADDR">(Cooked type) HWADDR [ Translate Hardware Address (MAC) from STRING]</option>
             <option value="STRINGPARSER">(Cooked type) STRINGPARSER [ Compute values from Regex ]</option>
-            <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate data from]</option>
+            <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate math expressions from other Field names in the mesurement]</option>
+            <option value="CONDITIONEVAL">(Cooked type) CONDITIONEVAL [evaluate OID table with boolean conditions and get number of true values ]</option>
           </select>
           <!--input formControlName="SnmpVersion" id="SnmpVersion" /-->
           <control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="IsTag">IsTag</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If true this OID will be sent to the Influxserver as a Tag Instead of a field on the measurement"></i>
+        <div class="col-sm-9">
+          <select formControlName="IsTag" id="IsTag" [ngModel]="testsnmpmetric.IsTag">
+            <option value="true">(true) Use data as Tag</option>
+            <option value="false">(false) Use data as Field --default-- </option>
+          </select>
+          <control-messages [control]="snmpmetForm.controls.IsTag"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'STRINGEVAL' && snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'" >
+        <label class="control-label col-sm-2" for="BaseOID">Base OID</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
+        <div class="col-sm-9">
+          <input formControlName="BaseOID" id="BaseOID" [ngModel]="testsnmpmetric.BaseOID" />
+          <control-messages [control]="snmpmetForm.controls.BaseOID"></control-messages>
         </div>
       </div>
 
@@ -247,7 +257,16 @@
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'CONDITIONEVAL'">
+        <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Selector of available OID conditions"></i>
+        <div class="col-sm-9">
+          <ss-multiselect-dropdown [options]="selectoidcond" formControlName="ExtraData" [texts]="myTexts" [settings]="mySettings" [ngModel]="testsnmpmetric.ExtraData"></ss-multiselect-dropdown>
+          <control-messages [control]="snmpmetForm.controls.ExtraData"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'">
         <label class="control-label col-sm-2" for="Scale">Scale</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
         <div class="col-sm-9">
@@ -256,7 +275,7 @@
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType != 'CONDITIONEVAL'">
         <label class="control-label col-sm-2" for="Shift">Shift</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Add a num to the returned (scaled) value "></i>
         <div class="col-sm-9">

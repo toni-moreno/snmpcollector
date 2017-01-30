@@ -1,47 +1,37 @@
 import { Component, ChangeDetectionStrategy, ViewChild  } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
-import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
-import { SnmpMetricService } from './snmpmetriccfg.service';
-import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
+import { OidConditionService } from './oidconditioncfg.service';
 import { ControlMessagesComponent } from '../common/control-messages.component'
 import { ValidationService } from '../common/validation.service'
 
 import { GenericModal } from '../common/generic-modal';
 
 @Component({
-  selector: 'snmpmetrics',
-  providers: [SnmpMetricService,OidConditionService],
-  templateUrl: './snmpmetriceditor.html',
+  selector: 'oidconditions',
+  providers: [OidConditionService],
+  templateUrl: './oidconditioneditor.html',
   styleUrls: ['../css/component-styles.css']
 })
 
-export class SnmpMetricCfgComponent {
+export class OidConditionCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
 
   editmode: string; //list , create, modify
-  snmpmetrics: Array<any>;
-  filter: string;
-  snmpmetForm: any;
-  testsnmpmetric: any;
-  myFilterValue: any;
-  //OID selector
   oidconditions: Array<any>;
-  selectoidcond: IMultiSelectOption[] = [];
-
+  filter: string;
+  oidconditionForm: any;
+  testoidcondition: any;
+  myFilterValue: any;
 
   //Initialization data, rows, colunms for Table
   private data: Array<any> = [];
   public rows: Array<any> = [];
   public columns: Array<any> = [
     { title: 'ID', name: 'ID' },
-    { title: 'FieldName', name: 'FieldName' },
-    { title: 'BaseOID', name: 'BaseOID' },
-    { title: 'DataSrcType', name: 'DataSrcType' },
-    { title: 'GetRate', name: 'GetRate' },
-    { title: 'Scale', name: 'Scale' },
-    { title: 'Shift', name: 'Shift' },
-    { title: 'IsTag', name: 'IsTag' }
+    { title: 'OIDCond', name: 'OIDCond' },
+    { title: 'CondType', name: 'CondType' },
+    { title: 'CondValue', name: 'CondValue' }
   ];
 
   public page: number = 1;
@@ -58,46 +48,24 @@ export class SnmpMetricCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public snmpMetricService: SnmpMetricService, public oidCondService: OidConditionService, builder: FormBuilder) {
+  constructor(public oidConditionService: OidConditionService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
-    this.snmpmetForm = builder.group({
+    this.oidconditionForm = builder.group({
       id: ['', Validators.required],
-      FieldName: ['', Validators.required],
-      BaseOID: ['', Validators.compose([ValidationService.OIDValidator])],
-      DataSrcType: ['GAUGE', Validators.required],
-      //Depending on datasrctype
-      ExtraData: [''],
-      GetRate: ['False'], //Validators.required],
-      Scale: ['0', Validators.compose([Validators.required, ValidationService.floatValidator])],
-      Shift: ['0', Validators.compose([Validators.required, ValidationService.floatValidator])],
-      IsTag: ['false', Validators.required],
+      OIDCond: ['', Validators.compose([ValidationService.OIDValidator])],
+      CondType: ['', Validators.required],
+      CondValue: ['',Validators.required],
       Description: ['']
     });
   }
 
-  getOidCond() {
-    this.oidCondService.getConditions(null)
+  reloadData() {
+    // now it's a simple subscription to the observable
+    this.oidConditionService.getConditions(this.filter)
       .subscribe(
       data => {
         this.oidconditions = data;
-        this.selectoidcond = [];
-        for (let entry of data) {
-          console.log(entry)
-          this.selectoidcond.push({ 'id': entry.ID, 'name': entry.ID });
-        }
-      },
-      err => console.error(err),
-      () => { console.log('DONE') }
-      );
-  }
-
-  reloadData() {
-    // now it's a simple subscription to the observable
-    this.snmpMetricService.getMetrics(this.filter)
-      .subscribe(
-      data => {
-        this.snmpmetrics = data;
         this.data = data;
         this.onChangeTable(this.config);
       },
@@ -218,7 +186,7 @@ export class SnmpMetricCfgComponent {
   removeItem(row) {
     let id = row.ID;
     console.log('remove', id);
-    this.snmpMetricService.checkOnDeleteMetric(id)
+    this.oidConditionService.checkOnDeleteCondition(id)
       .subscribe(
       data => {
         console.log(data);
@@ -229,21 +197,19 @@ export class SnmpMetricCfgComponent {
       () => { }
       );
   }
-  newMetric() {
+  newOidCondition() {
     this.editmode = "create";
-    this.getOidCond();
   }
-  editMetric(row) {
+  editOidCondition(row) {
     let id = row.ID;
-    this.getOidCond();
-    this.snmpMetricService.getMetricsById(id)
-      .subscribe(data => { this.testsnmpmetric = data },
+    this.oidConditionService.getConditionsById(id)
+      .subscribe(data => { this.testoidcondition = data },
       err => console.error(err),
       () => this.editmode = "modify"
       );
   }
-  deleteSNMPMetric(id) {
-    this.snmpMetricService.deleteMetric(id)
+  deleteOidCondition(id) {
+    this.oidConditionService.deleteCondition(id)
       .subscribe(data => { },
       err => console.error(err),
       () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
@@ -254,9 +220,9 @@ export class SnmpMetricCfgComponent {
     this.editmode = "list";
   }
 
-  saveSnmpMet() {
-    if (this.snmpmetForm.dirty && this.snmpmetForm.valid) {
-      this.snmpMetricService.addMetric(this.snmpmetForm.value)
+  saveOidCondition() {
+    if (this.oidconditionForm.dirty && this.oidconditionForm.valid) {
+      this.oidConditionService.addCondition(this.oidconditionForm.value)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
         () => { this.editmode = "list"; this.reloadData() }
@@ -264,16 +230,16 @@ export class SnmpMetricCfgComponent {
     }
   }
 
-  updateSnmpMet(oldId) {
+  updateOidCondition(oldId) {
     console.log(oldId);
-    console.log(this.snmpmetForm.value.id);
-    if (this.snmpmetForm.dirty && this.snmpmetForm.valid) {
+    console.log(this.oidconditionForm.value.id);
+    if (this.oidconditionForm.dirty && this.oidconditionForm.valid) {
       var r = true;
-      if (this.snmpmetForm.value.id != oldId) {
-        r = confirm("Changing Metric ID from " + oldId + " to " + this.snmpmetForm.value.id + ". Proceed?");
+      if (this.oidconditionForm.value.id != oldId) {
+        r = confirm("Changing Condition ID from " + oldId + " to " + this.oidconditionForm.value.id + ". Proceed?");
       }
       if (r == true) {
-        this.snmpMetricService.editMetric(this.snmpmetForm.value, oldId)
+        this.oidConditionService.editCondition(this.oidconditionForm.value, oldId)
           .subscribe(data => { console.log(data) },
           err => console.error(err),
           () => { this.editmode = "list"; this.reloadData() }
