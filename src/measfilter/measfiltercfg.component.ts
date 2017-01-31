@@ -230,7 +230,7 @@ export class MeasFilterCfgComponent {
       .subscribe(data => {
         this.testmeasfilters = data;
         console.log(this.testmeasfilters.FType);
-        if (this.testmeasfilters.FType="CustomFilter") this.getCustomFiltersforMeasFilters()
+        if (row.FType==="CustomFilter") this.getCustomFiltersforMeasFilters()
         this.editmode = "modify"
       },
       err => console.error(err),
@@ -295,7 +295,6 @@ export class MeasFilterCfgComponent {
   }
 
   getCustomFiltersforMeasFilters() {
-    console.log("HOLA");
     this.customFilterService.getCustomFilter(null)
       .subscribe(
       data => {
