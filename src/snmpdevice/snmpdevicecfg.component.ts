@@ -111,8 +111,8 @@ export class SnmpDeviceCfgComponent {
       DeviceTagName: ['', Validators.required],
       DeviceTagValue: ['id'],
       Extratags: ['', Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
-      MeasurementGroups: [''],
-      MeasFilters: [''],
+      MeasurementGroups: [null],
+      MeasFilters: [null],
       Description: ['']
     });
   }

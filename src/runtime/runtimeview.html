@@ -173,7 +173,7 @@
                 {{measurement.ID}}
                 <template #measInfo>
                     <dl class="text-left">
-                      <p><dt class="margin-bottom:5px">Metrics <span class="badge">{{finalColumns[i].length-1}}</span></dt></p>
+                      <p><dt class="margin-bottom:5px">Metrics <span class="badge">{{finalColumns[i].length > 0 ? finalColumns[i].length-1 : '0'}}</span></dt></p>
                       <dd *ngFor="let metrics of finalColumns[i]"><span *ngIf="metrics.title !== 'Index'">{{metrics.title}}</span></dd>
                     </dl>
                 </template>

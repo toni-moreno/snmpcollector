@@ -54,7 +54,7 @@ export class MeasGroupCfgComponent {
     this.reloadData();
     this.measgroupForm = builder.group({
       id: ['', Validators.required],
-      Measurements: ['', Validators.required],
+      Measurements: [null, Validators.compose([Validators.required, ValidationService.emptySelector])],
       Description: ['']
     });
   }

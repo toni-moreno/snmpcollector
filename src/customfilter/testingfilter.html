@@ -6,7 +6,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
         <h4 class="modal-title" *ngIf="showNewFilterForm === false">{{titleName}} <b>{{ formValues ? (formValues.id||formValues.ID) : 'Select a device' }}</b><i *ngIf="formValues && loadFromDevice === false" style="padding-left: 20px" class="glyphicon glyphicon-edit text-primary" (click)="formValues = null"></i></h4>
-        <h4 class="modal-title" *ngIf="showNewFilterForm === true">Assign <b>{{customFilterValues.ID}} to a new filter</b><i style="padding-left: 20px"></i></h4>
+        <h4 class="modal-title" *ngIf="showNewFilterForm === true">Assign <b>{{customFilterValues.ID}}</b> to a new filter<i style="padding-left: 20px"></i></h4>
       </div>
 
       <div class="modal-body" style="display: flex !important" *ngIf="!formValues">
