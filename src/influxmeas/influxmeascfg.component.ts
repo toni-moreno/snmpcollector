@@ -77,7 +77,7 @@ export class InfluxMeasCfgComponent {
       IndexTagFormat: [''],
       IndexAsValue: ['false'],
       Fields: builder.array([
-      ],Validators.compose([Validators.required, ValidationService.emptySelector])),
+      ]),
       Description: ['']
     });
   }
