@@ -124,25 +124,31 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error {
 		}
 		oidcheckarray[v.BaseOID] = v.ID
 	}
-	//Check if duplicated fieldNames in any of field/eval Metrics
+	//Check if duplicated fieldNames in any of field/eval/oidCondition Metrics
 	fieldnamecheckarray := make(map[string]string)
 	for _, v := range mc.FieldMetric {
-		//check if the OID has already used as metric in the same measurement
 		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
 		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
-			//oid has already inserted
+			//field name has already inserted
 			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
 		}
-		oidcheckarray[v.FieldName] = v.ID
+		fieldnamecheckarray[v.FieldName] = v.ID
 	}
 	for _, v := range mc.EvalMetric {
-		//check if the OID has already used as metric in the same measurement
 		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
 		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
-			//oid has already inserted
+			//field name has already inserted
 			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
 		}
-		oidcheckarray[v.FieldName] = v.ID
+		fieldnamecheckarray[v.FieldName] = v.ID
+	}
+	for _, v := range mc.OidCondMetric {
+		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
+		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
+			//field name has already inserted
+			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
+		}
+		fieldnamecheckarray[v.FieldName] = v.ID
 	}
 	//Check if all evaluated metrics has well defined its parameters as FieldNames
 	err := mc.CheckComputedMetric()
