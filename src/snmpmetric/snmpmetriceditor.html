@@ -69,6 +69,7 @@
             <option value="TIMETICKS">(Cooked type) TIMETICKS [Compute TimeTicks to seconds]</option>
             <option value="COUNTER32">(Cooked type) COUNTER32 [Compute increments]</option>
             <option value="COUNTER64">(Cooked type) COUNTER64 [Compute increments]</option>
+            <option value="COUNTERXX">(Cooked type) COUNTERXX [Compute non negative increments --for unknown range or buggy counter--]</option>
             <option value="HWADDR">(Cooked type) HWADDR [ Translate Hardware Address (MAC) from STRING]</option>
             <option value="STRINGPARSER">(Cooked type) STRINGPARSER [ Compute values from Regex ]</option>
             <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate math expressions from other Field names in the mesurement]</option>
@@ -99,7 +100,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'COUNTER32' || snmpmetForm.value.DataSrcType == 'COUNTER64'">
+      <div class="form-group" *ngIf="snmpmetForm.value.DataSrcType == 'COUNTER32' || snmpmetForm.value.DataSrcType == 'COUNTER64' || snmpmetForm.value.DataSrcType == 'COUNTERXX'  ">
         <label class="control-label col-sm-2" for="GetRate">GetRate</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Normalize the returned value by time"></i>
         <div class="col-sm-9">
@@ -203,6 +204,7 @@
             <option value="TIMETICKS">(Cooked type) TIMETICKS [Compute TimeTicks to seconds]</option>
             <option value="COUNTER32">(Cooked type) COUNTER32 [Compute increments]</option>
             <option value="COUNTER64">(Cooked type) COUNTER64 [Compute increments]</option>
+            <option value="COUNTERXX">(Cooked type) COUNTERXX [Compute non negative increments --for unknown range or buggy counter--]</option>
             <option value="HWADDR">(Cooked type) HWADDR [ Translate Hardware Address (MAC) from STRING]</option>
             <option value="STRINGPARSER">(Cooked type) STRINGPARSER [ Compute values from Regex ]</option>
             <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate math expressions from other Field names in the mesurement]</option>
@@ -234,7 +236,7 @@
         </div>
       </div>
 
-      <div *ngIf="snmpmetForm.value.DataSrcType == 'COUNTER32' || snmpmetForm.value.DataSrcType == 'COUNTER64'">
+      <div *ngIf="snmpmetForm.value.DataSrcType == 'COUNTER32' || snmpmetForm.value.DataSrcType == 'COUNTER64' || snmpmetForm.value.DataSrcType == 'COUNTERXX' ">
         <div class="form-group">
           <label class="control-label col-sm-2" for="GetRate">GetRate</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Normalize the returned value by time"></i>

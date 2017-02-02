@@ -228,6 +228,48 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			}
 
 		}
+	case "COUNTERXX": //Generic Counter With Unknown range or buggy counters that  Like Non negative derivative
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			//first time only set values and reassign itself to the complete method this will avoi to send invalid data
+			val := snmp.PduVal2UInt64(pdu)
+			s.CurValue = val
+			s.CurTime = now
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+				val := snmp.PduVal2UInt64(pdu)
+				s.LastTime = s.CurTime
+				s.LastValue = s.CurValue
+				s.CurValue = val
+				s.CurTime = now
+				s.Compute()
+			}
+		}
+		if s.cfg.GetRate == true {
+			s.Compute = func(arg ...interface{}) {
+				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+				if s.CurValue.(uint64) > s.LastValue.(uint64) {
+					s.CookedValue = float64(s.CurValue.(uint64)-s.LastValue.(uint64)) / s.ElapsedTime
+					if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
+						s.CookedValue = (s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift
+					}
+				} else {
+					// Else => nothing to do last value will be sent
+					s.log.Warnf("Warning Negative COUNTER increment [current: %d | last: %d ] last value will be sent %f", s.CurValue, s.LastValue, s.CookedValue)
+				}
+			}
+		} else {
+			s.Compute = func(arg ...interface{}) {
+				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+				if s.CurValue.(uint64) > s.LastValue.(uint64) {
+					s.CookedValue = float64(s.CurValue.(uint64) - s.LastValue.(uint64))
+					if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
+						s.CookedValue = (s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift
+					}
+				} else {
+					// Else => nothing to do last value will be sent
+					s.log.Warnf("Warning Negative COUNTER increment [current: %d | last: %d ] last value will be sent %f", s.CurValue, s.LastValue, s.CookedValue)
+				}
+			}
+		}
 	case "OCTETSTRING":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue = snmp.PduVal2str(pdu)
