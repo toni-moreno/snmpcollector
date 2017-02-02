@@ -358,6 +358,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 						}
 					}
 					m.log.Debugf("generating field for Metric: %s : value %f", v_mtr.GetFieldName(), v_mtr.CookedValue.(float64))
+					m.log.Debugf("DEBUG METRIC %+v", v_mtr)
 					Fields[v_mtr.GetFieldName()] = v_mtr.CookedValue
 				}
 
