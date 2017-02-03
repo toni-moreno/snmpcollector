@@ -101,6 +101,10 @@ export class InfluxMeasCfgComponent {
   }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
+    //Check if we have to change the actual page
+
+    let maxPage =  Math.ceil(data.length/this.itemsPerPage);
+    if (page.page > maxPage && page.page != 1) this.page = page.page = maxPage;
     let start = (page.page - 1) * page.itemsPerPage;
     let end = page.itemsPerPage > -1 ? (start + page.itemsPerPage) : data.length;
     return data.slice(start, end);
@@ -177,6 +181,13 @@ export class InfluxMeasCfgComponent {
     return filteredData;
   }
 
+  changeItemsPerPage (items) {
+    this.itemsPerPage = parseInt(items);
+    let maxPage =  Math.ceil(this.length/this.itemsPerPage);
+    if (this.page > maxPage) this.page = maxPage;
+    this.onChangeTable(this.config);
+  }
+
   public onChangeTable(config: any, page: any = { page: this.page, itemsPerPage: this.itemsPerPage }): any {
     if (config.filtering) {
       Object.assign(this.config.filtering, config.filtering);
@@ -208,9 +219,10 @@ export class InfluxMeasCfgComponent {
       );
   }
 
-  onResetFilter(): void {
+  onResetFilter() : void {
+    this.page = 1;
     this.myFilterValue = "";
-    this.config.filtering = { filtering: { filterString: '' } };
+    this.config.filtering = {filtering: { filterString: '' }};
     this.onChangeTable(this.config);
   }
 
