@@ -10,8 +10,6 @@ import { RuntimeService } from './runtime.service';
 })
 
 export class RuntimeComponent implements OnDestroy {
-  @ViewChild('filterValue') public filterValue: any;
-
 
   public isRefreshing: boolean = true;
 
@@ -58,6 +56,8 @@ export class RuntimeComponent implements OnDestroy {
   public maxSize: number;
   public numPages: number = 1;
   public length: number = 0;
+  myFilterValue: any;
+
 
   //Set config
   public config: any = {
@@ -68,6 +68,10 @@ export class RuntimeComponent implements OnDestroy {
   };
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
+    //Check if we have to change the actual page
+    let maxPage =  Math.ceil(data.length/this.itemsPerPage);
+    if (page.page > maxPage && page.page != 1) this.page = page.page = maxPage;
+
     let start = (page.page - 1) * page.itemsPerPage;
     let end = page.itemsPerPage > -1 ? (start + page.itemsPerPage) : data.length;
     return data.slice(start, end);
@@ -158,9 +162,10 @@ export class RuntimeComponent implements OnDestroy {
     console.log(data);
   }
 
-  onResetFilter(): void {
-    this.filterValue.nativeElement.value = '';
-    this.config.filtering = { filtering: { filterString: '' } };
+  onResetFilter() : void {
+    this.page = 1;
+    this.myFilterValue = "";
+    this.config.filtering = {filtering: { filterString: '' }};
     this.onChangeTable(this.config);
   }
 

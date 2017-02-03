@@ -182,12 +182,20 @@
             </span>
           </div>
           <br>
-          <div class="col-md-6 text-left">
+          <div class="col-md-6 text-left" style="margin-bottom: 10px">
             <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()"><i class="glyphicon glyphicon-trash"></i></label>
-            <input #filterValue style="margin-bottom: 20px" *ngIf="config.filtering" placeholder="Filter all columns" [ngTableFiltering]="config.filtering" class="form-control" (tableChanged)="onChangeTable(config)" />
+            <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
             <span class="label label-info"> {{length}} Results </span>
           </div>
-          <div class="col-md-6 text-right">
+          <div class="col-md-3 text-right">
+            <span style="margin-left: 20px"> Items per page: </span>
+            <select class="select-pages" style="width:auto" [(ngModel)]="itemsPerPage" (ngModelChange)="onChangeTable(config)">
+              <option style="padding-left:2px" [value]='10'>10</option>
+              <option style="padding-left:2px" [value]='15'>15</option>
+              <option style="padding-left:2px" [value]='20'>20</option>
+            </select>
+          </div>
+          <div class="col-md-3 text-right">
             <span class="label label-danger" [tooltip]="filterInfo" style="margin-l>eft: 10px" *ngIf="runtime_dev['Measurements'][measActive].Filter"> Filter applied: {{runtime_dev['Measurements'][measActive].FilterCfg.ID}}</span>
             <template #filterInfo>
               <div *ngFor="let run of runtime_dev['Measurements'][measActive].Filter | objectParser" style="text-align:left !important">
@@ -201,7 +209,7 @@
             </ng-table>
           </div>
           <div class="col-md-12">
-            <pagination *ngIf="config.paging" class="pagination-sm" [ngModel]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
+            <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
             </pagination>
             <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
           </div>

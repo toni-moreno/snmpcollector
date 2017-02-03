@@ -8,15 +8,15 @@
         [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteOidCondition($event)">
     </test-modal>
     <div class="row">
-      <div class="col-md-6 text-left">
+      <div class="col-md-8 text-left">
         <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()" style="margin-top: 10px"><i class="glyphicon glyphicon-trash text-primary"></i></label>
         <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
         <label [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']">{{length}} Results</label>
         <button style ="margin-top: -5px;" type="button" (click)="newOidCondition()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
     </div>
-      <div class="col-md-6 text-right">
+      <div class="col-md-4 text-right">
         <span style="margin-left: 20px"> Items per page: </span>
-        <select class="select-pages" style="width:auto" [(ngModel)]="itemsPerPage" (ngModelChange)="onChangeTable(config)">
+        <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage" (ngModelChange)="changeItemsPerPage($event)">
           <option style="padding-left:2px" [value]="10">10</option>
           <option style="padding-left:2px" [value]="15">15</option>
           <option style="padding-left:2px" [value]="20">20</option>
@@ -26,7 +26,7 @@
     <br>
     <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (cellClicked)="onCellClick($event)" (viewedItem)="viewItem($event)" (editedItem)="editOidCondition($event)" (removedItem)="removeItem($event)" [showCustom]="true" [rows]="rows" [columns]="columns">
     </ng-table>
-    <pagination *ngIf="config.paging" class="pagination-sm" [ngModel]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
+    <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
     </pagination>
     <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
   </template>
