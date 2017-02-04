@@ -1,13 +1,34 @@
-# v 0.6.3 (Not Yet Released)
+# v 0.6.4 (Not Yet Released)
 ### New Features
 * Measurement Filters refactor , added CustomFilter.
 * Added OID condition as new SNMP Metric Type
+* Migrated OID conditions from Measurement Filter tables to its rigth place on OID condition Table (breaking change)
 
 ### fixes
-* fix for #105, #107, #115
+* fix for #105, #107, #115, #119, #120. #123
 
-### breaking changess
+### breaking changes
+* OID Contions now are stored in a separate table in the configuration DB , data migration should be done before install this version.
 
+```sql
+-- table creation
+CREATE TABLE `oid_condition_cfg` (`id` TEXT NULL, `cond_oid` TEXT NULL, `cond_type` TEXT NULL, `cond_value` TEXT NULL, `description` TEXT NULL);
+CREATE UNIQUE INDEX `UQE_oid_condition_cfg_id` ON `oid_condition_cfg` (`id`);
+-- oid contition data migration from meas_filter_cfg
+insert into oid_condition_cfg select id,cond_oid,cond_type,cond_value,description  from meas_filter_cfg where filter_type = 'OIDCondition';
+-- old table reestructuration
+ALTER TABLE meas_filter_cfg  rename to meas_filter_cfg_old;
+CREATE TABLE `meas_filter_cfg` (`id` TEXT NULL, `id_measurement_cfg` TEXT NULL, `filter_type` TEXT NULL,`filter_name` TEXT NULL, `enable_alias` INTEGER NULL, `description` TEXT NULL);
+-- old table migration to new depending on the type
+INSERT INTO meas_filter_cfg select id,id_measurement_cfg,filter_type,id,enable_alias,description from meas_filter_cfg_old where filter_type == 'OIDCondition';
+INSERT INTO meas_filter_cfg select id,id_measurement_cfg,filter_type,file_name,enable_alias,description from meas_filter_cfg_old where filter_type == 'file';
+INSERT INTO meas_filter_cfg select id,id_measurement_cfg,filter_type,customid,enable_alias,description from meas_filter_cfg_old where filter_type == 'CustomFilter';
+DROP TABLE meas_filter_cfg_old;
+CREATE UNIQUE INDEX `UQE_meas_filter_cfg_id` ON `meas_filter_cfg` (`id`);
+```
+
+# v 0.6.3
+* this version have been bypassed for technical reasons
 
 # v 0.6.2
 ### New Features

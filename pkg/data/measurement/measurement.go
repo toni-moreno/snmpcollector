@@ -152,13 +152,17 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 	m.FilterCfg = f
 	switch m.FilterCfg.FType {
 	case "file":
-		m.Filter = filter.NewFileFilter(m.FilterCfg.FileName, m.FilterCfg.EnableAlias, m.log)
+		m.Filter = filter.NewFileFilter(m.FilterCfg.FilterName, m.FilterCfg.EnableAlias, m.log)
 		m.Filter.Init(confDir)
 	case "OIDCondition":
-		m.Filter = filter.NewOidFilter(m.FilterCfg.OIDCond, m.FilterCfg.CondType, m.FilterCfg.CondValue, m.log)
+		cond, err := dbc.GetOidConditionCfgByID(m.FilterCfg.FilterName)
+		if err != nil {
+			m.log.Errorf("Error on measurement %s  getting filter id %s OIDCondition [id: %s ] data : %s", m.cfg.ID, m.FilterCfg.ID, m.FilterCfg.FilterName, err)
+		}
+		m.Filter = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, m.log)
 		m.Filter.Init(m.Walk)
 	case "custom":
-		m.Filter = filter.NewCustomFilter(m.FilterCfg.CustomID, m.FilterCfg.EnableAlias, m.log)
+		m.Filter = filter.NewCustomFilter(m.FilterCfg.FilterName, m.FilterCfg.EnableAlias, m.log)
 		m.Filter.Init(dbc)
 	default:
 		return fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.FilterCfg.FType, m.cfg.ID)

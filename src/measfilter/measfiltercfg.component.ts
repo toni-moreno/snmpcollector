@@ -3,6 +3,7 @@ import { FormBuilder, Validators} from '@angular/forms';
 import { MeasFilterService } from './measfiltercfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 import { CustomFilterService } from '../customfilter/customfilter.service';
+import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
 
 import { ValidationService } from '../common/validation.service'
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
@@ -12,7 +13,7 @@ import { GenericModal } from '../common/generic-modal';
 
 @Component({
   selector: 'measfilters',
-  providers: [MeasFilterService, InfluxMeasService, CustomFilterService],
+  providers: [MeasFilterService, InfluxMeasService, CustomFilterService,OidConditionService],
   templateUrl: './measfiltereditor.html',
   styleUrls: ['../css/component-styles.css']
 })
@@ -30,6 +31,9 @@ export class MeasFilterCfgComponent {
   selectmeas: IMultiSelectOption[] = [];
   selectCustomFilters:  IMultiSelectOption[] = [];
 
+  oidconditions: Array<any>;
+  selectoidcond: IMultiSelectOption[] = [];
+
   myFilterValue: any;
 
   private mySettings: IMultiSelectSettings = {
@@ -43,12 +47,8 @@ export class MeasFilterCfgComponent {
     { title: 'ID', name: 'ID' },
     { title: 'Measurement ID', name: 'IDMeasurementCfg' },
     { title: 'Filter Type', name: 'FType' },
-    { title: 'FileName', name: 'FileName' },
-    { title: 'EnableAlias', name: 'EnableAlias' },
-    { title: 'Custom Filter', name: 'CustomID' },
-    { title: 'OID Condition', name: 'OIDCond' },
-    { title: 'Condition Type', name: 'CondType' },
-    { title: 'Condition Value', name: 'CondValue' }
+    { title: 'Filter Name', name: 'FilterName' },
+    { title: 'EnableAlias', name: 'EnableAlias' }
   ];
 
   public page: number = 1;
@@ -65,19 +65,15 @@ export class MeasFilterCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public customFilterService: CustomFilterService, public measFilterService: MeasFilterService, public measMeasFilterService: InfluxMeasService, builder: FormBuilder) {
+  constructor(public oidCondService: OidConditionService,public customFilterService: CustomFilterService, public measFilterService: MeasFilterService, public measMeasFilterService: InfluxMeasService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.measfilterForm = builder.group({
       id: ['', Validators.required],
       IDMeasurementCfg: ['', Validators.required],
       FType: ['', Validators.required],
-      FileName: [''],
+      FilterName: [''],
       EnableAlias: [''],
-      OIDCond: ['', ValidationService.OIDValidator],
-      CondType: [''],
-      CondValue: [''],
-      CustomID: [''],
       Description: ['']
     });
   }
@@ -243,7 +239,7 @@ export class MeasFilterCfgComponent {
       .subscribe(data => {
         this.testmeasfilters = data;
         console.log(this.testmeasfilters.FType);
-        if (row.FType==="CustomFilter") this.getCustomFiltersforMeasFilters()
+        this.initFilterType(row.FType)
         this.editmode = "modify"
       },
       err => console.error(err),
@@ -306,6 +302,31 @@ export class MeasFilterCfgComponent {
       () => console.log('DONE')
       );
   }
+
+  initFilterType(type) {
+    if (type === 'CustomFilter') {
+      this.getCustomFiltersforMeasFilters()
+    }
+    if (type === 'OIDCondition') {
+      this.getOidCond()
+    }
+  }
+  getOidCond() {
+    this.oidCondService.getConditions(null)
+      .subscribe(
+      data => {
+        this.oidconditions = data;
+        this.selectoidcond = [];
+        for (let entry of data) {
+          console.log(entry)
+          this.selectoidcond.push({ 'id': entry.ID, 'name': entry.ID });
+        }
+      },
+      err => console.error(err),
+      () => { console.log('DONE') }
+      );
+  }
+
 
   getCustomFiltersforMeasFilters() {
     this.customFilterService.getCustomFilter(null)

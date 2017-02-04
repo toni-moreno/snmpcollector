@@ -1482,8 +1482,8 @@ func (dbc *DatabaseCfg) UpdateCustomFilterCfg(id string, dev CustomFilterCfg) (i
 	session := dbc.x.NewSession()
 	defer session.Close()
 
-	if id != dev.ID { //ID has been changed
-		affecteddev, err = session.Where("customid='" + id + "'").Cols("customid").Update(&MeasFilterCfg{CustomID: dev.ID})
+	if id != dev.ID { //ID has been changed so we need to update Related MeasurementCfg
+		affecteddev, err = session.Where("filter_name='" + id + "'").Cols("filter_name").Update(&MeasFilterCfg{FilterName: dev.ID})
 		if err != nil {
 			session.Rollback()
 			return 0, fmt.Errorf("Error on Update Custom Filter on update id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
@@ -1659,7 +1659,7 @@ func (dbc *DatabaseCfg) UpdateOidConditionCfg(id string, dev OidConditionCfg) (i
 			return 0, fmt.Errorf("Error on Update SnmpMetricCfg on update OID Condition id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
 		//MeasFilterCfg
-		affecteddev, err = session.Where("cond_oid='" + id + "'").Cols("cond_oid").Update(&MeasFilterCfg{OIDCond: dev.ID})
+		affecteddev, err = session.Where("filter_name='" + id + "'").Cols("filter_name").Update(&MeasFilterCfg{FilterName: dev.ID})
 		if err != nil {
 			session.Rollback()
 			return 0, fmt.Errorf("Error on Update Custom Filter on update id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
