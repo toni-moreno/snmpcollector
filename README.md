@@ -62,7 +62,7 @@ will init a change autodetect webserver with angular-cli (ng serve) and also a a
 
 #### Online config
 
-Now you wil be able to configure metrics/measuremnets and devices from the builting web server at  http://localhost:8090 or http://localhost:4390 if working in development mode (npm start)
+Now you wil be able to configure metrics/measuremnets and devices from the builting web server at  http://localhost:8090 or http://localhost:4200 if working in development mode (npm start)
 
 ### Offline configuration.
 
