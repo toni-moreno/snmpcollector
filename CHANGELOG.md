@@ -1,4 +1,4 @@
-# v 0.6.4 (Not Yet Released)
+# v 0.6.4 
 ### New Features
 * Measurement Filters refactor , added CustomFilter.
 * Added OID condition as new SNMP Metric Type
