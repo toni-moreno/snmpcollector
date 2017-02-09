@@ -1,0 +1,19 @@
+.block-overlay {
+  background-color: rgba(255, 255, 255, 0.7);
+  cursor: wait;
+}
+.block-message-container {
+  position: absolute;
+  top: 35%;
+  left: 0;
+  right: 0;
+  height: 0;
+  text-align: center;
+  z-index: 10001;
+  cursor: wait;
+}
+.block-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

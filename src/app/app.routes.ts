@@ -3,8 +3,8 @@ import { Home } from '../home/home';
 import { Login } from '../login/login';
 
 
-export const routes: Routes = [
-  { path: '',   component: Login },
-  { path: 'login',  component: Login },
-  { path: 'home',   component: Home },
-];
+export const AppRoutes: Routes = [
+  { path: '', redirectTo: '/home', pathMatch: 'full' },
+  { path: 'home', component: Home },
+  { path: 'login', component: Login },
+  ];
