@@ -1,3 +1,4 @@
+<div #blocker></div>
 <div id="wrapper">
   <!-- Sidebar -->
   <div id="sidebar-wrapper">
@@ -10,7 +11,13 @@
         <a (click)="clickMenu(menuItem.selector)" role="button" [ngClass]="item_type === menuItem.selector ? 'active-menu' : ''">{{menuItem.title}}</a>
       </li>
       <li class="last-li">
-        <a class="btn btn-primary" style="text-align:left" (click)="reloadConfig()"> <i class="glyphicon glyphicon-refresh" style="display: inline; padding-left: 0px"> </i>Reload Config</a>
+        <a class="btn btn-primary" style="text-align:left" (click)="reloadConfig()"> <i class="glyphicon glyphicon-refresh" style="display: inline; padding-left: 0px"> </i>Reload Config
+          <i *ngIf="elapsedReload" class="glyphicon glyphicon-ok-circle" container="body" [tooltip]="elapsed"></i>
+            <template #elapsed>
+              <p>Elapsed: {{elapsedReload}} ns</p>
+              <p>Last Reload: {{lastReload}}</p>
+            </template>
+        </a>
       </li>
       <li>
         <a class="btn btn-primary" style="text-align:left" role="button" (click)="logout()"><i class="glyphicon glyphicon-off" style="display: inline; padding-left: 0px"> </i>Logout</a>

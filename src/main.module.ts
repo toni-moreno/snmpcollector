@@ -15,7 +15,7 @@ import { Login } from './login/login';
 import { App } from './app/app';
 import { HttpAPI } from './common/httpAPI';
 
-import { routes } from './app/app.routes';
+import { AppRoutes } from './app/app.routes';
 //common
 import { ControlMessagesComponent } from './common/control-messages.component';
 import { MultiselectDropdownModule } from './common/multiselect-dropdown'
@@ -30,6 +30,7 @@ import { MeasFilterCfgComponent } from './measfilter/measfiltercfg.component';
 import { InfluxServerCfgComponent } from './influxserver/influxservercfg.component';
 import { RuntimeComponent } from './runtime/runtime.component';
 import { CustomFilterCfgComponent } from './customfilter/customfiltercfg.component';
+import { BlockUIService } from './common/blockui/blockui-service';
 
 import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap';
 import { TooltipModule } from 'ng2-bootstrap';
@@ -45,7 +46,9 @@ import { ValidationService } from './common/validation.service';
 //pipes
 import { ObjectParserPipe } from './common/custom_pipe';
 
+import { BlockUIComponent } from './common/blockui/blockui-component';
 import { SpinnerComponent } from './common/spinner';
+
 
 @NgModule({
   bootstrap: [App],
@@ -62,6 +65,7 @@ import { SpinnerComponent } from './common/spinner';
     CustomFilterCfgComponent,
     RuntimeComponent,
     GenericModal,
+    BlockUIComponent,
     SpinnerComponent,
     TestConnectionModal,
     TestFilterModal,
@@ -82,13 +86,13 @@ import { SpinnerComponent } from './common/spinner';
     TabsModule.forRoot(),
     DropdownModule.forRoot(),
     Ng2TableModule,
-    RouterModule.forRoot(routes, {
-    //  useHash: true
-    })
+    RouterModule.forRoot(AppRoutes)
   ],
   providers: [
     HttpAPI,
     ValidationService,
-  ]
+    BlockUIService
+  ],
+  entryComponents: [BlockUIComponent]
 })
 export class AppModule {}
