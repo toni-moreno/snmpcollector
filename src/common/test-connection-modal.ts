@@ -5,6 +5,7 @@ import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
+import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from './multiselect-dropdown';
 
 
 import {SpinnerComponent} from '../common/spinner';
@@ -43,6 +44,16 @@ import { Subscription } from "rxjs";
                       <input type="radio" class=""  (click)="selectOption('OID')" [checked]="selectedOption === 'OID'">Direct OID
                     </label>
                     </div>
+
+                    <div class="col-md-3">
+
+                    <label class="checkbox-inline">
+                      <input type="radio" class="btn btn-default" (click)="selectOption('Test')"   [checked]="selectedOption === 'Test'">Test
+                    </label>
+                    <ss-multiselect-dropdown [options]="selectmeas" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="selectedmeas" (ngModelChange)="testi($event,selectmeas)"></ss-multiselect-dropdown>
+                    </div>
+
+
                     <div class="col-md-3">
 
                     <label class="checkbox-inline">
@@ -174,6 +185,7 @@ export class TestConnectionModal implements OnInit  {
 
   //ConnectionForm
   testForm : any;
+  test : any;
 
   public validationClick(myId: string):void {
     this.validationClicked.emit(myId);
@@ -189,6 +201,20 @@ export class TestConnectionModal implements OnInit  {
     });
 
   }
+
+testi(test,test2) {
+    for (let item of test2) {
+     if (item.id === test) {
+         this.selectOID(item.OID,null);
+         break;
+     }
+ }
+}
+
+testo: any;
+
+  selectmeas: any = [];
+
 
   //History OIDs
   histArray : Array<string> = [];
@@ -217,6 +243,10 @@ export class TestConnectionModal implements OnInit  {
   queryResult : any;
   editResults: boolean = false;
   maximized : boolean = false;
+
+  private mySettings: IMultiSelectSettings = {
+      singleSelect: true,
+  };
 
   selectOption(id : string) {
     this.selectedOption = id;
@@ -271,6 +301,11 @@ export class TestConnectionModal implements OnInit  {
     this.myObservable = this.influxMeasService.getMeas(null)
     .subscribe(
       data => {
+          this.selectmeas = [];
+          for (let entry of data) {
+            console.log(entry)
+            this.selectmeas.push({ 'id': entry.ID, 'name': entry.ID, 'OID': entry.IndexOID});
+          }
         for (let entry of data) {
           if (entry.IndexOID !== "") this.measlist.push({'ID' : entry.ID , 'OID' : entry.IndexOID});
         }

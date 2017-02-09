@@ -17,7 +17,7 @@ declare var _:any;
 
 export class Home {
 
-  @ViewChild('myspinner', { read: ViewContainerRef }) container: ViewContainerRef;
+  @ViewChild('blocker', { read: ViewContainerRef }) container: ViewContainerRef;
 
   response: string;
   api: string;
