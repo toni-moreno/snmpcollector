@@ -98,7 +98,7 @@ export class MultiSelectSearchFilter {
         </div>
     `
 })
-export class MultiselectDropdown implements OnInit, DoCheck, /*AfterContentInit,*/ ControlValueAccessor {
+export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccessor {
 
     @Input() options: Array<IMultiSelectOption>;
     @Input() settings: IMultiSelectSettings;
@@ -182,12 +182,10 @@ export class MultiselectDropdown implements OnInit, DoCheck, /*AfterContentInit,
     ngDoCheck() {
         if(this.model){
             if (this.settings.singleSelect) {
-                console.log("updating");
                 this.updateNumSelected();
                 this.updateTitle();
             } else {
-                let changes = this.differ.diff(this.model);
-                if (changes) {
+                if(this.model.length !== this.options.length) {
                     this.updateNumSelected();
                     this.updateTitle();
                 }

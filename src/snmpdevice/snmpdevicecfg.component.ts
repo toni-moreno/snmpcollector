@@ -35,12 +35,16 @@ export class SnmpDeviceCfgComponent {
   filter: string;
   snmpdevForm: any;
   testsnmpdev: any;
-  influxservers: Array<any>;
+  //influxservers: Array<any>;
   measfilters: Array<any>;
   measgroups: Array<any>;
   filteroptions: any;
   selectgroups: IMultiSelectOption[] = [];
   selectfilters: IMultiSelectOption[] = [];
+  selectinfluxservers: IMultiSelectOption[] = [];
+  private mySettingsInflux: IMultiSelectSettings = {
+      singleSelect: true,
+  };
   alertHandler: any = [];
 
   myFilterValue: any;
@@ -356,7 +360,15 @@ export class SnmpDeviceCfgComponent {
   getInfluxServersforDevices() {
     this.influxserverDeviceService.getInfluxServer(null)
       .subscribe(
-      data => { this.influxservers = data },
+      data => {
+      //  this.influxservers = data;
+        this.selectinfluxservers = [];
+
+        for (let entry of data) {
+          console.log(entry)
+          this.selectinfluxservers.push({ 'id': entry.ID, 'name': entry.ID });
+        }
+      },
       err => console.error(err),
       () => console.log('DONE')
       );

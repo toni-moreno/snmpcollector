@@ -8,7 +8,7 @@
         [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteInfluxServer($event)">
     </test-modal>
     <div class="row">
-      <div class="col-md-6 text-left">
+      <div class="col-md-8 text-left">
         <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()" style="margin-top: 10px"><i class="glyphicon glyphicon-trash text-primary"></i></label>
         <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
         <label [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']">{{length}} Results</label>
@@ -21,8 +21,6 @@
           <option style="padding-left:2px" [value]="15">15</option>
           <option style="padding-left:2px" [value]="20">20</option>
         </select>
-      </div>
-      <div class="col-md-6">
       </div>
     </div>
     <br>

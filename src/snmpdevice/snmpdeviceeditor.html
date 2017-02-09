@@ -212,10 +212,7 @@
         <label class="control-label col-sm-2" for="OutDB">InfluxDB Server</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="InfluxDB server"></i>
         <div class="col-sm-9">
-          <select formControlName="OutDB" id="OutDB">
-            <option *ngFor="let influxserver of influxservers" [value]="influxserver.ID"> {{influxserver.ID}}
-            </option>
-          </select>
+          <ss-multiselect-dropdown [options]="selectinfluxservers" formControlName="OutDB" [texts]="myTexts" [settings]="mySettingsInflux"></ss-multiselect-dropdown>
           <control-messages [control]="snmpdevForm.controls.OutDB"></control-messages>
         </div>
       </div>
@@ -507,10 +504,7 @@
         <label class="control-label col-sm-2" for="OutDB">InfluxDB Server</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="InfluxDB server"></i>
         <div class="col-sm-9">
-          <select formControlName="OutDB" id="OutDB" [ngModel]="testsnmpdev.OutDB">
-            <option *ngFor="let influxserver of influxservers" [value]="influxserver.ID" [label]="influxservers.ID"> {{influxserver.ID}}
-            </option>
-          </select>
+          <ss-multiselect-dropdown [options]="selectinfluxservers" formControlName="OutDB" [texts]="myTexts" [settings]="mySettingsInflux" [ngModel]="testsnmpdev.OutDB"></ss-multiselect-dropdown>
           <control-messages [control]="snmpdevForm.controls.OutDB"></control-messages>
         </div>
       </div>
