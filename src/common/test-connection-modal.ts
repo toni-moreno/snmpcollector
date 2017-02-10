@@ -1,10 +1,10 @@
 import { Component, Input, Output, Pipe, PipeTransform, ViewChild, EventEmitter, OnInit  } from '@angular/core';
 import { Validators, FormGroup, FormArray, FormBuilder } from '@angular/forms';
-import { ModalDirective } from 'ng2-bootstrap';
+import { ModalDirective,ModalOptions} from 'ng2-bootstrap';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
-import { MeasFilterService } from '../measfilter/measfiltercfg.service';
+import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from './multiselect-dropdown';
 
 
@@ -15,11 +15,11 @@ import { Subscription } from "rxjs";
 @Component({
     selector: 'test-connection-modal',
     template: `
-      <div bsModal #childModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" arisa-labelledby="myLargeModalLabel" aria-hidden="true">
+      <div bsModal #childModal="bs-modal" [config]="modalOptions" keyboard="false" class="modal fade" tabindex="-1" role="dialog" arisa-labelledby="myLargeModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-lg" style="width: 80%">
             <div class="modal-content">
               <div class="modal-header">
-                <button type="button" class="close" (click)="childModal.hide()" aria-label="Close">
+                <button type="button" class="close" (click)="hide()" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
                 <h4 class="modal-title" *ngIf="formValues != null">{{titleName}} <b>{{ formValues.id }}</b></h4>
@@ -39,49 +39,12 @@ import { Subscription } from "rxjs";
                 <div class="panel panel-primary">
                   <div class="panel-heading">Source from OID</div>
                   <div class="panel-body">
-                  <div class="col-md-3">
-                    <label class="checkbox-inline">
-                      <input type="radio" class=""  (click)="selectOption('OID')" [checked]="selectedOption === 'OID'">Direct OID
-                    </label>
-                    </div>
-
-                    <div class="col-md-3">
-
-                    <label class="checkbox-inline">
-                      <input type="radio" class="btn btn-default" (click)="selectOption('Test')"   [checked]="selectedOption === 'Test'">Test
-                    </label>
-                    <ss-multiselect-dropdown [options]="selectmeas" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="selectedmeas" (ngModelChange)="testi($event,selectmeas)"></ss-multiselect-dropdown>
-                    </div>
-
-
-                    <div class="col-md-3">
-
-                    <label class="checkbox-inline">
-                      <input type="radio" class="btn btn-default" (click)="selectOption('Metric')"   [checked]="selectedOption === 'Metric'">Metric Base OID
-                    </label>
-                    <select class="form-control" *ngIf="selectedOption === 'Metric'" [ngModel]="''" (ngModelChange)="selectOID($event)" [ngModelOptions]="{standalone: true}">
-                      <option value="" disabled selected>Select Metric</option>
-                      <option *ngFor="let metric of metricList" [value]="metric.OID" >{{metric.ID}}</option>
-                    </select>
-                    </div>
-                    <div class="col-md-3">
-                    <label class="checkbox-inline">
-                      <input type="radio" class="btn btn-default" (click)="selectOption('Meas')"   [checked]="selectedOption === 'Meas'">Meas Index OID
-                    </label>
-                    <select class="form-control" *ngIf="selectedOption === 'Meas'"  [ngModel]="''" (ngModelChange)="selectOID($event, 'walk')" [ngModelOptions]="{standalone: true}">
-                    <option value="" disabled selected>Select Measurement</option>
-                      <option *ngFor="let meas of measlist" [value]="meas.OID" >{{meas.ID}}</option>
-                    </select>
-                    </div>
-                    <div class="col-md-3">
-                    <label class="checkbox-inline">
-                      <input type="radio" class="btn btn-default" (click)="selectOption('Filter')"   [checked]="selectedOption === 'Filter'">Filter OID
-                    </label>
-                    <select class="form-control" *ngIf="selectedOption === 'Filter'"  [ngModel]="''" (ngModelChange)="selectOID($event, null, filter)" [ngModelOptions]="{standalone: true}">
-                    <option value="" disabled selected>Select Filter</option>
-                      <option *ngFor="let filter of filterlist" [value]="filter.OID" >{{filter.ID}}</option>
-                    </select>
-                    </div>
+                  <div class="col-md-2" *ngFor="let selector of selectors; let i=index">
+                  <label class="checkbox-inline">
+                    <input type="radio" class=""  (click)="selectOption(selector.option,i)" [checked]="selectedOption === selector.option">{{selector.title}}
+                  </label>
+                  <ss-multiselect-dropdown *ngIf="selectedOption === selector.option && selector.option !== 'Direct'" [options]="selector.Array" [texts]="myTexts" [settings]="mySettings" ngModel (ngModelChange)="selectItem($event,selector.Array,i)"></ss-multiselect-dropdown>
+                  </div>
                   </div>
                 </div>
                 </div>
@@ -98,7 +61,7 @@ import { Subscription } from "rxjs";
                             <li class="list-group-item"  style="padding: 3px" *ngIf="histArray.length === 0"> Empty history</li>
                             <li class="list-group-item" style="padding: 3px" *ngFor="let hist of histArray">
                             <div>
-                            <span style="padding: 0px; margin-right: 10px" class="glyphicon glyphicon-plus" (click)="selectOID(hist)"></span>
+                            <span style="padding: 0px; margin-right: 10px" class="glyphicon glyphicon-plus" (click)="selectedOID = hist"></span>
                             <span> {{hist}} </span>
                             </div>
                             </li>
@@ -110,8 +73,8 @@ import { Subscription } from "rxjs";
                         <div class="form-group">
                           <label for="Mode" class="col-sm-4 control-label">Mode</label>
                           <div class="col-sm-8">
-                          <select class="form-control" formControlName="Mode" id="Mode">
-                            <option *ngFor="let mode of modeGo" [value]="mode" >{{mode | uppercase}}</option>
+                          <select class="form-control" formControlName="Mode" id="Mode" [(ngModel)]="setMode">
+                            <option *ngFor="let mode of modeGo" >{{mode}}</option>
                           </select>
                           </div>
                         </div>
@@ -168,12 +131,12 @@ import { Subscription } from "rxjs";
               </div>
               </div>
               <div class="modal-footer">
-               <button type="button" class="btn btn-primary" (click)="childModal.hide()">Close</button>
+               <button type="button" class="btn btn-primary" (click)="hide()">Close</button>
              </div>
             </div>
           </div>
         </div>`,
-        providers: [SnmpDeviceService, SnmpMetricService, InfluxMeasService, MeasFilterService, SpinnerComponent],
+        providers: [SnmpDeviceService, SnmpMetricService, InfluxMeasService, OidConditionService, SpinnerComponent],
 })
 
 export class TestConnectionModal implements OnInit  {
@@ -183,15 +146,11 @@ export class TestConnectionModal implements OnInit  {
   @Input() systemInfo: any;
   @Output() public validationClicked:EventEmitter<any> = new EventEmitter();
 
-  //ConnectionForm
-  testForm : any;
-  test : any;
-
   public validationClick(myId: string):void {
     this.validationClicked.emit(myId);
   }
 
-  constructor(private builder: FormBuilder, public metricMeasService: SnmpMetricService, public influxMeasService: InfluxMeasService, public measFilterService : MeasFilterService,public snmpDeviceService: SnmpDeviceService) {
+  constructor(private builder: FormBuilder, public metricMeasService: SnmpMetricService, public influxMeasService: InfluxMeasService, public oidConditionService : OidConditionService,public snmpDeviceService: SnmpDeviceService) {
   }
 
   ngOnInit () {
@@ -202,36 +161,37 @@ export class TestConnectionModal implements OnInit  {
 
   }
 
-testi(test,test2) {
-    for (let item of test2) {
-     if (item.id === test) {
-         this.selectOID(item.OID,null);
-         break;
-     }
- }
-}
+  //Modal Options
+  modalOptions : ModalOptions  = {
+    'keyboard' : false
+  }
 
-testo: any;
-
-  selectmeas: any = [];
-
+  //ConnectionForm
+  testForm : any;
+  setMode : string = 'get';
 
   //History OIDs
   histArray : Array<string> = [];
   formValues: any;
+
   //Sysinfo
    alertHandler : any = {};
    isRequesting : boolean ;
    isConnected: boolean;
    myObservable : Subscription;
 
-
   //Panel OID source
   selectedOption : any = 'OID';
-  metricList : any = [];
   selectedOID : any;
-  measlist: any = [];
-  filterlist: any = [];
+
+  //Selector object:
+  public selectors : Object =  [
+    { option : 'Direct',  title : 'Direct OID', forceMode : 'get'},
+    { option : 'IndexMeas', title : 'Direct Index. Measurements', forceMode : 'walk', Array: []},
+    { option : 'IIndexMeas', title : 'Indirect Index. Measurements', forceMode : 'walk', Array: []},
+    { option : 'Metric', title : 'Metric Base OID', forceMode : 'get', Array: []},
+    { option : 'OIDCond', title : 'OID Conditions', forceMode : 'walk', Array: []}
+  ];
 
   //Panel connection
   modeGo : Array<string> = [
@@ -244,30 +204,45 @@ testo: any;
   editResults: boolean = false;
   maximized : boolean = false;
 
+
   private mySettings: IMultiSelectSettings = {
       singleSelect: true,
   };
 
-  selectOption(id : string) {
+  selectOption(id : string, index : number) {
     this.selectedOption = id;
-    this.selectedOID = null;
-    this.testForm.controls['Mode'].patchValue('get');
+    this.setMode = this.selectors[index].forceMode;
+    switch (id) {
+      case 'Metric':
+      this.getMetricsforModal(index);
+      break;
+      case 'IndexMeas':
+      this.getMeasforModal('indexed', index);
+      break;
+      case 'IIndexMeas':
+      this.getMeasforModal('indexed_it', index)
+      break;
+      case 'OIDCond':
+      this.getOidConditionforModal(index);
+      default: ;
+    }
+    ;
   }
 
-  selectOID(OID: string, forceMode: string) {
-    this.selectedOID = OID;
-    console.log("force",forceMode);
-    forceMode ? this.testForm.controls['Mode'].patchValue(forceMode) : '';
-}
+  selectItem(selectedItem : string, forceMode : boolean, index: number) : void {
+      for (let item of this.selectors[index].Array) {
+       if (item.id === selectedItem) {
+           this.selectedOID = item.OID;
+         break;
+       }
+     }
+   }
 
-    maximizeQueryResults () {
-        this.maximized = !this.maximized;
-    }
+  maximizeQueryResults () {
+    this.maximized = !this.maximized;
+  }
 
   show(_formValues) {
-      this.getMetricsforModal();
-      this.getMeasforModal();
-      this.getFiltersforModal();
     //reset var values
     this.formValues = _formValues;
     this.alertHandler = {};
@@ -280,16 +255,17 @@ testo: any;
   }
 
   hide() {
-    this.childModal.hide();
     if (this.myObservable) this.myObservable.unsubscribe();
+    this.childModal.hide();
   }
 
-  getMetricsforModal(){
+  getMetricsforModal(index : number){
     this.myObservable = this.metricMeasService.getMetrics(null)
     .subscribe(
       data => {
+        this.selectors[index].Array = [];
         for (let entry of data) {
-            this.metricList.push({'ID' : entry.ID , 'OID' : entry.BaseOID});
+          this.selectors[index].Array.push({'id' : entry.ID , 'name': entry.ID, 'OID' : entry.BaseOID});
         }
       },
       err => console.error(err),
@@ -297,30 +273,27 @@ testo: any;
     );
   }
 
-  getMeasforModal(){
-    this.myObservable = this.influxMeasService.getMeas(null)
+  getMeasforModal(type : string, index : number){
+    this.myObservable = this.influxMeasService.getMeasByType(type)
     .subscribe(
       data => {
-          this.selectmeas = [];
+          this.selectors[index].Array = [];
           for (let entry of data) {
-            console.log(entry)
-            this.selectmeas.push({ 'id': entry.ID, 'name': entry.ID, 'OID': entry.IndexOID});
+            this.selectors[index].Array.push({ 'id': entry.ID, 'name': entry.ID, 'OID': entry.IndexOID});
           }
-        for (let entry of data) {
-          if (entry.IndexOID !== "") this.measlist.push({'ID' : entry.ID , 'OID' : entry.IndexOID});
-        }
       },
       err => console.error(err),
       () => console.log('DONE')
     );
   }
 
-  getFiltersforModal(){
-    this.myObservable = this.measFilterService.getMeasFilter(null)
+  getOidConditionforModal(index : number){
+    this.myObservable = this.oidConditionService.getConditions(null)
     .subscribe(
       data => {
+        this.selectors[index].Array = [];
         for (let entry of data) {
-          if (entry.OIDCond !== "")  this.filterlist.push({'ID' : entry.ID , 'OID' : entry.OIDCond});
+          this.selectors[index].Array.push({'id' : entry.ID , 'name': entry.ID, 'OID' : entry.OIDCond});
         }
       },
       err => console.error(err),
