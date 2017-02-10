@@ -68,6 +68,13 @@ export class InfluxMeasService {
             responseData.json()
     )};
 
+    getMeasByType(type : string) {
+        // return an observable
+        return this.httpAPI.get('/api/cfg/measurement/type/'+type)
+        .map( (responseData) =>
+            responseData.json()
+    )};
+
     checkOnDeleteInfluxMeas(id : string){
       return this.httpAPI.get('/api/cfg/measurement/checkondel/'+id)
       .map( (responseData) =>
