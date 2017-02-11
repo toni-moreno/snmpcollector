@@ -42,6 +42,17 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="IsMultiple">Is Multiple</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of Condition query"></i>
+        <div class="col-sm-9">
+          <select formControlName="IsMultiple" id="IsMutiple">
+            <option value="true">(true) This Condition is defined as boolean expresion from other OID conditions</option>
+            <option value="false">(false) This condition is defined from an OID --default-- </option>
+          </select>
+          <control-messages [control]="oidconditionForm.controls.IsMultiple"></control-messages>
+        </div>
+      </div>
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="OIDCond">OID Condition</label>
@@ -52,33 +63,37 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="CondType">CondType</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
-        <div class="col-sm-9">
-          <select formControlName="CondType" id="CondType">
-            <option value="match">(match) string regexp match</option>
-            <option value="notmatch">(notmatch) string regex match inverse</option>
-            <option value="neq">(neq) numeric equal</option>
-            <option value="nlt">(nlt) numeric less than</option>
-            <option value="ngt">(ngt) numeric Greater than</option>
-            <option value="nge">(nge) numeric Greater or Equal</option>
-            <option value="nle">(nle) numeric less or equal </option>
-          </select>
-          <control-messages [control]="oidconditionForm.controls.CondType"></control-messages>
+      <div *ngIf=" oidconditionForm.value.IsMultiple == false ">
+
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="CondType">CondType</label>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
+          <div class="col-sm-9">
+            <select formControlName="CondType" id="CondType">
+              <option value="match">(match) string regexp match</option>
+              <option value="notmatch">(notmatch) string regex match inverse</option>
+              <option value="neq">(neq) numeric equal</option>
+              <option value="nlt">(nlt) numeric less than</option>
+              <option value="ngt">(ngt) numeric Greater than</option>
+              <option value="nge">(nge) numeric Greater or Equal</option>
+              <option value="nle">(nle) numeric less or equal </option>
+            </select>
+            <control-messages [control]="oidconditionForm.controls.CondType"></control-messages>
+          </div>
         </div>
-      </div>
 
 
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="CondValue">CondValue</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
-        <div class="col-sm-9">
-          <input formControlName="CondValue" id="CondValue" />
-          <control-messages [control]="oidconditionForm.controls.CondValue"></control-messages>
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="CondValue">CondValue</label>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
+          <div class="col-sm-9">
+            <input formControlName="CondValue" id="CondValue" />
+            <control-messages [control]="oidconditionForm.controls.CondValue"></control-messages>
+          </div>
         </div>
-      </div>
 
+
+      </div>
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
@@ -110,6 +125,18 @@
       </div>
 
       <div class="form-group">
+        <label class="control-label col-sm-2" for="IsMultiple">Is Multiple</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of Condition query"></i>
+        <div class="col-sm-9">
+          <select formControlName="IsMultiple" id="IsMutiple" [ngModel]="testoidcondition.IsMultiple">
+            <option value="true">(true) This Condition is defined as boolean expresion from other OID conditions</option>
+            <option value="false">(false) This condition is defined from an OID --default-- </option>
+          </select>
+          <control-messages [control]="oidconditionForm.controls.IsMultiple"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
         <label class="control-label col-sm-2" for="OIDCond">OID Condition</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
         <div class="col-sm-9">
@@ -118,29 +145,32 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="CondType">CondType</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
-        <div class="col-sm-9">
-          <select formControlName="CondType" id="CondType" [ngModel]="testoidcondition.CondType">
-            <option value="match">(match) string regexp match</option>
-            <option value="notmatch">(notmatch) string regex match inverse</option>
-            <option value="neq">(neq) numeric equal</option>
-            <option value="nlt">(nlt) numeric less than</option>
-            <option value="ngt">(ngt) numeric Greater than</option>
-            <option value="nge">(nge) numeric Greater or Equal</option>
-            <option value="nle">(nle) numeric less or equal </option>
-          </select>
-          <control-messages [control]="oidconditionForm.controls.CondType"></control-messages>
-        </div>
-      </div>
+      <div *ngIf=" oidconditionForm.value.IsMultiple == false">
 
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="CondValue">CondValue</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
-        <div class="col-sm-9">
-          <input formControlName="CondValue" id="CondValue" [ngModel]='testoidcondition.CondValue'/>
-          <control-messages [control]="oidconditionForm.controls.CondValue"></control-messages>
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="CondType">CondType</label>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
+          <div class="col-sm-9">
+            <select formControlName="CondType" id="CondType" [ngModel]="testoidcondition.CondType">
+              <option value="match">(match) string regexp match</option>
+              <option value="notmatch">(notmatch) string regex match inverse</option>
+              <option value="neq">(neq) numeric equal</option>
+              <option value="nlt">(nlt) numeric less than</option>
+              <option value="ngt">(ngt) numeric Greater than</option>
+              <option value="nge">(nge) numeric Greater or Equal</option>
+              <option value="nle">(nle) numeric less or equal </option>
+            </select>
+            <control-messages [control]="oidconditionForm.controls.CondType"></control-messages>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="CondValue">CondValue</label>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
+          <div class="col-sm-9">
+            <input formControlName="CondValue" id="CondValue" [ngModel]='testoidcondition.CondValue'/>
+            <control-messages [control]="oidconditionForm.controls.CondValue"></control-messages>
+          </div>
         </div>
       </div>
 

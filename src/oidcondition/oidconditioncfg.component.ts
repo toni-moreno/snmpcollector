@@ -29,6 +29,7 @@ export class OidConditionCfgComponent {
   public rows: Array<any> = [];
   public columns: Array<any> = [
     { title: 'ID', name: 'ID' },
+    { title: 'Is Multiple', name: 'IsMultiple' },
     { title: 'OIDCond', name: 'OIDCond' },
     { title: 'CondType', name: 'CondType' },
     { title: 'CondValue', name: 'CondValue' }
@@ -53,9 +54,10 @@ export class OidConditionCfgComponent {
     this.reloadData();
     this.oidconditionForm = builder.group({
       id: ['', Validators.required],
-      OIDCond: ['', Validators.compose([ValidationService.OIDValidator])],
-      CondType: ['', Validators.required],
-      CondValue: ['',Validators.required],
+      IsMultiple: [false,Validators.required],
+      OIDCond: [''],
+      CondType: [''],
+      CondValue: [''],
       Description: ['']
     });
   }

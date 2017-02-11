@@ -97,6 +97,7 @@ type CustomFilterCfg struct {
 // OidConditionCfg condition config for filters and metrics
 type OidConditionCfg struct {
 	ID          string `xorm:"'id' unique"`
+	IsMultiple  bool   `xorm:"is_multiple"`
 	OIDCond     string `xorm:"cond_oid"`
 	CondType    string `xorm:"cond_type"`
 	CondValue   string `xorm:"cond_value"`

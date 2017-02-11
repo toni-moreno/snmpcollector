@@ -24,6 +24,12 @@ func NewCustomFilter(cid string, enableAlias bool, l *logrus.Logger) *CustomFilt
 func (cf *CustomFilter) Init(arg ...interface{}) error {
 	cf.dbc = arg[0].(*config.DatabaseCfg)
 	cf.log.Infof("Init CustomFilter ID: %s Enable Alias: %t", cf.CustomID, cf.EnableAlias)
+	_, err := cf.dbc.GetCustomFilterCfgByID(cf.CustomID)
+	if err != nil {
+		cf.log.Debug("Error on define custom Filter %s", cf.CustomID)
+		return err
+	}
+
 	cf.filterLabels = make(map[string]string)
 	return nil
 }

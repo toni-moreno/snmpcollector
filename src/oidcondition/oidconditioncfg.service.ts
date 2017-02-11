@@ -13,12 +13,7 @@ export class OidConditionService {
 
     addCondition(dev) {
         return this.httpAPI.post('/api/cfg/oidcondition',JSON.stringify(dev,function (key,value) {
-            if (key == 'Scale' ||
-            key == 'Shift') {
-                return parseFloat(value);
-            };
-            if (key == 'GetRate' ||
-            key == 'IsTag' ) return ( value === "true" || value === true);
+            if ( key == 'IsMultiple' ) return ( value === "true" || value === true);
             return value;
 
         }))
@@ -28,12 +23,7 @@ export class OidConditionService {
     editCondition(dev, id) {
         console.log("DEV: ",dev);
         return this.httpAPI.put('/api/cfg/oidcondition/'+id,JSON.stringify(dev,function (key,value) {
-            if (key == 'Scale' ||
-            key == 'Shift') {
-                return parseFloat(value);
-            };
-            if (key == 'GetRate' ||
-            key == 'IsTag' ) return ( value === "true" || value === true);
+            if ( key == 'IsMultiple' ) return ( value === "true" || value === true);
             return value;
 
         }))

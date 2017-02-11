@@ -153,17 +153,36 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 	switch m.FilterCfg.FType {
 	case "file":
 		m.Filter = filter.NewFileFilter(m.FilterCfg.FilterName, m.FilterCfg.EnableAlias, m.log)
-		m.Filter.Init(confDir)
-	case "OIDCondition":
-		cond, err := dbc.GetOidConditionCfgByID(m.FilterCfg.FilterName)
+		err = m.Filter.Init(confDir)
 		if err != nil {
+			return fmt.Errorf("Error invalid File Filter : %s", err)
+		}
+	case "OIDCondition":
+		cond, err2 := dbc.GetOidConditionCfgByID(m.FilterCfg.FilterName)
+		if err2 != nil {
 			m.log.Errorf("Error on measurement %s  getting filter id %s OIDCondition [id: %s ] data : %s", m.cfg.ID, m.FilterCfg.ID, m.FilterCfg.FilterName, err)
 		}
-		m.Filter = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, m.log)
-		m.Filter.Init(m.Walk)
+
+		if cond.IsMultiple {
+			m.Filter = filter.NewOidMultipleFilter(cond.OIDCond, m.log)
+			err = m.Filter.Init(m.Walk, dbc)
+			if err != nil {
+				return fmt.Errorf("Error invalid Multiple Condition Filter : %s", err)
+			}
+		} else {
+			m.Filter = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, m.log)
+			err = m.Filter.Init(m.Walk)
+			if err != nil {
+				return fmt.Errorf("Error invalid OID condition Filter : %s", err)
+			}
+		}
+
 	case "custom":
 		m.Filter = filter.NewCustomFilter(m.FilterCfg.FilterName, m.FilterCfg.EnableAlias, m.log)
-		m.Filter.Init(dbc)
+		err = m.Filter.Init(dbc)
+		if err != nil {
+			return fmt.Errorf("Error invalid Custom Filter : %s", err)
+		}
 	default:
 		return fmt.Errorf("Invalid Filter Type %s for measurement: %s", m.FilterCfg.FType, m.cfg.ID)
 	}

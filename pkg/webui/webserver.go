@@ -9,6 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/measurement/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"os"
 
@@ -21,6 +22,7 @@ import (
 
 var (
 	logDir     string
+	confDir    string
 	log        *logrus.Logger
 	confHTTP   *config.HTTPConfig
 	instanceID string
@@ -29,6 +31,11 @@ var (
 // SetLogDir et dir for logs
 func SetLogDir(dir string) {
 	logDir = dir
+}
+
+// SetConfDir et dir for logs
+func SetConfDir(dir string) {
+	confDir = dir
 }
 
 // SetLogger set output log
@@ -885,6 +892,28 @@ func GetMeasFilter(ctx *Context) {
 // AddMeasFilter Insert new measurement groups to de internal BBDD --pending--
 func AddMeasFilter(ctx *Context, dev config.MeasFilterCfg) {
 	log.Printf("ADDING measurement Filter %+v", dev)
+	//check Filter Config
+	switch dev.FType {
+	case "file":
+		f := filter.NewFileFilter(dev.FilterName, dev.EnableAlias, log)
+		err := f.Init(confDir)
+		if err != nil {
+			ctx.JSON(404, err.Error())
+			return
+		}
+	case "OIDCondition":
+		//no need for check here we have needed  SNMP walk function defined at this level
+	case "CustomFilter":
+		f := filter.NewCustomFilter(dev.FilterName, dev.EnableAlias, log)
+		err := f.Init(agent.MainConfig.Database)
+		if err != nil {
+			ctx.JSON(404, err.Error())
+			return
+		}
+	default:
+		ctx.JSON(404, fmt.Errorf("Error no filter type %s supported ", dev.FType).Error())
+		return
+	}
 	affected, err := agent.MainConfig.Database.AddMeasFilterCfg(dev)
 	if err != nil {
 		log.Warningf("Error on insert Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)

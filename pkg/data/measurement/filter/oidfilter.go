@@ -12,7 +12,7 @@ import (
 
 // OidFilter a new Oid condition filter
 type OidFilter struct {
-	filterLabels map[string]string
+	FilterLabels map[string]string `json:"-"`
 	OidCond      string
 	TypeCond     string
 	ValueCond    string
@@ -27,7 +27,7 @@ func NewOidFilter(oidcond string, typecond string, value string, l *logrus.Logge
 
 // Init initialize
 func (of *OidFilter) Init(arg ...interface{}) error {
-	of.filterLabels = make(map[string]string)
+	of.FilterLabels = make(map[string]string)
 	of.Walk = arg[0].(func(string, gosnmp.WalkFunc) error)
 	if of.Walk == nil {
 		return fmt.Errorf("Error when initializing oid cond %s", of.OidCond)
@@ -37,13 +37,13 @@ func (of *OidFilter) Init(arg ...interface{}) error {
 
 // Count return current number of itemp in the filter
 func (of *OidFilter) Count() int {
-	return len(of.filterLabels)
+	return len(of.FilterLabels)
 }
 
 // MapLabels return the final tagmap from all posible values and the filter results
 func (of *OidFilter) MapLabels(AllIndexedLabels map[string]string) map[string]string {
-	curIndexedLabels := make(map[string]string, len(of.filterLabels))
-	for kf := range of.filterLabels {
+	curIndexedLabels := make(map[string]string, len(of.FilterLabels))
+	for kf := range of.FilterLabels {
 		for kl, vl := range AllIndexedLabels {
 			if kf == kl {
 				curIndexedLabels[kl] = vl
@@ -60,7 +60,7 @@ func (of *OidFilter) Update() error {
 
 	idxPosInOID := len(of.OidCond)
 	// reset current filter
-	of.filterLabels = make(map[string]string)
+	of.FilterLabels = make(map[string]string)
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
 		of.log.Debugf("received SNMP  pdu:%+v", pdu)
@@ -117,7 +117,7 @@ func (of *OidFilter) Update() error {
 				return nil //if error return the bulk process will stop
 			}
 			suffix := pdu.Name[idxPosInOID+1:]
-			of.filterLabels[suffix] = ""
+			of.FilterLabels[suffix] = ""
 		}
 
 		return nil

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/Sirupsen/logrus"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -26,6 +27,12 @@ func NewFileFilter(fileName string, enableAlias bool, l *logrus.Logger) *FileFil
 func (ff *FileFilter) Init(arg ...interface{}) error {
 	ff.confDir = arg[0].(string)
 	ff.log.Infof("initialize File filter : %s Enable Alias: %t", ff.FileName, ff.EnableAlias)
+	//chek if File exist
+	if _, err := os.Stat(filepath.Join(ff.confDir, ff.FileName)); os.IsNotExist(err) {
+		// does not exist
+		ff.log.Errorf("ERROR  file %s does not exist Plase upload first to the %s dir: error: %s", filepath.Join(ff.confDir, ff.FileName), ff.confDir, err)
+		return err
+	}
 	ff.filterLabels = make(map[string]string)
 	return nil
 }

@@ -155,6 +155,7 @@ func init() {
 	measurement.SetConfDir(confDir)
 	webui.SetLogger(log)
 	webui.SetLogDir(logDir)
+	webui.SetConfDir(confDir)
 	agent.SetLogger(log)
 	//
 	log.Infof("Set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n -Home: %s\n", appdir, confDir, logDir, homeDir)
