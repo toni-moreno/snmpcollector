@@ -6,7 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/data/measurement/filter"
+	"github.com/toni-moreno/snmpcollector/pkg/data/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"math"
 	"regexp"

@@ -11,7 +11,7 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/data/measurement/filter"
+	"github.com/toni-moreno/snmpcollector/pkg/data/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
