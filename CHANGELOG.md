@@ -1,4 +1,14 @@
-# v 0.6.4 
+# v 0.6.5 (not released yet)
+### New Features
+* Added new Multiple OID condition Filter and filter check improvements
+
+### fixes
+* fix for #126
+
+### breaking changes
+
+
+# v 0.6.4
 ### New Features
 * Measurement Filters refactor , added CustomFilter.
 * Added OID condition as new SNMP Metric Type
