@@ -55,7 +55,7 @@
 				<label class="control-label col-sm-2" for="FType">Filter type</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Filter input source: file or condiction OID"></i>
 				<div class="col-sm-9">
-					<select formControlName="FType" id="FType" (click)="initFilterType(measfilterForm.controls.FType.value)">
+					<select formControlName="FType" id="FType" (click)="initFilterType(measfilterForm.controls.FType.value, true)">
 						<option value="file">File</option>
 						<option value="OIDCondition">OID Condition</option>
 						<option value="CustomFilter" >Custom Filter</option>
@@ -161,7 +161,7 @@
 				<label class="control-label col-sm-2" for="FType">Filter type</label>"
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Filter input source: file or condiction OID"></i>
 				<div class="col-sm-9">
-					<select formControlName="FType" id="FType" [ngModel]="testmeasfilters.FType" (click)="initFilterType(measfilterForm.controls.FType.value)">
+					<select formControlName="FType" id="FType" [ngModel]="testmeasfilters.FType" (click)="initFilterType(measfilterForm.controls.FType.value, true)">
 						<option value="file">File</option>
 						<option value="OIDCondition">OID Condition</option>
 						<option value="CustomFilter" >Custom Filter</option>

@@ -190,6 +190,8 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
                     this.updateTitle();
                 }
             }
+        } else {
+            this.title = this.texts.defaultTitle;
         }
     }
 

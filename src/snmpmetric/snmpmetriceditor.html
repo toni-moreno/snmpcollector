@@ -55,7 +55,7 @@
         <label class="control-label col-sm-2" for="DataSrcType">DataSrcType</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
-          <select formControlName="DataSrcType" id="DataSrcType" (click)=" snmpmetForm.controls.DataSrcType.value === 'CONDITIONEVAL' ? getOidCond() : '' ">
+          <select formControlName="DataSrcType" id="DataSrcType" (click)="snmpmetForm.controls['ExtraData'].patchValue(null); snmpmetForm.controls.DataSrcType.value === 'CONDITIONEVAL' ? getOidCond() : null ">
             <option value="INTEGER">(SNMP SMI Type) INTEGER</option>
             <option value="Integer32">(SNMP SMI Type) Integer32</option>
             <option value="Gauge32">(SNMP SMI Type) Gauge32</option>
@@ -190,7 +190,7 @@
         <label class="control-label col-sm-2" for="DataSrcType">DataSrcType</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
-          <select formControlName="DataSrcType" id="DataSrcType" [ngModel]="testsnmpmetric.DataSrcType" (click)=" snmpmetForm.controls.DataSrcType.value === 'CONDITIONEVAL' ? getOidCond() : '' ">
+          <select formControlName="DataSrcType" id="DataSrcType" [ngModel]="testsnmpmetric.DataSrcType" (click)="snmpmetForm.controls['ExtraData'].patchValue(null); snmpmetForm.controls.DataSrcType.value === 'CONDITIONEVAL' ? getOidCond() : '' ">
             <option value="INTEGER">(SNMP SMI Type) INTEGER</option>
             <option value="Integer32">(SNMP SMI Type) Integer32</option>
             <option value="Gauge32">(SNMP SMI Type) Gauge32</option>
