@@ -238,8 +238,7 @@ export class MeasFilterCfgComponent {
     this.measFilterService.getMeasFilterById(id)
       .subscribe(data => {
         this.testmeasfilters = data;
-        console.log(this.testmeasfilters.FType);
-        this.initFilterType(row.FType)
+        this.initFilterType(row.FType, false);
         this.editmode = "modify"
       },
       err => console.error(err),
@@ -303,9 +302,10 @@ export class MeasFilterCfgComponent {
       );
   }
 
-  initFilterType(type) {
+  initFilterType(type : string, init? : boolean) : void {
+    if (init === true) this.measfilterForm.controls['FilterName'].patchValue(null);
     if (type === 'CustomFilter') {
-      this.getCustomFiltersforMeasFilters()
+      this.getCustomFiltersforMeasFilters();
     }
     if (type === 'OIDCondition') {
       this.getOidCond()
