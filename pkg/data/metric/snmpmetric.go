@@ -120,8 +120,11 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.log.Errorf("Error getting CONDITIONEVAL [id: %s ] data : %s", s.cfg.ExtraData, err)
 		}
 		//get Regexp
-		s.condflt = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, s.log)
-
+		if cond.IsMultiple == true {
+			s.condflt = filter.NewOidMultipleFilter(cond.OIDCond, s.log)
+		} else {
+			s.condflt = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, s.log)
+		}
 		s.Compute = func(arg ...interface{}) {
 			s.condflt.Init(arg...)
 			s.condflt.Update()
