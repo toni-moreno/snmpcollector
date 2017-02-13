@@ -54,7 +54,7 @@ export class OidConditionCfgComponent {
     this.reloadData();
     this.oidconditionForm = builder.group({
       id: ['', Validators.required],
-      IsMultiple: [false,Validators.required],
+      IsMultiple: ['false',Validators.required],
       OIDCond: [''],
       CondType: [''],
       CondValue: [''],
@@ -147,7 +147,7 @@ export class OidConditionCfgComponent {
     filteredData.forEach((item: any) => {
       let flag = false;
       this.columns.forEach((column: any) => {
-        if (!item[column.name]) {
+        if (item[column.name] == null) {
           item[column.name] = '--'
         }
         if (item[column.name].toString().match(this.config.filtering.filterString)) {
