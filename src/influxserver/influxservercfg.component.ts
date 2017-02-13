@@ -157,7 +157,7 @@ export class InfluxServerCfgComponent {
     filteredData.forEach((item: any) => {
       let flag = false;
       this.columns.forEach((column: any) => {
-        if (!item[column.name]) {
+        if (item[column.name] === null) {
           item[column.name] = '--'
         }
         if (item[column.name].toString().match(this.config.filtering.filterString)) {
@@ -180,7 +180,7 @@ export class InfluxServerCfgComponent {
     if (this.page > maxPage) this.page = maxPage;
     this.onChangeTable(this.config);
   }
-  
+
   public onChangeTable(config: any, page: any = { page: this.page, itemsPerPage: this.itemsPerPage }): any {
     if (config.filtering) {
       Object.assign(this.config.filtering, config.filtering);
