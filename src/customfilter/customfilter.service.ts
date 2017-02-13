@@ -76,11 +76,11 @@ export class CustomFilterService {
         console.log("MAP SERVICE", deleteobject);
         let result: any = { 'ID': id };
         _.forEach(deleteobject, function(value, key) {
-          result[value.Type] = [];
+          result[value.TypeDesc] = [];
         });
         _.forEach(deleteobject, function(value, key) {
-          result[value.Type].Description = value.Action;
-          result[value.Type].push(value.ObID);
+          result[value.TypeDesc].Description = value.Action;
+          result[value.TypeDesc].push(value.ObID);
         });
         return result;
       });

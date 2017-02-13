@@ -25,9 +25,10 @@ func (dbc *DatabaseCfg) getChanges() int64 {
 
 //DbObjAction measurement groups to asign to devices
 type DbObjAction struct {
-	Type   string
-	ObID   string
-	Action string
+	Type     string
+	TypeDesc string
+	ObID     string
+	Action   string
 }
 
 //InitDB initialize de BD configuration
@@ -313,9 +314,10 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 
 	for _, val := range devices {
 		obj = append(obj, &DbObjAction{
-			Type:   "measurements",
-			ObID:   val.IDMeasurementCfg,
-			Action: "Delete SNMPMetric field from Measurement relation",
+			Type:     "measurementscfg",
+			TypeDesc: "Measurements",
+			ObID:     val.IDMeasurementCfg,
+			Action:   "Delete SNMPMetric field from Measurement relation",
 		})
 
 	}
@@ -563,9 +565,10 @@ func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction,
 	}
 	for _, val := range mf {
 		obj = append(obj, &DbObjAction{
-			Type:   "fields",
-			ObID:   val.IDMetricCfg,
-			Action: "Delete SNMPMetric field from Measurement relation",
+			Type:     "fieldscfg",
+			TypeDesc: "Metrics",
+			ObID:     val.IDMetricCfg,
+			Action:   "Delete SNMPMetric field from Measurement relation",
 		})
 	}
 
@@ -576,9 +579,10 @@ func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction,
 
 	for _, val := range mg {
 		obj = append(obj, &DbObjAction{
-			Type:   "measurement_group",
-			ObID:   val.IDMGroupCfg,
-			Action: "Delete Measurement from Measurement Group relation",
+			Type:     "measurementgroupcfg",
+			TypeDesc: "Meas. Groups",
+			ObID:     val.IDMGroupCfg,
+			Action:   "Delete Measurement from Measurement Group relation",
 		})
 	}
 	return obj, nil
@@ -732,9 +736,10 @@ func (dbc *DatabaseCfg) GetMeasFilterCfgAffectOnDel(id string) ([]*DbObjAction, 
 	}
 	for _, val := range mf {
 		obj = append(obj, &DbObjAction{
-			Type:   "snmpdevices",
-			ObID:   val.IDSnmpDev,
-			Action: "Delete Measurement Filter in SNMPDevices relation",
+			Type:     "snmpdevicecfg",
+			TypeDesc: "SNMP Devices",
+			ObID:     val.IDSnmpDev,
+			Action:   "Delete Measurement Filter in SNMPDevices relation",
 		})
 	}
 	return obj, nil
@@ -939,9 +944,10 @@ func (dbc *DatabaseCfg) GetMGroupsCfgAffectOnDel(id string) ([]*DbObjAction, err
 
 	for _, val := range devices {
 		obj = append(obj, &DbObjAction{
-			Type:   "snmpdevices",
-			ObID:   val.IDSnmpDev,
-			Action: "Delete SNMPDevice from Measurement Group relation",
+			Type:     "snmpdevicecfg",
+			TypeDesc: "SNMP Devices",
+			ObID:     val.IDSnmpDev,
+			Action:   "Delete SNMPDevice from Measurement Group relation",
 		})
 
 	}
@@ -1321,9 +1327,10 @@ func (dbc *DatabaseCfg) GetInfluxCfgAffectOnDel(id string) ([]*DbObjAction, erro
 
 	for _, val := range devices {
 		obj = append(obj, &DbObjAction{
-			Type:   "snmpdevices",
-			ObID:   val.ID,
-			Action: "Reset InfluxDB Server from SNMPDevice to 'default' InfluxDB Server",
+			Type:     "snmpdevicecfg",
+			TypeDesc: "SNMP Devices",
+			ObID:     val.ID,
+			Action:   "Reset InfluxDB Server from SNMPDevice to 'default' InfluxDB Server",
 		})
 
 	}
@@ -1535,9 +1542,10 @@ func (dbc *DatabaseCfg) GetCustomFilterCfgAffectOnDel(id string) ([]*DbObjAction
 
 	for _, val := range filters {
 		obj = append(obj, &DbObjAction{
-			Type:   "measurementfilters",
-			ObID:   val.ID,
-			Action: "Change Measurement filter to other custom or delete them",
+			Type:     "measfiltercfg",
+			TypeDesc: "Meas. Filters",
+			ObID:     val.ID,
+			Action:   "Change Measurement filter to other custom or delete them",
 		})
 
 	}
@@ -1712,9 +1720,10 @@ func (dbc *DatabaseCfg) GetOidConditionCfgAffectOnDel(id string) ([]*DbObjAction
 
 	for _, val := range metrics {
 		obj = append(obj, &DbObjAction{
-			Type:   "snmpmetriccfg",
-			ObID:   val.ID,
-			Action: "Change Measurement filter to other custom or delete them",
+			Type:     "snmpmetriccfg",
+			TypeDesc: "Metrics",
+			ObID:     val.ID,
+			Action:   "Change Measurement filter to other custom or delete them",
 		})
 	}
 
@@ -1725,9 +1734,10 @@ func (dbc *DatabaseCfg) GetOidConditionCfgAffectOnDel(id string) ([]*DbObjAction
 
 	for _, val := range measf {
 		obj = append(obj, &DbObjAction{
-			Type:   "measfiltercfg",
-			ObID:   val.ID,
-			Action: "Change Measurement filter to other custom or delete them",
+			Type:     "measfiltercfg",
+			TypeDesc: "Meas. Filters",
+			ObID:     val.ID,
+			Action:   "Change Measurement filter to other custom or delete them",
 		})
 	}
 
