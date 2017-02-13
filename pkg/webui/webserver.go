@@ -905,7 +905,7 @@ func AddMeasFilter(ctx *Context, dev config.MeasFilterCfg) {
 		//no need for check here we have needed  SNMP walk function defined at this level
 	case "CustomFilter":
 		f := filter.NewCustomFilter(dev.FilterName, dev.EnableAlias, log)
-		err := f.Init(agent.MainConfig.Database)
+		err := f.Init(&agent.MainConfig.Database)
 		if err != nil {
 			ctx.JSON(404, err.Error())
 			return

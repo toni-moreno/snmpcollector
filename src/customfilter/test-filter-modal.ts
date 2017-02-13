@@ -267,7 +267,7 @@ export class TestFilterModal implements OnInit {
       id: ['', Validators.required],
       IDMeasurementCfg: [''],
       FType: ['CustomFilter'],
-      CustomID: [''],
+      FilterName: [''],
       EnableAlias: ['false'],
       Description: ['']
     });
