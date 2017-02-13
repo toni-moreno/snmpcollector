@@ -1451,7 +1451,13 @@ func (dbc *DatabaseCfg) DelCustomFilterCfg(id string) (int64, error) {
 	session := dbc.x.NewSession()
 	defer session.Close()
 	// deleting references in Measurements
-	//
+
+	affecteddev, err = session.Where("filter_name='" + id + "'").Cols("filter_name").Update(&MeasFilterCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Delete Custom Filter on Measurement Filter table with id:  %s , error: %s", id, err)
+	}
+
 	affecteddev, err = session.Where("customid='" + id + "'").Delete(&CustomFilterItems{})
 	if err != nil {
 		session.Rollback()
@@ -1522,7 +1528,7 @@ func (dbc *DatabaseCfg) UpdateCustomFilterCfg(id string, dev CustomFilterCfg) (i
 func (dbc *DatabaseCfg) GetCustomFilterCfgAffectOnDel(id string) ([]*DbObjAction, error) {
 	var filters []*MeasFilterCfg
 	var obj []*DbObjAction
-	if err := dbc.x.Where("customid='" + id + "'").Find(&filters); err != nil {
+	if err := dbc.x.Where("filter_name='" + id + "'").Find(&filters); err != nil {
 		log.Warnf("Error on Get CustomID  id %d for Measurement Filters , error: %s", id, err)
 		return nil, err
 	}
@@ -1625,7 +1631,19 @@ func (dbc *DatabaseCfg) DelOidConditionCfg(id string) (int64, error) {
 
 	session := dbc.x.NewSession()
 	defer session.Close()
-	// deleting references in Measurements
+	// deleting references filter_name on Measurement Filters
+	affecteddev, err = session.Where("filter_name='" + id + "'").Cols("filter_name").Update(&MeasFilterCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Delete OIDCondition on Measurement Filter table with id:  %s , error: %s", id, err)
+	}
+
+	// deleting references extrada on SNMP Metric on related ConditionEval
+	affecteddev, err = session.Where("extradata='" + id + "' and datasrctype = 'CONDITIONEVAL'").Cols("extradata").Update(&SnmpMetricCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Delete OIDCondition on Metric table with id:  %s , error: %s", id, err)
+	}
 
 	affected, err = session.Where("id='" + id + "'").Delete(&OidConditionCfg{})
 	if err != nil {
@@ -1700,7 +1718,7 @@ func (dbc *DatabaseCfg) GetOidConditionCfgAffectOnDel(id string) ([]*DbObjAction
 		})
 	}
 
-	if err = dbc.x.Where("cond_oid='" + id + "'").Find(&measf); err != nil {
+	if err = dbc.x.Where("filter_name='" + id + "'").Find(&measf); err != nil {
 		log.Warnf("Error on Get CustomID  id %d for Measurement Filters , error: %s", id, err)
 		return nil, err
 	}
