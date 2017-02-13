@@ -457,7 +457,7 @@ func (m *Measurement) ComputeOidConditionalMetrics() {
 			evalkey := m.cfg.ID + "." + v.ID
 			if metr, ok := m.OidSnmpMap[evalkey]; ok {
 				m.log.Debugln("OK OidCondition  metric found", m.cfg.ID, "Eval KEY", evalkey)
-				metr.Compute(m.Walk)
+				metr.Compute(m.Walk, dbc)
 			} else {
 				m.log.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 			}
