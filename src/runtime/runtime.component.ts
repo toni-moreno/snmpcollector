@@ -130,7 +130,7 @@ export class RuntimeComponent implements OnDestroy {
     filteredData.forEach((item: any) => {
       let flag = false;
       this.columns.forEach((column: any) => {
-        if (item[column.name] == null) {
+        if (item[column.name] === null) {
           item[column.name] = '--'
         }
         if (item[column.name].toString().match(this.config.filtering.filterString)) {
