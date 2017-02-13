@@ -31,7 +31,8 @@ import { ModalDirective } from 'ng2-bootstrap';
                     <div *ngIf="isArray(entry.value)" style="margin-bottom:10px">
                       <div *ngFor="let val of entry.value; let i = index">
                         <div *ngIf="isObject(val)">
-                          <dd [ngClass]="reportMetricStatus[val.Report]?.class">{{val?.ID}} <i [ngClass]="reportMetricStatus[val.Report]?.icon"></i>
+                          <dd *ngIf="val.Report != null" [ngClass]="reportMetricStatus[val.Report]?.class">{{val?.ID}} <i [ngClass]="reportMetricStatus[val.Report]?.icon"></i>
+                          <dd *ngIf="val.Report == null">{{val.TagID}} - {{val.Alias}}</dd>
                         </div>
                         <div *ngIf="!isObject(val)">
                           <dd> {{val}}</dd>
