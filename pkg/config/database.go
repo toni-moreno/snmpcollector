@@ -288,7 +288,7 @@ func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64
 		log.Infof("Updated SnmpMetric Config to %s devices ", affecteddev)
 	}
 
-	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -538,7 +538,7 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 		}
 	}
 	//update data
-	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -710,7 +710,7 @@ func (dbc *DatabaseCfg) UpdateMeasFilterCfg(id string, dev MeasFilterCfg) (int64
 	}
 
 	//update data
-	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -918,7 +918,7 @@ func (dbc *DatabaseCfg) UpdateMGroupsCfg(id string, dev MGroupsCfg) (int64, erro
 		}
 	}
 
-	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -1158,7 +1158,7 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 		}
 		newft, err = session.Insert(&mfstruct)
 	}
-	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 
 	if err != nil {
 		session.Rollback()
@@ -1301,7 +1301,7 @@ func (dbc *DatabaseCfg) UpdateInfluxCfg(id string, dev InfluxCfg) (int64, error)
 		log.Infof("Updated Influx Config to %s devices ", affecteddev)
 	}
 
-	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -1516,7 +1516,7 @@ func (dbc *DatabaseCfg) UpdateCustomFilterCfg(id string, dev CustomFilterCfg) (i
 			return 0, err
 		}
 	}
-	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err
@@ -1692,7 +1692,7 @@ func (dbc *DatabaseCfg) UpdateOidConditionCfg(id string, dev OidConditionCfg) (i
 		}
 	}
 
-	affected, err = session.Where("id='" + id + "'").UseBool().Update(dev)
+	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
 		session.Rollback()
 		return 0, err

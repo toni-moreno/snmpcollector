@@ -44,7 +44,8 @@ func (m *SnmpMetricCfg) Init() error {
 	case "Gauge32":
 	case "UInteger32", "Unsigned32":
 	case "Counter32", "COUNTER32": //raw and cooked increment of Counter32
-	case "Counter64", "COUNTER64": //raw and Cooked increment of Counter34
+	case "Counter64", "COUNTER64": //raw and Cooked increment of Counter64
+	case "COUNTERXX": //raw and Coocked increment with non_negative behaivour of Counters
 	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
 	case "OCTETSTRING":
 	case "HWADDR":
