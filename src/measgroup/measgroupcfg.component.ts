@@ -4,6 +4,7 @@ import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../
 import { MeasGroupService } from './measgroupcfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 import { ValidationService } from '../common/validation.service'
+import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
 import { GenericModal } from '../common/generic-modal';
 
@@ -40,7 +41,8 @@ export class MeasGroupCfgComponent {
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
-
+  private builder;
+  private oldID : string;
   //Set config
   public config: any = {
     paging: true,
@@ -49,16 +51,20 @@ export class MeasGroupCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
+
   constructor(public measGroupService: MeasGroupService, public measMeasGroupService: InfluxMeasService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
-    this.measgroupForm = builder.group({
-      id: ['', Validators.required],
-      Measurements: [null, Validators.compose([Validators.required, ValidationService.emptySelector])],
-      Description: ['']
-    });
+    this.builder = builder;
   }
 
+  createStaticForm() {
+    this.measgroupForm = this.builder.group({
+      ID: [this.measgroupForm ? this.measgroupForm.value.ID : '', Validators.required],
+      Measurements: [this.measgroupForm ? this.measgroupForm.value.Measurements : null, Validators.compose([Validators.required, ValidationService.emptySelector])],
+      Description: [this.measgroupForm ? this.measgroupForm.value.Description : '']
+    });
+  }
 
   reloadData() {
     // now it's a simple subscription to the observable
@@ -210,8 +216,9 @@ export class MeasGroupCfgComponent {
   }
 
   newMeasGroup() {
-    this.editmode = "create";
+    this.createStaticForm();
     this.getMeasforMeasGroups();
+    this.editmode = "create";
   }
 
   editMeasGroup(row) {
@@ -220,7 +227,10 @@ export class MeasGroupCfgComponent {
     this.measGroupService.getMeasGroupById(id)
       .subscribe(
       data => {
-        this.testmeasgroups = data;
+        this.measgroupForm = {};
+        this.measgroupForm.value = data;
+        this.oldID = data.ID
+        this.createStaticForm();
         this.editmode = "modify"
       },
       err => console.error(err),
@@ -240,7 +250,7 @@ export class MeasGroupCfgComponent {
     this.editmode = "list";
   }
   saveMeasGroup() {
-    if (this.measgroupForm.dirty && this.measgroupForm.valid) {
+    if (this.measgroupForm.valid) {
       this.measGroupService.addMeasGroup(this.measgroupForm.value)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
@@ -249,16 +259,14 @@ export class MeasGroupCfgComponent {
     }
   }
 
-  updateMeasGroup(oldId) {
-    console.log(oldId);
-    console.log(this.measgroupForm.value.id);
+  updateMeasGroup() {
     if (this.measgroupForm.valid) {
       var r = true;
-      if (this.measgroupForm.value.id != oldId) {
-        r = confirm("Changing Measurement Group ID from " + oldId + " to " + this.measgroupForm.value.id + ". Proceed?");
+      if (this.measgroupForm.value.id != this.oldID) {
+        r = confirm("Changing Measurement Group ID from " + this.oldID + " to " + this.measgroupForm.value.ID + ". Proceed?");
       }
       if (r == true) {
-        this.measGroupService.editMeasGroup(this.measgroupForm.value, oldId)
+        this.measGroupService.editMeasGroup(this.measgroupForm.value, this.oldID)
           .subscribe(data => { console.log(data) },
           err => console.error(err),
           () => { this.editmode = "list"; this.reloadData() }

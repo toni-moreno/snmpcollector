@@ -22,7 +22,7 @@ import { Subscription } from "rxjs";
                 <button type="button" class="close" (click)="hide()" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
-                <h4 class="modal-title" *ngIf="formValues != null">{{titleName}} <b>{{ formValues.id }}</b></h4>
+                <h4 class="modal-title" *ngIf="formValues != null">{{titleName}} <b>{{ formValues.ID }}</b></h4>
              </div>
               <div class="modal-body">
               <!--System Info Panel-->

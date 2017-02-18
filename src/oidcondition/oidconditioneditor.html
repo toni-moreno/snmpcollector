@@ -34,11 +34,11 @@
   <template ngSwitchCase="create">
     <form [formGroup]="oidconditionForm" class="form-horizontal" (ngSubmit)="saveOidCondition()">
       <div class="form-group">
-        <label class="control-label col-sm-2" for="id">id</label>
+        <label class="control-label col-sm-2" for="ID">ID</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique metric identifier"></i>
         <div class="col-sm-9">
-          <input formControlName="id" id="id" />
-          <control-messages [control]="oidconditionForm.controls.id"></control-messages>
+          <input formControlName="ID" id="ID" />
+          <control-messages [control]="oidconditionForm.controls.ID"></control-messages>
         </div>
       </div>
 
@@ -46,7 +46,7 @@
         <label class="control-label col-sm-2" for="IsMultiple">Is Multiple</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of Condition query"></i>
         <div class="col-sm-9">
-          <select formControlName="IsMultiple" id="IsMutiple">
+          <select formControlName="IsMultiple" id="IsMutiple" (click)="setDynamicFields(oidconditionForm.value.IsMultiple, true)">
             <option value="true">(true) This Condition is defined as boolean expresion from other OID conditions</option>
             <option value="false">(false) This condition is defined from an OID --default-- </option>
           </select>
@@ -54,16 +54,15 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="OIDCond">OID Condition</label>
+      <div class="form-group" *ngIf="oidconditionForm.controls.OIDCond">
+        <label class="control-label col-sm-2" for="OIDCond">{{(oidconditionForm.value.IsMultiple === "true" || oidconditionForm.value.IsMultiple === true) ? 'OID Condition' : 'OID'}}</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of Condition query"></i>
         <div class="col-sm-9">
           <input formControlName="OIDCond" id="OIDCond" />
           <control-messages [control]="oidconditionForm.controls.OIDCond"></control-messages>
         </div>
       </div>
-      <div *ngIf="oidconditionForm.value.IsMultiple === 'false' ||  oidconditionForm.value.IsMultiple === false ">
-
+      <div *ngIf="oidconditionForm.controls.CondType">
         <div class="form-group">
           <label class="control-label col-sm-2" for="CondType">CondType</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
@@ -82,7 +81,7 @@
         </div>
 
 
-        <div class="form-group">
+        <div class="form-group" *ngIf="oidconditionForm.controls.CondValue">
           <label class="control-label col-sm-2" for="CondValue">CondValue</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
           <div class="col-sm-9">
@@ -112,13 +111,13 @@
   </template>
 
   <template ngSwitchCase="modify">
-    <form [formGroup]="oidconditionForm" class="form-horizontal" (ngSubmit)="updateOidCondition(testoidcondition.ID)">
+    <form [formGroup]="oidconditionForm" class="form-horizontal" (ngSubmit)="updateOidCondition()">
       <div class="form-group">
-        <label class="control-label col-sm-2" for="id">id</label>
+        <label class="control-label col-sm-2" for="ID">ID</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique metric identifier"></i>
         <div class="col-sm-9">
-          <input formControlName="id" id="id" [ngModel]="testoidcondition.ID" />
-          <control-messages [control]="oidconditionForm.controls.id"></control-messages>
+          <input formControlName="ID" id="ID" [ngModel]="oidconditionForm.value.ID" />
+          <control-messages [control]="oidconditionForm.controls.ID"></control-messages>
         </div>
       </div>
 
@@ -126,7 +125,7 @@
         <label class="control-label col-sm-2" for="IsMultiple">Is Multiple</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of Condition query"></i>
         <div class="col-sm-9">
-          <select formControlName="IsMultiple" id="IsMutiple" [ngModel]="testoidcondition.IsMultiple">
+          <select formControlName="IsMultiple" id="IsMutiple" [ngModel]="oidconditionForm.value.IsMultiple" (click)="setDynamicFields(oidconditionForm.value.IsMultiple, true)">
             <option value="true">(true) This Condition is defined as boolean expresion from other OID conditions</option>
             <option value="false">(false) This condition is defined from an OID --default-- </option>
           </select>
@@ -135,21 +134,19 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label col-sm-2" for="OIDCond">OID Condition</label>
+        <label class="control-label col-sm-2" for="OIDCond">{{(oidconditionForm.value.IsMultiple === "true" || oidconditionForm.value.IsMultiple === true) ? 'OID Condition' : 'OID'}} </label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
         <div class="col-sm-9">
-          <input formControlName="OIDCond" id="OIDCond" [ngModel]="testoidcondition.OIDCond" />
+          <input formControlName="OIDCond" id="OIDCond" [ngModel]="oidconditionForm.value.OIDCond" />
           <control-messages [control]="oidconditionForm.controls.OIDCond"></control-messages>
         </div>
       </div>
 
-      <div *ngIf="oidconditionForm.value.IsMultiple === 'false' ||  oidconditionForm.value.IsMultiple === false ">
-
-        <div class="form-group">
+        <div class="form-group" *ngIf="oidconditionForm.controls.CondType">
           <label class="control-label col-sm-2" for="CondType">CondType</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
           <div class="col-sm-9">
-            <select formControlName="CondType" id="CondType" [ngModel]="testoidcondition.CondType">
+            <select formControlName="CondType" id="CondType" [ngModel]="oidconditionForm.value.CondType">
               <option value="match">(match) string regexp match</option>
               <option value="notmatch">(notmatch) string regex match inverse</option>
               <option value="neq">(neq) numeric equal</option>
@@ -162,21 +159,20 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" *ngIf="oidconditionForm.controls.CondValue">
           <label class="control-label col-sm-2" for="CondValue">CondValue</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
           <div class="col-sm-9">
-            <input formControlName="CondValue" id="CondValue" [ngModel]='testoidcondition.CondValue'/>
+            <input formControlName="CondValue" id="CondValue" [ngModel]='oidconditionForm.value.CondValue'/>
             <control-messages [control]="oidconditionForm.controls.CondValue"></control-messages>
           </div>
         </div>
-      </div>
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the OID Condition"></i>
         <div class="col-sm-9">
-          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='testoidcondition.Description'> </textarea>
+          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='oidconditionForm.value.Description'> </textarea>
           <control-messages [control]="oidconditionForm.controls.Description"></control-messages>
         </div>
       </div>

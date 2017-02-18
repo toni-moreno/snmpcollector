@@ -4,6 +4,7 @@ import { MeasFilterService } from './measfiltercfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 import { CustomFilterService } from '../customfilter/customfilter.service';
 import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
+import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
 import { ValidationService } from '../common/validation.service'
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
@@ -26,7 +27,6 @@ export class MeasFilterCfgComponent {
   measfilters: Array<any>;
   filter: string;
   measfilterForm: any;
-  testmeasfilters: any;
   influxmeas: Array<any>;
   selectmeas: IMultiSelectOption[] = [];
   selectCustomFilters:  IMultiSelectOption[] = [];
@@ -56,7 +56,8 @@ export class MeasFilterCfgComponent {
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
-
+  private builder;
+  private oldID : string;
   //Set config
   public config: any = {
     paging: true,
@@ -68,14 +69,59 @@ export class MeasFilterCfgComponent {
   constructor(public oidCondService: OidConditionService,public customFilterService: CustomFilterService, public measFilterService: MeasFilterService, public measMeasFilterService: InfluxMeasService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
-    this.measfilterForm = builder.group({
-      id: ['', Validators.required],
-      IDMeasurementCfg: ['', Validators.required],
-      FType: ['', Validators.required],
-      FilterName: [''],
-      EnableAlias: [''],
-      Description: ['']
+    this.builder = builder;
+  }
+
+  createStaticForm() {
+    this.measfilterForm = this.builder.group({
+      ID: [this.measfilterForm ? this.measfilterForm.value.ID : '', Validators.required],
+      IDMeasurementCfg: [this.measfilterForm ? this.measfilterForm.value.IDMeasurementCfg : '', Validators.required],
+      FType: [this.measfilterForm ? this.measfilterForm.value.FType : 'OIDCondition', Validators.required],
+      Description: [this.measfilterForm ? this.measfilterForm.value.Description : '']
     });
+  }
+
+  createDynamicForm(fieldsArray: any) : void {
+    //Saves the actual to check later if there are shared values
+    let tmpform : any;
+    if (this.measfilterForm)  tmpform = this.measfilterForm.value;
+    this.createStaticForm();
+
+    for (let entry of fieldsArray) {
+      let value = entry.defVal;
+      //Check if there are common values from the previous selected item
+      if (tmpform) {
+        if (tmpform[entry.ID] && entry.override !== true) {
+          value = tmpform[entry.ID];
+        }
+      }
+      //Set different controls:
+      this.measfilterForm.addControl(entry.ID, new FormControl(value, entry.Validators));
+    }
+  }
+
+  setDynamicFields (field : any, override? : boolean) : void  {
+    //Saves on the array all values to push into formGroup
+    let controlArray : Array<any> = [];
+    switch (field) {
+      case 'file':
+        controlArray.push({'ID': 'FilterName', 'defVal' : '', 'Validators' : Validators.required, 'override' : override});
+        controlArray.push({'ID': 'EnableAlias', 'defVal' : 'true', 'Validators' : Validators.required});
+
+        break;
+      case 'CustomFilter':
+        this.getCustomFiltersforMeasFilters();
+        controlArray.push({'ID': 'FilterName', 'defVal' : '', 'Validators' : Validators.required, 'override' : override});
+        controlArray.push({'ID': 'EnableAlias', 'defVal' : 'true', 'Validators' : Validators.required});
+
+      break;
+      default: //OID Condition
+        this.getOidCond();
+        controlArray.push({'ID': 'FilterName', 'defVal' : '', 'Validators' : Validators.required, 'override' : override});
+        break;
+    }
+    //Reload the formGroup with new values saved on controlArray
+    this.createDynamicForm(controlArray);
   }
 
   onResetFilter() : void {
@@ -227,9 +273,15 @@ export class MeasFilterCfgComponent {
       () => { }
       );
   }
+
   newMeasFilter() {
-    this.editmode = "create";
+    if (this.measfilterForm) {
+      this.setDynamicFields(this.measfilterForm.value.FType);
+    } else {
+      this.setDynamicFields(null);
+    }
     this.getMeasforMeasFilters();
+    this.editmode = "create";
   }
 
   editMeasFilter(row) {
@@ -237,12 +289,13 @@ export class MeasFilterCfgComponent {
     this.getMeasforMeasFilters();
     this.measFilterService.getMeasFilterById(id)
       .subscribe(data => {
-        this.testmeasfilters = data;
-        this.initFilterType(row.FType, false);
+        this.measfilterForm = {};
+        this.measfilterForm.value = data;
+        this.setDynamicFields(row.FType, false);
+        this.oldID = data.ID
         this.editmode = "modify"
       },
       err => console.error(err),
-      () => {console.log("DONE");},
       );
   }
 
@@ -258,7 +311,7 @@ export class MeasFilterCfgComponent {
     this.editmode = "list";
   }
   saveMeasFilter() {
-    if (this.measfilterForm.dirty && this.measfilterForm.valid) {
+    if (this.measfilterForm.valid) {
       this.measFilterService.addMeasFilter(this.measfilterForm.value)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
@@ -267,16 +320,14 @@ export class MeasFilterCfgComponent {
     }
   }
 
-  updateMeasFilter(oldId) {
-    console.log(oldId);
-    console.log(this.measfilterForm.value.id);
+  updateMeasFilter() {
     if (this.measfilterForm.valid) {
       var r = true;
-      if (this.measfilterForm.value.id != oldId) {
-        r = confirm("Changing Measurement Filter ID from " + oldId + " to " + this.measfilterForm.value.id + ". Proceed?");
+      if (this.measfilterForm.value.ID != this.oldID) {
+        r = confirm("Changing Measurement Filter ID from " + this.oldID + " to " + this.measfilterForm.value.ID + ". Proceed?");
       }
       if (r == true) {
-        this.measFilterService.editMeasFilter(this.measfilterForm.value, oldId)
+        this.measFilterService.editMeasFilter(this.measfilterForm.value, this.oldID)
           .subscribe(data => { console.log(data) },
           err => console.error(err),
           () => { this.editmode = "list"; this.reloadData() }
@@ -302,15 +353,6 @@ export class MeasFilterCfgComponent {
       );
   }
 
-  initFilterType(type : string, init? : boolean) : void {
-    if (init === true) this.measfilterForm.controls['FilterName'].patchValue(null);
-    if (type === 'CustomFilter') {
-      this.getCustomFiltersforMeasFilters();
-    }
-    if (type === 'OIDCondition') {
-      this.getOidCond()
-    }
-  }
   getOidCond() {
     this.oidCondService.getConditions(null)
       .subscribe(

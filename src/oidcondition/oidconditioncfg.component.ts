@@ -3,6 +3,8 @@ import { FormBuilder, Validators} from '@angular/forms';
 import { OidConditionService } from './oidconditioncfg.service';
 import { ControlMessagesComponent } from '../common/control-messages.component'
 import { ValidationService } from '../common/validation.service'
+import { FormArray, FormGroup, FormControl} from '@angular/forms';
+import { TypeaheadModule } from 'ng2-bootstrap/typeahead';
 
 import { GenericModal } from '../common/generic-modal';
 
@@ -21,7 +23,6 @@ export class OidConditionCfgComponent {
   oidconditions: Array<any>;
   filter: string;
   oidconditionForm: any;
-  testoidcondition: any;
   myFilterValue: any;
 
   //Initialization data, rows, colunms for Table
@@ -40,7 +41,8 @@ export class OidConditionCfgComponent {
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
-
+  private builder;
+  private oldID : string;
   //Set config
   public config: any = {
     paging: true,
@@ -52,14 +54,53 @@ export class OidConditionCfgComponent {
   constructor(public oidConditionService: OidConditionService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
-    this.oidconditionForm = builder.group({
-      id: ['', Validators.required],
-      IsMultiple: ['false',Validators.required],
-      OIDCond: [''],
-      CondType: [''],
-      CondValue: [''],
-      Description: ['']
+    this.builder = builder;
+  }
+
+  createStaticForm() {
+    this.oidconditionForm = this.builder.group({
+      ID: [this.oidconditionForm ? this.oidconditionForm.value.ID : '', Validators.required],
+      IsMultiple: [this.oidconditionForm ? this.oidconditionForm.value.IsMultiple : 'false',Validators.required],
+      Description: [this.oidconditionForm ? this.oidconditionForm.value.Description : '']
     });
+  }
+
+  createDynamicForm(fieldsArray: any) : void {
+    //Saves the actual to check later if there are shared values
+    let tmpform : any;
+    if (this.oidconditionForm)  tmpform = this.oidconditionForm.value;
+    this.createStaticForm();
+
+    for (let entry of fieldsArray) {
+      let value = entry.defVal;
+      //Check if there are common values from the previous selected item
+      if (tmpform) {
+        if (tmpform[entry.ID] && entry.override !== true) {
+          value = tmpform[entry.ID];
+        }
+      }
+      //Set different controls:
+      this.oidconditionForm.addControl(entry.ID, new FormControl(value, entry.Validators));
+    }
+  }
+
+  setDynamicFields (field : any, override? : boolean) : void  {
+    //Saves on the array all values to push into formGroup
+    let controlArray : Array<any> = [];
+    console.log(field);
+    switch (field) {
+      case 'true':
+      case true:
+        controlArray.push({'ID': 'OIDCond', 'defVal' : '', 'Validators' : Validators.required, 'override' : override});
+        break;
+      default:
+        controlArray.push({'ID': 'OIDCond', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]), 'override' : override});
+        controlArray.push({'ID': 'CondType', 'defVal' : 'match', 'Validators' : Validators.required });
+        controlArray.push({'ID': 'CondValue', 'defVal' : '', 'Validators' : Validators.required });
+        break;
+    }
+    //Reload the formGroup with new values saved on controlArray
+    this.createDynamicForm(controlArray);
   }
 
   reloadData() {
@@ -212,14 +253,25 @@ export class OidConditionCfgComponent {
       );
   }
   newOidCondition() {
+    if (this.oidconditionForm) {
+      this.setDynamicFields(this.oidconditionForm.value.IsMultiple);
+    } else {
+      this.setDynamicFields(null);
+    }
     this.editmode = "create";
   }
+
   editOidCondition(row) {
     let id = row.ID;
     this.oidConditionService.getConditionsById(id)
-      .subscribe(data => { this.testoidcondition = data },
-      err => console.error(err),
-      () => this.editmode = "modify"
+      .subscribe(data => {
+        this.oidconditionForm = {};
+        this.oidconditionForm.value = data;
+        this.setDynamicFields(row.IsMultiple, false);
+        this.oldID = data.ID
+        this.editmode = "modify"
+       },
+      err => console.error(err)
       );
   }
   deleteOidCondition(id) {
@@ -235,7 +287,7 @@ export class OidConditionCfgComponent {
   }
 
   saveOidCondition() {
-    if (this.oidconditionForm.dirty && this.oidconditionForm.valid) {
+    if (this.oidconditionForm.valid) {
       this.oidConditionService.addCondition(this.oidconditionForm.value)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
@@ -244,16 +296,14 @@ export class OidConditionCfgComponent {
     }
   }
 
-  updateOidCondition(oldId) {
-    console.log(oldId);
-    console.log(this.oidconditionForm.value.id);
-    if (this.oidconditionForm.dirty && this.oidconditionForm.valid) {
+  updateOidCondition() {
+    if (this.oidconditionForm.valid) {
       var r = true;
-      if (this.oidconditionForm.value.id != oldId) {
-        r = confirm("Changing Condition ID from " + oldId + " to " + this.oidconditionForm.value.id + ". Proceed?");
+      if (this.oidconditionForm.value.ID != this.oldID) {
+        r = confirm("Changing Condition ID from " + this.oldID + " to " + this.oidconditionForm.value.ID + ". Proceed?");
       }
       if (r == true) {
-        this.oidConditionService.editCondition(this.oidconditionForm.value, oldId)
+        this.oidConditionService.editCondition(this.oidconditionForm.value, this.oldID)
           .subscribe(data => { console.log(data) },
           err => console.error(err),
           () => { this.editmode = "list"; this.reloadData() }

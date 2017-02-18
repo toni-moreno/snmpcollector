@@ -18,7 +18,7 @@ export class ControlMessagesComponent {
   get errorMessage() {
     let alertType = '';
     for (let propertyName in this.control.errors) {
-      if (this.control.errors.hasOwnProperty(propertyName) && this.control.touched) {
+      if (this.control.errors.hasOwnProperty(propertyName)) {
         this.control.errors.hasOwnProperty('required') ? alertType = 'danger' : alertType = 'warning';
         return {'message': ValidationService.getValidatorErrorMessage(propertyName, this.control.errors[propertyName]),'alertType': alertType};
       }

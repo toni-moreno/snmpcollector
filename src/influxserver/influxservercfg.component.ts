@@ -1,5 +1,7 @@
 import { Component, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
+import { FormArray, FormGroup, FormControl} from '@angular/forms';
+
 import { InfluxServerService } from './influxservercfg.service';
 import { ValidationService } from '../common/validation.service'
 
@@ -21,7 +23,6 @@ export class InfluxServerCfgComponent {
   influxservers: Array<any>;
   filter: string;
   influxserverForm: any;
-  testinfluxservers: any;
   myFilterValue: any;
 
 
@@ -46,7 +47,8 @@ export class InfluxServerCfgComponent {
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
-
+  private builder;
+  private oldID : string;
   //Set config
   public config: any = {
     paging: true,
@@ -58,17 +60,21 @@ export class InfluxServerCfgComponent {
   constructor(public influxServerService: InfluxServerService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
-    this.influxserverForm = builder.group({
-      id: ['', Validators.required],
-      Host: ['', Validators.required],
-      Port: ['', Validators.compose([Validators.required, ValidationService.integerValidator])],
-      DB: ['', Validators.required],
-      User: ['', Validators.required],
-      Password: ['', Validators.required],
-      Retention: ['autogen', Validators.required],
-      Timeout: [30, Validators.compose([Validators.required, ValidationService.integerValidator])],
-      UserAgent: [''],
-      Description: ['']
+    this.builder = builder;
+  }
+
+  createStaticForm() {
+    this.influxserverForm = this.builder.group({
+      ID: [this.influxserverForm ? this.influxserverForm.value.ID : '', Validators.required],
+      Host: [this.influxserverForm ? this.influxserverForm.value.Host : '', Validators.required],
+      Port: [this.influxserverForm ? this.influxserverForm.value.Port : '', Validators.compose([Validators.required, ValidationService.integerValidator])],
+      DB: [this.influxserverForm ? this.influxserverForm.value.DB : '', Validators.required],
+      User: [this.influxserverForm ? this.influxserverForm.value.User : '', Validators.required],
+      Password: [this.influxserverForm ? this.influxserverForm.value.Password : '', Validators.required],
+      Retention: [this.influxserverForm ? this.influxserverForm.value.Retention : 'autogen', Validators.required],
+      Timeout: [this.influxserverForm ? this.influxserverForm.value.Timeout : 30, Validators.compose([Validators.required, ValidationService.integerValidator])],
+      UserAgent: [this.influxserverForm ? this.influxserverForm.value.UserAgent : ''],
+      Description: [this.influxserverForm ? this.influxserverForm.value.Description : '']
     });
   }
 
@@ -222,15 +228,22 @@ export class InfluxServerCfgComponent {
       );
   }
   newInfluxServer() {
+    //No hidden fields, so create fixed Form
+    this.createStaticForm();
     this.editmode = "create";
   }
 
   editInfluxServer(row) {
     let id = row.ID;
     this.influxServerService.getInfluxServerById(id)
-      .subscribe(data => { this.testinfluxservers = data },
-      err => console.error(err),
-      () => this.editmode = "modify"
+      .subscribe(data => {
+        this.influxserverForm = {};
+        this.influxserverForm.value = data;
+        this.oldID = data.ID
+        this.createStaticForm();
+        this.editmode = "modify";
+      },
+      err => console.error(err)
       );
  	}
 
@@ -246,7 +259,7 @@ export class InfluxServerCfgComponent {
     this.editmode = "list";
   }
   saveInfluxServer() {
-    if (this.influxserverForm.dirty && this.influxserverForm.valid) {
+    if (this.influxserverForm.valid) {
       this.influxServerService.addInfluxServer(this.influxserverForm.value)
         .subscribe(data => { console.log(data) },
         err => {
@@ -257,16 +270,14 @@ export class InfluxServerCfgComponent {
     }
   }
 
-  updateInfluxServer(oldId) {
-    console.log(oldId);
-    console.log(this.influxserverForm.value.id);
-    if (this.influxserverForm.dirty && this.influxserverForm.valid) {
+  updateInfluxServer() {
+    if (this.influxserverForm.valid) {
       var r = true;
-      if (this.influxserverForm.value.id != oldId) {
-        r = confirm("Changing Influx Server ID from " + oldId + " to " + this.influxserverForm.value.id + ". Proceed?");
+      if (this.influxserverForm.value.ID != this.oldID) {
+        r = confirm("Changing Influx Server ID from " + this.oldID + " to " + this.influxserverForm.value.ID + ". Proceed?");
       }
       if (r == true) {
-        this.influxServerService.editInfluxServer(this.influxserverForm.value, oldId)
+        this.influxServerService.editInfluxServer(this.influxserverForm.value, this.oldID)
           .subscribe(data => { console.log(data) },
           err => console.error(err),
           () => { this.editmode = "list"; this.reloadData() }

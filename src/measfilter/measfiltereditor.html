@@ -34,11 +34,11 @@
 	<template ngSwitchCase="create">
 		<form [formGroup]="measfilterForm" class="form-horizontal" (ngSubmit)="saveMeasFilter()">
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="id">id</label>
+				<label class="control-label col-sm-2" for="ID">ID</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Filters "></i>
 				<div class="col-sm-9">
-					<input formControlName="id" id="id" />
-					<control-messages [control]="measfilterForm.controls.id"></control-messages>
+					<input formControlName="ID" id="ID" />
+					<control-messages [control]="measfilterForm.controls.ID"></control-messages>
 				</div>
 			</div>
 
@@ -55,7 +55,7 @@
 				<label class="control-label col-sm-2" for="FType">Filter type</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Filter input source: file or condiction OID"></i>
 				<div class="col-sm-9">
-					<select formControlName="FType" id="FType" (click)="initFilterType(measfilterForm.controls.FType.value, true)">
+					<select formControlName="FType" id="FType" (click)="setDynamicFields(measfilterForm.value.FType, true)">
 						<option value="file">File</option>
 						<option value="OIDCondition">OID Condition</option>
 						<option value="CustomFilter" >Custom Filter</option>
@@ -64,7 +64,7 @@
 				</div>
 			</div>
 
-			<div *ngIf="measfilterForm.value.FType == 'file'">
+			<div *ngIf="measfilterForm.controls.FilterName && measfilterForm.value.FType === 'file'">
 				<div class="form-group">
 					<label class="control-label col-sm-2" for="FilterName">File Name</label>
 					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid filename cointained in the conf/ directory"></i>
@@ -73,7 +73,7 @@
 						<control-messages [control]="measfilterForm.controls.FilterName"></control-messages>
 					</div>
 				</div>
-				<div class="form-group">
+				<div class="form-group" *ngIf="measfilterForm.controls.EnableAlias">
 					<label class="control-label col-sm-2" for="EnableAlias">Enable alias</label>
 					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Allow get measurement tag from alias in the file"></i>
 					<div class="col-sm-9">
@@ -86,7 +86,7 @@
 				</div>
 			</div>
 
-			<div *ngIf="measfilterForm.value.FType == 'OIDCondition'">
+			<div *ngIf="measfilterForm.controls.FilterName && measfilterForm.value.FType === 'OIDCondition'">
         <div class="form-group">
 					<label class="control-label col-sm-2" for="FilterName">Oid Condition</label>
 					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="valid OID condition in the OID conditions table"></i>
@@ -97,8 +97,8 @@
 				</div>
 			</div>
 
-			<div *ngIf="measfilterForm.value.FType == 'CustomFilter'">
-        <div class="form-group">
+
+        <div class="form-group" *ngIf="measfilterForm.controls.FilterName && measfilterForm.value.FType === 'CustomFilter'">
 					<label class="control-label col-sm-2" for="FilterName">Custom Filter</label>
 					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Valid Custom FIlter on the Custom Filter Table"></i>
 					<div class="col-sm-9">
@@ -106,7 +106,7 @@
 						<control-messages [control]="measfilterForm.controls.FilterName"></control-messages>
 					</div>
 				</div>
-				<div class="form-group">
+				<div class="form-group" *ngIf="measfilterForm.controls.EnableAlias">
 					<label class="control-label col-sm-2" for="EnableAlias">Enable alias</label>
 					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Allow get measurement tag from alias in the file"></i>
 					<div class="col-sm-9">
@@ -117,8 +117,6 @@
 						<control-messages [control]="measfilterForm.controls.EnableAlias"></control-messages>
 					</div>
 				</div>
-			</div>
-
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="Description">Description</label>
@@ -140,13 +138,13 @@
 	</template>
 
 	<template ngSwitchCase="modify">
-		<form [formGroup]="measfilterForm" class="form-horizontal" (ngSubmit)="updateMeasFilter(testmeasfilters.ID)">
+		<form [formGroup]="measfilterForm" class="form-horizontal" (ngSubmit)="updateMeasFilter()">
 			<div class="form-group">
-				<label class="control-label col-sm-2" for="id">id</label>
+				<label class="control-label col-sm-2" for="ID">ID</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Measurement Filters "></i>
 				<div class="col-sm-9">
-					<input formControlName="id" id="id" [ngModel]="testmeasfilters.ID" />
-					<control-messages [control]="measfilterForm.controls.id"></control-messages>
+					<input formControlName="ID" id="ID" [ngModel]="measfilterForm.value.ID" />
+					<control-messages [control]="measfilterForm.controls.ID"></control-messages>
 				</div>
 			</div>
 
@@ -154,14 +152,14 @@
 				<label class="control-label col-sm-2" for="IDMeasurementCfg">Measurements</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of Measurements to attach the filter"></i>
 				<div class="col-sm-9">
-					<ss-multiselect-dropdown [options]="selectmeas" formControlName="IDMeasurementCfg" [texts]="myTexts" [settings]="mySettings" [ngModel]="testmeasfilters.IDMeasurementCfg"></ss-multiselect-dropdown>					<control-messages [control]="measfilterForm.controls.IDMeasurementCfg"></control-messages>
+					<ss-multiselect-dropdown [options]="selectmeas" formControlName="IDMeasurementCfg" [texts]="myTexts" [settings]="mySettings" [ngModel]="measfilterForm.value.IDMeasurementCfg"></ss-multiselect-dropdown>					<control-messages [control]="measfilterForm.controls.IDMeasurementCfg"></control-messages>
 				</div>
 			</div>
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="FType">Filter type</label>"
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Filter input source: file or condiction OID"></i>
 				<div class="col-sm-9">
-					<select formControlName="FType" id="FType" [ngModel]="testmeasfilters.FType" (click)="initFilterType(measfilterForm.controls.FType.value, true)">
+					<select formControlName="FType" id="FType" [ngModel]="measfilterForm.value.FType" (click)="setDynamicFields(measfilterForm.value.FType, true)">
 						<option value="file">File</option>
 						<option value="OIDCondition">OID Condition</option>
 						<option value="CustomFilter" >Custom Filter</option>
@@ -170,68 +168,52 @@
 				</div>
 			</div>
 
-			<div *ngIf="measfilterForm.value.FType == 'file'">
-				<div class="form-group">
+				<div class="form-group" *ngIf="measfilterForm.value.FType == 'file'">
 					<label class="control-label col-sm-2" for="FilterName">File Name</label>
 					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="A valid filename cointained in the conf/ directory"></i>
 					<div class="col-sm-9">
-						<input formControlName="FilterName" id="FilterName" [ngModel]="testmeasfilters.FilterName" />
+						<input formControlName="FilterName" id="FilterName" [ngModel]="measfilterForm.value.FilterName" />
 						<control-messages [control]="measfilterForm.controls.FilterName"></control-messages>
 					</div>
 				</div>
-
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="EnableAlias">Enable alias</label>
-					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Allow get measurement tag from alias in the file"></i>
-					<div class="col-sm-9">
-						<select formControlName="EnableAlias" id="EnableAlias" [ngModel]="testmeasfilters.EnableAlias">
-							<option value="true">Enable</option>
-							<option value="false">Disable</option>
-						</select>
-						<control-messages [control]="measfilterForm.controls.EnableAlias"></control-messages>
-					</div>
-				</div>
-			</div>
 
 			<div *ngIf="measfilterForm.value.FType == 'OIDCondition'">
         <div class="form-group">
 					<label class="control-label col-sm-2" for="FilterName">OID Condition</label>
 					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="valid OID condition in the OID conditions table"></i>
 					<div class="col-sm-9">
-						<ss-multiselect-dropdown [options]="selectoidcond" formControlName="FilterName" [texts]="myTexts" [settings]="mySettings" [ngModel]="testmeasfilters.FilterName"></ss-multiselect-dropdown>
+						<ss-multiselect-dropdown [options]="selectoidcond" formControlName="FilterName" [texts]="myTexts" [settings]="mySettings" [ngModel]="measfilterForm.value.FilterName"></ss-multiselect-dropdown>
 						<control-messages [control]="measfilterForm.controls.FilterName"></control-messages>
 					</div>
 				</div>
 			</div>
 
-			<div *ngIf="measfilterForm.value.FType == 'CustomFilter'">
-        <div class="form-group">
+        <div class="form-group" *ngIf="measfilterForm.value.FType == 'CustomFilter'">
 					<label class="control-label col-sm-2" for="FilterName">Custom Filter</label>
 					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Valid Custom FIlter on the Custom Filter Table"></i>
 					<div class="col-sm-9">
-						<ss-multiselect-dropdown [options]="selectCustomFilters" formControlName="FilterName" [texts]="myTexts" [settings]="mySettings" [ngModel]="testmeasfilters.FilterName"></ss-multiselect-dropdown>
+						<ss-multiselect-dropdown [options]="selectCustomFilters" formControlName="FilterName" [texts]="myTexts" [settings]="mySettings" [ngModel]="measfilterForm.value.FilterName"></ss-multiselect-dropdown>
 						<control-messages [control]="measfilterForm.controls.FilterName"></control-messages>
 					</div>
 				</div>
 
-				<div class="form-group">
+				<div class="form-group" *ngIf="measfilterForm.controls.EnableAlias">
 					<label class="control-label col-sm-2" for="EnableAlias">Enable alias</label>
 					<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Allow get measurement tag from alias in the file"></i>
 					<div class="col-sm-9">
-						<select formControlName="EnableAlias" id="EnableAlias" [ngModel]="testmeasfilters.EnableAlias">
+						<select formControlName="EnableAlias" id="EnableAlias" [ngModel]="measfilterForm.value.EnableAlias">
 							<option value="true">Enable</option>
 							<option value="false">Disable</option>
 						</select>
 						<control-messages [control]="measfilterForm.controls.EnableAlias"></control-messages>
 					</div>
 				</div>
-			</div>
 
 			<div class="form-group">
 				<label class="control-label col-sm-2" for="Description">Description</label>
 				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Filter"></i>
 				<div class="col-sm-9">
-					<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]="testmeasfilters.Description"> </textarea>
+					<textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]="measfilterForm.value.Description"> </textarea>
 					<control-messages [control]="measfilterForm.controls.Description"></control-messages>
 				</div>
 			</div>

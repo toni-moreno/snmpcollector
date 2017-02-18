@@ -5,6 +5,7 @@ import { SnmpMetricService } from './snmpmetriccfg.service';
 import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
 import { ControlMessagesComponent } from '../common/control-messages.component'
 import { ValidationService } from '../common/validation.service'
+import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
 import { GenericModal } from '../common/generic-modal';
 
@@ -23,7 +24,6 @@ export class SnmpMetricCfgComponent {
   snmpmetrics: Array<any>;
   filter: string;
   snmpmetForm: any;
-  testsnmpmetric: any;
   myFilterValue: any;
   //OID selector
   oidconditions: Array<any>;
@@ -31,8 +31,6 @@ export class SnmpMetricCfgComponent {
   private mySettings: IMultiSelectSettings = {
        singleSelect: true,
  };
-
-
 
   //Initialization data, rows, colunms for Table
   private data: Array<any> = [];
@@ -42,6 +40,7 @@ export class SnmpMetricCfgComponent {
     { title: 'FieldName', name: 'FieldName' },
     { title: 'BaseOID', name: 'BaseOID' },
     { title: 'DataSrcType', name: 'DataSrcType' },
+    { title: 'ExtraData', name: 'ExtraData'},
     { title: 'GetRate', name: 'GetRate' },
     { title: 'Scale', name: 'Scale' },
     { title: 'Shift', name: 'Shift' },
@@ -53,7 +52,8 @@ export class SnmpMetricCfgComponent {
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
-
+  private builder;
+  private oldID : string;
   //Set config
   public config: any = {
     paging: true,
@@ -65,19 +65,71 @@ export class SnmpMetricCfgComponent {
   constructor(public snmpMetricService: SnmpMetricService, public oidCondService: OidConditionService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
-    this.snmpmetForm = builder.group({
-      id: ['', Validators.required],
-      FieldName: [null, Validators.required],
-      BaseOID: ['', Validators.compose([ValidationService.OIDValidator])],
-      DataSrcType: ['Gauge32', Validators.required],
-      //Depending on datasrctype
-      ExtraData: [''],
-      GetRate: ['False'], //Validators.required],
-      Scale: ['0', Validators.compose([Validators.required, ValidationService.floatValidator])],
-      Shift: ['0', Validators.compose([Validators.required, ValidationService.floatValidator])],
-      IsTag: ['false', Validators.required],
-      Description: ['']
+    this.builder = builder;
+  }
+
+  createStaticForm() {
+    this.snmpmetForm = this.builder.group({
+      ID: [this.snmpmetForm ? this.snmpmetForm.value.ID : '', Validators.required],
+      FieldName: [this.snmpmetForm ? this.snmpmetForm.value.FieldName : '', Validators.required],
+      DataSrcType: [this.snmpmetForm ? this.snmpmetForm.value.DataSrcType : 'Gauge32', Validators.required],
+      IsTag: [this.snmpmetForm ? this.snmpmetForm.value.IsTag : 'false', Validators.required],
+      Description: [this.snmpmetForm ? this.snmpmetForm.value.Description : '']
     });
+  }
+
+
+  createDynamicForm(fieldsArray: any) : void {
+    //Saves the actual to check later if there are shared values
+    let tmpform : any;
+    if (this.snmpmetForm)  tmpform = this.snmpmetForm.value;
+    this.createStaticForm();
+
+    for (let entry of fieldsArray) {
+      let value = entry.defVal;
+      //Check if there are common values from the previous selected item
+      if (tmpform) {
+        if (tmpform[entry.ID] && entry.override !== true) {
+          value = tmpform[entry.ID];
+        }
+      }
+      //Set different controls:
+      this.snmpmetForm.addControl(entry.ID, new FormControl(value, entry.Validators));
+    }
+  }
+
+  setDynamicFields (field : any, override? : boolean) : void  {
+    //Saves on the array all values to push into formGroup
+    let controlArray : Array<any> = [];
+
+    switch (field) {
+      case 'OCTETSTRING':
+      case 'HWADDR':
+      case 'IpAddress':
+        controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]) })
+      break;
+      case 'CONDITIONEVAL':
+        this.getOidCond();
+        controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
+        break;
+      case 'STRINGPARSER':
+      case 'STRINGEVAL':
+        controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
+        controlArray.push({'ID': 'Scale', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
+        controlArray.push({'ID': 'Shift', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
+        break;
+      case 'COUNTER32':
+      case 'COUNTER64':
+      case 'COUNTERXX':
+        controlArray.push({'ID': 'GetRate', 'defVal' : 'false', 'Validators' : Validators.required});
+      default: //Gauge32
+        controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' :Validators.compose([ValidationService.OIDValidator, Validators.required]) })
+        controlArray.push({'ID': 'Scale', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
+        controlArray.push({'ID': 'Shift', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
+        break;
+    }
+    //Reload the formGroup with new values saved on controlArray
+    this.createDynamicForm(controlArray);
   }
 
   getOidCond() {
@@ -247,17 +299,25 @@ export class SnmpMetricCfgComponent {
       );
   }
   newMetric() {
+    if (this.snmpmetForm) {
+      this.setDynamicFields(this.snmpmetForm.value.DataSrcType);
+    } else {
+      this.setDynamicFields(null);
+    }
     this.editmode = "create";
   }
+
   editMetric(row) {
     let id = row.ID;
-    if ( row.DataSrcType === 'CONDITIONEVAL' ) {
-      this.getOidCond();
-    }
     this.snmpMetricService.getMetricsById(id)
-      .subscribe(data => { this.testsnmpmetric = data },
-      err => console.error(err),
-      () => this.editmode = "modify"
+      .subscribe(data => {
+        this.snmpmetForm = {};
+        this.snmpmetForm.value = data;
+        this.setDynamicFields(row.DataSrcType, false);
+        this.oldID = data.ID
+        this.editmode = "modify"
+       },
+      err => console.error(err)
       );
   }
   deleteSNMPMetric(id) {
@@ -273,7 +333,8 @@ export class SnmpMetricCfgComponent {
   }
 
   saveSnmpMet() {
-    if (this.snmpmetForm.dirty && this.snmpmetForm.valid) {
+    console.log(this.snmpmetForm);
+    if (this.snmpmetForm.valid) {
       this.snmpMetricService.addMetric(this.snmpmetForm.value)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
@@ -282,16 +343,14 @@ export class SnmpMetricCfgComponent {
     }
   }
 
-  updateSnmpMet(oldId) {
-    console.log(oldId);
-    console.log(this.snmpmetForm.value.id);
-    if (this.snmpmetForm.dirty && this.snmpmetForm.valid) {
+  updateSnmpMet() {
+    if (this.snmpmetForm.valid) {
       var r = true;
-      if (this.snmpmetForm.value.id != oldId) {
-        r = confirm("Changing Metric ID from " + oldId + " to " + this.snmpmetForm.value.id + ". Proceed?");
+      if (this.snmpmetForm.value.ID != this.oldID) {
+        r = confirm("Changing Metric ID from " + this.oldID + " to " + this.snmpmetForm.value.ID + ". Proceed?");
       }
       if (r == true) {
-        this.snmpMetricService.editMetric(this.snmpmetForm.value, oldId)
+        this.snmpMetricService.editMetric(this.snmpmetForm.value, this.oldID)
           .subscribe(data => { console.log(data) },
           err => console.error(err),
           () => { this.editmode = "list"; this.reloadData() }
