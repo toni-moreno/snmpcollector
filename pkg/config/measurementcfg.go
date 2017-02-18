@@ -21,9 +21,9 @@ type MeasurementCfg struct {
 		ID     string
 		Report int
 	} `xorm:"-"` //Got from MeasurementFieldCfg table
-	FieldMetric   []*SnmpMetricCfg `xorm:"-"`
-	EvalMetric    []*SnmpMetricCfg `xorm:"-"`
-	OidCondMetric []*SnmpMetricCfg `xorm:"-"`
+	FieldMetric   []*SnmpMetricCfg `xorm:"-" json:"-"`
+	EvalMetric    []*SnmpMetricCfg `xorm:"-" json:"-"`
+	OidCondMetric []*SnmpMetricCfg `xorm:"-" json:"-"`
 	Description   string           `xorm:"description"`
 }
 

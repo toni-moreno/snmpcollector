@@ -11,6 +11,7 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/impexp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/measurement"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"github.com/toni-moreno/snmpcollector/pkg/webui"
@@ -157,6 +158,8 @@ func init() {
 	webui.SetLogDir(logDir)
 	webui.SetConfDir(confDir)
 	agent.SetLogger(log)
+
+	impexp.SetLogger(log)
 	//
 	log.Infof("Set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n -Home: %s\n", appdir, confDir, logDir, homeDir)
 }
@@ -171,6 +174,7 @@ func main() {
 
 	agent.MainConfig.Database.InitDB()
 	measurement.SetDB(&agent.MainConfig.Database)
+	impexp.SetDB(&agent.MainConfig.Database)
 
 	agent.LoadConf()
 
