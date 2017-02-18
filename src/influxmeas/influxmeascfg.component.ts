@@ -1,11 +1,14 @@
 import { Component, ChangeDetectionStrategy, ViewChild} from '@angular/core';
-import { FormBuilder, Validators, FormArray } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { InfluxMeasService } from './influxmeascfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
 import { ValidationService } from '../common/validation.service'
+import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
 import { GenericModal } from '../common/generic-modal';
+
+declare var _:any;
 
 @Component({
   selector: 'influxmeas',
@@ -55,7 +58,8 @@ export class InfluxMeasCfgComponent {
   public numPages: number = 1;
   public length: number = 0;
   myFilterValue: any;
-
+  private builder;
+  private oldID : string;
   //Set config
   public config: any = {
     paging: true,
@@ -64,40 +68,80 @@ export class InfluxMeasCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public influxMeasService: InfluxMeasService, public metricMeasService: SnmpMetricService, private builder: FormBuilder) {
+  constructor(public influxMeasService: InfluxMeasService, public metricMeasService: SnmpMetricService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
-    this.influxmeasForm = builder.group({
-      id: ['', Validators.required],
-      Name: ['', Validators.required],
-      GetMode: ['value', Validators.required],
-      IndexOID: [''],
-      TagOID: [''],
-      IndexTag: [''],
-      IndexTagFormat: [''],
-      IndexAsValue: ['false'],
-      Fields: builder.array([
-      ]),
-      Description: ['']
+    this.builder = builder;
+  }
+
+  createStaticForm() {
+    this.influxmeasForm = this.builder.group({
+      ID: [this.influxmeasForm ? this.influxmeasForm.value.ID : '', Validators.required],
+      Name: [this.influxmeasForm ? this.influxmeasForm.value.Name : '', Validators.required],
+      GetMode: [this.influxmeasForm ? this.influxmeasForm.value.GetMode : 'value', Validators.required],
+      Fields: this.builder.array(this.influxmeasForm ? ((this.influxmeasForm.value.Fields) !== null ? this.influxmeasForm.value.Fields : []) : []),
+      Description: [this.influxmeasForm ? this.influxmeasForm.value.Description : '']
     });
   }
 
-  onChangeMetricArray(id) {
-    this.metricArray = [];
-    for (let a of id) {
-      this.metricArray.push({ ID: a, Report: 1 });
+  createDynamicForm(fieldsArray: any) : void {
+    //Saves the actual to check later if there are shared values
+    let tmpform : any;
+    if (this.influxmeasForm)  tmpform = this.influxmeasForm.value;
+    this.createStaticForm();
+
+    for (let entry of fieldsArray) {
+      let value = entry.defVal;
+      //Check if there are common values from the previous selected item
+      if (tmpform) {
+        if (tmpform[entry.ID] && entry.override !== true) {
+          value = tmpform[entry.ID];
+        }
+      }
+      //Set different controls:
+      this.influxmeasForm.addControl(entry.ID, new FormControl(value, entry.Validators));
     }
   }
+
+  setDynamicFields (field : any, override? : boolean) : void  {
+    //Saves on the array all values to push into formGroup
+    let controlArray : Array<any> = [];
+    console.log(field);
+    switch (field) {
+      case 'indexed_it':
+        controlArray.push({'ID': 'TagOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
+      case 'indexed':
+        controlArray.push({'ID': 'IndexOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
+        controlArray.push({'ID': 'IndexTag', 'defVal' : '', 'Validators' : Validators.required});
+        controlArray.push({'ID': 'IndexTagFormat', 'defVal' : ''});
+        controlArray.push({'ID': 'IndexAsValue', 'defVal' : 'false', 'Validators' : Validators.required});
+      break;
+      default:
+        break;
+    }
+    //Reload the formGroup with new values saved on controlArray
+    this.createDynamicForm(controlArray);
+  }
+
+
+  onChangeMetricArray(id) {
+
+    //Create the array with ID:
+    let testMetricID = this.metricArray.map( x => {return x['ID']})
+    let delEntries = _.differenceWith(testMetricID,id,_.isEqual);
+    let newEntries = _.differenceWith(id,testMetricID,_.isEqual);
+    //Remove detected delEntries
+    _.remove(this.metricArray, function(n) {
+      return delEntries.indexOf(n['ID']) != -1;
+    });
+    //Add new entries
+    for (let a of newEntries) {
+      this.metricArray.push ({'ID': a, 'Report': 1});
+    }
+  }
+
   onCheckMetric(index: number, reportIndex: number) {
-
     this.metricArray[index]['Report'] = this.reportMetricStatus[reportIndex]['value'];
-
-    /*		if (this.metricArray[index]['Report'] == 1 ) {
-    this.metricArray[index]['Report']=0
-  } else {
-  this.metricArray[index]['Report']=1
-}
-*/
   }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
@@ -251,6 +295,11 @@ export class InfluxMeasCfgComponent {
   }
 
   newMeas() {
+    if (this.influxmeasForm) {
+      this.setDynamicFields(this.influxmeasForm.value.GetMode);
+    } else {
+      this.setDynamicFields(null);
+    }
     this.editmode = "create";
     this.getMetricsforMeas();
   }
@@ -259,19 +308,22 @@ export class InfluxMeasCfgComponent {
     let id = row.ID;
     this.metricArray = [];
     this.selectedMetrics = [];
-    this.getMetricsforMeas();
     this.influxMeasService.getMeasById(id)
       .subscribe(data => {
-        this.testinfluxmeas = data
-        if (this.testinfluxmeas.Fields) {
-          for (var values of this.testinfluxmeas.Fields) {
+        this.influxmeasForm = {};
+        this.influxmeasForm.value = data;
+        if (data.Fields) {
+          for (var values of data.Fields) {
             this.metricArray.push({ ID: values.ID, Report: values.Report });
             this.selectedMetrics.push(values.ID);
           }
         }
+        this.setDynamicFields(row.GetMode, false);
+        this.getMetricsforMeas();
+        this.oldID = data.ID
+        this.editmode = "modify"
       },
-      err => console.error(err),
-      () => this.editmode = "modify"
+      err => console.error(err)
       );
   }
 
@@ -290,7 +342,7 @@ export class InfluxMeasCfgComponent {
   saveInfluxMeas() {
     this.influxmeasForm.value['Fields'] = this.metricArray;
     console.log(this.influxmeasForm.value);
-    if (this.influxmeasForm.dirty && this.influxmeasForm.valid) {
+    if (this.influxmeasForm.valid) {
       this.influxMeasService.addMeas(this.influxmeasForm.value)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
@@ -299,17 +351,17 @@ export class InfluxMeasCfgComponent {
     }
   }
 
-  updateInfluxMeas(oldId) {
-    console.log(oldId);
+  updateInfluxMeas() {
+    console.log(this.oldID);
     console.log(this.influxmeasForm.value.id);
     if (this.influxmeasForm.valid) {
       var r = true;
-      if (this.influxmeasForm.value.id != oldId) {
-        r = confirm("Changing Measurement ID from " + oldId + " to " + this.influxmeasForm.value.id + ". Proceed?");
+      if (this.influxmeasForm.value.ID != this.oldID) {
+        r = confirm("Changing Measurement ID from " + this.oldID + " to " + this.influxmeasForm.value.ID + ". Proceed?");
       }
       if (r == true) {
         this.influxmeasForm.value['Fields'] = this.metricArray;
-        this.influxMeasService.editMeas(this.influxmeasForm.value, oldId)
+        this.influxMeasService.editMeas(this.influxmeasForm.value, this.oldID)
           .subscribe(data => { console.log(data) },
           err => console.error(err),
           () => { this.editmode = "list"; this.reloadData() }

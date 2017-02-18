@@ -65,7 +65,7 @@ input:focus.ng-valid[required], select:focus.ng-valid[required]{
 }
 
 ss-multiselect-dropdown {
-  display: inline-flex;
+  display: inline-block;
 }
 
 input:focus.ng-valid, select:focus.ng-valid{

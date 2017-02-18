@@ -8,6 +8,7 @@ import { MeasFilterService } from '../measfilter/measfiltercfg.service';
 import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ValidationService } from '../common/validation.service'
 import { Observable } from 'rxjs/Observable';
+import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
 
 import { GenericModal } from '../common/generic-modal';
@@ -34,7 +35,6 @@ export class SnmpDeviceCfgComponent {
   snmpdevs: Array<any>;
   filter: string;
   snmpdevForm: any;
-  testsnmpdev: any;
   //influxservers: Array<any>;
   measfilters: Array<any>;
   measgroups: Array<any>;
@@ -76,7 +76,8 @@ export class SnmpDeviceCfgComponent {
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
-
+  private builder;
+  private oldID : string;
   //Set config
   public config: any = {
     paging: true,
@@ -90,34 +91,85 @@ export class SnmpDeviceCfgComponent {
   constructor(public snmpDeviceService: SnmpDeviceService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
-    this.snmpdevForm = builder.group({
-      id: ['', Validators.required],
-      Host: ['', Validators.required],
-      Port: [161, Validators.compose([Validators.required, ValidationService.integerValidator])],
-      Retries: [5, Validators.compose([Validators.required, ValidationService.integerValidator])],
-      Timeout: [20, Validators.compose([Validators.required, ValidationService.integerValidator])],
-      Active: ['true', Validators.required],
-      SnmpVersion: ['2c', Validators.required],
-      DisableBulk: ['false'],
-      Community: ['public'],
-      V3SecLevel: [''],
-      V3AuthUser: [''],
-      V3AuthPass: [''],
-      V3AuthProt: [''],
-      V3PrivPass: [''],
-      V3PrivProt: [''],
-      Freq: [60, Validators.compose([Validators.required, ValidationService.integerValidator])],
-      UpdateFltFreq: [60, Validators.compose([Validators.required, ValidationService.integerValidator])],
-      OutDB: ['', Validators.required],
-      LogLevel: ['info', Validators.required],
-      SnmpDebug: ['false', Validators.required],
-      DeviceTagName: ['', Validators.required],
-      DeviceTagValue: ['id'],
-      Extratags: ['', Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
-      MeasurementGroups: [null],
-      MeasFilters: [null],
-      Description: ['']
+    this.builder = builder;
+  }
+
+  createStaticForm() {
+    this.snmpdevForm = this.builder.group({
+      ID: [this.snmpdevForm ? this.snmpdevForm.value.ID : '', Validators.required],
+      Host: [this.snmpdevForm ? this.snmpdevForm.value.Host : '', Validators.required],
+      Port: [this.snmpdevForm ? this.snmpdevForm.value.Port : 161, Validators.compose([Validators.required, ValidationService.integerValidator])],
+      Retries: [this.snmpdevForm ? this.snmpdevForm.value.Retries : 5, Validators.compose([Validators.required, ValidationService.integerValidator])],
+      Timeout: [this.snmpdevForm ? this.snmpdevForm.value.Timeout : 20, Validators.compose([Validators.required, ValidationService.integerValidator])],
+      Active: [this.snmpdevForm ? this.snmpdevForm.value.Active : 'true', Validators.required],
+      SnmpVersion: [this.snmpdevForm ? this.snmpdevForm.value.SnmpVersion : '2c', Validators.required],
+      DisableBulk: [this.snmpdevForm ? this.snmpdevForm.value.DisableBulk : 'false'],
+      Freq: [this.snmpdevForm ? this.snmpdevForm.value.Freq : 60, Validators.compose([Validators.required, ValidationService.integerValidator])],
+      UpdateFltFreq: [this.snmpdevForm ? this.snmpdevForm.value.UpdateFltFreq : 60, Validators.compose([Validators.required, ValidationService.integerValidator])],
+      OutDB: [this.snmpdevForm ? this.snmpdevForm.value.OutDB :  '', Validators.required],
+      LogLevel: [this.snmpdevForm ? this.snmpdevForm.value.LogLevel : 'info', Validators.required],
+      SnmpDebug: [this.snmpdevForm ? this.snmpdevForm.value.SnmpDebug : 'false', Validators.required],
+      DeviceTagName: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagName : '', Validators.required],
+      DeviceTagValue: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagValue : 'id'],
+      ExtraTags: [this.snmpdevForm ? this.snmpdevForm.value.ExtraTags : null, Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
+      MeasurementGroups: [this.snmpdevForm ? this.snmpdevForm.value.MeasurementGroups : null],
+      MeasFilters: [this.snmpdevForm ? this.snmpdevForm.value.MeasFilters : null],
+      Description: [this.snmpdevForm ? this.snmpdevForm.value.Description : ''],
     });
+  }
+
+  createDynamicForm(fieldsArray: any) : void {
+
+    //Generates the static form:
+    //Saves the actual to check later if there are shared values
+    let tmpform : any;
+    if (this.snmpdevForm)  tmpform = this.snmpdevForm.value;
+    this.createStaticForm();
+    //Set new values and check if we have to mantain the value!
+    for (let entry of fieldsArray) {
+      let value = entry.defVal;
+      //Check if there are common values from the previous selected item
+      if (tmpform) {
+        if (tmpform[entry.ID] && entry.override !== true) {
+          value = tmpform[entry.ID];
+        }
+      }
+      //Set different controls:
+      this.snmpdevForm.addControl(entry.ID, new FormControl(value, entry.Validators));
+    }
+}
+
+  setDynamicFields (field : any, override? : boolean) : void  {
+    //Saves on the array all values to push into formGroup
+    let controlArray : Array<any> = [];
+
+    switch (field) {
+      case 'AuthPriv':
+      controlArray.push({'ID': 'V3PrivPass', 'defVal' : '', 'Validators' : Validators.required });
+      case 'AuthNoPriv':
+      controlArray.push({'ID': 'V3AuthPass', 'defVal' : '', 'Validators' : Validators.required });
+      controlArray.push({'ID': 'V3PrivProt', 'defVal' : '', 'Validators' : Validators.required });
+      controlArray.push({'ID': 'V3AuthProt', 'defVal' : '', 'Validators' : Validators.required });
+      case 'NoAuthNoPriv':
+      controlArray.push({'ID': 'V3SecLevel', 'defVal' : field, 'Validators' : Validators.required });
+      controlArray.push({'ID': 'V3AuthUser', 'defVal' : '', 'Validators' : Validators.required });
+      break;
+      case '3':
+      controlArray.push({'ID': 'V3SecLevel', 'defVal' : 'NoAuthNoPriv', 'Validators' : Validators.required });
+      controlArray.push({'ID': 'V3AuthUser', 'defVal' : '', 'Validators' : Validators.required });
+      break;
+      case '1':
+      break;
+      case '2c':
+      controlArray.push({'ID': 'Community', 'defVal' : 'public', 'Validators' : Validators.required });
+      break;
+      default: //Gauge32
+      controlArray.push({'ID': 'SnmpVersion', 'defVal' : '2c', 'Validators' : Validators.required });
+      controlArray.push({'ID': 'Community', 'defVal' : 'public', 'Validators' : Validators.required });
+      break;
+    }
+    //Reload the formGroup with new values saved on controlArray
+    this.createDynamicForm(controlArray);
   }
 
   reloadData() {
@@ -269,13 +321,21 @@ export class SnmpDeviceCfgComponent {
       () => { }
       );
   }
+
   newDevice() {
+    //Check for subhidden fields
+    if (this.snmpdevForm) {
+      this.setDynamicFields(this.snmpdevForm.value.SnmpVersion === '3' ? this.snmpdevForm.value.V3SecLevel : this.snmpdevForm.value.SnmpVersion);
+    } else {
+      this.setDynamicFields(null);
+    }
+
     this.editmode = "create";
     this.getInfluxServersforDevices();
     this.getMeasGroupsforDevices();
     this.getMeasFiltersforDevices();
-
   }
+
   editDevice(row) {
     let id = row.ID;
     //Get select options
@@ -285,7 +345,11 @@ export class SnmpDeviceCfgComponent {
 
     this.snmpDeviceService.getDevicesById(id)
       .subscribe(data => {
-        this.testsnmpdev = data;
+        this.snmpdevForm = {};
+        this.snmpdevForm.value = data;
+        this.snmpdevForm.value.ExtraTags = this.snmpdevForm.value.ExtraTags.join(',');
+        this.oldID = data.ID
+        this.setDynamicFields(row.SnmpVersion === '3' ? row.V3SecLevel : row.SnmpVersion);
         this.editmode = "modify"
       },
       err => console.error(err),
@@ -304,7 +368,7 @@ export class SnmpDeviceCfgComponent {
     this.editmode = "list";
   }
   saveSnmpDev() {
-    if (this.snmpdevForm.dirty && this.snmpdevForm.valid) {
+    if (this.snmpdevForm.valid) {
       this.snmpDeviceService.addDevice(this.snmpdevForm.value)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
@@ -313,14 +377,14 @@ export class SnmpDeviceCfgComponent {
     }
   }
 
-  updateSnmpDev(oldId) {
+  updateSnmpDev() {
     if (this.snmpdevForm.valid) {
       var r = true;
-      if (this.snmpdevForm.value.id != oldId) {
-        r = confirm("Changing Device ID from " + oldId + " to " + this.snmpdevForm.value.id + ". Proceed?");
+      if (this.snmpdevForm.value.ID != this.oldID) {
+        r = confirm("Changing Device ID from " + this.oldID + " to " + this.snmpdevForm.value.ID + ". Proceed?");
       }
       if (r == true) {
-        this.snmpDeviceService.editDevice(this.snmpdevForm.value, oldId)
+        this.snmpDeviceService.editDevice(this.snmpdevForm.value, this.oldID)
           .subscribe(data => { console.log(data) },
           err => console.error(err),
           () => { this.editmode = "list"; this.reloadData() }
