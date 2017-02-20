@@ -314,7 +314,7 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 
 	for _, val := range devices {
 		obj = append(obj, &DbObjAction{
-			Type:     "measurementscfg",
+			Type:     "measurementcfg",
 			TypeDesc: "Measurements",
 			ObID:     val.IDMeasurementCfg,
 			Action:   "Delete SNMPMetric field from Measurement relation",
@@ -565,7 +565,7 @@ func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction,
 	}
 	for _, val := range mf {
 		obj = append(obj, &DbObjAction{
-			Type:     "fieldscfg",
+			Type:     "snmpmetriccfg",
 			TypeDesc: "Metrics",
 			ObID:     val.IDMetricCfg,
 			Action:   "Delete SNMPMetric field from Measurement relation",
@@ -579,7 +579,7 @@ func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction,
 
 	for _, val := range mg {
 		obj = append(obj, &DbObjAction{
-			Type:     "measurementgroupcfg",
+			Type:     "measgroupscfg",
 			TypeDesc: "Meas. Groups",
 			ObID:     val.IDMGroupCfg,
 			Action:   "Delete Measurement from Measurement Group relation",
