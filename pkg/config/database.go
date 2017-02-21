@@ -175,6 +175,9 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgByID(id string) (SnmpMetricCfg, error) {
 	if len(cfgarray) > 1 {
 		return SnmpMetricCfg{}, fmt.Errorf("Error %d results on get SnmpMetricCfg by id %s", len(cfgarray), id)
 	}
+	if len(cfgarray) == 0 {
+		return SnmpMetricCfg{}, fmt.Errorf("Error no values have been returned with this id %s in the metric config table", id)
+	}
 	return *cfgarray[0], nil
 }
 
@@ -343,6 +346,9 @@ func (dbc *DatabaseCfg) GetMeasurementCfgByID(id string) (MeasurementCfg, error)
 	}
 	if len(cfgarray) > 1 {
 		return MeasurementCfg{}, fmt.Errorf("Error %d results on get MeasurementCfg by id %s", len(cfgarray), id)
+	}
+	if len(cfgarray) == 0 {
+		return MeasurementCfg{}, fmt.Errorf("Error no values have been returned with this id %s in the measurement config table", id)
 	}
 	return *cfgarray[0], nil
 }
@@ -608,6 +614,9 @@ func (dbc *DatabaseCfg) GetMeasFilterCfgByID(id string) (MeasFilterCfg, error) {
 	if len(cfgarray) > 1 {
 		return MeasFilterCfg{}, fmt.Errorf("Error %d results on get MeasurementFilter by id %s", len(cfgarray), id)
 	}
+	if len(cfgarray) == 0 {
+		return MeasFilterCfg{}, fmt.Errorf("Error no values have been returned with this id %s in the meas filter config table", id)
+	}
 	return *cfgarray[0], nil
 }
 
@@ -764,6 +773,9 @@ func (dbc *DatabaseCfg) GetMGroupsCfgByID(id string) (MGroupsCfg, error) {
 	}
 	if len(cfgarray) > 1 {
 		return MGroupsCfg{}, fmt.Errorf("Error %d results on get MGroupsCfg by id %s", len(cfgarray), id)
+	}
+	if len(cfgarray) == 0 {
+		return MGroupsCfg{}, fmt.Errorf("Error no values have been returned with this id %s in the meas groups config table", id)
 	}
 	return *cfgarray[0], nil
 }
@@ -973,6 +985,9 @@ func (dbc *DatabaseCfg) GetSnmpDeviceCfgByID(id string) (SnmpDeviceCfg, error) {
 	}
 	if len(devcfgarray) > 1 {
 		return SnmpDeviceCfg{}, fmt.Errorf("Error %d results on get SnmpDeviceCfg by id %s", len(devcfgarray), id)
+	}
+	if len(devcfgarray) == 0 {
+		return SnmpDeviceCfg{}, fmt.Errorf("Error no values have been returned with this id %s in the snmp device config table", id)
 	}
 	return *devcfgarray[0], nil
 }
@@ -1200,6 +1215,9 @@ func (dbc *DatabaseCfg) GetInfluxCfgByID(id string) (InfluxCfg, error) {
 	}
 	if len(cfgarray) > 1 {
 		return InfluxCfg{}, fmt.Errorf("Error %d results on get SnmpDeviceCfg by id %s", len(cfgarray), id)
+	}
+	if len(cfgarray) == 0 {
+		return InfluxCfg{}, fmt.Errorf("Error no values have been returned with this id %s in the influx config table", id)
 	}
 	return *cfgarray[0], nil
 }
