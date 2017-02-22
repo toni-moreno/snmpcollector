@@ -1,14 +1,19 @@
-<div bsModal #childModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" arisa-labelledby="myLargeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" style="width: 80%">
+<div bsModal #childModal="bs-modal" [config]="{'keyboard' : false, backdrop: 'static'}" keyboard="false" class="modal fade" tabindex="-1" role="dialog" arisa-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" [ngStyle]="showNewFilterForm === false ? {width: '80%'} : ''">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" (click)="childModal.hide()" aria-label="Close">
+        <button type="button" class="close" (click)="unsubscribeRequest(); validationClick()" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
-        <h4 class="modal-title" *ngIf="showNewFilterForm === false">{{titleName}} <b>{{ formValues ? (formValues.id||formValues.ID) : 'Select a device' }}</b><i *ngIf="formValues && loadFromDevice === false" style="padding-left: 20px" class="glyphicon glyphicon-edit text-primary" (click)="formValues = null"></i></h4>
+        <h4 class="modal-title" *ngIf="showNewFilterForm === false">{{titleName}} <b>{{ formValues ? (formValues.id||formValues.ID) : 'Select a device' }}</b><i *ngIf="formValues" style="padding-left: 20px" class="glyphicon glyphicon-edit text-primary" (click)="formValues = null; initGetDevices();"></i></h4>
         <h4 class="modal-title" *ngIf="showNewFilterForm === true">Assign <b>{{customFilterValues.ID}}</b> to a new filter<i style="padding-left: 20px"></i></h4>
       </div>
-
+      <my-spinner *ngIf="!isConnected && isRequesting" [isRunning]="isRequesting"></my-spinner>
+      <div *ngIf="alertHandler.msg && !isConnected">
+        <div [ngClass]="['panel-body', 'bg-'+alertHandler.type]">
+          {{alertHandler.msg}}
+        </div>
+      </div>
       <div class="modal-body" style="display: flex !important" *ngIf="!formValues">
         <div class="col-md-6">
           <span> Select a device </span>
@@ -18,8 +23,9 @@
         </div>
       </div>
 
+      <!--FILTER EDITOR-->
       <div class="modal-body" style="display: flex !important" *ngIf="showNewFilterForm === true">
-        <div class="col-md-6">
+        <div class="col-md-12">
 
           <div *ngIf="alertHandler" style="margin-bottom: 20px">
             <div [ngClass]="['panel-body', 'bg-'+alertHandler.type]">
@@ -94,34 +100,61 @@
         </div>
       </div>
 
-
-
+      <!--CUSTOM FILTER EDITOR-->
       <div class="modal-body" style="display: flex !important" *ngIf="formValues && showNewFilterForm === false">
         <div class="col-md-6">
           <div class="col-md-12">
-            <div class="panel panel-primary">
-              <div class="panel-heading">Connection data</div>
+            <div class="panel panel-primary" *ngIf="isConnected">
+              <div class="panel-heading"><i class="glyphicon glyphicon-ok-circle" [tooltip]="alertHandler.msg" style="padding-right 5px"></i> Connection data </div>
               <div class="panel-body">
-                <div class="col-md-5">
+                <div class="col-md-5" *ngIf="measGroups.length > 0">
                   <h5>Measurement Group</h5>
-                  <ss-multiselect-dropdown [options]="measGroups" [texts]="myTexts" [settings]="mySettings" [ngModel]="selectedMeasGroup" (ngModelChange)="selectMeasGroup($event)"></ss-multiselect-dropdown>
+                  <ss-multiselect-dropdown [options]="measGroups" [texts]="myTexts" [settings]="mySettings" ngModel (ngModelChange)="selectMeasGroup($event)"></ss-multiselect-dropdown>
                   <h5>Indexed OID</h5>
-                  <input style="display: inline; width: auto" type="text" class="form-control" placeholder="Text input" disabled [(ngModel)]="selectedOID" id="OID">
+                  <input style="display: inline; width: auto" type="text" class="form-control" placeholder="Text input" disabled [ngModel]="selectedOID || 'No Index OID'" id="OID">
                 </div>
-                <div class="col-md-6">
-                  <div class="input-group list-group">
+                <div class="col-md-5" *ngIf="measGroups.length === 0">
+                  <span class="text-danger"><span class="glyphicon glyphicon-alert" style="padding-right: 10px"></span>No Meas groups associated with device!</span>
+                </div>
+                <!-- Check if there are meas groups on device-->
+                <div class="col-md-6" *ngIf="measGroups.length > 0">
+                  <!-- Check if there are measurements on selected  Measgroups-->
+                  <div class="input-group list-group" *ngIf="measOnMeasGroup">
+                    <!-- Check if its directly loaded from "edit"-->
+                    <div *ngIf="measOnMeasGroup.length === 0 && selectedMeas">
+                      <span>Loaded Measurements <span class="badge">{{1}}</span></span>
+                      <div class="input-group-addon">
+                        <span class="text-success glyphicon glyphicon-eye-open" type="button"></span>
+                      </div>
+                      <div class="input-group-addon" style="background: none">
+                        <span>{{selectedMeas}}</span>
+                      </div>
+                    </div>
+                    <!-- Check if there are no related meas on CustomFilter-->
+                    <div *ngIf="measOnMeasGroup.length === 0 && !selectedMeas">
+                      <span>Loaded Measurements <span class="badge">{{0}}</span></span>
+                      <div>
+                        <span role="" class="text-danger">No measurement related with CustomFilter</span>
+                      </div>
+                    </div>
+                    <!-- Load measurements on selected Measurement Group-->
+                    <div *ngIf="measOnMeasGroup.length > 0">
                     <span>Measurements <span class="badge">{{measOnMeasGroup ? measOnMeasGroup.length : '0'}}</span></span>
                     <div *ngFor="let measurement of measOnMeasGroup; let i = index">
                       <div class="input-group" style="background: none">
-                        <div dropdown class="input-group-addon">
+                        <div class="input-group-addon">
                           <span [ngClass]="selectedMeas === measurement ? ['text-success glyphicon  glyphicon glyphicon-eye-open'] : ['glyphicon glyphicon-eye-close']" type="button"></span>
                         </div>
                         <div class="input-group-addon" style="background: none">
                           <span role="button" [ngClass]="selectedMeas === measurement ? ['text-success'] : ['text-default']" (click)="selectMeasOID(measurement)">{{measurement}}</span>
                         </div>
                       </div>
-
                     </div>
+                  </div>
+                  </div>
+                  <!-- Warn meessage due to non-existence of measurements on MeasGroups-->
+                  <div *ngIf="!measOnMeasGroup">
+                    <span class="text-danger"><span class="glyphicon glyphicon-alert" style="padding-right: 10px"></span>No Measurement on selected Measurement Group</span>
                   </div>
                 </div>
                 <div class="col-md-12 text-right">
@@ -134,8 +167,9 @@
           <!--FILTERFORM-->
           <div class="col-md-12" *ngIf="selectedOID">
             <div class="panel panel-primary">
-              <div class="panel-heading">Filter Creation
-                <span [ngClass]="checkedResults.length > 0 ? ['label label-info'] : ['label label-danger']">{{checkedResults.length}} selected</span>
+              <div class="panel-heading">
+                <i *ngIf="filterForm.valid && checkedResults.length !== 0" class="glyphicon glyphicon-ok-circle" style="padding-right: 5px"></i>
+                Custom Filter Config
               </div>
               <div class="panel-body">
                 <div>
@@ -144,34 +178,36 @@
                       <label class="control-label col-sm-3" for="ID">ID</label>
                       <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique custom filter ID to identify it"></i>
                       <div class="col-sm-8">
-                        <input formControlName="ID" id="ID" />
+                        <input formControlName="ID" id="ID" [ngModel]="filterForm.value.ID"/>
                       </div>
                     </div>
-                    <div class="form-group col-md-12" style="margin-bottom: 50px">
+                    <div class="form-group col-md-12">
                       <label class="control-label col-sm-3" for="Description">Description</label>
                       <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the description of this custom filter"></i>
                       <div class="col-sm-8">
-                        <input formControlName="Description" id="Description" />
+                        <input formControlName="Description" id="Description"/>
                       </div>
                     </div>
+                    <div class="form-group col-md-12">
+                      <label class="control-label col-sm-3" for="Items">Items:
+                        <span [ngClass]="checkedResults.length > 0 ? ['label label-info'] : ['label label-danger']">{{checkedResults.length}}</span>
+                      </label>
+                      <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Items to filter on"></i>
 
-                    <div formArrayName="Items">
-                      <div *ngFor="let filters of filterForm.controls.Items.controls; let i=index">
-                        <div [formGroupName]="i">
-                          <!--street-->
-                          <div class="form-group" class="panel">
-                            <div class="col-sm-2">
-                              <span class="control-label">Item {{i}} <i class="glyphicon glyphicon-remove-circle text-danger" role="button" (click)="removeOption(filterForm.controls.Items.controls[i].value.TagID)"></i></span>
+                    </div>
+                    <div formArrayName="Items" style="position: relative">
+                      <div [formGroupName]="i" *ngFor="let filters of filterForm.controls.Items.controls; let i=index">
+                          <div class="form-group" class="col-md-11 col-md-offset-1 ">
+                            <div class="col-sm-3">
+                              <span class="control-label" style="padding-top: 5px;">Item {{i}} <i class="glyphicon glyphicon-remove-circle text-danger" role="button" (click)="removeOption(filterForm.controls.Items.controls[i].value.TagID)"></i></span>
                             </div>
                             <div class="input-group col-sm-6">
-                              <span class="input-group-addon">{{filterForm.controls.Items.controls[i].value.TagID}}</span>
-                              <input type="text" class="form-control" formControlName="Alias" placeholder="Set the alias">
+                              <span class="input-group-addon">{{filterForm.value.Items[i].TagID}}</span>
+                              <input type="text" class="form-control" formControlName="Alias" id="Alias" placeholder="Set the alias">
                             </div>
                           </div>
                         </div>
-                      </div>
                     </div>
-
                     <div class="col-md-12 text-right">
                       <button class="btn btn-primary" style="padding-top:10px" type="submit" [disabled]="!filterForm.valid || checkedResults.length == 0">Submit</button>
                     </div>
@@ -180,22 +216,12 @@
                     <h4> Custom Values</h4>
                     <form *ngIf="itemForm" [formGroup]="itemForm" (ngSubmit)="addCustomItem(itemForm.controls.TagID.value)">
                       <div class="form-group">
-                        <label class="control-label col-sm-3" for="TagID">TagID</label>
-                        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the number of retries to attempt within timeout"></i>
-                        <div class="col-sm-8">
-                          <input formControlName="TagID" id="TagID" />
+                        <div class="input-group col-sm-12" style="display: flex">
+                          <input type="text" class="form-control" formControlName="TagID" id="TagID" placeholder="TagID">
+                          <input type="text" class="form-control" formControlName="Alias" id="Alias" placeholder="Alias">
+                          <h4 [ngClass]="itemForm.valid ? ['glyphicon glyphicon-ok-circle text-success'] : ['glyphicon glyphicon-exclamation-sign textz-danger']" style="margin-top: 3px;margin-left: 10px;" role="button" (click)="itemForm.valid ? addCustomItem(itemForm.controls.TagID.value) : ''"></h4>
+                          <h4 role="button" class="glyphicon glyphicon-ban-circle text-danger" style="margin-top: 3px;margin-left: 10px" type="cancel" (click)="showItemForm = false"></h4>
                         </div>
-                      </div>
-                      <div class="form-group">
-                        <label class="control-label col-sm-3" for="Alias">Alias</label>
-                        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the number of retries to attempt within timeout"></i>
-                        <div class="col-sm-8">
-                          <input formControlName="Alias" id="Alias" />
-                        </div>
-                      </div>
-                      <div class="text-right">
-                        <button class="btn btn-primary" style="padding-top:10px" type="submit">Add</button>
-                        <button class="btn btn-danger" style="padding-top:10px" type="cancel" (click)="showItemForm = false">Cancel</button>
                       </div>
                     </form>
                   </div>
@@ -209,12 +235,8 @@
         </div>
 
         <div class="col-md-6">
-          <my-spinner [isRunning]="isRequesting"></my-spinner>
-
-          <div *ngIf="alertHandler">
-            <div [ngClass]="['panel-body', 'bg-'+alertHandler.type]">
-              {{alertHandler.msg}}
-            </div>
+          <div *ngIf="isConnected">
+            <my-spinner [isRunning]="isRequesting"></my-spinner>
           </div>
           <div *ngIf="queryResult" class="panel panel-default">
             <div class="panel-heading">
@@ -255,7 +277,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" (click)="validationClick()">Close</button>
+        <button type="button" class="btn btn-primary" (click)="unsubscribeRequest(); validationClick()">Close</button>
       </div>
     </div>
   </div>

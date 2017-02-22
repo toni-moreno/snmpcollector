@@ -88,6 +88,7 @@ type CustomFilterCfg struct {
 	ID          string `xorm:"'id' unique"`
 	Description string `xorm:"description"`
 	RelatedDev  string `xorm:"related_dev"`
+	RelatedMeas string `xorm:"related_meas"`
 	Items       []struct {
 		TagID string
 		Alias string

@@ -14,7 +14,6 @@ export class CustomFilterService {
 
   addCustomFilter(dev) {
     return this.httpAPI.post('/api/cfg/customfilter', JSON.stringify(dev, function(key, value) {
-
       return value;
     }))
       .map((responseData) => responseData.json());
@@ -23,10 +22,7 @@ export class CustomFilterService {
   editCustomFilter(dev, id) {
     console.log("DEV: ", dev);
     return this.httpAPI.put('/api/cfg/customfilter/' + id, JSON.stringify(dev, function(key, value) {
-
-      if (key == 'IndexAsValue') return (value === "true" || value === true);
       return value;
-
     }))
       .map((responseData) => responseData.json());
   }

@@ -15,7 +15,7 @@ import { Subscription } from "rxjs";
 @Component({
     selector: 'test-connection-modal',
     template: `
-      <div bsModal #childModal="bs-modal" [config]="modalOptions" keyboard="false" class="modal fade" tabindex="-1" role="dialog" arisa-labelledby="myLargeModalLabel" aria-hidden="true">
+      <div bsModal #childModal="bs-modal" [config]="{'keyboard' : false, backdrop: 'static'}" class="modal fade" tabindex="-1" role="dialog" arisa-labelledby="myLargeModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-lg" style="width: 80%">
             <div class="modal-content">
               <div class="modal-header">
@@ -159,11 +159,6 @@ export class TestConnectionModal implements OnInit  {
     OID: ['', Validators.required]
     });
 
-  }
-
-  //Modal Options
-  modalOptions : ModalOptions  = {
-    'keyboard' : false
   }
 
   //ConnectionForm

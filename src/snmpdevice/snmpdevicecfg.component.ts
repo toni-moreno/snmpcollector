@@ -401,7 +401,7 @@ export class SnmpDeviceCfgComponent {
 
   showFilterModal(){
     if(this.snmpdevForm.valid) {
-      this.viewTestFilterModal.show(this.snmpdevForm.value);
+      this.viewTestFilterModal.newCustomFilter(this.snmpdevForm.value);
     }
   }
 

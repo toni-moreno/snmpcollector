@@ -452,7 +452,7 @@ func (dbc *DatabaseCfg) AddMeasurementCfg(dev MeasurementCfg) (int64, error) {
 
 /*DelMeasurementCfg for deleting influx databases from ID*/
 func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
-	var affectedfl, affectedmg, affectedft, affected int64
+	var affectedfl, affectedmg, affectedft, affectedcf, affected int64
 	var err error
 
 	session := dbc.x.NewSession()
@@ -476,6 +476,13 @@ func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 		return 0, fmt.Errorf("Error on Update FilterMeasurement on with id: %s, error: %s", id, err)
 	}
 
+	//CustomFilter Related Dev
+	affectedcf, err = session.Where("related_meas='" + id + "'").Cols("related_meas").Update(&CustomFilterCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Delete Measurement with id on delete CustomFilter with id: %s, error: %s", id, err)
+	}
+
 	affected, err = session.Where("id='" + id + "'").Delete(&MeasurementCfg{})
 	if err != nil {
 		session.Rollback()
@@ -486,8 +493,8 @@ func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Infof("Deleted Successfully Measurement with ID %s [ %d Measurements Groups Affected / %d Fields Affected / %d Filters Afected ]", id, affectedmg, affectedfl, affectedft)
-	dbc.addChanges(affected + affectedmg + affectedfl + affectedft)
+	log.Infof("Deleted Successfully Measurement with ID %s [ %d Measurements Groups Affected / %d Fields Affected / %d Filters Afected / %d Custom Filters Afected ]", id, affectedmg, affectedfl, affectedft, affectedcf)
+	dbc.addChanges(affected + affectedmg + affectedfl + affectedft + affectedcf)
 	return affected, nil
 }
 
@@ -520,6 +527,12 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
+		affecteddev, err = session.Where("related_meas='" + id + "'").Cols("related_meas").Update(&CustomFilterCfg{RelatedMeas: dev.ID})
+		if err != nil {
+			session.Rollback()
+			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
+		}
+
 		log.Infof("Updated Measurement config to %s devices ", affecteddev)
 	}
 	//delete all previous values
@@ -563,6 +576,7 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction, error) {
 	var mf []*MeasurementFieldCfg
 	var mg []*MGroupsMeasurements
+	var cf []*CustomFilterCfg
 	var obj []*DbObjAction
 	var err error
 	err = dbc.x.Where("id_measurement_cfg='" + id + "'").Find(&mf)
@@ -591,6 +605,20 @@ func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction,
 			Action:   "Delete Measurement from Measurement Group relation",
 		})
 	}
+
+	err = dbc.x.Where("related_meas='" + id + "'").Find(&cf)
+	if err != nil {
+		return nil, fmt.Errorf("Error on Delete Measurement on MeasurementFieldCfg with id: %s, error: %s", id, err)
+	}
+	for _, val := range cf {
+		obj = append(obj, &DbObjAction{
+			Type:     "customfiltercfg",
+			TypeDesc: "Custom Filter",
+			ObID:     val.ID,
+			Action:   "Delete related Measurement from CustomFilter",
+		})
+	}
+
 	return obj, nil
 }
 
@@ -1104,7 +1132,7 @@ func (dbc *DatabaseCfg) AddSnmpDeviceCfg(dev SnmpDeviceCfg) (int64, error) {
 
 /*DelSnmpDeviceCfg for deleting devices from ID*/
 func (dbc *DatabaseCfg) DelSnmpDeviceCfg(id string) (int64, error) {
-	var affectedmg, affectedft, affected int64
+	var affectedmg, affectedft, affectedcf, affected int64
 	var err error
 
 	session := dbc.x.NewSession()
@@ -1122,6 +1150,12 @@ func (dbc *DatabaseCfg) DelSnmpDeviceCfg(id string) (int64, error) {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Delete Device with id on delete SnmpDevFilters with id: %s, error: %s", id, err)
 	}
+	//CustomFilter Reladed Dev
+	affectedcf, err = session.Where("related_dev='" + id + "'").Cols("related_dev").Update(&CustomFilterCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Delete Device with id on delete SnmpDevCfg with id: %s, error: %s", id, err)
+	}
 
 	affected, err = session.Where("id='" + id + "'").Delete(&SnmpDeviceCfg{})
 	if err != nil {
@@ -1133,14 +1167,14 @@ func (dbc *DatabaseCfg) DelSnmpDeviceCfg(id string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Infof("Deleted Successfully device with ID %s [] %d Measurement Groups Affected , %d Filters Afected ]", id, affectedmg, affectedft)
-	dbc.addChanges(affected + affectedmg + affectedft)
+	log.Infof("Deleted Successfully device with ID %s [] %d Measurement Groups Affected , %d Filters Afected ]", id, affectedmg, affectedft, affectedcf)
+	dbc.addChanges(affected + affectedmg + affectedft + affectedcf)
 	return affected, nil
 }
 
 /*UpdateSnmpDeviceCfg for adding new devices*/
 func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64, error) {
-	var deletemg, newmg, deleteft, newft, affected int64
+	var deletemg, newmg, deleteft, newft, affectedcf, affected int64
 	var err error
 	session := dbc.x.NewSession()
 	defer session.Close()
@@ -1155,6 +1189,12 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 	if err != nil {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Delete Device with id on delete SnmpDevFilters with id: %s, error: %s", id, err)
+	}
+
+	affectedcf, err = session.Where("related_dev='" + id + "'").Cols("related_dev").Update(&CustomFilterCfg{RelatedDev: dev.ID})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error Update SnmpDevice id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 	}
 
 	//Measurement Groups
@@ -1186,13 +1226,26 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 	log.Infof("Updated device constrains (old %d / new %d ) Measurement Groups", deletemg, newmg)
 	log.Infof("Updated device constrains (old %d / new %d ) MFilters", deleteft, newft)
 	log.Infof("Updated new Device Successfully with id %s and data:%+v", id, dev)
-	dbc.addChanges(affected + deletemg + newmg + deleteft + newft)
+	dbc.addChanges(affected + deletemg + newmg + deleteft + newft + affectedcf)
 	return affected, nil
 }
 
 /*GeSnmpDeviceCfgAffectOnDel for deleting devices from ID*/
 func (dbc *DatabaseCfg) GeSnmpDeviceCfgAffectOnDel(id string) ([]*DbObjAction, error) {
+	var devices []*CustomFilterCfg
 	var obj []*DbObjAction
+	if err := dbc.x.Where("related_dev='" + id + "'").Find(&devices); err != nil {
+		log.Warnf("Error on Get Custotm Filter id %d for devices , error: %s", id, err)
+		return nil, err
+	}
+	for _, val := range devices {
+		obj = append(obj, &DbObjAction{
+			Type:     "customfiltercfg",
+			TypeDesc: "Custom Filters",
+			ObID:     val.ID,
+			Action:   "Delete related Device from CustomFilter",
+		})
+	}
 	return obj, nil
 }
 
