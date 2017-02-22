@@ -36,6 +36,7 @@ export class CustomFilterCfgComponent {
   public columns: Array<any> = [
     { title: 'ID', name: 'ID' },
     { title: 'RelatedDev', name: 'RelatedDev' },
+    { title: 'RelatedMeas', name: 'RelatedMeas' },
     { title: 'Items', name: 'Items' },
   ];
 
@@ -206,12 +207,22 @@ export class CustomFilterCfgComponent {
       () => { }
       );
   }
+
   newCustomFilter() {
-    this.viewTestFilterModal.show(null);
+    this.viewTestFilterModal.newCustomFilter();
   }
 
   editCustomFilter(row) {
-    alert("Not implemented yet");
+    this.snmpDeviceService.getDevicesById(row.RelatedDev || null).subscribe(
+      data => {
+        this.viewTestFilterModal.editCustomFilter(data, row)
+      },
+      err => {
+        this.viewTestFilterModal.newCustomFilter();
+        console.log(err);
+      },
+      () => console.log("DONE")
+    )
  	}
 
   deleteCustomFilter(id) {
@@ -236,23 +247,4 @@ export class CustomFilterCfgComponent {
         );
     }
   }
-
-  updateCustomFilter(oldId) {
-    console.log(oldId);
-    console.log(this.customfilterForm.value.id);
-    if (this.customfilterForm.dirty && this.customfilterForm.valid) {
-      var r = true;
-      if (this.customfilterForm.value.id != oldId) {
-        r = confirm("Changing Influx Server ID from " + oldId + " to " + this.customfilterForm.value.id + ". Proceed?");
-      }
-      if (r == true) {
-        this.customFilterService.editCustomFilter(this.customfilterForm.value, oldId)
-          .subscribe(data => { console.log(data) },
-          err => console.error(err),
-          () => { this.editmode = "list"; this.reloadData() }
-          );
-      }
-    }
-  }
-
 }

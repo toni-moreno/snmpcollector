@@ -1,8 +1,7 @@
 import { Component, Input, Output, Pipe, PipeTransform, ViewChild, EventEmitter, OnInit, ChangeDetectionStrategy  } from '@angular/core';
 import { Validators, FormGroup, FormArray, FormBuilder } from '@angular/forms';
-import { ModalDirective } from 'ng2-bootstrap';
+import { ModalDirective, ModalOptions } from 'ng2-bootstrap';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
-import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
 import { MeasGroupService } from '../measgroup/measgroupcfg.service';
@@ -19,7 +18,7 @@ import { CustomFilterService } from './customfilter.service';
   selector: 'test-filter-modal',
   templateUrl: './testingfilter.html',
   styleUrls: ['./filter-modal-styles.css'],
-  providers: [SnmpDeviceService, SnmpMetricService, MeasGroupService, InfluxMeasService, MeasFilterService, SpinnerComponent, CustomFilterService],
+  providers: [SnmpDeviceService, MeasGroupService, InfluxMeasService, MeasFilterService, SpinnerComponent, CustomFilterService],
 })
 
 export class TestFilterModal implements OnInit {
@@ -32,79 +31,110 @@ export class TestFilterModal implements OnInit {
   @Input() textValidation: string;
 
   //EMITERS
-  public validationClick(myId: string): void {
+  public validationClick(myId?: string): void {
     this.childModal.hide();
-    this.validationClicked.emit(myId);
+    this.validationClicked.emit();
   }
+
+  public mode : string;
+  public builder : any;
 
   //CONSTRUCTOR
-  constructor(private builder: FormBuilder, public metricMeasService: SnmpMetricService, public influxMeasService: InfluxMeasService, public customFilterService: CustomFilterService, public measGroupService: MeasGroupService, public measFilterService: MeasFilterService, public snmpDeviceService: SnmpDeviceService) {
+
+  constructor(builder: FormBuilder, public influxMeasService: InfluxMeasService, public customFilterService: CustomFilterService, public measGroupService: MeasGroupService, public measFilterService: MeasFilterService, public snmpDeviceService: SnmpDeviceService) {
+    this.builder = builder;
   }
 
-  //INITI
+
+  //INIT
   ngOnInit() {
-    this.filterForm = this.builder.group({
-      ID: ['', Validators.required],
-      Description: ['', Validators.required],
-      RelatedDev: [''],
-      Items: this.builder.array([])
-    });
   }
 
-  //SHOW MODAL FUNCTION
+  createStaticForm() {
+    this.filterForm = this.builder.group({
+      ID: [this.filterForm ? this.filterForm.value.ID : '', Validators.required],
+      RelatedDev: [this.filterForm ? this.filterForm.value.RelatedDev : ''],
+      RelatedMeas: [this.filterForm ? this.filterForm.value.RelatedMeas : ''],
+      Items: this.builder.array([]),
+      Description: [this.filterForm ? this.filterForm.value.Description : '']
+    });
+    console.log(this.filterForm);
+  }
 
-  show(_formValues) {
-    //reset var values
-    if (!_formValues) this.formValues = null;
+  clearConfig() {
+  //  this.loadFromDevice = true;
+    this.formValues = null;
+    this.measOnMeasGroup = [];
+    this.measGroups = [];
+    this.selectedOID = "";
     this.selectedMeas = null;
-    this.selectedMeasGroup = null;
-    this.measGroups = null;
+  }
 
-    this.unsubscribeRequest();
+  clearItems() {
+    this.checkedResults = [];
+    this.isConnected = false;
+  }
+
+  clearQuery() {
     this.alertHandler = {};
     this.queryResult = null;
-    this.isConnected = false;
-    this.isRequesting = true;
+  }
 
-    if (this.formValues) {
-      this.loadFromDevice = true;
-      this.formValues = _formValues;
+  //SHOW MODAL FUNCTION: SPLITTED INTO NEW AND EDIT
+
+  newCustomFilter(formValues? : any) {
+    //Reset forms!
+    this.mode = "new";
+    this.clearQuery();
+    this.clearItems();
+    this.clearConfig();
+    this.unsubscribeRequest();
+    if (formValues) {
+      //Get Related Device INFO:
+      this.formValues = formValues;
       this.loadDeviceValues(this.formValues);
       this.pingDevice(this.formValues);
-      this.childModal.show();
+      this.createStaticForm();
+    } else{
+      this.initGetDevices();
     }
-    else {
-      this.snmpDeviceService.getDevices(null)
-        .subscribe(
-        data => {
-          this.snmpdevs = [];
-          for (let entry of data) {
-            this.snmpdevs.push({ 'id': entry.ID, 'name': entry.ID });
-          }
-
-          this.childModal.show();
-        },
-        err => console.error(err),
-        () => console.log('DONE')
-        );
-    }
+    this.childModal.show();
   }
 
-  //HIDE MODAL FUNCCTION
+  editCustomFilter(_formValues : any, editForm? : any, alertMessage? : any) {
+    this.mode = "edit";
+    //reset var values
+    this.clearQuery();
+    this.clearItems();
+    this.clearConfig();
+    //secure forms
+    this.showNewFilterForm = false;
+    this.formValues = _formValues || null;
+    this.unsubscribeRequest();
 
-  hide() {
-    this.childModal.hide();
+    //Get Related Device INFO:
+    this.loadDeviceValues(this.formValues);
+    this.pingDevice(this.formValues);
+    this.filterForm = {};
+    this.filterForm.value = editForm;
+    this.createStaticForm();
+    //Fill with items:
+    this.fillFilterValues(editForm.Items);
+    this.oldID = editForm.ID;
+    this.selectedMeas = editForm.RelatedMeas;
+    this.getMeasByIdforModal(this.selectedMeas);
+    this.childModal.show();
   }
+
+  fillFilterValues(items) {
+    for (let item of items) {
+     this.addFilterValue(item.TagID, item.Alias);
+   }
+  }
+
 
   clearSelected() {
     this.filterForm.controls.Items = this.builder.array([]);
-  }
-
-  resetVars() {
-    this.checkedResults = [];
-    this.queryResult = null;
-    this.all = true;
-    this.clearSelected();
   }
 
   //Forms:
@@ -117,7 +147,6 @@ export class TestFilterModal implements OnInit {
   all: boolean = true;
   showNewFilterForm: boolean = false;
   showItemForm: boolean = false;
-  loadFromDevice : boolean = false;
 
 
   //Selector Data:
@@ -125,20 +154,19 @@ export class TestFilterModal implements OnInit {
   private mySettings: IMultiSelectSettings = {
     singleSelect: true,
   };
+
   snmpdevs: IMultiSelectOption[] = [];
   measGroups: IMultiSelectOption[] = [];
 
   //SELECTED DATA:
   selectedMeas: any;
-  selectedMeasGroup: any;
+//  selectedMeasGroup: any;
   selectedOID: any;
-
   customFilterValues: any;
 
   //Data
   checkedResults: Array<any> = [];
   queryResult: any;
-
 
   //snmpdevs: any;
   oidValue: any;
@@ -151,12 +179,15 @@ export class TestFilterModal implements OnInit {
   isRequesting: boolean;
   isConnected: boolean;
   myObservable: Subscription;
+  oldID : string;
 
+  public editForm : any;
 
   //FILTERFORM
   //ADD
   addFilterValue(selectedTag: string, customAlias: string): void {
     // add address to the list
+    this.checkedResults.push(selectedTag);
     const control = <FormArray>this.filterForm.controls['Items'];
     control.push(this.builder.group({
       TagID: [selectedTag.toString(), Validators.required],
@@ -164,6 +195,7 @@ export class TestFilterModal implements OnInit {
     })
     );
   }
+
   //REMOVE
   removeFilterValue(i: number) {
     // remove address from the list
@@ -171,18 +203,13 @@ export class TestFilterModal implements OnInit {
     control.removeAt(i);
   }
 
-
   //SELECTORS
   //MeasGroup Selector
-  selectMeasGroup(measGroup: string, forceMode: string): void {
+  selectMeasGroup(measGroup: string): void {
     this.queryResult = null;
-    if (this.selectedMeasGroup !== measGroup) {
-      this.selectedMeasGroup = measGroup;
-      this.selectedOID = null;
-      this.getMeasGroupByIdForModal(measGroup);
-      this.clearSelected();
-      this.selectedMeas = "";
-    }
+    this.selectedOID = null;
+    this.getMeasGroupByIdForModal(measGroup);
+    this.selectedMeas = "";
   }
 
   loadDeviceValues (formValues) : void {
@@ -195,21 +222,22 @@ export class TestFilterModal implements OnInit {
       this.selectedOID = "";
     }
   }
+
   //Device Selector
   selectDevice(id: string): void {
     this.unsubscribeRequest();
-    this.resetVars();
+  //  this.resetVars();
+    this.isConnected = false;
     this.snmpDeviceService.getDevicesById(id)
       .subscribe(
       data => {
-        this.measGroups = [];
+        this.clearConfig();
         if (data.MeasurementGroups) {
           for (let entry of data.MeasurementGroups) {
             this.measGroups.push({ 'id': entry, 'name': entry });
           }
-          this.selectedMeasGroup = null;
-          this.measOnMeasGroup = [];
-          this.selectedOID = "";
+        //clearItems
+        this.clearQuery()
         }
         this.formValues = data;
         this.pingDevice(this.formValues);
@@ -221,13 +249,12 @@ export class TestFilterModal implements OnInit {
 
   //Select Measurement -> Load OID
   selectMeasOID(id: string) {
-    if (this.selectedMeas !== id) {
-      this.selectedMeas = id;
-      this.getMeasByIdforModal(id);
-      this.resetVars();
-    }
+      if (this.selectedMeas !== id) {
+        this.clearQuery();
+        this.selectedMeas = id;
+        this.getMeasByIdforModal(id);
+      }
   }
-
 
   //Select ALL Options
   selectAllOptions(checkAll: boolean): void {
@@ -278,7 +305,6 @@ export class TestFilterModal implements OnInit {
     if ((this.checkedResults && this.checkedResults.indexOf(tagID) > -1) == false) {
       if (this.selectOption(this.itemForm.controls['TagID'].value) == false) {
         this.addFilterValue(this.itemForm.controls['TagID'].value, this.itemForm.controls['Alias'].value);
-        this.checkedResults.push(tagID);
         this.showItemForm = false;
       }
     } else {
@@ -288,16 +314,22 @@ export class TestFilterModal implements OnInit {
 
   //QUERYRESULT PANEL
   sendQuery() {
+    this.isRequesting = true;
     this.snmpDeviceService.sendQuery(this.formValues, 'walk', this.selectedOID)
       .map(data => { this.queryResult = data })
       .subscribe(data => {
         for (let res of this.queryResult.QueryResult) {
           res.Value = res.Value.toString();
           res.checked = false;
-          if (this.checkedResults.indexOf(res.Value) > -1) res.checked = true;
+          let a = this.checkedResults.indexOf(res.Value)
+          if (a > -1){
+            console.log(a);
+            console.log(res);
+            res.checked = true;
+          }
         }
-
         this.queryResult.OID = this.selectedOID;
+        this.isRequesting = false;
       },
       err => {
         console.error(err);
@@ -335,7 +367,6 @@ export class TestFilterModal implements OnInit {
             //Push the first ocrurante to avoid duplicating entries with the same value
             if (this.checkedResults.indexOf(tmpValue) == -1) {
               ifexist = true;
-              this.checkedResults.push(tmpValue)
               this.addFilterValue(tmpValue, null);
             }
             //When non selected:
@@ -369,7 +400,25 @@ export class TestFilterModal implements OnInit {
   }
 
 
-  //BACKGROUND PROVIDERS FOR MODAL
+  //PROVIDERS FOR MODAL
+  initGetDevices() {
+    this.isRequesting = false;
+    this.alertHandler = {};
+    this.unsubscribeRequest();
+    this.clearItems();
+    this.snmpDeviceService.getDevices(null)
+      .subscribe(
+      data => {
+        this.snmpdevs = [];
+        for (let entry of data) {
+          this.snmpdevs.push({ 'id': entry.ID, 'name': entry.ID });
+        }
+        this.createStaticForm();
+      },
+      err => console.error(err),
+      () => console.log('DONE')
+      );
+  }
 
   getMeasGroupByIdForModal(id: string) {
     this.myObservable = this.measGroupService.getMeasGroupById(id)
@@ -387,7 +436,7 @@ export class TestFilterModal implements OnInit {
     this.myObservable = this.influxMeasService.getMeasById(id)
       .subscribe(
       data => {
-        this.selectedOID = data.IndexOID;
+        this.selectedOID = data.IndexOID || null;
       },
       err => console.error(err),
       () => console.log('DONE')
@@ -396,7 +445,9 @@ export class TestFilterModal implements OnInit {
 
   addCustomFilter() {
     console.log(this.formValues);
-    this.filterForm.controls['RelatedDev'].patchValue(this.formValues.id || this.formValues.ID);
+    this.filterForm.controls['RelatedDev'].patchValue(this.formValues.ID);
+    this.filterForm.controls['RelatedMeas'].patchValue(this.selectedMeas);
+    if (this.mode === "new") {
     this.customFilterService.addCustomFilter(this.filterForm.value)
       .subscribe(data => {
         this.showNewFilterForm = true;
@@ -412,24 +463,27 @@ export class TestFilterModal implements OnInit {
       },
       () => { console.log("DONE"); }
       );
-  }
-
-  saveMeasFilter() {
-    if (this.newFilterForm.valid) {
-      this.measFilterService.addMeasFilter(this.newFilterForm.value)
-        .subscribe(data => {
-          this.hide();
-        },
-        err => console.error(err),
-        () => { console.log("DONE") }
-        );
+    } else {
+      if (this.filterForm.valid) {
+        var r = true;
+        if (this.filterForm.value.ID != this.oldID) {
+          r = confirm("Changing CustomFilter ID from " + this.oldID + " to " + this.filterForm.value.ID + ". Proceed?");
+        }
+        if (r == true) {
+            this.customFilterService.editCustomFilter(this.filterForm.value, this.oldID)
+            .subscribe(data => {
+              this.validationClick();
+            },
+            err => console.error(err),
+            () => { }
+            );
+        }
+      }
     }
   }
 
-
-  //WAIT
   pingDevice(formValues) {
-    this.alertHandler = null;
+    this.alertHandler = {};
     this.isRequesting = true;
     this.myObservable = this.snmpDeviceService.pingDevice(formValues)
       .subscribe(data => {
@@ -438,7 +492,6 @@ export class TestFilterModal implements OnInit {
         this.isRequesting = false
       },
       err => {
-        console.error(err);
         this.alertHandler = { msg: 'Test failed! ' + err['_body'], type: 'danger', closable: true };
         this.isConnected = false;
         this.isRequesting = false

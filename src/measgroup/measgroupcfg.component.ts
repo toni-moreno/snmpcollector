@@ -262,7 +262,7 @@ export class MeasGroupCfgComponent {
   updateMeasGroup() {
     if (this.measgroupForm.valid) {
       var r = true;
-      if (this.measgroupForm.value.id != this.oldID) {
+      if (this.measgroupForm.value.ID != this.oldID) {
         r = confirm("Changing Measurement Group ID from " + this.oldID + " to " + this.measgroupForm.value.ID + ". Proceed?");
       }
       if (r == true) {
