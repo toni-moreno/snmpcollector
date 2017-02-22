@@ -9,9 +9,12 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"os"
+	"strconv"
+	"time"
 )
 
 type UploadForm struct {
+	AutoRename bool
 	ExportFile *multipart.FileHeader
 }
 
@@ -34,9 +37,21 @@ func NewImportExport(m *macaron.Macaron) error {
 /*IMPORT*/
 /*****************/
 
+type ImportCheck struct {
+	IsOk       bool
+	Message    string
+	Duplicated []*impexp.ExportObject
+}
+
 func ImportDataFile(ctx *Context, uf UploadForm) {
 	if (UploadForm{}) == uf {
 		log.Error("Error no data in expected struct")
+		ctx.JSON(404, "Error no data in expected struct")
+		return
+	}
+	log.Debugf("Uploaded data :%+v", uf)
+	if uf.ExportFile == nil {
+		ctx.JSON(404, "Error no file uploaded struct")
 		return
 	}
 	log.Debugf("Uploaded File : %+v", uf)
@@ -55,6 +70,41 @@ func ImportDataFile(ctx *Context, uf UploadForm) {
 		ctx.JSON(404, err.Error())
 	}
 	log.Debugf("IMPORTED STRUCT %+v", ImportedData)
+
+	arrays, err := ImportedData.ImportCheck()
+
+	if err != nil && uf.AutoRename == false {
+		ctx.JSON(404, &ImportCheck{IsOk: false, Message: err.Error(), Duplicated: arrays})
+		return
+	}
+	if err != nil && uf.AutoRename == true {
+		timestamp := time.Now().Unix()
+		replaced := buf.Bytes()
+		for _, v := range arrays {
+			oldid := v.ObjectID
+			newid := v.ObjectID + "_" + strconv.FormatInt(timestamp, 10)
+			log.Debugf("replacind old ID %s for new one %s", oldid, newid)
+			replaced = bytes.Replace(replaced, []byte(oldid), []byte(newid), -1)
+		}
+		ImportedData = impexp.ExportData{}
+		if err = json.Unmarshal(replaced, &ImportedData); err != nil {
+			log.Errorf("Error in data to struct (json-unmarshal) procces: %s", err)
+			ctx.JSON(404, err.Error())
+		}
+		err = ImportedData.Import()
+		if err != nil {
+			log.Errorf("Some Error happened on import data: %s", err)
+			ctx.JSON(404, err.Error())
+		}
+		ctx.JSON(200, &ImportCheck{IsOk: true, Message: "all duplicated ID's have been replaced", Duplicated: arrays})
+		return
+	}
+	err = ImportedData.Import()
+	if err != nil {
+		log.Errorf("Some Error happened on import data: %s", err)
+		ctx.JSON(404, err.Error())
+	}
+	ctx.JSON(200, &ImportCheck{IsOk: true, Message: "all objects have been  imported", Duplicated: nil})
 }
 
 /****************/

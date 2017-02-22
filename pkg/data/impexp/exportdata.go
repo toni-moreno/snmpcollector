@@ -39,7 +39,7 @@ type ExportInfo struct {
 type ExportObject struct {
 	ObjectTypeID string
 	ObjectID     string
-	ObjectPtr    interface{}
+	ObjectCfg    interface{}
 }
 
 // ExportData the runtime measurement config
@@ -73,62 +73,7 @@ func (e *ExportData) PrependObject(obj *ExportObject) {
 	if e.checkIfExist(obj.ObjectTypeID, obj.ObjectID) {
 		return
 	}
-	//newdata := []*ExportObject{obj}
-	//e.Objects = append(newdata, e.Objects...)
 	e.Objects = append([]*ExportObject{obj}, e.Objects...)
-}
-
-func (e *ExportData) ExportPtr(ptr interface{}) error {
-
-	switch v := ptr.(type) {
-	case config.SnmpDeviceCfg:
-		//contains sensible data
-	case config.InfluxCfg:
-		//contains sensible probable
-	case config.MeasFilterCfg:
-		e.PrependObject(&ExportObject{ObjectTypeID: "measfiltercfg", ObjectID: v.ID, ObjectPtr: ptr})
-		switch v.FType {
-		case "file":
-		case "OIDCondition":
-			filter, _ := dbc.GetOidConditionCfgByID(v.FilterName)
-			e.ExportPtr(filter)
-			//e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: v.FilterName, ObjectPtr: filter})
-		case "CustomFilter":
-			filter, _ := dbc.GetCustomFilterCfgByID(v.FilterName)
-			e.ExportPtr(filter)
-			//e.PrependObject(&ExportObject{ObjectTypeID: "customfiltercfg", ObjectID: v.FilterName, ObjectPtr: filter})
-		}
-
-	case config.CustomFilterCfg:
-		e.PrependObject(&ExportObject{ObjectTypeID: "customfiltercfg", ObjectID: v.ID, ObjectPtr: ptr})
-
-	case config.OidConditionCfg:
-		e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: v.ID, ObjectPtr: ptr})
-
-	case config.MeasurementCfg:
-		e.PrependObject(&ExportObject{ObjectTypeID: "measurementcfg", ObjectID: v.ID, ObjectPtr: ptr})
-		for _, val := range v.Fields {
-			metric, _ := dbc.GetSnmpMetricCfgByID(val.ID)
-			e.ExportPtr(metric)
-		}
-	case config.SnmpMetricCfg:
-		e.PrependObject(&ExportObject{ObjectTypeID: "snmpmetriccfg", ObjectID: v.ID, ObjectPtr: ptr})
-		if v.DataSrcType == "CONDITIONEVAL" {
-			cond, _ := dbc.GetOidConditionCfgByID(v.ExtraData)
-			e.ExportPtr(cond)
-		}
-	case config.MGroupsCfg:
-		e.PrependObject(&ExportObject{ObjectTypeID: "measgroupscfg", ObjectID: v.ID, ObjectPtr: ptr})
-		for _, val := range v.Measurements {
-			meas, _ := dbc.GetMeasurementCfgByID(val)
-			e.ExportPtr(meas)
-		}
-
-	default:
-		log.Warn("Unknown type for object ")
-	}
-
-	return nil
 }
 
 // Export  exports data
@@ -141,7 +86,7 @@ func (e *ExportData) Export(ObjType string, id string) error {
 		if err != nil {
 			return err
 		}
-		e.PrependObject(&ExportObject{ObjectTypeID: "snmpdevicecfg", ObjectID: id, ObjectPtr: v})
+		e.PrependObject(&ExportObject{ObjectTypeID: "snmpdevicecfg", ObjectID: id, ObjectCfg: v})
 		for _, val := range v.MeasurementGroups {
 			e.Export("measgroupcfg", val)
 		}
@@ -155,14 +100,13 @@ func (e *ExportData) Export(ObjType string, id string) error {
 		if err != nil {
 			return err
 		}
-		e.PrependObject(&ExportObject{ObjectTypeID: "influxcfg", ObjectID: id, ObjectPtr: v})
-
+		e.PrependObject(&ExportObject{ObjectTypeID: "influxcfg", ObjectID: id, ObjectCfg: v})
 	case "measfiltercfg":
 		v, err := dbc.GetMeasFilterCfgByID(id)
 		if err != nil {
 			return err
 		}
-		e.PrependObject(&ExportObject{ObjectTypeID: "measfiltercfg", ObjectID: id, ObjectPtr: v})
+		e.PrependObject(&ExportObject{ObjectTypeID: "measfiltercfg", ObjectID: id, ObjectCfg: v})
 		switch v.FType {
 		case "file":
 		case "OIDCondition":
@@ -175,21 +119,19 @@ func (e *ExportData) Export(ObjType string, id string) error {
 		if err != nil {
 			return err
 		}
-		e.PrependObject(&ExportObject{ObjectTypeID: "customfiltercfg", ObjectID: id, ObjectPtr: v})
-
+		e.PrependObject(&ExportObject{ObjectTypeID: "customfiltercfg", ObjectID: id, ObjectCfg: v})
 	case "oidconditioncfg":
 		v, err := dbc.GetOidConditionCfgByID(id)
 		if err != nil {
 			return err
 		}
-		e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: id, ObjectPtr: v})
-
+		e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: id, ObjectCfg: v})
 	case "measurementcfg":
 		v, err := dbc.GetMeasurementCfgByID(id)
 		if err != nil {
 			return err
 		}
-		e.PrependObject(&ExportObject{ObjectTypeID: "measurementcfg", ObjectID: id, ObjectPtr: v})
+		e.PrependObject(&ExportObject{ObjectTypeID: "measurementcfg", ObjectID: id, ObjectCfg: v})
 		for _, val := range v.Fields {
 			e.Export("snmpmetriccfg", val.ID)
 		}
@@ -198,7 +140,7 @@ func (e *ExportData) Export(ObjType string, id string) error {
 		if err != nil {
 			return err
 		}
-		e.PrependObject(&ExportObject{ObjectTypeID: "snmpmetriccfg", ObjectID: id, ObjectPtr: v})
+		e.PrependObject(&ExportObject{ObjectTypeID: "snmpmetriccfg", ObjectID: id, ObjectCfg: v})
 		if v.DataSrcType == "CONDITIONEVAL" {
 			e.Export("oidconditioncfg", v.ExtraData)
 		}
@@ -207,7 +149,7 @@ func (e *ExportData) Export(ObjType string, id string) error {
 		if err != nil {
 			return err
 		}
-		e.PrependObject(&ExportObject{ObjectTypeID: "measgroupscfg", ObjectID: id, ObjectPtr: v})
+		e.PrependObject(&ExportObject{ObjectTypeID: "measgroupscfg", ObjectID: id, ObjectCfg: v})
 		for _, val := range v.Measurements {
 			e.Export("measurementcfg", val)
 		}
