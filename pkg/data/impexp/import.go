@@ -74,6 +74,9 @@ func (e *ExportData) Import() error {
 
 		o := e.Objects[i]
 		log.Debugf("Importing object %+v", o)
+		if o.ObjectCfg == nil {
+			return fmt.Errorf("Error inconsistent data not ObjectCfg found on Imported data for id: %s", o.ObjectID)
+		}
 		raw, err := json.Marshal(o.ObjectCfg)
 		if err != nil {
 			return fmt.Errorf("error on reformating object %s: error: %s ", o.ObjectID, err)

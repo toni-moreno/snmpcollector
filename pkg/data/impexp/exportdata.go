@@ -2,6 +2,7 @@ package impexp
 
 import (
 	"fmt"
+	"github.com/Knetic/govaluate"
 	"github.com/Sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
@@ -126,6 +127,20 @@ func (e *ExportData) Export(ObjType string, id string) error {
 			return err
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: id, ObjectCfg: v})
+		if v.IsMultiple {
+			expression, err := govaluate.NewEvaluableExpression(v.OIDCond)
+			if err != nil {
+				return fmt.Errorf("Error on initializing , evaluation : %s : ERROR : %s", v.OIDCond, err)
+			}
+			vars := expression.Vars()
+			for _, par := range vars {
+				oidcond, err := dbc.GetOidConditionCfgByID(par)
+				if err != nil {
+					return fmt.Errorf("Error on initializing , evaluation : %s (subcondition %s): ERROR : %s", v.OIDCond, par, err)
+				}
+				e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: par, ObjectCfg: oidcond})
+			}
+		}
 	case "measurementcfg":
 		v, err := dbc.GetMeasurementCfgByID(id)
 		if err != nil {
