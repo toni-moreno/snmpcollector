@@ -1,9 +1,12 @@
 # v 0.6.5 (not released yet)
 ### New Features
-* Added new Multiple OID condition Filter and filter check improvements
+* Refactored and Improved form Validation options,to allow dynamic validators  on some parameters changes
+* Added new Multiple OID condition Filter and filter check improvements.
+* Added Import/Export methods to API REST
+* Added CustomFilter to Filter type REST API and WebUI
 
 ### fixes
-* fix for #126
+* fix for #126, #140, #142, #145
 
 ### breaking changes
 
