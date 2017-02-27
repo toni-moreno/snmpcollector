@@ -599,7 +599,7 @@ func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction,
 
 	for _, val := range mg {
 		obj = append(obj, &DbObjAction{
-			Type:     "measgroupscfg",
+			Type:     "measgroupcfg",
 			TypeDesc: "Meas. Groups",
 			ObID:     val.IDMGroupCfg,
 			Action:   "Delete Measurement from Measurement Group relation",

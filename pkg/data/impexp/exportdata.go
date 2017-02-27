@@ -164,7 +164,7 @@ func (e *ExportData) Export(ObjType string, id string) error {
 		if err != nil {
 			return err
 		}
-		e.PrependObject(&ExportObject{ObjectTypeID: "measgroupscfg", ObjectID: id, ObjectCfg: v})
+		e.PrependObject(&ExportObject{ObjectTypeID: "measgroupcfg", ObjectID: id, ObjectCfg: v})
 		for _, val := range v.Measurements {
 			e.Export("measurementcfg", val)
 		}
