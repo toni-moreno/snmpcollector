@@ -38,6 +38,7 @@ func NewImportExport(m *macaron.Macaron) error {
 /*****************/
 
 type ImportCheck struct {
+	Info       *impexp.ExportInfo
 	IsOk       bool
 	Message    string
 	Duplicated []*impexp.ExportObject
@@ -74,7 +75,7 @@ func ImportDataFile(ctx *Context, uf UploadForm) {
 	arrays, err := ImportedData.ImportCheck()
 
 	if err != nil && uf.AutoRename == false {
-		ctx.JSON(404, &ImportCheck{IsOk: false, Message: err.Error(), Duplicated: arrays})
+		ctx.JSON(200, &ImportCheck{Info: ImportedData.Info, IsOk: false, Message: err.Error(), Duplicated: arrays})
 		return
 	}
 	if err != nil && uf.AutoRename == true {
@@ -96,7 +97,7 @@ func ImportDataFile(ctx *Context, uf UploadForm) {
 			log.Errorf("Some Error happened on import data: %s", err)
 			ctx.JSON(404, err.Error())
 		}
-		ctx.JSON(200, &ImportCheck{IsOk: true, Message: "all duplicated ID's have been replaced", Duplicated: arrays})
+		ctx.JSON(200, &ImportCheck{Info: ImportedData.Info, IsOk: true, Message: "all duplicated ID's have been replaced", Duplicated: arrays})
 		return
 	}
 	err = ImportedData.Import()
@@ -104,7 +105,7 @@ func ImportDataFile(ctx *Context, uf UploadForm) {
 		log.Errorf("Some Error happened on import data: %s", err)
 		ctx.JSON(404, err.Error())
 	}
-	ctx.JSON(200, &ImportCheck{IsOk: true, Message: "all objects have been  imported", Duplicated: nil})
+	ctx.JSON(200, &ImportCheck{Info: ImportedData.Info, IsOk: true, Message: "all objects have been  imported", Duplicated: nil})
 }
 
 /****************/
