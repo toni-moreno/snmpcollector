@@ -6,8 +6,10 @@ import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
 import { ControlMessagesComponent } from '../common/control-messages.component'
 import { ValidationService } from '../common/validation.service'
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
+import { ExportFileModal } from '../common/dataservice/export-file-modal';
 
 import { GenericModal } from '../common/generic-modal';
+import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 @Component({
   selector: 'snmpmetrics',
@@ -19,6 +21,7 @@ import { GenericModal } from '../common/generic-modal';
 export class SnmpMetricCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
+  @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
   editmode: string; //list , create, modify
   snmpmetrics: Array<any>;
@@ -62,7 +65,7 @@ export class SnmpMetricCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public snmpMetricService: SnmpMetricService, public oidCondService: OidConditionService, builder: FormBuilder) {
+  constructor(public snmpMetricService: SnmpMetricService, public oidCondService: OidConditionService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -283,8 +286,12 @@ export class SnmpMetricCfgComponent {
   viewItem(id, event) {
     console.log('view', id);
     this.viewModal.parseObject(id);
-
   }
+
+  exportItem(item : any) : void {
+    this.exportFileModal.initExportModal(item);
+  }
+
   removeItem(row) {
     let id = row.ID;
     console.log('remove', id);

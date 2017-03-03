@@ -5,7 +5,7 @@ import { HttpAPI} from '../common/httpAPI';
 import { Observable } from 'rxjs/Observable';
 import { BlockUIService } from '../common/blockui/blockui-service';
 import { BlockUIComponent } from '../common/blockui/blockui-component'; // error
-
+import { ImportFileModal } from '../common/dataservice/import-file-modal';
 declare var _:any;
 
 @Component({
@@ -18,6 +18,7 @@ declare var _:any;
 export class Home {
 
   @ViewChild('blocker', { read: ViewContainerRef }) container: ViewContainerRef;
+  @ViewChild('importFileModal') public importFileModal : ImportFileModal;
 
   response: string;
   api: string;
@@ -58,6 +59,10 @@ export class Home {
   clickMenu(selected : string) : void {
     this.item_type = "";
     this.item_type = selected;
+  }
+
+  showImportModal() {
+    this.importFileModal.initImport();
   }
 
   reloadConfig() {

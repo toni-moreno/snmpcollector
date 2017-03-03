@@ -5,10 +5,17 @@
     <ul class="sidebar-nav">
       <li class="sidebar-brand">
         <h3>SNMP Collector</h3>
-        <h5 *ngIf="version" class="instance">{{version.InstanceID}}</h5>
+        <h5 *ngIf="version" class="instance" style="margin-right: 10px">{{version.InstanceID}}</h5>
+      </li>
+      <li>
+        <span class="title-menu">Navigation</span>
       </li>
       <li *ngFor="let menuItem of menuItems; let last=last" [ngClass]="last ? 'last-li' : ''">
         <a (click)="clickMenu(menuItem.selector)" role="button" [ngClass]="item_type === menuItem.selector ? 'active-menu' : ''">{{menuItem.title}}</a>
+      </li>
+      <li class="last-li">
+        <span class="title-menu">Data Management</span>
+        <a (click)="showImportModal()" role="button">Import Data</a>
       </li>
       <li class="last-li">
         <a class="btn btn-primary" style="text-align:left" (click)="reloadConfig()"> <i class="glyphicon glyphicon-refresh" style="display: inline; padding-left: 0px"> </i>Reload Config
@@ -27,9 +34,10 @@
   <!-- /#sidebar-wrapper -->
 
   <!-- Page Content -->
-  <div id="page-content-wrapper">
+  <div id="page-content-wrapper" style="margin-bottom:50px">
     <div class="container-fluid">
       <div class="row">
+        <import-file-modal #importFileModal [showValidation]="true" [textValidation]="'Import'" titleName='Importing:'></import-file-modal>
         <div class="col-lg-12">
           <p [ngSwitch]="item_type">
             <template ngSwitchCase="influxserver">

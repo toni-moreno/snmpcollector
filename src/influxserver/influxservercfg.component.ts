@@ -4,8 +4,10 @@ import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
 import { InfluxServerService } from './influxservercfg.service';
 import { ValidationService } from '../common/validation.service'
+import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 import { GenericModal } from '../common/generic-modal';
+import { ExportFileModal } from '../common/dataservice/export-file-modal';
 
 @Component({
   selector: 'influxservers',
@@ -17,6 +19,7 @@ import { GenericModal } from '../common/generic-modal';
 export class InfluxServerCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
+  @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
 
   editmode: string; //list , create, modify
@@ -57,7 +60,7 @@ export class InfluxServerCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public influxServerService: InfluxServerService, builder: FormBuilder) {
+  constructor(public influxServerService: InfluxServerService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -211,6 +214,10 @@ export class InfluxServerCfgComponent {
   viewItem(id, event) {
     console.log('view', id);
     this.viewModal.parseObject(id);
+  }
+
+  exportItem(item : any) : void {
+    this.exportFileModal.initExportModal(item);
   }
 
   removeItem(row) {

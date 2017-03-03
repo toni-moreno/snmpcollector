@@ -5,8 +5,10 @@ import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
 import { ValidationService } from '../common/validation.service'
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
+import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 import { GenericModal } from '../common/generic-modal';
+import { ExportFileModal } from '../common/dataservice/export-file-modal';
 
 declare var _:any;
 
@@ -20,6 +22,7 @@ declare var _:any;
 export class InfluxMeasCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
+  @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
   editmode: string; //list , create, modify
   influxmeas: Array<any>;
@@ -68,7 +71,7 @@ export class InfluxMeasCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public influxMeasService: InfluxMeasService, public metricMeasService: SnmpMetricService, builder: FormBuilder) {
+  constructor(public influxMeasService: InfluxMeasService, public metricMeasService: SnmpMetricService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -277,6 +280,10 @@ export class InfluxMeasCfgComponent {
   viewItem(id, event) {
     console.log('view', id);
     this.viewModal.parseObject(id);
+  }
+
+  exportItem(item : any) : void {
+    this.exportFileModal.initExportModal(item);
   }
 
   removeItem(row) {

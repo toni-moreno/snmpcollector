@@ -2,11 +2,13 @@ import { Component, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
 import { CustomFilterService } from './customfilter.service';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
+import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 import { ValidationService } from '../common/validation.service'
 
 import { GenericModal } from '../common/generic-modal';
 import { TestFilterModal } from './test-filter-modal';
+import { ExportFileModal } from '../common/dataservice/export-file-modal';
 
 
 @Component({
@@ -20,6 +22,7 @@ export class CustomFilterCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('viewTestFilterModal') public viewTestFilterModal: TestFilterModal;
+  @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
 
   editmode: string; //list , create, modify
@@ -54,7 +57,7 @@ export class CustomFilterCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public customFilterService: CustomFilterService, public snmpDeviceService: SnmpDeviceService, builder: FormBuilder) {
+  constructor(public customFilterService: CustomFilterService, public snmpDeviceService: SnmpDeviceService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
   }
@@ -191,6 +194,10 @@ export class CustomFilterCfgComponent {
   viewItem(id, event) {
     console.log('view', id);
     this.viewModal.parseObject(id);
+  }
+
+  exportItem(item : any) : void {
+    this.exportFileModal.initExportModal(item);
   }
 
   removeItem(row) {

@@ -5,8 +5,10 @@ import { ControlMessagesComponent } from '../common/control-messages.component'
 import { ValidationService } from '../common/validation.service'
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 import { TypeaheadModule } from 'ng2-bootstrap/typeahead';
+import { ExportFileModal } from '../common/dataservice/export-file-modal';
 
 import { GenericModal } from '../common/generic-modal';
+import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 @Component({
   selector: 'oidconditions',
@@ -18,6 +20,7 @@ import { GenericModal } from '../common/generic-modal';
 export class OidConditionCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
+  @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
   editmode: string; //list , create, modify
   oidconditions: Array<any>;
@@ -51,7 +54,7 @@ export class OidConditionCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public oidConditionService: OidConditionService, builder: FormBuilder) {
+  constructor(public oidConditionService: OidConditionService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -238,6 +241,11 @@ export class OidConditionCfgComponent {
     this.viewModal.parseObject(id);
 
   }
+
+  exportItem(item : any) : void {
+    this.exportFileModal.initExportModal(item);
+  }
+  
   removeItem(row) {
     let id = row.ID;
     console.log('remove', id);
