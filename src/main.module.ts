@@ -38,13 +38,17 @@ import { ModalModule } from 'ng2-bootstrap';
 import { ModalDirective } from 'ng2-bootstrap';
 
 import { GenericModal } from './common/generic-modal';
+import { ExportFileModal } from './common/dataservice/export-file-modal';
+import { TreeView } from './common/dataservice/treeview';
 import { TestConnectionModal } from './common/test-connection-modal';
 import { TestFilterModal } from './customfilter/test-filter-modal';
+import { ImportFileModal } from './common/dataservice/import-file-modal'
 
 //others
 import { ValidationService } from './common/validation.service';
+import { ExportServiceCfg } from './common/dataservice/export.service'
 //pipes
-import { ObjectParserPipe } from './common/custom_pipe';
+import { ObjectParserPipe,SplitCommaPipe } from './common/custom_pipe';
 
 import { BlockUIComponent } from './common/blockui/blockui-component';
 import { SpinnerComponent } from './common/spinner';
@@ -54,6 +58,7 @@ import { SpinnerComponent } from './common/spinner';
   bootstrap: [App],
   declarations: [
     ObjectParserPipe,
+    SplitCommaPipe,
     ControlMessagesComponent,
     SnmpDeviceCfgComponent,
     OidConditionCfgComponent,
@@ -65,7 +70,10 @@ import { SpinnerComponent } from './common/spinner';
     CustomFilterCfgComponent,
     RuntimeComponent,
     GenericModal,
+    ExportFileModal,
+    ImportFileModal,
     BlockUIComponent,
+    TreeView,
     SpinnerComponent,
     TestConnectionModal,
     TestFilterModal,
@@ -90,6 +98,7 @@ import { SpinnerComponent } from './common/spinner';
   ],
   providers: [
     HttpAPI,
+    ExportServiceCfg,
     ValidationService,
     BlockUIService
   ],
