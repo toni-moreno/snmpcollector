@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 export class HttpAPI {
     protected headers: Headers;
     protected router : Router;
+    protected headersUpload: Headers;
     public testi;
 
     constructor(private _http: Http, public _router : Router) {
@@ -19,6 +20,9 @@ export class HttpAPI {
         this.headers = new Headers();
         this.headers.append('Content-Type', 'application/json');
         this.headers.append('Accept', 'application/json');
+        this.headersUpload = new Headers();
+        this.headersUpload.append('Content-Type', 'multipart/form-data')
+        this.headersUpload.append('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
     }
 
     get(url:string) : Observable<any> {
@@ -30,6 +34,13 @@ export class HttpAPI {
         if (args == null) args = {};
         if (args.headers === undefined) args.headers = this.headers;
         return this._http.post(url, data, args)
+            .catch(this.handleError.bind(this));
+    }
+
+    postFile(url:string, data:any, args?: RequestOptionsArgs) : Observable<any> {
+        if (args == null) args = {};
+        args.headers = this.headersUpload;
+        return this._http.post(url, data, this.headersUpload)
             .catch(this.handleError.bind(this));
     }
 

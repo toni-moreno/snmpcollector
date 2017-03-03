@@ -53,10 +53,16 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  margin-bottom: 50px;
 }
 .sidebar-nav li {
   text-indent: 20px;
-  line-height: 40px;
+  line-height: 30px;
+}
+.title-menu {
+  color: #999999;
+  display:block;
+  text-indent: 10px;
 }
 .sidebar-nav li a {
   display: block;
@@ -64,7 +70,7 @@
   color: #eee;
 }
 .last-li {
-  margin-bottom: 20px;
+  padding-bottom: 20px;
   border-bottom: 1px solid #333;
 }
 .sidebar-nav li a:hover {
