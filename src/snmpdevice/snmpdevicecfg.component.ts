@@ -12,8 +12,10 @@ import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
 
 import { GenericModal } from '../common/generic-modal';
+import { ExportFileModal } from '../common/dataservice/export-file-modal';
 import { TestConnectionModal } from '../common/test-connection-modal';
 import { TestFilterModal } from '../customfilter/test-filter-modal'
+import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 
 @Component({
@@ -28,6 +30,7 @@ export class SnmpDeviceCfgComponent {
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('viewTestConnectionModal') public viewTestConnectionModal: TestConnectionModal;
   @ViewChild('viewTestFilterModal') public viewTestFilterModal: TestFilterModal;
+  @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
 
   //ADDED
@@ -88,7 +91,7 @@ export class SnmpDeviceCfgComponent {
 
 
 
-  constructor(public snmpDeviceService: SnmpDeviceService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService, builder: FormBuilder) {
+  constructor(public snmpDeviceService: SnmpDeviceService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService,  public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -305,6 +308,10 @@ export class SnmpDeviceCfgComponent {
   viewItem(id) {
     console.log("id: ", id);
     this.viewModal.parseObject(id);
+  }
+
+  exportItem(item : any) : void {
+    this.exportFileModal.initExportModal(item);
   }
 
   removeItem(row) {

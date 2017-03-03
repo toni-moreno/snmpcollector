@@ -5,8 +5,10 @@ import { MeasGroupService } from './measgroupcfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 import { ValidationService } from '../common/validation.service'
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
+import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 import { GenericModal } from '../common/generic-modal';
+import { ExportFileModal } from '../common/dataservice/export-file-modal';
 
 @Component({
   selector: 'measgroups',
@@ -18,6 +20,7 @@ import { GenericModal } from '../common/generic-modal';
 export class MeasGroupCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
+  @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
   editmode: string; //list , create, modify
   measgroups: Array<any>;
@@ -52,7 +55,7 @@ export class MeasGroupCfgComponent {
   };
 
 
-  constructor(public measGroupService: MeasGroupService, public measMeasGroupService: InfluxMeasService, builder: FormBuilder) {
+  constructor(public measGroupService: MeasGroupService, public measMeasGroupService: InfluxMeasService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -200,6 +203,11 @@ export class MeasGroupCfgComponent {
     console.log('view', id);
     this.viewModal.parseObject(id);
   }
+
+  exportItem(item : any) : void {
+    this.exportFileModal.initExportModal(item);
+  }
+
   removeItem(row) {
     let id = row.ID;
     console.log('remove', id);

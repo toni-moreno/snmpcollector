@@ -5,11 +5,12 @@ import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
 import { CustomFilterService } from '../customfilter/customfilter.service';
 import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
+import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 import { ValidationService } from '../common/validation.service'
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 
-
+import { ExportFileModal } from '../common/dataservice/export-file-modal';
 import { GenericModal } from '../common/generic-modal';
 
 @Component({
@@ -22,6 +23,7 @@ import { GenericModal } from '../common/generic-modal';
 export class MeasFilterCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
+  @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
   editmode: string; //list , create, modify
   measfilters: Array<any>;
@@ -66,7 +68,7 @@ export class MeasFilterCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public oidCondService: OidConditionService,public customFilterService: CustomFilterService, public measFilterService: MeasFilterService, public measMeasFilterService: InfluxMeasService, builder: FormBuilder) {
+  constructor(public oidCondService: OidConditionService,public customFilterService: CustomFilterService, public measFilterService: MeasFilterService, public measMeasFilterService: InfluxMeasService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -257,6 +259,10 @@ export class MeasFilterCfgComponent {
   viewItem(id, event) {
     console.log('view', id);
     this.viewModal.parseObject(id);
+  }
+
+  exportItem(item : any) : void {
+    this.exportFileModal.initExportModal(item);
   }
 
   removeItem(row) {

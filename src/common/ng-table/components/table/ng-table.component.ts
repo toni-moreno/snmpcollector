@@ -10,7 +10,7 @@ import { TooltipModule } from 'ng2-bootstrap';
            role="grid" style="width: 100%;">
       <thead>
         <tr role="row">
-          <th *ngIf="showCustom == true" style="min-width:78px">
+          <th *ngIf="showCustom == true" [ngStyle]="exportType ? {'min-width': '95px'} : {'min-width': '80px'}">
           </th>
           <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column"
               (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important;">
@@ -34,6 +34,7 @@ import { TooltipModule } from 'ng2-bootstrap';
       </tr>
         <tr *ngFor="let row of rows">
           <td *ngIf="showCustom == true">
+          <i *ngIf="exportType" class="glyphicon glyphicon-download-alt" [tooltip]="'Export item'" (click)="exportItem(row, exportType)"></i>
           <i class="glyphicon glyphicon-eye-open" [tooltip]="'View item'" (click)="viewItem(row)"></i>
 					<i class="glyphicon glyphicon-edit"  [tooltip]="'Edit item'" (click)="editItem(row)"></i>
     			<i class="glyphicon glyphicon glyphicon-remove"  [tooltip]="'Remove Item'" (click)="removeItem(row)"></i>
@@ -67,6 +68,7 @@ export class NgTableComponent {
   // Table values
   @Input() public rows: Array<any> = [];
   @Input() public showCustom: boolean;
+  @Input() public exportType: string;
 
   @Input()
   public set config(conf: any) {
@@ -91,6 +93,7 @@ export class NgTableComponent {
   @Output() public viewedItem: EventEmitter<any> = new EventEmitter();
   @Output() public editedItem: EventEmitter<any> = new EventEmitter();
   @Output() public removedItem: EventEmitter<any> = new EventEmitter();
+  @Output() public exportedItem: EventEmitter<any> = new EventEmitter();
 
 
   public showFilterRow: Boolean = false;
@@ -199,5 +202,8 @@ export class NgTableComponent {
   }
   public removeItem(row: any): void {
     this.removedItem.emit(row);
+  }
+  public exportItem(row: any, exportType : any) : void {
+    this.exportedItem.emit({row, exportType});
   }
 }
