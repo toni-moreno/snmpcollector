@@ -31,10 +31,13 @@ func SetLogger(l *logrus.Logger) {
 }
 
 type ExportInfo struct {
-	FileName    string
-	Description string
-	Author      string
-	Tags        string
+	FileName      string
+	Description   string
+	Author        string
+	Tags          string
+	AgentVersion  string
+	ExportVersion string
+	CreationDate  time.Time
 }
 
 type ExportObject struct {
@@ -45,19 +48,16 @@ type ExportObject struct {
 
 // ExportData the runtime measurement config
 type ExportData struct {
-	Info          *ExportInfo
-	AgentVersion  string
-	ExportVersion string
-	CreationDate  time.Time
-	Objects       []*ExportObject
+	Info    *ExportInfo
+	Objects []*ExportObject
 }
 
 func NewExport(info *ExportInfo) *ExportData {
+	info.AgentVersion = agent.Version
+	info.ExportVersion = "1.0"
+	info.CreationDate = time.Now()
 	return &ExportData{
-		Info:          info,
-		AgentVersion:  agent.Version,
-		ExportVersion: "1.0",
-		CreationDate:  time.Now(),
+		Info: info,
 	}
 }
 
