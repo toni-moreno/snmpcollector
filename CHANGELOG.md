@@ -3,6 +3,7 @@
 * Refactored and Improved form Validation options,to allow dynamic validators  on some parameters changes
 * Added new Multiple OID condition Filter and filter check improvements.
 * Added Import/Export methods to API REST
+* Added Import/Export WebUI forms
 * Added CustomFilter to Filter type REST API and WebUI
 
 ### fixes
