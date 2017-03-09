@@ -6,7 +6,7 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 )
 
-func (e *ExportData) ImportCheck() ([]*ExportObject, error) {
+func (e *ExportData) ImportCheck() (*ExportData, error) {
 
 	var duplicated []*ExportObject
 
@@ -54,20 +54,20 @@ func (e *ExportData) ImportCheck() ([]*ExportObject, error) {
 				duplicated = append(duplicated, o)
 			}
 		default:
-			return duplicated, fmt.Errorf("Unknown type object type %s ", o.ObjectTypeID)
+			return &ExportData{Info: e.Info, Objects: duplicated}, fmt.Errorf("Unknown type object type %s ", o.ObjectTypeID)
 		}
 	}
 	if len(duplicated) > 0 {
-		return duplicated, fmt.Errorf("There is %d objects duplicated in the config database ", len(duplicated))
+		return &ExportData{Info: e.Info, Objects: duplicated}, fmt.Errorf("There is %d objects duplicated in the config database ", len(duplicated))
 	}
-	return duplicated, nil
+	return &ExportData{Info: e.Info, Objects: duplicated}, nil
 }
 
 func (e *ExportData) Import() error {
 
 	a, err := e.ImportCheck()
-	if len(a) > 0 {
-		return fmt.Errorf("Error there is  %d objects already in database: %s", len(a), err)
+	if len(a.Objects) > 0 {
+		return fmt.Errorf("Error there is  %d objects already in database: %s", len(a.Objects), err)
 	}
 
 	for i := 0; i < len(e.Objects); i++ {

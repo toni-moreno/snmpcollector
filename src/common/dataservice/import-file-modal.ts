@@ -14,7 +14,7 @@ import { TreeView} from './treeview';
                 <button type="button" class="close" (click)="childModal.hide()" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
-                <h4 class="modal-title">{{titleName}} {{importResult ? importResult.Info.FileName  : 'Select File' }}</h4>
+                <h4 class="modal-title">{{titleName}} {{importResult ? importResult.Data.Info.FileName  : 'Select File' }}</h4>
               </div>
               <div class="modal-body">
               <div>
@@ -23,17 +23,17 @@ import { TreeView} from './treeview';
               <div class="panel panel-default">
               <div class="panel-heading">
                 <div class="text-left">
-                  <span>{{importResult.Info.FileName}}
-                  <label style="margin-left:10px" *ngFor="let tag of importResult.Info.Tags | splitComma" class="label label-info">{{tag}}</label>
+                  <span>{{importResult.Data.Info.FileName}}
+                  <label style="margin-left:10px" *ngFor="let tag of importResult.Data.Info.Tags | splitComma" class="label label-info">{{tag}}</label>
                   </span>
                 </div>
 
               </div>
               <div class="panel-body">
-                <p>"{{importResult.Info.Description}}"</p>
+                <p>"{{importResult.Data.Info.Description}}"</p>
               </div>
               <div class="text-right">
-                  <span>by {{importResult.Info.Author}}</span>
+                  <span>by {{importResult.Data.Info.Author}}</span>
               </div>
               </div>
               <h4 [ngClass]="importResult.IsOk === true ? ['text-success'] : ['text-danger']">
@@ -48,7 +48,7 @@ import { TreeView} from './treeview';
                   </select>
               </div>
                 <div style="max-height:350px; overflow-y:scroll">
-                <div *ngFor="let a of importResult.Duplicated;  let i = index" >
+                <div *ngFor="let a of importResult.Data.Objects;  let i = index" >
                 <treeview [visible]="false" [title]="a.ObjectID" [type]="a.ObjectTypeID" [object]="a.ObjectCfg"> </treeview>
                 </div>
                 </div>

@@ -40,9 +40,16 @@ type ExportInfo struct {
 	CreationDate  time.Time
 }
 
+type EIOptions struct {
+	Recursive   bool   //Export Option
+	AutoRename  bool   //Import Option
+	AlternateID string //Import Option
+}
+
 type ExportObject struct {
 	ObjectTypeID string
 	ObjectID     string
+	Options      *EIOptions
 	ObjectCfg    interface{}
 }
 
@@ -53,7 +60,12 @@ type ExportData struct {
 }
 
 func NewExport(info *ExportInfo) *ExportData {
-	info.AgentVersion = agent.Version
+	if len(agent.Version) > 0 {
+		info.AgentVersion = agent.Version
+	} else {
+		info.AgentVersion = "debug"
+	}
+
 	info.ExportVersion = "1.0"
 	info.CreationDate = time.Now()
 	return &ExportData{
@@ -78,7 +90,7 @@ func (e *ExportData) PrependObject(obj *ExportObject) {
 }
 
 // Export  exports data
-func (e *ExportData) Export(ObjType string, id string) error {
+func (e *ExportData) Export(ObjType string, id string, recursive bool) error {
 
 	switch ObjType {
 	case "snmpdevicecfg":
@@ -88,13 +100,16 @@ func (e *ExportData) Export(ObjType string, id string) error {
 			return err
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "snmpdevicecfg", ObjectID: id, ObjectCfg: v})
+		if !recursive {
+			return nil
+		}
 		for _, val := range v.MeasurementGroups {
-			e.Export("measgroupcfg", val)
+			e.Export("measgroupcfg", val, recursive)
 		}
 		for _, val := range v.MeasFilters {
-			e.Export("measfiltercfg", val)
+			e.Export("measfiltercfg", val, recursive)
 		}
-		e.Export("influxcfg", v.OutDB)
+		e.Export("influxcfg", v.OutDB, recursive)
 	case "influxcfg":
 		//contains sensible probable
 		v, err := dbc.GetInfluxCfgByID(id)
@@ -108,12 +123,15 @@ func (e *ExportData) Export(ObjType string, id string) error {
 			return err
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "measfiltercfg", ObjectID: id, ObjectCfg: v})
+		if !recursive {
+			return nil
+		}
 		switch v.FType {
 		case "file":
 		case "OIDCondition":
-			e.Export("oidconditioncfg", v.FilterName)
+			e.Export("oidconditioncfg", v.FilterName, recursive)
 		case "CustomFilter":
-			e.Export("customfiltercfg", v.FilterName)
+			e.Export("customfiltercfg", v.FilterName, recursive)
 		}
 	case "customfiltercfg":
 		v, err := dbc.GetCustomFilterCfgByID(id)
@@ -127,6 +145,9 @@ func (e *ExportData) Export(ObjType string, id string) error {
 			return err
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: id, ObjectCfg: v})
+		if !recursive {
+			return nil
+		}
 		if v.IsMultiple {
 			expression, err := govaluate.NewEvaluableExpression(v.OIDCond)
 			if err != nil {
@@ -147,8 +168,11 @@ func (e *ExportData) Export(ObjType string, id string) error {
 			return err
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "measurementcfg", ObjectID: id, ObjectCfg: v})
+		if !recursive {
+			return nil
+		}
 		for _, val := range v.Fields {
-			e.Export("snmpmetriccfg", val.ID)
+			e.Export("snmpmetriccfg", val.ID, recursive)
 		}
 	case "snmpmetriccfg":
 		v, err := dbc.GetSnmpMetricCfgByID(id)
@@ -157,7 +181,7 @@ func (e *ExportData) Export(ObjType string, id string) error {
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "snmpmetriccfg", ObjectID: id, ObjectCfg: v})
 		if v.DataSrcType == "CONDITIONEVAL" {
-			e.Export("oidconditioncfg", v.ExtraData)
+			e.Export("oidconditioncfg", v.ExtraData, recursive)
 		}
 	case "measgroupcfg":
 		v, err := dbc.GetMGroupsCfgByID(id)
@@ -165,8 +189,11 @@ func (e *ExportData) Export(ObjType string, id string) error {
 			return err
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "measgroupcfg", ObjectID: id, ObjectCfg: v})
+		if !recursive {
+			return nil
+		}
 		for _, val := range v.Measurements {
-			e.Export("measurementcfg", val)
+			e.Export("measurementcfg", val, recursive)
 		}
 
 	default:
