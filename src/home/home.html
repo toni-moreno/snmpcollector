@@ -16,6 +16,7 @@
       <li class="last-li">
         <span class="title-menu">Data Management</span>
         <a (click)="showImportModal()" role="button">Import Data</a>
+        <a (click)="showExportBulkModal()" role="button">Export Data</a>
       </li>
       <li class="last-li">
         <a class="btn btn-primary" style="text-align:left" (click)="reloadConfig()"> <i class="glyphicon glyphicon-refresh" style="display: inline; padding-left: 0px"> </i>Reload Config
@@ -38,6 +39,8 @@
     <div class="container-fluid">
       <div class="row">
         <import-file-modal #importFileModal [showValidation]="true" [textValidation]="'Import'" titleName='Importing:'></import-file-modal>
+        <export-file-modal #exportBulkFileModal [showValidation]="true" [bulkExport]="true" [prepareExport]="false" [textValidation]="'Export'" titleName='Exporting Data:'></export-file-modal>
+
         <div class="col-lg-12">
           <p [ngSwitch]="item_type">
             <template ngSwitchCase="influxserver">

@@ -37,9 +37,8 @@ import { TreeView} from './treeview';
               </div>
               </div>
               <h4 [ngClass]="importResult.IsOk === true ? ['text-success'] : ['text-danger']">
-              Result:
               <i [ngClass]="importResult.IsOk === true ? ['glyphicon glyphicon-ok-circle'] : ['glyphicon glyphicon-remove-circle']"></i>
-                - {{ importResult.Message}} </h4>
+              {{ importResult.Message}} </h4>
               <div class="text-right">
                 <label class="control-label" for="AutoRename">AutoRename</label>
                   <select name="auto_rename" id="auto_rename" [(ngModel)]="auto_rename">
@@ -49,7 +48,7 @@ import { TreeView} from './treeview';
               </div>
                 <div style="max-height:350px; overflow-y:scroll">
                 <div *ngFor="let a of importResult.Data.Objects;  let i = index" >
-                <treeview [visible]="false" [title]="a.ObjectID" [type]="a.ObjectTypeID" [object]="a.ObjectCfg"> </treeview>
+                <treeview [visible]="false" [visibleToogleEnable]="true" [title]="a.ObjectID" [type]="a.ObjectTypeID" [object]="a.ObjectCfg"> </treeview>
                 </div>
                 </div>
               </div>

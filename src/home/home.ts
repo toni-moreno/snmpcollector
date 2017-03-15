@@ -6,6 +6,8 @@ import { Observable } from 'rxjs/Observable';
 import { BlockUIService } from '../common/blockui/blockui-service';
 import { BlockUIComponent } from '../common/blockui/blockui-component'; // error
 import { ImportFileModal } from '../common/dataservice/import-file-modal';
+import { ExportFileModal } from '../common/dataservice/export-file-modal';
+
 declare var _:any;
 
 @Component({
@@ -19,6 +21,7 @@ export class Home {
 
   @ViewChild('blocker', { read: ViewContainerRef }) container: ViewContainerRef;
   @ViewChild('importFileModal') public importFileModal : ImportFileModal;
+  @ViewChild('exportBulkFileModal') public exportBulkFileModal : ExportFileModal;
 
   response: string;
   api: string;
@@ -63,6 +66,10 @@ export class Home {
 
   showImportModal() {
     this.importFileModal.initImport();
+  }
+
+  showExportBulkModal() {
+    this.exportBulkFileModal.initExportModal(null, false);
   }
 
   reloadConfig() {

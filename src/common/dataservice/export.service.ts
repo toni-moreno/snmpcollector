@@ -19,6 +19,15 @@ export class ExportServiceCfg {
         return [new Blob([res['_body']],{type: "application/json"}),res.json()];
         })
     }
+
+    bulkExport(values) {
+      return this.httpAPI.post('/api/cfg/bulkexport',values)
+      .map((res) => {
+          console.log(res);
+          return [new Blob([res['_body']],{type: "application/json"}),res.json()];
+      })
+    }
+
     exportRecursive(type : string, id : string, values) {
         console.log(values);
         // return an observable
