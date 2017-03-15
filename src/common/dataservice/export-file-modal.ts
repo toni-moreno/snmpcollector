@@ -321,6 +321,8 @@ export class ExportFileModal {
   }
 
   exportBulkItem(){
+    if (this.bulkExport === false) this.finalArray[0].Options.Recursive = this.recursiveObject;
+
     let finalValues = {"Info": this.exportForm.value, "Objects" : this.finalArray}
     this.exportServiceCfg.bulkExport(finalValues)
     .subscribe(
@@ -336,7 +338,7 @@ export class ExportFileModal {
 
   //SINGLE EXPORT
 
-  exportItem(){
+/*  exportItem(){
     this.exportServiceCfg.bulkExport(this.finalArray[0])
     .subscribe(
       data => {
@@ -348,6 +350,8 @@ export class ExportFileModal {
       () => console.log("DONE"),
     );
   }
+  */
+
 //Load items functions from services depending on items selected Type
   loadItems(type, filter?) {
     this.resultArray = [];

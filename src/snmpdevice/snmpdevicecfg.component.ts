@@ -149,9 +149,9 @@ export class SnmpDeviceCfgComponent {
     switch (field) {
       case 'AuthPriv':
       controlArray.push({'ID': 'V3PrivPass', 'defVal' : '', 'Validators' : Validators.required });
+      controlArray.push({'ID': 'V3PrivProt', 'defVal' : '', 'Validators' : Validators.required });
       case 'AuthNoPriv':
       controlArray.push({'ID': 'V3AuthPass', 'defVal' : '', 'Validators' : Validators.required });
-      controlArray.push({'ID': 'V3PrivProt', 'defVal' : '', 'Validators' : Validators.required });
       controlArray.push({'ID': 'V3AuthProt', 'defVal' : '', 'Validators' : Validators.required });
       case 'NoAuthNoPriv':
       controlArray.push({'ID': 'V3SecLevel', 'defVal' : field, 'Validators' : Validators.required });
