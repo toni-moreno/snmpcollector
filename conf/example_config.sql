@@ -1,6 +1,6 @@
 
 DELETE from snmp_metric_cfg;
-DELETE from influx_measurement_cfg;
+DELETE from measurement_cfg;
 DELETE from measurement_field_cfg;
 DELETE from m_groups_cfg;
 DELETE from m_groups_measurements;
@@ -9,6 +9,11 @@ DELETE from snmp_device_cfg;
 DELETE from snmp_dev_m_groups;
 DELETE from meas_filter_cfg;
 DELETE from snmp_dev_filters;
+DELETE from oid_condition_cfg;
+DELETE from custom_filter_cfg;
+DELETE from custom_filter_items;
+
+
 /*
 =====================
 metrics
@@ -136,10 +141,28 @@ INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, sca
   baseOID = ".1.3.6.1.2.1.31.1.1.1.1"
   DatasrcType = "STRING"
   getRate = false
-  IsTag = true 
+  IsTag = true
 */
 
 INSERT INTO snmp_metric_cfg  (id, field_name, baseoid, datasrctype, getrate, scale, shift, istag, description)  VALUES ('ifName','IfName','.1.3.6.1.2.1.31.1.1.1.1','STRING',0,0.0,0.0,1,'Tags');
+
+
+
+/*=======================================
+OID Conditions
+*=======================================
+
+	"id"                 : Text identificator
+	"cond_oid"           : oid to apply the condition
+  "cond_type"       : could be  "file" or "OIDCondition"
+  "cond_value"          : a valid filename contained in the conf/ directory (only valid if filter_type = "file")
+  "is_multiple"       : "1" if enabled "0" if not ( allow get measurement tag from alias in the file)
+  "description"          : a valid OID only valid for filter_type = "OIDCondition"
+*/
+
+INSERT INTO "oid_condition_cfg" (id, cond_oid, cond_type, cond_value, description, is_multiple) VALUES('cond_if_name_match_eth','.1.3.6.1.2.1.31.1.1.1.1','match','eth.*','Filter to get Ethernet interface with eth5',0);
+INSERT INTO "oid_condition_cfg" (id, cond_oid, cond_type, cond_value, description, is_multiple) VALUES('cond_if_status_up','.1.3.6.1.2.1.2.2.1.8','neq','1','Filter to get UP Interfaces',0);
+
 
 
 /*
@@ -169,7 +192,7 @@ measurements
 	]
  getmode = "value"
 */
-INSERT INTO influx_measurement_cfg (id, name, getmode, indexoid, indextag) VALUES ('linux_cpu','linux.cpu','value','','');
+INSERT INTO measurement_cfg (id, name, getmode, indexoid, indextag,description) VALUES ('linux_cpu','linux.cpu','value','','','Linux CPU metric collection - non Indexed');
 INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_cpu','Linux_user_CPU_percent');
 INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_cpu','Linux_system_CPU_percent');
 INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_cpu','Linux_idle_CPU_percent');
@@ -186,7 +209,7 @@ INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('li
  indexOID = ".1.3.6.1.2.1.31.1.1.1.1" # ifName => needed to be "STRING"
  IndexTAG = "portName"
  */
- INSERT INTO influx_measurement_cfg (id, name, getmode, indexoid, indextag) VALUES ('linux_ports','linux.ports','indexed','.1.3.6.1.2.1.31.1.1.1.1','portName');
+ INSERT INTO measurement_cfg (id, name, getmode, indexoid, indextag, description) VALUES ('linux_ports','linux.ports','indexed','.1.3.6.1.2.1.31.1.1.1.1','portName','Linux Ports metric collection - indexed by ifName');
  INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports','ifHCInOctets');
  INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports','ifHCOutOctets');
  INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports','ifHCInUcastPkts');
@@ -196,7 +219,7 @@ INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('li
 
 
 /*Test to check issue */
-INSERT INTO influx_measurement_cfg (id, name, getmode, indexoid, indextag) VALUES ('linux_ports_by_index','linux.ports','indexed','.1.3.6.1.2.1.2.2.1.1','ifindex');
+INSERT INTO measurement_cfg (id, name, getmode, indexoid, indextag, description) VALUES ('linux_ports_by_index','linux.ports','indexed','.1.3.6.1.2.1.2.2.1.1','ifindex','Linux Ports metric collection - indexed by ifName');
 INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports_by_index','ifHCInOctets');
 INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports_by_index','ifHCOutOctets');
 INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('linux_ports_by_index','ifHCInUcastPkts');
@@ -215,7 +238,7 @@ INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('li
  IndexTAG = "portName"
 */
 
-INSERT INTO influx_measurement_cfg (id, name, getmode, indexoid, indextag) VALUES ('network_32bits','32bits-ports','indexed','.1.3.6.1.2.1.31.1.1.1.1','portName');
+INSERT INTO measurement_cfg (id, name, getmode, indexoid, indextag, description) VALUES ('network_32bits','32bits-ports','indexed','.1.3.6.1.2.1.31.1.1.1.1','portName', 'Traffic metric Collection - indexed by ifName');
 INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('network_32bits','ifInOctets');
 INSERT INTO measurement_field_cfg( id_measurement_cfg,id_metric_cfg) VALUES ('network_32bits','ifOutOctets');
 
@@ -251,18 +274,15 @@ Measurement filters
 	"id"                 : Text identificator
 	"id_measurement_cfg" : related to a measurement
   "filter_type"       : could be  "file" or "OIDCondition"
-  "file_name"          : a valid filename contained in the conf/ directory (only valid if filter_type = "file")
+  "filter_name"          : a valid filename contained in the conf/ directory (only valid if filter_type = "file")
   "enabla_alias"       : "1" if enabled "0" if not ( allow get measurement tag from alias in the file)
-  "cond_oid"          : a valid OID only valid for filter_type = "OIDCondition"
-  "cond_type"    : Valid conditions "eq","lt","gt","ge","le"
-  "cond_value"   : the value to get the condition
-
+  "filter_name"          : a valid OID only valid for filter_type = "OIDCondition"
 */
 
-INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,file_name,enable_alias) VALUES ('filter_ports_file_a','linux_ports','file','lp_file_filter_a.txt',1);
-INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,file_name,enable_alias) VALUES ('filter_ports_file_b','linux_ports','file','lp_file_filter_b.txt',1);
-INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,cond_oid,cond_type,cond_value) VALUES ('filter_port_if_status_up','linux_ports','OIDCondition','.1.3.6.1.2.1.2.2.1.8','neq','1');
-INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,cond_oid,cond_type,cond_value) VALUES ('filter_port_if_name_match_eth','linux_ports','OIDCondition','.1.3.6.1.2.1.31.1.1.1.1','match','eth.*');
+INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,filter_name,enable_alias) VALUES ('filter_ports_file_a','linux_ports','file','lp_file_filter_a.txt',1);
+INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,filter_name,enable_alias) VALUES ('filter_ports_file_b','linux_ports','file','lp_file_filter_b.txt',1);
+INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,filter_name) VALUES ('filter_port_if_name_match_eth','linux_ports','OIDCondition','cond_if_name_match_eth');
+INSERT INTO meas_filter_cfg (id,id_measurement_cfg,filter_type,filter_name) VALUES ('filter_port_if_status_up','linux_ports','OIDCondition','cond_if_status_up');
 
 
 /*=======================================
@@ -280,7 +300,7 @@ Influx databases configuration
  retention = "autogen"
  */
 
-INSERT INTO influx_cfg (id,host,port,db,user,password,retention) VALUES ('default','127.0.0.1',8086,'snmp','snmpuser','snmppass','autogen');
+INSERT INTO influx_cfg (id,host,port,db,user,password,retention,description) VALUES ('default','127.0.0.1',8086,'snmp','snmpuser','snmppass','autogen', 'Default InfluxDB Server');
 
 
 /*======================================
@@ -350,6 +370,7 @@ INSERT INTO influx_cfg (id,host,port,db,user,password,retention) VALUES ('defaul
    devicetagname = "router"
    devicetagvalue = "id"
    extratags = [ "tagA=4","tagB=5" ,"tagC=6" ]
+   outdb = "default"
    loglevel = "debug"
    snmpdebug  = false
    metricgroups = [ "Linux.*" ]
@@ -358,7 +379,7 @@ INSERT INTO influx_cfg (id,host,port,db,user,password,retention) VALUES ('defaul
   	]
 
     */
-INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES ('hostsnmpv3a','hostsnmpv3a',161,5,20,0,'3','NoAuthNoPriv','v3usernoauth',60,'router','id','[ "tagA=4","tagB=5","tagC=6" ]','debug',0);
+INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug,description,outdb) VALUES ('hostsnmpv3a','hostsnmpv3a',161,5,20,0,'3','NoAuthNoPriv','v3usernoauth',60,'router','id','[ "tagA=4","tagB=5","tagC=6" ]','debug',0,'Test Host SNMPV3 a','default');
 INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3a','Issue_index');
 /*INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3a','Linux.*');
 INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filter_ports_file_a');*/
@@ -385,6 +406,7 @@ INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filte
    devicetagname = "router"
    devicetagvalue = "id"
    #extratags = [ "tagA=4","tagB=5" ,"tagC=6" ]
+   outdb = "default"
    loglevel = "debug"
    snmpdebug  = false
    metricgroups = [ ".*ux" ]
@@ -393,7 +415,7 @@ INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filte
   	]
     */
 
-    INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,v3authpass,v3authprot,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES  ('hostsnmpv3b','hostsnmpv3b',161,5,20,0,'3','AuthNoPriv','v3userauth','v3passauth','MD5',30,'router','id','[ "tagA=14","tagB=15","tagC=16" ]','debug',0);
+    INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,v3authpass,v3authprot,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug,description, outdb) VALUES  ('hostsnmpv3b','hostsnmpv3b',161,5,20,0,'3','AuthNoPriv','v3userauth','v3passauth','MD5', 30,'router','id','[ "tagA=14","tagB=15","tagC=16" ]','debug',0, 'Test Host SNMPV3 b','default');
     INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3b','Linux');
     INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3b','filter_ports_file_b');
 
@@ -417,13 +439,14 @@ INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3a','filte
    devicetagname = "router"
    devicetagvalue = "id"
    extratags = [ "tagA=4","tagB=5" ,"tagC=6" ]
+   outdb = "default"
    loglevel = "debug"
    snmpdebug  = false
    metricgroups = [ "Lin.*"]
 
 */
 
-INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,v3authpass,v3authprot,freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug) VALUES ('hostsnmpv3c','hostsnmpv3c',161,5,20,0,'3','AuthNoPriv','v3userauth','v3passauth','MD5',30,'router','id','[ "tagA=14","tagB=15","tagC=16"]','debug',0);
+INSERT INTO snmp_device_cfg (id,host,port,retries,timeout,repeat,snmpversion,v3seclevel,v3authuser,v3authpass,v3authprot, v3privprot, freq,devicetagname,devicetagvalue,'extra-tags',loglevel,snmpdebug,description, outdb) VALUES ('hostsnmpv3c','hostsnmpv3c',161,5,20,0,'3','AuthNoPriv','v3userauth','v3passauth','MD5', 'DES', 30,'router','id','[ "tagA=14","tagB=15","tagC=16"]','debug',0,'Test Host SNMPV3 c', 'default');
 INSERT INTO snmp_dev_m_groups (id_snmpdev,id_mgroup_cfg) VALUES ('hostsnmpv3c','Linux');
 /*INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3c','filter_port_if_status_up');*/
 INSERT INTO snmp_dev_filters (id_snmpdev,id_filter) VALUES ('hostsnmpv3c','filter_port_if_name_match_eth');

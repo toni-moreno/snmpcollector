@@ -482,6 +482,18 @@ export class TestFilterModal implements OnInit {
     }
   }
 
+  saveMeasFilter() {
+    if (this.newFilterForm.valid) {
+      this.measFilterService.addMeasFilter(this.newFilterForm.value)
+      .subscribe(data => {
+        this.validationClick();
+      },
+      err => console.error(err),
+      () => { console.log("DONE")}
+      );
+    }
+  }
+
   pingDevice(formValues) {
     this.alertHandler = {};
     this.isRequesting = true;
