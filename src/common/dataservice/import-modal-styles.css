@@ -30,7 +30,7 @@ input, button {
 select,input {
  //  float: right;
     display: inline;
-    width: 200px;
+//    width: auto;;
     height: 27px;
     padding: 2px 12px;
     font-size: 14px;
@@ -53,7 +53,7 @@ button {
   font-weight: 300;
 }
 
-input:focus.ng-invalid,select:focus.ng-invalid, textarea:focus.ng-invalid {
+/*input:focus.ng-invalid,select:focus.ng-invalid, textarea:focus.ng-invalid {
   box-shadow: 0 0 5px #a94442;
   border: 1px solid #a94442;
   border-left: 5px solid #a94442
@@ -68,7 +68,33 @@ input:focus.ng-valid, select:focus.ng-valid{
   box-shadow: 0 0 5px #42A948;
   border: 1px solid #42A948;
   border-left:5px solid #42A948;
+}*/
+
+input:focus.ng-invalid,select:focus.ng-invalid, textarea:focus.ng-invalid {
+  box-shadow: 0 0 5px #a94442;
+  border: 1px solid #a94442;
+  border-left: 5px solid #a94442
 }
+input:focus.ng-valid[required], select:focus.ng-valid[required]{
+  box-shadow: 0 0 5px #42A948;
+  border: 1px solid #42A948;
+  border-left:5px solid #42A948;
+}
+
+ss-multiselect-dropdown {
+  display: inline-block;
+}
+
+input:focus.ng-valid, select:focus.ng-valid{
+  box-shadow: 0 0 5px #42A948;
+  border: 1px solid #42A948;
+  border-left:5px solid #42A948;
+}
+
+.ng-valid:not(pagination).ng-valid:not(form) {
+  border-left: 5px solid #42A948; /* green */
+}
+
 
 .select-pages {
   border-left:5px solid #337ab7 !important;

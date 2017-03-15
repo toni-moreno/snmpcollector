@@ -7,11 +7,20 @@ import { ExportServiceCfg } from './export.service'
   selector: 'treeview',
   template: `
       <div>
-      <div class="panel panel-default">
-        <div class="panel-heading">
-        <i role=button [ngClass]="visible === true ? ['glyphicon glyphicon-minus'] : ['glyphicon glyphicon-plus']" (click)="toggleVisible()" style="padding-right: 10px"></i>
-        <span>{{title}}</span>
-        <label [ngClass]="['label label-'+colorsObject[type]]"> {{type}} </label>
+      <div class="panel panel-default" style="margin-bottom:0px">
+        <div class="panel-heading col-md-12">
+          <div style="display: inline" class="text-left col-md-8">
+          <i role=button *ngIf="visibleToogleEnable" [ngClass]="visible === true ? ['glyphicon glyphicon-minus'] : ['glyphicon glyphicon-plus']" (click)="toggleVisible()" style="padding-right: 10px"></i>
+          <span>{{title}}</span>
+          <label *ngIf="type && showType === true" [ngClass]="['label label-'+colorsObject[type]]"> {{type}} </label>
+          </div>
+
+          <div style="display: inline" class="text-right col-md-4">
+            <i *ngIf="addClickEnable===true" [ngClass]="alreadySelected === true ? ['text-success glyphicon glyphicon-ok-circle'] : ['text-danger glyphicon glyphicon-ban-circle']" (click)="addItem(title, type)" style="float:right"></i>
+            <span *ngIf="recursiveToogle === true">
+              <input type="checkbox" [checked]="this.recursive" (click)="recursiveClick()"> Recursive
+              </span>
+          </div>
         </div>
         <div class="panel-body" *ngIf="visible === true">
         <pre > {{object | json }} </pre>
@@ -27,6 +36,15 @@ export class TreeView {
   @Input() type: any;
   @Input() visible : boolean;
   @Input() object : any;
+  @Input() index : any;
+  @Input() showType: boolean = true;
+  @Input() addClickEnable: boolean = false;
+  @Input() visibleToogleEnable: boolean = false;
+  @Input() recursiveToogle : boolean;
+  @Input() alreadySelected: boolean;
+  @Output() public addClicked: EventEmitter<any> = new EventEmitter();
+  @Output() public recursiveClicked: EventEmitter<any> = new EventEmitter();
+
 
   public colorsObject : Object = {
    "snmpdevicecfg" : 'danger',
@@ -38,17 +56,28 @@ export class TreeView {
    "snmpmetriccfg" : 'warning',
    "measgroupcfg" : 'success'
  };
+ recursive : boolean;
 
     show() {
     console.log("SHOWN");
   }
   constructor(){
+    this.showType
     this.visible = false;
+    this.recursive = false;
   }
   toggleVisible() {
     this.visible = !this.visible;
   }
 
 
+  public addItem(ObjectID: any, ObjectTypeID: any): void {
+    this.addClicked.emit({ ObjectID, ObjectTypeID, "Options" : {'Recursive': false }});
+  }
+
+  public recursiveClick(): void {
+    this.recursive = !this.recursive
+    this.recursiveClicked.emit({"Recursive":this.recursive, "Index":this.index});
+  }
 
 }
