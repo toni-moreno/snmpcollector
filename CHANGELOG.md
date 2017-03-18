@@ -1,4 +1,4 @@
-# v 0.6.5 (not released yet)
+# v 0.6.5
 ### New Features
 * Refactored and Improved form Validation options,to allow dynamic validators  on some parameters changes
 * Added new Multiple OID condition Filter and filter check improvements.
