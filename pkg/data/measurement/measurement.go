@@ -604,7 +604,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 			m.log.Warnf("no value retured by pdu :%+v", pdu)
 			return nil //if error return the bulk process will stop
 		}
-		if len(pdu.Name) < m.curIdxPos {
+		if len(pdu.Name) < m.curIdxPos+1 {
 			m.log.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", m.curIdxPos, pdu)
 			return nil //if error return the bulk process will stop
 		}

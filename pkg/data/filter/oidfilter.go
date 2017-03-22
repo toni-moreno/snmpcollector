@@ -112,7 +112,7 @@ func (of *OidFilter) Update() error {
 			of.log.Errorf("Error in Condition filter OidCondition: %s Type: %s ValCond: %s ", of.OidCond, of.TypeCond, of.ValueCond)
 		}
 		if cond == true {
-			if len(pdu.Name) < idxPosInOID {
+			if len(pdu.Name) < idxPosInOID+1 {
 				of.log.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", idxPosInOID, pdu)
 				return nil //if error return the bulk process will stop
 			}
