@@ -282,7 +282,11 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 // AgentReloadConf xx
 func AgentReloadConf(ctx *Context) {
 	log.Info("trying to reload configuration for all devices")
-	time := agent.ReloadConf()
+	time, err := agent.ReloadConf()
+	if err != nil {
+		ctx.JSON(405, err.Error())
+		return
+	}
 	ctx.JSON(200, time)
 }
 

@@ -1,3 +1,13 @@
+# v 0.6.6 (not yet released)
+### New Features
+*
+
+### fixes
+* fix for #157, #158
+
+
+### breaking changes
+
 # v 0.6.5
 ### New Features
 * Refactored and Improved form Validation options,to allow dynamic validators  on some parameters changes

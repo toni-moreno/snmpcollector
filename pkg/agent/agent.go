@@ -50,6 +50,9 @@ var (
 	log *logrus.Logger
 	//mutex for devices map
 	mutex sync.Mutex
+	//reload mutex
+	reloadMutex   sync.Mutex
+	reloadProcess bool
 	//runtime devices
 	devices map[string]*device.SnmpDevice
 	//runtime output db's
@@ -64,6 +67,26 @@ var (
 // SetLogger set log output
 func SetLogger(l *logrus.Logger) {
 	log = l
+}
+
+//Reload Mutex Related Methods.
+
+// CheckAndSetStarted check if this thread is already working and set if not
+func CheckAndSetReloadProcess() bool {
+	reloadMutex.Lock()
+	defer reloadMutex.Unlock()
+	retval := reloadProcess
+	reloadProcess = true
+	return retval
+}
+
+// CheckAndUnSetStarted check if this thread is already working and set if not
+func CheckAndUnSetReloadProcess() bool {
+	reloadMutex.Lock()
+	defer reloadMutex.Unlock()
+	retval := reloadProcess
+	reloadProcess = false
+	return retval
 }
 
 //PrepareInfluxDBs review all configured db's in the SQL database
@@ -216,9 +239,14 @@ func LoadConf() {
 }
 
 // ReloadConf call to reinitialize alln configurations
-func ReloadConf() time.Duration {
+func ReloadConf() (time.Duration, error) {
 	start := time.Now()
-	log.Info("RELOADCONF: begin device Gather processes stop...")
+	if CheckAndSetReloadProcess() == true {
+		log.Warning("RELOADCONF: There is another reload process running while trying to reload at %s  ", start.String())
+		return time.Since(start), fmt.Errorf("There is another reload process running.... please wait until finished ")
+	}
+
+	log.Infof("RELOADCONF INIT: begin device Gather processes stop... at %s", start.String())
 	//stop all device prcesses
 	DeviceProcessStop()
 	log.Info("RELOADCONF: begin selfmon Gather processes stop...")
@@ -245,5 +273,8 @@ func ReloadConf() time.Duration {
 	LoadConf()
 	log.Info("RELOADCONF: Starting all device processes again...")
 	DeviceProcessStart()
-	return time.Since(start)
+	log.Infof("RELOADCONF END: Finished from %s to %s [Duration : %s]", start.String(), time.Now().String(), time.Since(start).String())
+	CheckAndUnSetReloadProcess()
+
+	return time.Since(start), nil
 }
