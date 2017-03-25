@@ -96,8 +96,24 @@
           <input formControlName="Retention" id="Retention" />
           <control-messages [control]="influxserverForm.controls.Retention"></control-messages>
         </div>
-
       </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Precision">Timestamp Precision</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Sets the precision for the supplied Unix time values (valid values are [ns,u,ms,s,m,h] ). SNMP are a slow gather protocol so default snmpcollector precision are in seconds"></i>
+        <div class="col-sm-9">
+          <select formControlName="Precision" id="Precision">
+            <option value="h">h (hour)</option>
+            <option value="m">m (minute)</option>
+            <option default value="s">s (second)</option>
+            <option value="ms">ms (millisecond)</option>
+            <option value="u">u (microsecond)</option>
+            <option value="ns">ns (nanosecond)</option>
+          </select>
+          <control-messages [control]="influxserverForm.controls.Precision"></control-messages>
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="control-label col-sm-2" for="Timeout">Timeout</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Time in second that client will wait to a complete write transaction to be complete"></i>
@@ -195,6 +211,22 @@
         <div class="col-sm-9">
           <input formControlName="Retention" id="Retention" [ngModel]="influxserverForm.value.Retention" />
           <control-messages [control]="influxserverForm.controls.Retention"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Precision">Timestamp Precision</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Sets the precision for the supplied Unix time values (valid values are [ns,u,ms,s,m,h] ). SNMP are a slow gather protocol so default snmpcollector precision are in seconds"></i>
+        <div class="col-sm-9">
+          <select formControlName="Precision" id="Precision" [ngModel]="influxserverForm.value.Precision">
+            <option value="h">h (hour)</option>
+            <option value="m">m (minute)</option>
+            <option default value="s">s (second)</option>
+            <option value="ms">ms (millisecond)</option>
+            <option value="u">u (microsecond)</option>
+            <option value="ns">ns (nanosecond)</option>
+          </select>
+          <control-messages [control]="influxserverForm.controls.Precision"></control-messages>
         </div>
       </div>
 

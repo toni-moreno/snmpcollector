@@ -52,6 +52,7 @@ type InfluxCfg struct {
 	User        string `xorm:"user"`
 	Password    string `xorm:"password"`
 	Retention   string `xorm:"retention"`
+	Precision   string `xorm:"'precision' default 's'"` //posible values [h,m,s,ms,u,ns] default seconds for the nature of data
 	Timeout     int    `xorm:"'timeout' default 30"`
 	UserAgent   string `xorm:"useragent"`
 	Description string `xorm:"description"`

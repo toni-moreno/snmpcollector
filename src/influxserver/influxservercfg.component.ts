@@ -35,12 +35,11 @@ export class InfluxServerCfgComponent {
   public columns: Array<any> = [
     { title: 'ID', name: 'ID' },
     { title: 'Host', name: 'Host' },
-    { title: 'Host', name: 'Host' },
     { title: 'Port', name: 'Port' },
     { title: 'DB', name: 'DB' },
     { title: 'User', name: 'User' },
-    { title: 'User', name: 'User' },
     { title: 'Retention', name: 'Retention' },
+    { title: 'Precision', name: 'Precision' },
     { title: 'Timeout', name: 'Timeout' },
     { title: 'User Agent', name: 'UserAgent' }
   ];
@@ -75,6 +74,7 @@ export class InfluxServerCfgComponent {
       User: [this.influxserverForm ? this.influxserverForm.value.User : '', Validators.required],
       Password: [this.influxserverForm ? this.influxserverForm.value.Password : '', Validators.required],
       Retention: [this.influxserverForm ? this.influxserverForm.value.Retention : 'autogen', Validators.required],
+      Precision: [this.influxserverForm ? this.influxserverForm.value.Precision : 's', Validators.required],
       Timeout: [this.influxserverForm ? this.influxserverForm.value.Timeout : 30, Validators.compose([Validators.required, ValidationService.integerValidator])],
       UserAgent: [this.influxserverForm ? this.influxserverForm.value.UserAgent : ''],
       Description: [this.influxserverForm ? this.influxserverForm.value.Description : '']

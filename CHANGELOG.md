@@ -1,10 +1,11 @@
 # v 0.6.6 (not yet released)
 ### New Features
-*
+* Compilation with Go1.8
+* added Docker image to hub tonimoreno/snmpcollector
+* added timestamp precision parameter to the influxdb Config (changed default precision from ns to seconds)
 
 ### fixes
 * fix for #157, #158
-
 
 ### breaking changes
 

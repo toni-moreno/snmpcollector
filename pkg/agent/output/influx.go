@@ -81,7 +81,7 @@ func (db *InfluxDB) BP() *client.BatchPoints {
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:        db.cfg.DB,
 		RetentionPolicy: db.cfg.Retention,
-		Precision:       "ns", //Default precision for Time lib
+		Precision:       db.cfg.Precision, //Default precision for Time lib
 	})
 	return &bp
 }
