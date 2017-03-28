@@ -8,6 +8,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
@@ -228,6 +229,7 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 		m.Delete("/:id", reqSignedIn, DeleteInfluxServer)
 		m.Get("/:id", reqSignedIn, GetInfluxServerByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetInfluxAffectOnDel)
+		m.Post("/ping/", reqSignedIn, bind(config.InfluxCfg{}), PingInfluxServer)
 	})
 
 	// Data sources
@@ -1057,6 +1059,26 @@ func GetInfluxAffectOnDel(ctx *Context) {
 		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, &obarray)
+	}
+}
+
+//PingInfluxServer Return ping result
+func PingInfluxServer(ctx *Context, cfg config.InfluxCfg) {
+	log.Infof("trying to ping influx server %s : %+v", cfg.ID, cfg)
+	_, elapsed, message, err := output.Ping(&cfg)
+	type result struct {
+		Result  string
+		Elapsed time.Duration
+		Message string
+	}
+	if err != nil {
+		log.Debugf("ERROR on ping InfluxDB Server : %s", err)
+		res := result{Result: "NOOK", Elapsed: elapsed, Message: err.Error()}
+		ctx.JSON(400, res)
+	} else {
+		log.Debugf("OK on ping InfluxDB Server %+v, %+v", elapsed, message)
+		res := result{Result: "OK", Elapsed: elapsed, Message: message}
+		ctx.JSON(200, res)
 	}
 }
 

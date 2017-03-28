@@ -86,25 +86,32 @@ func (db *InfluxDB) BP() *client.BatchPoints {
 	return &bp
 }
 
+// Ping InfluxDB Server
+func Ping(cfg *config.InfluxCfg) (client.Client, time.Duration, string, error) {
+
+	conf := client.HTTPConfig{
+		Addr:      fmt.Sprintf("http://%s:%d", cfg.Host, cfg.Port),
+		Username:  cfg.User,
+		Password:  cfg.Password,
+		UserAgent: cfg.UserAgent,
+		Timeout:   time.Duration(cfg.Timeout) * time.Second,
+	}
+	cli, err := client.NewHTTPClient(conf)
+
+	if err != nil {
+		return cli, 0, "", err
+	}
+	elapsed, message, err := cli.Ping(time.Duration(cfg.Timeout) * time.Second)
+	return cli, elapsed, message, err
+}
+
 //Connect to influxdb
 func (db *InfluxDB) Connect() error {
 	if db.dummy == true {
 		return nil
 	}
-	conf := client.HTTPConfig{
-		Addr:      fmt.Sprintf("http://%s:%d", db.cfg.Host, db.cfg.Port),
-		Username:  db.cfg.User,
-		Password:  db.cfg.Password,
-		UserAgent: db.cfg.UserAgent,
-		Timeout:   time.Duration(db.cfg.Timeout) * time.Second,
-	}
-	cli, err := client.NewHTTPClient(conf)
-	db.client = cli
-	if err != nil {
-		return err
-	}
-
-	_, _, err = db.client.Ping(time.Duration(5))
+	var err error
+	db.client, _, _, err = Ping(db.cfg)
 	return err
 }
 

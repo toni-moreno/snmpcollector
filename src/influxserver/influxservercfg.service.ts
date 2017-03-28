@@ -85,6 +85,19 @@ export class InfluxServerService {
       });
     };
 
+    testInfluxServer(influxserver) {
+      // return an observable
+      return this.httpAPI.post('/api/cfg/influxservers/ping/',JSON.stringify(influxserver,function (key,value) {
+          if ( key == 'Port' ) {
+            return parseInt(value);
+          }
+          return value;
+      }))
+      .map(
+        (responseData) => responseData.json()
+      );
+    };
+
     deleteInfluxServer(id : string) {
         // return an observable
         console.log("ID: ",id);
