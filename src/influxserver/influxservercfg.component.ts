@@ -27,6 +27,7 @@ export class InfluxServerCfgComponent {
   filter: string;
   influxserverForm: any;
   myFilterValue: any;
+  alertHandler : any = null;
 
 
   //Initialization data, rows, colunms for Table
@@ -83,6 +84,7 @@ export class InfluxServerCfgComponent {
 
   reloadData() {
     // now it's a simple subscription to the observable
+    this.alertHandler = null;
     this.influxServerService.getInfluxServer(null)
       .subscribe(
       data => {
@@ -264,6 +266,7 @@ export class InfluxServerCfgComponent {
 
   cancelEdit() {
     this.editmode = "list";
+    this.reloadData();
   }
   saveInfluxServer() {
     if (this.influxserverForm.valid) {
@@ -291,6 +294,20 @@ export class InfluxServerCfgComponent {
           );
       }
     }
+  }
+
+
+  testInfluxServerConnection() {
+    this.influxServerService.testInfluxServer(this.influxserverForm.value)
+    .subscribe(
+    data =>  this.alertHandler = {msg: 'Influx Version: '+data['Message'], result : data['Result'], elapsed: data['Elapsed'], type: 'success', closable: true},
+    err => {
+        let error = err.json();
+        this.alertHandler = {msg: error['Message'], elapsed: error['Elapsed'], result : error['Result'], type: 'danger', closable: true}
+      },
+    () =>  { console.log("DONE")}
+  );
+
   }
 
 }

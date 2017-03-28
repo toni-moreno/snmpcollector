@@ -140,11 +140,19 @@
           <control-messages [control]="influxserverForm.controls.Description"></control-messages>
         </div>
       </div>
-
-      <div class="col-sm-offset-4 col-sm-6">
+      <div class="col-sm-2">
+        <button type="button"(click)="testInfluxServerConnection()">Test Connection</button>
+      </div>
+      <div class="col-sm-offset-4 col-sm-5">
         <button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
         <button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
         <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+      </div>
+      <div *ngIf="alertHandler" class="col-md-4">
+        <div [ngClass]="['panel-body', 'bg-'+alertHandler.type,'text-'+alertHandler.type]">
+           <span>{{alertHandler.result}} - Ping elapsed: {{alertHandler.elapsed / 1000000 }} ms</span>
+           <p>{{alertHandler.msg}}</p>
+        </div>
       </div>
     </form>
   </template>
@@ -256,11 +264,19 @@
           <control-messages [control]="influxserverForm.controls.Description"></control-messages>
         </div>
       </div>
-
-      <div class="col-sm-offset-4 col-sm-6">
+      <div class="col-sm-2">
+        <button type="button"(click)="testInfluxServerConnection()">Test Connection</button>
+      </div>
+      <div class="col-sm-offset-4 col-sm-5">
         <button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
         <button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
         <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+      </div>
+      <div *ngIf="alertHandler" class="col-md-4">
+        <div [ngClass]="['panel-body', 'bg-'+alertHandler.type,'text-'+alertHandler.type]">
+           <span>{{alertHandler.result}} - Ping elapsed: {{alertHandler.elapsed / 1000000 }} ms</span>
+           <p>{{alertHandler.msg}}</p>
+        </div>
       </div>
     </form>
   </template>
