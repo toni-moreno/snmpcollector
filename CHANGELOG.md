@@ -3,6 +3,7 @@
 * Compilation with Go1.8
 * added Docker image to hub tonimoreno/snmpcollector
 * added timestamp precision parameter to the influxdb Config (changed default precision from ns to seconds)
+* added influxdb connection check (influx ping) to the influxdb configuration forms
 
 ### fixes
 * fix for #157, #158
