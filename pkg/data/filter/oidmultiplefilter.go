@@ -46,7 +46,7 @@ func (of *OidMultipleFilter) Init(arg ...interface{}) error {
 	//needs to get data conditions
 	expression, err := govaluate.NewEvaluableExpression(of.EvalCondition)
 	if err != nil {
-		of.log.Errorf("Error on initializing , evaluation : %s : ERROR : %s", of.EvalCondition, err)
+		of.log.Errorf("OIDMULTIPLEFILTER [%s] Error on initializing  ERROR : %s", of.EvalCondition, err)
 		return err
 	}
 	of.expr = expression
@@ -54,13 +54,13 @@ func (of *OidMultipleFilter) Init(arg ...interface{}) error {
 	of.oidFilterMap = make(map[string]*OidFilter)
 
 	for _, par := range of.vars {
-		of.log.Infof("getting condition %s", par)
+		of.log.Infof("OIDMULTIPLEFILTER [%s] getting condition %s", of.EvalCondition, par)
 		oidcond, err := of.dbc.GetOidConditionCfgByID(par)
 		if err != nil {
 			return err
 		}
 		of.condMap[par] = &oidcond
-		of.log.Debugf("multiple filter get %s Filter %+v", par, oidcond)
+		of.log.Debugf("OIDMULTIPLEFILTER [%s]  get %s Filter %+v", of.EvalCondition, par, oidcond)
 		f := NewOidFilter(oidcond.OIDCond, oidcond.CondType, oidcond.CondValue, of.log)
 		f.Init(of.Walk)
 		of.oidFilterMap[par] = f
@@ -92,7 +92,7 @@ func (of *OidMultipleFilter) MapLabels(AllIndexedLabels map[string]string) map[s
 func (of *OidMultipleFilter) Update() error {
 	filterMatrix := make(map[string]map[string]interface{}) //key [oidcond]
 	for condID, f := range of.oidFilterMap {
-		of.log.Debug("updating filter data for key : %s", condID)
+		of.log.Debugf("OIDMULTIPLEFILTER [%s] updating filter data for key : %s", of.EvalCondition, condID)
 		f.Update()
 		for index := range f.FilterLabels {
 			if _, ok := filterMatrix[index]; !ok {
@@ -114,11 +114,11 @@ func (of *OidMultipleFilter) Update() error {
 	for kf, v := range filterMatrix {
 		result, err := of.expr.Evaluate(v)
 		if err != nil {
-			of.log.Errorf("Error in expression evaluation for multiple filter On Index %s EVAL string: %s : ERROR : %s", kf, of.EvalCondition, err)
+			of.log.Errorf("OIDMULTIPLEFILTER [%s] Error in expression evaluation for multiple filter On Index %s  ERROR : %s", of.EvalCondition, kf, err)
 			continue
 		}
 		if result.(bool) {
-			of.log.Debugf("Multiple filter expression for index %s TRUE on condition (%s) with map %+v", kf, of.EvalCondition, v)
+			of.log.Debugf("OIDMULTIPLEFILTER [%s] Multiple filter expression for index %s TRUE on condition with map %+v", of.EvalCondition, kf, v)
 			//save this index as true
 			of.FilterLabels[kf] = ""
 		}

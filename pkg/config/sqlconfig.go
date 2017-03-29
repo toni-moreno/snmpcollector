@@ -24,8 +24,9 @@ type SnmpDeviceCfg struct {
 	//snmp workarround for some devices
 	DisableBulk bool `xorm:"'disablebulk' default 0"`
 	//snmp runtime config
-	Freq          int `xorm:"'freq' default 60"`
-	UpdateFltFreq int `xorm:"'update_flt_freq' default 60"`
+	Freq             int  `xorm:"'freq' default 60"`
+	UpdateFltFreq    int  `xorm:"'update_flt_freq' default 60"`
+	ConcurrentGather bool `xorm:"'concurrent_gather' default 1"`
 
 	OutDB    string `xorm:"outdb"`
 	LogLevel string `xorm:"loglevel"`

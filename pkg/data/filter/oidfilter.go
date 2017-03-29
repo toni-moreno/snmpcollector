@@ -56,16 +56,16 @@ func (of *OidFilter) MapLabels(AllIndexedLabels map[string]string) map[string]st
 // Update  load filtered data from SNMP client config online time
 func (of *OidFilter) Update() error {
 
-	of.log.Debugf("Compute Condition Filter: Looking up column names in: Condition %s", of.OidCond)
+	of.log.Debugf("OIDFILTER [%s] Compute Condition Filter: Looking up column names in Condition", of.OidCond)
 
 	idxPosInOID := len(of.OidCond)
 	// reset current filter
 	of.FilterLabels = make(map[string]string)
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
-		of.log.Debugf("received SNMP  pdu:%+v", pdu)
+		of.log.Debugf("OIDFILTER [%s] received SNMP  pdu:%+v", of.OidCond, pdu)
 		if pdu.Value == nil {
-			of.log.Warnf("no value retured by pdu :%+v", pdu)
+			of.log.Warnf("OIDFILTER [%s] no value retured by pdu :%+v", of.OidCond, pdu)
 			return nil //if error return the bulk process will stop
 		}
 		var vci int64
@@ -78,20 +78,20 @@ func (of *OidFilter) Update() error {
 			str := snmp.PduVal2str(pdu)
 			var re = regexp.MustCompile(of.ValueCond)
 			matched := re.MatchString(str)
-			of.log.Debugf("Evaluated notmatch condition  value: %s | filter: %s | result : %t", str, of.ValueCond, !matched)
+			of.log.Debugf("OIDFILTER [%s] Evaluated notmatch condition  value: %s | filter: %s | result : %t", of.OidCond, str, of.ValueCond, !matched)
 			cond = !matched
 		case of.TypeCond == "match":
 			//m.log.Debugf("PDU: %+v", pdu)
 			str := snmp.PduVal2str(pdu)
 			var re = regexp.MustCompile(of.ValueCond)
 			matched := re.MatchString(str)
-			of.log.Debugf("Evaluated match condition  value: %s | filter: %s | result : %t", str, of.ValueCond, matched)
+			of.log.Debugf("OIDFILTER [%s] Evaluated match condition  value: %s | filter: %s | result : %t", of.OidCond, str, of.ValueCond, matched)
 			cond = matched
 		case strings.Contains(of.TypeCond, "n"):
 			//undesrstand valueCondition as numeric
 			vc, err := strconv.Atoi(of.ValueCond)
 			if err != nil {
-				of.log.Warnf("only accepted numeric value as value condition  current : %s  for TypeCond %s", of.ValueCond, of.TypeCond)
+				of.log.Warnf("OIDFILTER [%s] only accepted numeric value as value condition  current : %s  for TypeCond %s", of.OidCond, of.ValueCond, of.TypeCond)
 				return nil
 			}
 			vci = int64(vc)
@@ -109,11 +109,11 @@ func (of *OidFilter) Update() error {
 		case of.TypeCond == "nle":
 			cond = (value <= vci)
 		default:
-			of.log.Errorf("Error in Condition filter OidCondition: %s Type: %s ValCond: %s ", of.OidCond, of.TypeCond, of.ValueCond)
+			of.log.Errorf("OIDFILTER [%s] Error in Condition filter  Type: %s ValCond: %s ", of.OidCond, of.TypeCond, of.ValueCond)
 		}
 		if cond == true {
 			if len(pdu.Name) < idxPosInOID+1 {
-				of.log.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", idxPosInOID, pdu)
+				of.log.Warnf("OIDFILTER [%s] Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", of.OidCond, idxPosInOID, pdu)
 				return nil //if error return the bulk process will stop
 			}
 			suffix := pdu.Name[idxPosInOID+1:]
@@ -124,7 +124,7 @@ func (of *OidFilter) Update() error {
 	}
 	err := of.Walk(of.OidCond, setRawData)
 	if err != nil {
-		of.log.Errorf("SNMP  walk error : %s", err)
+		of.log.Errorf("OIDFILTER [%s] SNMP  walk error : %s", of.OidCond, err)
 		return err
 	}
 
