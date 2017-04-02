@@ -28,7 +28,7 @@ import { Subscription } from "rxjs";
               <!--System Info Panel-->
               <div class="panel panel-primary" *ngIf = "maximized === false">
                 <div class="panel-heading">System Info</div>
-                <my-spinner [isRunning]="isRequesting"></my-spinner>
+                <my-spinner [isRunning]="isRequesting && !isConnected"></my-spinner>
                 <div [ngClass]="['panel-body', 'bg-'+alertHandler.type]">
                   {{alertHandler.msg}}
                 </div>
@@ -98,33 +98,34 @@ import { Subscription } from "rxjs";
                 <div class="panel-heading">
                   <h4>
                     Query OID: {{queryResult.OID}}
-                    <label [ngClass]="(queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance') ? ['label label-primary'] : ['label label-danger']" style="padding-top: 0.5em; margin:0px">
+                    <label *ngIf="queryResult.QueryResult.length != 0" [ngClass]="(queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance') ? ['label label-primary'] : ['label label-danger']" style="padding-top: 0.5em; margin:0px">
                       {{queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance' ? queryResult.QueryResult.length +' results': '0 results - '+queryResult.QueryResult[0].Type}}
                     </label>
+                    <label style="padding-top: 0.5em; margin:0px" *ngIf="queryResult.QueryResult.length == 0" class="label label-danger">
+                      0 results
+                    </label>
+                    <span style="margin-left: 15px">
+                      Filter value: <input type=text [(ngModel)]="filter" placeholder="Filter..." (ngModelChange)="onChange($event)">
+                    </span>
                     <i [ngClass]="maximized ? ['pull-right glyphicon glyphicon-resize-small']: ['pull-right glyphicon glyphicon-resize-full']" style="margin-left: 10px;" (click)="maximizeQueryResults()"></i>
                     <span class="pull-right">  elapsed: {{queryResult.TimeTaken}} s </span>
-
                   </h4>
+
                 </div>
               <div class="panel-body" [ngStyle]="maximized ? {'max-height' : '100%' } : {'max-height.px' : 300 , 'overflow-y' : 'scroll'}">
-                <table class="table table-hover table-striped table-condensed" style="width:100%">
+                <my-spinner *ngIf="isRequesting && isConnected" [isRunning]="isRequesting"></my-spinner>
+                <table class="table table-hover table-striped table-condensed" style="width:100%" *ngIf="isRequesting === false">
                 <thead>
                 <tr>
                     <th>OID</th>
                     <th>Type</th>
                     <th>Value</th>
-                    <th *ngIf="editResults"> Edit </th>
                 </tr>
                 </thead>
                 <tr *ngFor="let entry of queryResult.QueryResult; let i = index">
                   <td>{{entry.Name}} </td>
                   <td> {{entry.Type}}</td>
                   <td>{{entry.Value}}</td>
-                  <td *ngIf="editResults">
-                    <label class="checkbox-inline">
-                      <input type="checkbox" #i>
-                    </label>
-                  </td>
                 </tr>
               </table>
               </div>
@@ -196,9 +197,9 @@ export class TestConnectionModal implements OnInit  {
 
   //Result params
   queryResult : any;
-  editResults: boolean = false;
   maximized : boolean = false;
-
+  dataArray : any = [];
+  filter : any = null;
 
   private mySettings: IMultiSelectSettings = {
       singleSelect: true,
@@ -296,13 +297,24 @@ export class TestConnectionModal implements OnInit  {
     );
   }
 
+  onChange(event){
+    let tmpArray = this.dataArray.filter((item: any) => {
+      return item['Value'].toString().match(event);
+    });
+    this.queryResult.QueryResult = tmpArray;
+  }
+
   sendQuery() {
+    this.isRequesting = true;
+    this.filter = null;
     this.histArray.push(this.testForm.value.OID);
     if (this.histArray.length > 5 ) this.histArray.shift();
     this.snmpDeviceService.sendQuery(this.formValues,this.testForm.value.Mode, this.testForm.value.OID)
     .subscribe(data => {
       this.queryResult = data;
+      this.dataArray = this.queryResult.QueryResult;
       this.queryResult.OID = this.testForm.value.OID;
+      this.isRequesting = false;
      },
       err => {
       console.error(err);

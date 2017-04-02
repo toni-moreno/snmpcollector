@@ -242,13 +242,19 @@
             <div class="panel-heading">
               <h4>
                 Query OID: {{queryResult.OID}}
-                <label [ngClass]="(queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance') ? ['label label-primary'] : ['label label-danger']" style="padding-top: 0.5em; margin:0px">
+                <label *ngIf="queryResult.QueryResult.length != 0" [ngClass]="(queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance') ? ['label label-primary'] : ['label label-danger']" style="padding-top: 0.5em; margin:0px">
                   {{queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance' ? queryResult.QueryResult.length +' results': '0 results - '+queryResult.QueryResult[0].Type}}
                 </label>
-                <span class="pull-right">  elapsed: {{queryResult.TimeTaken}} s </span>
-
+                <label *ngIf="queryResult.QueryResult.length == 0" class="label label-danger" style="padding-top: 0.5em; margin:0px">
+                  0 results
+                </label>
               </h4>
+              <div class="text-left">
+                Filter value: <input type=text [(ngModel)]="filter" placeholder="Filter..." (ngModelChange)="onChange($event)">
+                <span class="pull-right">Elapsed: {{queryResult.TimeTaken | number:'1.0-8'}} s </span>
+              </div>
             </div>
+            <div *ngIf="queryResult.QueryResult.length != 0">
             <div class="panel-body" style="height:auto" *ngIf="(queryResult.QueryResult[0].Type != 'ERROR' && queryResult.QueryResult[0].Type != 'NoSuchObject' && queryResult.QueryResult[0].Type != 'NoSuchInstance')">
               <table class="table table-hover table-striped table-condensed" style="width:100%">
                 <thead>
@@ -273,6 +279,7 @@
                 </tr>
               </table>
             </div>
+          </div>
           </div>
         </div>
       </div>

@@ -5,11 +5,12 @@
 <div class="col-md-12">
   <div class="col-md-4">
     <h4>
-      <li class="glyphicon glyphicon-refresh" (click)="onFilter()"> </li>
+      <li class="glyphicon glyphicon-refresh" (click)="reloadData()"> </li>
       SNMP Devices list
     </h4>
-    <input type="text" style="width:auto" class="form-control" [(ngModel)]="filter">
-    <button type="submit" (click)="onFilter()" class="btn btn-primary">Filter</button>
+    <span>
+      Filter devices: <input type=text [(ngModel)]="filter" placeholder="Filter..." (ngModelChange)="onChange($event)">
+    </span>
     <hr>
     <ul class="list-group" style="max-height:400px; overflow-y:auto">
 

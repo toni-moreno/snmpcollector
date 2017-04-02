@@ -167,7 +167,8 @@ export class TestFilterModal implements OnInit {
   //Data
   checkedResults: Array<any> = [];
   queryResult: any;
-
+  dataArray : any = [];
+  filter : any = null;
   //snmpdevs: any;
   oidValue: any;
   filterText: string = "";
@@ -312,24 +313,32 @@ export class TestFilterModal implements OnInit {
     }
   }
 
+  onChange(event){
+    let tmpArray = this.dataArray.filter((item: any) => {
+      return item['Value'].match(event);
+    });
+    this.queryResult.QueryResult = tmpArray;
+  }
+
   //QUERYRESULT PANEL
   sendQuery() {
+    this.filter = null;
     this.isRequesting = true;
     this.snmpDeviceService.sendQuery(this.formValues, 'walk', this.selectedOID)
-      .map(data => { this.queryResult = data })
       .subscribe(data => {
+        this.queryResult = data;
         for (let res of this.queryResult.QueryResult) {
           res.Value = res.Value.toString();
           res.checked = false;
           let a = this.checkedResults.indexOf(res.Value)
           if (a > -1){
-            console.log(a);
-            console.log(res);
             res.checked = true;
           }
         }
         this.queryResult.OID = this.selectedOID;
         this.isRequesting = false;
+        this.dataArray = this.queryResult.QueryResult;
+
       },
       err => {
         console.error(err);

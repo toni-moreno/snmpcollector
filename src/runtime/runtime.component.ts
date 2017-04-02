@@ -15,6 +15,7 @@ export class RuntimeComponent implements OnDestroy {
 
   public oneAtATime: boolean = true;
   editmode: string; //list , create, modify
+  dataArray : any = [];
   runtime_devs: Array<any>;
   filter: string;
   measActive: number = 0;
@@ -66,6 +67,11 @@ export class RuntimeComponent implements OnDestroy {
     filtering: { filterString: '' },
     className: ['table-striped', 'table-bordered']
   };
+
+  constructor(public runtimeService: RuntimeService, builder: FormBuilder, private ref: ChangeDetectorRef) {
+    this.editmode = 'list';
+    this.reloadData();
+  }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
     //Check if we have to change the actual page
@@ -316,31 +322,6 @@ export class RuntimeComponent implements OnDestroy {
       );
   }
 
-  /*downloadLogFile(id) {
-  console.log("Download Log file from device",id);
-  var reader = new FileReader();
-  this.runtimeService.downloadLogFile(id)
-  .subscribe(
-  data => {
-  reader.readAsArrayBuffer(data)
-  console.log("download done")
-},
-err => {
-console.error(err)
-console.log("Error downloading the file.")
-},
-() => console.log('Completed file download.')
-);
-reader.onloadend = function (e) {
-console.log("PRE",reader.result)
-//var blob = new Blob([reader.result],{type:"text/plain;charset=utf-8"})
-var blob = new Blob([reader.result])
-saveAs(blob,id+".log");
-//var file = new File([reader.result],id+".log",{type:"text/plain;charset=utf-8"});
-//saveAs(file);
-}
-}*/
-
   downloadLogFile(id) {
     console.log("Download Log file from device", id);
     this.runtimeService.downloadLogFile(id)
@@ -369,32 +350,30 @@ saveAs(blob,id+".log");
       );
   }
 
+  onChange(event){
+    let tmpArray = this.dataArray.filter((item: any) => {
+      return item['ID'].toString().match(event);
+    });
+    console.log(this.dataArray);
+    this.runtime_devs = tmpArray;
+  }
+
   reloadData() {
+    this.filter = null;
     // now it's a simple subscription to the observable
-    this.runtimeService.getRuntime(this.filter)
+    this.runtimeService.getRuntime(null)
       .subscribe(
       data => {
         this.runtime_devs = data
+        this.dataArray = this.runtime_devs
       },
       err => console.error(err),
       () => console.log('DONE')
       );
   }
 
-  constructor(public runtimeService: RuntimeService, builder: FormBuilder, private ref: ChangeDetectorRef) {
-    this.editmode = 'list';
-
-
-    this.reloadData();
-  }
-
-  onFilter() {
-    this.reloadData();
-  }
-
   ngOnDestroy() {
     clearInterval(this.intervalStatus);
   }
-
 
 }
