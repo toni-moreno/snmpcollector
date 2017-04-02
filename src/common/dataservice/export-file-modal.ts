@@ -45,11 +45,11 @@ import { CustomFilterService } from '../../customfilter/customfilter.service';
                 <div class="col-md-5">
                 <div *ngIf="selectedType">
                   <div class="panel-heading">
-                  <div>
-                    2. Select Items of type <label [ngClass]="['label label-'+selectedType.Class]"> {{selectedType.Type}}</label>  <span class="badge" style="margin-left: 10px">{{resultArray.length}} Results</span>
+                    <div>
+                      2. Select Items of type <label [ngClass]="['label label-'+selectedType.Class]"> {{selectedType.Type}}</label>  <span class="badge" style="margin-left: 10px">{{resultArray.length}} Results</span>
                     </div>
-                    <div class="text-right">
-                      <input type=text [(ngModel)]="filter" placeholder="Filter items"/><button class="btn btn-default" (click)="loadItems(selectedType.Type, filter)">Filter</button>
+                    <div class="text-left" style="margin-top: 10px">
+                      Filter: <input type=text [(ngModel)]="filter" placeholder="Filter items..." (ngModelChange)="onChange($event)">
                     </div>
                   </div>
                   <div style="max-height: 400px; overflow-y:auto">
@@ -204,11 +204,12 @@ export class ExportFileModal {
   //Bulk Export - Result Array from Loading data:
 
   resultArray : any = [];
+  dataArray : any = [];
 
   //Bulk Export - SelectedType
   selectedType : any = null;
   finalArray : any = [];
-
+  filter : any;
   //Bulk Objects
   public objectTypes : any = [
    {'Type': "snmpdevicecfg", 'Class' : 'danger', 'Visible': false},
@@ -263,6 +264,13 @@ export class ExportFileModal {
     this.childModal.show();
   }
 
+  onChange(event){
+    let tmpArray = this.dataArray.filter((item: any) => {
+      return item['ID'].match(event);
+    });
+    this.resultArray = tmpArray;
+  }
+
   //Load items from selection type
    loadSelection(i, type) {
      for (let a of this.objectTypes) {
@@ -272,7 +280,7 @@ export class ExportFileModal {
      }
      this.objectTypes[i].Visible = true;
      this.selectedType = this.objectTypes[i];
-
+     this.filter = null;
      this.loadItems(type,null);
    }
 
@@ -361,7 +369,8 @@ export class ExportFileModal {
        .subscribe(
        data => {
          //Load items on selection
-         this.resultArray = data;
+         this.dataArray = data;
+         this.resultArray = this.dataArray;
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -371,7 +380,9 @@ export class ExportFileModal {
       case 'influxcfg':
        this.influxServerService.getInfluxServer(filter)
        .subscribe(
-       data => {this.resultArray=data;
+       data => {
+         this.dataArray=data;
+         this.resultArray = this.dataArray;
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -380,7 +391,9 @@ export class ExportFileModal {
       case 'oidconditioncfg':
        this.oidConditionService.getConditions(filter)
        .subscribe(
-       data => {this.resultArray=data;
+       data => {
+         this.dataArray=data;
+         this.resultArray = this.dataArray;
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -389,7 +402,9 @@ export class ExportFileModal {
       case 'measfiltercfg':
        this.measFilterService.getMeasFilter(filter)
        .subscribe(
-       data => {this.resultArray=data;
+       data => {
+         this.dataArray=data;
+         this.resultArray = this.dataArray;
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -398,7 +413,9 @@ export class ExportFileModal {
       case 'customfiltercfg':
        this.customFilterService.getCustomFilter(filter)
        .subscribe(
-       data => {this.resultArray=data;
+       data => {
+         this.dataArray=data;
+         this.resultArray = this.dataArray;
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -407,7 +424,9 @@ export class ExportFileModal {
       case 'measurementcfg':
        this.influxMeasService.getMeas(filter)
        .subscribe(
-       data => {this.resultArray=data;
+       data => {
+         this.dataArray=data;
+         this.resultArray = this.dataArray;
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -416,7 +435,9 @@ export class ExportFileModal {
       case 'snmpmetriccfg':
        this.metricMeasService.getMetrics(filter)
        .subscribe(
-       data => {this.resultArray=data;
+       data => {
+         this.dataArray=data;
+         this.resultArray = this.dataArray;
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -425,7 +446,9 @@ export class ExportFileModal {
       case 'measgroupcfg':
        this.measGroupService.getMeasGroup(filter)
        .subscribe(
-       data => {this.resultArray=data;
+       data => {
+         this.dataArray=data;
+         this.resultArray = this.dataArray;
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
