@@ -1,9 +1,9 @@
 {
 	"ImportPath": "github.com/toni-moreno/snmpcollector",
-	"GoVersion": "go1.6",
-	"GodepVersion": "v74",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
 	"Packages": [
-		"./..."
+		"./pkg/..."
 	],
 	"Deps": [
 		{
@@ -132,8 +132,8 @@
 		},
 		{
 			"ImportPath": "github.com/soniah/gosnmp",
-			"Comment": "v1.9-memory-103-g3fe3beb",
-			"Rev": "3fe3beb30fa9700988893c56a63b1df8e1b68c26"
+			"Comment": "v1.9-memory-112-gcfe685e",
+			"Rev": "cfe685e0bca91d7bc4a95eab3d1faddf66b32e02"
 		},
 		{
 			"ImportPath": "github.com/spf13/cast",
