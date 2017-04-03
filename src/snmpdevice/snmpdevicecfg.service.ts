@@ -25,7 +25,8 @@ export class SnmpDeviceService {
 
             if ( key == 'Active' ||
             key == 'SnmpDebug' ||
-            key == 'DisableBulk' ) return ( value === "true" || value === true);
+            key == 'DisableBulk' ||
+            key == 'ConcurrentGather') return ( value === "true" || value === true);
             if ( key == 'ExtraTags' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
@@ -51,7 +52,8 @@ export class SnmpDeviceService {
             }
             if ( key == 'Active' ||
             key == 'SnmpDebug' ||
-            key == 'DisableBulk' ) return ( value === "true" || value === true);
+            key == 'DisableBulk' ||
+            key == 'ConcurrentGather') return ( value === "true" || value === true);
             if ( key == 'ExtraTags' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {

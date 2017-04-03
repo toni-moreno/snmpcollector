@@ -23,10 +23,10 @@ func NewCustomFilter(cid string, enableAlias bool, l *logrus.Logger) *CustomFilt
 // Init Load Confiration before use them
 func (cf *CustomFilter) Init(arg ...interface{}) error {
 	cf.dbc = arg[0].(*config.DatabaseCfg)
-	cf.log.Infof("Init CustomFilter ID: %s Enable Alias: %t", cf.CustomID, cf.EnableAlias)
+	cf.log.Infof("CUSTOMFILTER [%s] Init CustomFilter Enable Alias: %t", cf.CustomID, cf.EnableAlias)
 	_, err := cf.dbc.GetCustomFilterCfgByID(cf.CustomID)
 	if err != nil {
-		cf.log.Debug("Error on define custom Filter %s", cf.CustomID)
+		cf.log.Debugf("CUSTOMFILTER [%s] Error on define custom Filter %s", cf.CustomID, err)
 		return err
 	}
 
@@ -61,12 +61,12 @@ func (cf *CustomFilter) MapLabels(AllIndexedLabels map[string]string) map[string
 
 // Update load filtered data from Database config online time
 func (cf *CustomFilter) Update() error {
-	cf.log.Infof("apply CustomFilter ID: %s Enable Alias: %t", cf.CustomID, cf.EnableAlias)
+	cf.log.Infof("CUSTOMFILTER [%s] apply CustomFilter Enable Alias: %t", cf.CustomID, cf.EnableAlias)
 	// reset current filter
 	cf.filterLabels = make(map[string]string)
 
 	filter, err := cf.dbc.GetCustomFilterCfgByID(cf.CustomID)
-	cf.log.Debug("custom Filter %+v", filter)
+	cf.log.Debugf("CUSTOMFILTER [%s] custom Filter %+v", cf.CustomID, filter)
 
 	if err != nil {
 		return err

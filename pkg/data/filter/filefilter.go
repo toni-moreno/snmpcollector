@@ -26,11 +26,11 @@ func NewFileFilter(fileName string, enableAlias bool, l *logrus.Logger) *FileFil
 // Init load config first time
 func (ff *FileFilter) Init(arg ...interface{}) error {
 	ff.confDir = arg[0].(string)
-	ff.log.Infof("initialize File filter : %s Enable Alias: %t", ff.FileName, ff.EnableAlias)
+	ff.log.Infof("FILEFILTER [%s] initialize File filter  Enable Alias: %t", ff.FileName, ff.EnableAlias)
 	//chek if File exist
 	if _, err := os.Stat(filepath.Join(ff.confDir, ff.FileName)); os.IsNotExist(err) {
 		// does not exist
-		ff.log.Errorf("ERROR  file %s does not exist Plase upload first to the %s dir: error: %s", filepath.Join(ff.confDir, ff.FileName), ff.confDir, err)
+		ff.log.Errorf("FILEFILTER [%s] file %s does not exist Plase upload first to the %s dir: error: %s", ff.FileName, filepath.Join(ff.confDir, ff.FileName), ff.confDir, err)
 		return err
 	}
 	ff.filterLabels = make(map[string]string)
@@ -64,15 +64,15 @@ func (ff *FileFilter) MapLabels(AllIndexedLabels map[string]string) map[string]s
 
 // Update load filtered data from config file online time
 func (ff *FileFilter) Update() error {
-	ff.log.Infof("apply File filter : %s Enable Alias: %t", ff.FileName, ff.EnableAlias)
-	//reset current filter
+	ff.log.Infof("FILEFILTER [%s] apply File filter Enable Alias: %t", ff.FileName, ff.EnableAlias)
+	//reset current fil ter
 	ff.filterLabels = make(map[string]string)
 	if len(ff.FileName) == 0 {
 		return errors.New("No file configured error ")
 	}
 	data, err := ioutil.ReadFile(filepath.Join(ff.confDir, ff.FileName))
 	if err != nil {
-		ff.log.Errorf("ERROR on open file %s: error: %s", filepath.Join(ff.confDir, ff.FileName), err)
+		ff.log.Errorf("FILEFILTER [%s] ERROR on open file %s: error: %s", ff.FileName, filepath.Join(ff.confDir, ff.FileName), err)
 		return err
 	}
 
@@ -99,7 +99,7 @@ func (ff *FileFilter) Update() error {
 			}
 
 		default:
-			ff.log.Warnf("wrong number of parameters in file: %s Lnum: %s num : %s line: %s", ff.FileName, lnum, len(f), line)
+			ff.log.Warnf("FILEFILTER [%s] wrong number of parameters in file  Lnum: %s num : %s line: %s", ff.FileName, lnum, len(f), line)
 		}
 	}
 	return nil
