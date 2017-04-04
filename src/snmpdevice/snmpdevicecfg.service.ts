@@ -19,6 +19,7 @@ export class SnmpDeviceService {
             key == 'Timeout' ||
             key == 'Repeat' ||
             key == 'Freq'  ||
+            key == 'MaxRepetitions'  ||
             key == 'UpdateFltFreq' ) {
                 return parseInt(value);
             }
@@ -47,6 +48,7 @@ export class SnmpDeviceService {
             key == 'Timeout' ||
             key == 'Repeat' ||
             key == 'Freq'  ||
+            key == 'MaxRepetitions'  ||
             key == 'UpdateFltFreq') {
                 return parseInt(value);
             }

@@ -22,7 +22,8 @@ type SnmpDeviceCfg struct {
 	V3PrivPass  string `xorm:"v3privpass"`
 	V3PrivProt  string `xorm:"v3privprot"`
 	//snmp workarround for some devices
-	DisableBulk bool `xorm:"'disablebulk' default 0"`
+	DisableBulk    bool  `xorm:"'disablebulk' default 0"`
+	MaxRepetitions uint8 `xorm:"'maxrepetitions' default 50"`
 	//snmp runtime config
 	Freq             int  `xorm:"'freq' default 60"`
 	UpdateFltFreq    int  `xorm:"'update_flt_freq' default 60"`
