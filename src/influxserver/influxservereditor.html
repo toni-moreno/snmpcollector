@@ -83,7 +83,7 @@
         <label class="control-label col-sm-2" for="Password">Password</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentification password to the DB of the user {{influxserverForm.value.User}}"></i>
         <div class="col-sm-9">
-          <input formControlName="Password" id="Password" />
+          <input formControlName="Password" id="Password" type="password" />
           <control-messages [control]="influxserverForm.controls.Password"></control-messages>
         </div>
       </div>
@@ -208,7 +208,7 @@
         <label class="control-label col-sm-2" for="Password">Password</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentification password to the DB of the user {{influxserverForm.value.User}}"></i>
         <div class="col-sm-9">
-          <input formControlName="Password" id="Password" [ngModel]="influxserverForm.value.Password" />
+          <input formControlName="Password" id="Password" type="password" [ngModel]="influxserverForm.value.Password" />
           <control-messages [control]="influxserverForm.controls.Password"></control-messages>
         </div>
       </div>
