@@ -160,7 +160,7 @@
           <label class="control-label col-sm-2" for="V3AuthPass">V3AuthPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication password"></i>
           <div class="col-sm-9">
-            <input formControlName="V3AuthPass" id="V3AuthPass" />
+            <input formControlName="V3AuthPass" id="V3AuthPass" type="password" />
             <control-messages [control]="snmpdevForm.controls.V3AuthPass"></control-messages>
           </div>
         </div>
@@ -181,7 +181,7 @@
           <label class="control-label col-sm-2" for="V3PrivPass">V3PrivPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Privacy password"></i>
           <div class="col-sm-9">
-            <input formControlName="V3PrivPass" id="V3PrivPass" />
+            <input formControlName="V3PrivPass" id="V3PrivPass" type="password" />
             <control-messages [control]="snmpdevForm.controls.V3PrivPass"></control-messages>
           </div>
         </div>
@@ -472,7 +472,7 @@
           <label class="control-label col-sm-2" for="V3AuthPass">V3AuthPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication password"></i>
           <div class="col-sm-9">
-            <input formControlName="V3AuthPass" id="V3AuthPass" [ngModel]="snmpdevForm.value.V3AuthPass" />
+            <input formControlName="V3AuthPass" id="V3AuthPass" type="password" [ngModel]="snmpdevForm.value.V3AuthPass" />
             <control-messages [control]="snmpdevForm.controls.V3AuthPass"></control-messages>
           </div>
         </div>
@@ -493,7 +493,7 @@
           <label class="control-label col-sm-2" for="V3PrivPass">V3PrivPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Privacy password"></i>
           <div class="col-sm-9">
-            <input formControlName="V3PrivPass" id="V3PrivPass" [ngModel]="snmpdevForm.value.V3PrivPass" />
+            <input formControlName="V3PrivPass" id="V3PrivPass" type="password" [ngModel]="snmpdevForm.value.V3PrivPass" />
             <control-messages [control]="snmpdevForm.controls.V3PrivPass"></control-messages>
           </div>
         </div>
