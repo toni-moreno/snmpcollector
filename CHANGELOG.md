@@ -1,12 +1,17 @@
-# v 0.6.6 (not yet released)
+# v 0.6.6
 ### New Features
 * Compilation with Go1.8
 * added Docker image to hub tonimoreno/snmpcollector
 * added timestamp precision parameter to the influxdb Config (changed default precision from ns to seconds)
 * added influxdb connection check (influx ping) to the influxdb configuration forms
+* added MaxConnections device settins for SNMP BULKWALK queries
+* Added Concurrent SNMP Gathering, one GOROUTINE per measurement
+* Updated gosnmp library with performance improvements
+* Improved Tag Format with a new ${VAR|SELECTOR|TRANSFORMATOR} defintion
+* passwords now will be hidden( Thanx to @TeraHz)
 
 ### fixes
-* fix for #157, #158
+* fix for #157, #158, #161
 
 ### breaking changes
 
