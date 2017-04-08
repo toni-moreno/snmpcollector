@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -581,17 +580,6 @@ func (m *Measurement) SnmpGetData() (int64, int64, error) {
 	return sent, errs, nil
 }
 
-func formatTag(format string, data map[string]string, def string) string {
-	if len(format) == 0 {
-		return data[def]
-	}
-	final := format
-	for k, v := range data {
-		final = strings.Replace(final, k, v, -1)
-	}
-	return final
-}
-
 func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 
 	m.Debugf("Looking up column names %s ", m.cfg.IndexOID)
@@ -641,7 +629,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 	}
 	if m.cfg.GetMode != "indexed_it" {
 		for k, v := range allindex {
-			allindex[k] = formatTag(m.cfg.IndexTagFormat, map[string]string{"$IDX1": k, "$VAL1": v}, "$VAL1")
+			allindex[k] = formatTag(m.log, m.cfg.IndexTagFormat, map[string]string{"IDX1": k, "VAL1": v}, "VAL1")
 		}
 		return allindex, nil
 	}
@@ -675,7 +663,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 	allindexIt := make(map[string]string)
 	for key1, val1 := range allindexOrigin {
 		if val2, ok := allindex[val1]; ok {
-			allindexIt[key1] = formatTag(m.cfg.IndexTagFormat, map[string]string{"$IDX1": key1, "$VAL1": val1, "$IDX2": val1, "$VAL2": val2}, "$VAL2")
+			allindexIt[key1] = formatTag(m.log, m.cfg.IndexTagFormat, map[string]string{"IDX1": key1, "VAL1": val1, "IDX2": val1, "VAL2": val2}, "VAL2")
 		} else {
 			m.Warnf("There is not valid index : %s on TagOID : %s", val1, m.cfg.TagOID)
 		}
