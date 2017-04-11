@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 	// _ needed to mysql
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -46,7 +47,12 @@ func (dbc *DatabaseCfg) InitDB() {
 		datasource = dataDir + "/" + dbc.Name + ".db"
 	case "mysql":
 		dbtype = "mysql"
-		datasource = dbc.User + ":" + dbc.Pass + "@" + dbc.Host + "/" + dbc.Name + "?charset=utf8"
+		protocol := "tcp"
+		if strings.HasPrefix(dbc.Host, "/") {
+			protocol = "unix"
+		}
+		datasource = fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4", dbc.User, dbc.Password, protocol, dbc.Host, dbc.Name)
+		//datasource = dbc.User + ":" + dbc.Pass + "@" + dbc.Host + "/" + dbc.Name + "?charset=utf8"
 	default:
 		log.Errorf("unknown db  type %s", dbc.Type)
 		return

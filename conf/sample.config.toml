@@ -14,7 +14,7 @@
  # there are as many logs as devices configured
  # logdir set the Directory path for each device individual log, default is /var/log/snmpcollector
  # logdir = "/var/log/somelogpath"
- # NOTE: main process log is now sent to standard output 
+ # NOTE: main process log is now sent to standard output
  # logLevel set the main process log level
  # valid values: panic,fatal,error,warn,info,debug
  logLevel = "warn"
@@ -27,10 +27,10 @@
 #type sets the sql backend
 #valid values sqlite3,mysql
  type = "sqlite3"
-# these parameters are only for mysql
+# these parameters are only for mysql (use mysql_setup.sql before)
 # host = 127.0.0.1:3306
-# user = "root"
-# password = ""
+# user = "snmpcoluser"
+# password = "snmpcolpass"
 # name sets the database name
  name = "snmpcollector"
 #sqllogfile sets the name for a file in the log/ directory where sql backend will write all SQL transactions

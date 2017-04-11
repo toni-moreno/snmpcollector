@@ -19,7 +19,7 @@ type DatabaseCfg struct {
 	Host       string `toml:"host"`
 	Name       string `toml:"name"`
 	User       string `toml:"user"`
-	Pass       string `toml:"password"`
+	Password   string `toml:"password"`
 	SQLLogFile string `toml:"sqllogfile"`
 	Debug      string `toml:"debug"`
 	x          *xorm.Engine
