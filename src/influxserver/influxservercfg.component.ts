@@ -70,13 +70,13 @@ export class InfluxServerCfgComponent {
     this.influxserverForm = this.builder.group({
       ID: [this.influxserverForm ? this.influxserverForm.value.ID : '', Validators.required],
       Host: [this.influxserverForm ? this.influxserverForm.value.Host : '', Validators.required],
-      Port: [this.influxserverForm ? this.influxserverForm.value.Port : '', Validators.compose([Validators.required, ValidationService.integerValidator])],
+      Port: [this.influxserverForm ? this.influxserverForm.value.Port : '', Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       DB: [this.influxserverForm ? this.influxserverForm.value.DB : '', Validators.required],
       User: [this.influxserverForm ? this.influxserverForm.value.User : '', Validators.required],
       Password: [this.influxserverForm ? this.influxserverForm.value.Password : '', Validators.required],
       Retention: [this.influxserverForm ? this.influxserverForm.value.Retention : 'autogen', Validators.required],
       Precision: [this.influxserverForm ? this.influxserverForm.value.Precision : 's', Validators.required],
-      Timeout: [this.influxserverForm ? this.influxserverForm.value.Timeout : 30, Validators.compose([Validators.required, ValidationService.integerValidator])],
+      Timeout: [this.influxserverForm ? this.influxserverForm.value.Timeout : 30, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       UserAgent: [this.influxserverForm ? this.influxserverForm.value.UserAgent : ''],
       Description: [this.influxserverForm ? this.influxserverForm.value.Description : '']
     });

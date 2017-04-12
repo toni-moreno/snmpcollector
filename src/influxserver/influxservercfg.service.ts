@@ -12,7 +12,8 @@ export class InfluxServerService {
 
     addInfluxServer(dev) {
         return this.httpAPI.post('/api/cfg/influxservers',JSON.stringify(dev,function (key,value) {
-                if ( key == 'Port' ) {
+                if ( key == 'Port'  ||
+                key == 'Timeout' ) {
                   return parseInt(value);
                 }
                 return value;
@@ -23,7 +24,8 @@ export class InfluxServerService {
 
     editInfluxServer(dev, id) {
         return this.httpAPI.put('/api/cfg/influxservers/'+id,JSON.stringify(dev,function (key,value) {
-            if ( key == 'Port' ) {
+            if ( key == 'Port'  ||
+            key == 'Timeout' ) {
               return parseInt(value);
             }
             return value;
@@ -88,7 +90,8 @@ export class InfluxServerService {
     testInfluxServer(influxserver) {
       // return an observable
       return this.httpAPI.post('/api/cfg/influxservers/ping/',JSON.stringify(influxserver,function (key,value) {
-          if ( key == 'Port' ) {
+          if ( key == 'Port'  ||
+          key == 'Timeout' ) {
             return parseInt(value);
           }
           return value;

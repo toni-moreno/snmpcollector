@@ -9,8 +9,10 @@ export class ValidationService {
             'invalidFloat': 'Invalid number. Must be a float. i.e: 3.2, -4',
             'invalidInteger': 'Invalid number. Must be an integer',
             'invalidExtraTags': 'Invalid format. Must be key=value, separated by commas',
-            'invalidWhiteSpaces': 'Invalid. Can\'t contain white spaces'
-
+            'invalidWhiteSpaces': 'Invalid. Can\'t contain white spaces',
+            'invalidUInteger': 'Invalid Number . Must be a Unsigned (positive) Integer',
+            'invalidUIntegerNotZero': 'Invalid Number . Must be a Unsigned (positive) Integer not Zero',
+            'invalidUIntegerAndLessOne': 'Invalid Number . Must be a Unsigned (positive) Integer or -1'
         };
 
         return config[validatorName];
@@ -65,10 +67,40 @@ export class ValidationService {
 
     static integerValidator(control) {
         if (control.value){
-            if (control.value.toString().match(/^\d*$/)) {
+            if (control.value.toString().match(/^(-?[1-9]+\d*)$|^0$/)) {
                 return null;
             } else {
                 return { 'invalidInteger': true };
+            }
+        }
+    }
+
+    static uintegerNotZeroValidator(control) {
+        if (control.value){
+            if (control.value.toString().match(/^[1-9]+\d*$/)) {
+                return null;
+            } else {
+                return { 'invalidUIntegerNotZero': true };
+            }
+        }
+    }
+
+    static uintegerValidator(control) {
+        if (control.value){
+            if (control.value.toString().match(/^([1-9]+\d*)$|^0$/)) {
+                return null;
+            } else {
+                return { 'invalidUInteger': true };
+            }
+        }
+    }
+
+    static uintegerAndLessOneValidator(control) {
+        if (control.value){
+            if (control.value.toString().match(/^([1-9]+\d*)$|^0$|^-1$/)) {
+                return null;
+            } else {
+                return { 'invalidUIntegerAndLessOne': true };
             }
         }
     }
