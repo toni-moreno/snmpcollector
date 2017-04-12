@@ -1,3 +1,13 @@
+# v 0.7.0 (not released yet)
+### New Features
+* added a gonsmp fix for snmpv3 performance problems.
+* updated all dependencies
+
+### fixes
+* fix for #169
+
+### breaking changes
+
 # v 0.6.6
 ### New Features
 * Compilation with Go1.8
