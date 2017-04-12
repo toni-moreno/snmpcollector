@@ -145,7 +145,7 @@ func Form(formStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 		if parseErr != nil {
 			errors.Add([]string{}, ERR_DESERIALIZATION, parseErr.Error())
 		}
-		mapForm(formStruct, ctx.Req.Form, nil, errors)
+		errors = mapForm(formStruct, ctx.Req.Form, nil, errors)
 		validateAndMap(formStruct, ctx, errors, ifacePtr...)
 	}
 }
@@ -185,7 +185,7 @@ func MultipartForm(formStruct interface{}, ifacePtr ...interface{}) macaron.Hand
 				ctx.Req.MultipartForm = form
 			}
 		}
-		mapForm(formStruct, ctx.Req.MultipartForm.Value, ctx.Req.MultipartForm.File, errors)
+		errors = mapForm(formStruct, ctx.Req.MultipartForm.Value, ctx.Req.MultipartForm.File, errors)
 		validateAndMap(formStruct, ctx, errors, ifacePtr...)
 	}
 }
@@ -449,7 +449,7 @@ VALIDATE_RULES:
 		case strings.HasPrefix(rule, "Default("):
 			if reflect.DeepEqual(zero, fieldValue) {
 				if fieldVal.CanAddr() {
-					setWithProperType(field.Type.Kind(), rule[8:len(rule)-1], fieldVal, field.Tag.Get("form"), errors)
+					errors = setWithProperType(field.Type.Kind(), rule[8:len(rule)-1], fieldVal, field.Tag.Get("form"), errors)
 				} else {
 					errors.Add([]string{field.Name}, ERR_EXCLUDE, "Default")
 					break VALIDATE_RULES
@@ -497,7 +497,7 @@ func SetNameMapper(nm NameMapper) {
 
 // Takes values from the form data and puts them into a struct
 func mapForm(formStruct reflect.Value, form map[string][]string,
-	formfile map[string][]*multipart.FileHeader, errors Errors) {
+	formfile map[string][]*multipart.FileHeader, errors Errors) Errors {
 
 	if formStruct.Kind() == reflect.Ptr {
 		formStruct = formStruct.Elem()
@@ -510,12 +510,12 @@ func mapForm(formStruct reflect.Value, form map[string][]string,
 
 		if typeField.Type.Kind() == reflect.Ptr && typeField.Anonymous {
 			structField.Set(reflect.New(typeField.Type.Elem()))
-			mapForm(structField.Elem(), form, formfile, errors)
+			errors = mapForm(structField.Elem(), form, formfile, errors)
 			if reflect.DeepEqual(structField.Elem().Interface(), reflect.Zero(structField.Elem().Type()).Interface()) {
 				structField.Set(reflect.Zero(structField.Type()))
 			}
 		} else if typeField.Type.Kind() == reflect.Struct {
-			mapForm(structField, form, formfile, errors)
+			errors = mapForm(structField, form, formfile, errors)
 		}
 
 		inputFieldName := parseFormName(typeField.Name, typeField.Tag.Get("form"))
@@ -530,11 +530,11 @@ func mapForm(formStruct reflect.Value, form map[string][]string,
 				sliceOf := structField.Type().Elem().Kind()
 				slice := reflect.MakeSlice(structField.Type(), numElems, numElems)
 				for i := 0; i < numElems; i++ {
-					setWithProperType(sliceOf, inputValue[i], slice.Index(i), inputFieldName, errors)
+					errors = setWithProperType(sliceOf, inputValue[i], slice.Index(i), inputFieldName, errors)
 				}
 				formStruct.Field(i).Set(slice)
 			} else {
-				setWithProperType(typeField.Type.Kind(), inputValue[0], structField, inputFieldName, errors)
+				errors = setWithProperType(typeField.Type.Kind(), inputValue[0], structField, inputFieldName, errors)
 			}
 			continue
 		}
@@ -555,13 +555,14 @@ func mapForm(formStruct reflect.Value, form map[string][]string,
 			structField.Set(reflect.ValueOf(inputFile[0]))
 		}
 	}
+	return errors
 }
 
 // This sets the value in a struct of an indeterminate type to the
 // matching value from the request (via Form middleware) in the
 // same type, so that not all deserialized values have to be strings.
 // Supported types are string, int, float, and bool.
-func setWithProperType(valueKind reflect.Kind, val string, structField reflect.Value, nameInTag string, errors Errors) {
+func setWithProperType(valueKind reflect.Kind, val string, structField reflect.Value, nameInTag string, errors Errors) Errors {
 	switch valueKind {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if val == "" {
@@ -586,7 +587,7 @@ func setWithProperType(valueKind reflect.Kind, val string, structField reflect.V
 	case reflect.Bool:
 		if val == "on" {
 			structField.SetBool(true)
-			return
+			break
 		}
 
 		if val == "" {
@@ -621,6 +622,7 @@ func setWithProperType(valueKind reflect.Kind, val string, structField reflect.V
 	case reflect.String:
 		structField.SetString(val)
 	}
+	return errors
 }
 
 // Don't pass in pointers to bind to. Can lead to bugs.

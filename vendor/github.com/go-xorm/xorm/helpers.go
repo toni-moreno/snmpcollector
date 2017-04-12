@@ -17,74 +17,83 @@ import (
 )
 
 // str2PK convert string value to primary key value according to tp
-func str2PK(s string, tp reflect.Type) (interface{}, error) {
+func str2PKValue(s string, tp reflect.Type) (reflect.Value, error) {
 	var err error
 	var result interface{}
+	var defReturn = reflect.Zero(tp)
+
 	switch tp.Kind() {
 	case reflect.Int:
 		result, err = strconv.Atoi(s)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as int: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as int: %s", s, err.Error())
 		}
 	case reflect.Int8:
 		x, err := strconv.Atoi(s)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as int16: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as int8: %s", s, err.Error())
 		}
 		result = int8(x)
 	case reflect.Int16:
 		x, err := strconv.Atoi(s)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as int16: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as int16: %s", s, err.Error())
 		}
 		result = int16(x)
 	case reflect.Int32:
 		x, err := strconv.Atoi(s)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as int32: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as int32: %s", s, err.Error())
 		}
 		result = int32(x)
 	case reflect.Int64:
 		result, err = strconv.ParseInt(s, 10, 64)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as int64: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as int64: %s", s, err.Error())
 		}
 	case reflect.Uint:
 		x, err := strconv.ParseUint(s, 10, 64)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as uint: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as uint: %s", s, err.Error())
 		}
 		result = uint(x)
 	case reflect.Uint8:
 		x, err := strconv.ParseUint(s, 10, 64)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as uint8: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as uint8: %s", s, err.Error())
 		}
 		result = uint8(x)
 	case reflect.Uint16:
 		x, err := strconv.ParseUint(s, 10, 64)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as uint16: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as uint16: %s", s, err.Error())
 		}
 		result = uint16(x)
 	case reflect.Uint32:
 		x, err := strconv.ParseUint(s, 10, 64)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as uint32: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as uint32: %s", s, err.Error())
 		}
 		result = uint32(x)
 	case reflect.Uint64:
 		result, err = strconv.ParseUint(s, 10, 64)
 		if err != nil {
-			return nil, errors.New("convert " + s + " as uint64: " + err.Error())
+			return defReturn, fmt.Errorf("convert %s as uint64: %s", s, err.Error())
 		}
 	case reflect.String:
 		result = s
 	default:
-		panic("unsupported convert type")
+		return defReturn, errors.New("unsupported convert type")
 	}
-	result = reflect.ValueOf(result).Convert(tp).Interface()
-	return result, nil
+	return reflect.ValueOf(result).Convert(tp), nil
+}
+
+func str2PK(s string, tp reflect.Type) (interface{}, error) {
+	v, err := str2PKValue(s, tp)
+	if err != nil {
+		return nil, err
+	}
+	return v.Interface(), nil
 }
 
 func splitTag(tag string) (tags []string) {
@@ -102,7 +111,7 @@ func splitTag(tag string) (tags []string) {
 		}
 	}
 	if lastIdx < len(tag) {
-		tags = append(tags, strings.TrimSpace(tag[lastIdx:len(tag)]))
+		tags = append(tags, strings.TrimSpace(tag[lastIdx:]))
 	}
 	return
 }
@@ -171,6 +180,20 @@ func isStructZero(v reflect.Value) bool {
 	return true
 }
 
+func isArrayValueZero(v reflect.Value) bool {
+	if !v.IsValid() || v.Len() == 0 {
+		return true
+	}
+
+	for i := 0; i < v.Len(); i++ {
+		if !isZero(v.Index(i).Interface()) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func int64ToIntValue(id int64, tp reflect.Type) reflect.Value {
 	var v interface{}
 	switch tp.Kind() {
@@ -205,10 +228,6 @@ func isPKZero(pk core.PK) bool {
 		}
 	}
 	return false
-}
-
-func equalNoCase(s1, s2 string) bool {
-	return strings.ToLower(s1) == strings.ToLower(s2)
 }
 
 func indexNoCase(s, sep string) int {
@@ -494,9 +513,8 @@ func genCols(table *core.Table, session *Session, bean interface{}, useCol bool,
 	args := make([]interface{}, 0, len(table.ColumnsSeq()))
 
 	for _, col := range table.Columns() {
-		lColName := strings.ToLower(col.Name)
 		if useCol && !col.IsVersion && !col.IsCreated && !col.IsUpdated {
-			if _, ok := session.Statement.columnMap[lColName]; !ok {
+			if _, ok := getFlagForColumn(session.Statement.columnMap, col); !ok {
 				continue
 			}
 		}
@@ -532,18 +550,18 @@ func genCols(table *core.Table, session *Session, bean interface{}, useCol bool,
 		}
 
 		if session.Statement.ColumnStr != "" {
-			if _, ok := session.Statement.columnMap[lColName]; !ok {
+			if _, ok := getFlagForColumn(session.Statement.columnMap, col); !ok {
 				continue
 			}
 		}
 		if session.Statement.OmitStr != "" {
-			if _, ok := session.Statement.columnMap[lColName]; ok {
+			if _, ok := getFlagForColumn(session.Statement.columnMap, col); ok {
 				continue
 			}
 		}
 
 		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
-		if _, ok := session.Statement.nullableMap[lColName]; ok {
+		if _, ok := getFlagForColumn(session.Statement.nullableMap, col); ok {
 			if col.Nullable && isZero(fieldValue.Interface()) {
 				var nilValue *int
 				fieldValue = reflect.ValueOf(nilValue)
@@ -581,4 +599,24 @@ func genCols(table *core.Table, session *Session, bean interface{}, useCol bool,
 
 func indexName(tableName, idxName string) string {
 	return fmt.Sprintf("IDX_%v_%v", tableName, idxName)
+}
+
+func getFlagForColumn(m map[string]bool, col *core.Column) (val bool, has bool) {
+
+	if len(m) == 0 {
+		return false, false
+	}
+
+	n := len(col.Name)
+
+	for mk := range m {
+		if len(mk) != n {
+			continue
+		}
+		if strings.EqualFold(mk, col.Name) {
+			return m[mk], true
+		}
+	}
+
+	return false, false
 }

@@ -67,7 +67,8 @@ var planAdditive precedent
 var planBitwise precedent
 var planShift precedent
 var planComparator precedent
-var planLogical precedent
+var planLogicalAnd precedent
+var planLogicalOr precedent
 var planTernary precedent
 var planSeparator precedent
 
@@ -118,17 +119,23 @@ func init() {
 		typeErrorFormat: TYPEERROR_COMPARATOR,
 		next:            planBitwise,
 	})
-	planLogical = makePrecedentFromPlanner(&precedencePlanner{
-		validSymbols:    LOGICAL_SYMBOLS,
+	planLogicalAnd = makePrecedentFromPlanner(&precedencePlanner{
+		validSymbols:    map[string]OperatorSymbol{"&&": AND},
 		validKinds:      []TokenKind{LOGICALOP},
 		typeErrorFormat: TYPEERROR_LOGICAL,
 		next:            planComparator,
+	})
+	planLogicalOr = makePrecedentFromPlanner(&precedencePlanner{
+		validSymbols:    map[string]OperatorSymbol{"||": OR},
+		validKinds:      []TokenKind{LOGICALOP},
+		typeErrorFormat: TYPEERROR_LOGICAL,
+		next:            planLogicalAnd,
 	})
 	planTernary = makePrecedentFromPlanner(&precedencePlanner{
 		validSymbols:    TERNARY_SYMBOLS,
 		validKinds:      []TokenKind{TERNARY},
 		typeErrorFormat: TYPEERROR_TERNARY,
-		next:            planLogical,
+		next:            planLogicalOr,
 	})
 	planSeparator = makePrecedentFromPlanner(&precedencePlanner{
 		validSymbols: SEPARATOR_SYMBOLS,
@@ -519,12 +526,6 @@ func reorderStages(rootStage *evaluationStage) {
 
 		currentPrecedence = findOperatorPrecedenceForSymbol(currentStage.symbol)
 
-		// do not reorder some operators, since they aren't actually "in a row" in the sense that this reordering works with.
-		switch currentPrecedence {
-		case LOGICAL_PRECEDENCE:
-			continue
-		}
-
 		if currentPrecedence == precedence {
 			identicalPrecedences = append(identicalPrecedences, currentStage)
 			continue
@@ -654,6 +655,10 @@ func elideStage(root *evaluationStage) *evaluationStage {
 
 	err = typeCheck(root.rightTypeCheck, rightValue, root.symbol, root.typeErrorFormat)
 	if err != nil {
+		return root
+	}
+
+	if root.typeCheck != nil && !root.typeCheck(leftValue, rightValue) {
 		return root
 	}
 

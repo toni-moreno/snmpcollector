@@ -17,6 +17,24 @@ type lexerState struct {
 var validLexerStates = []lexerState{
 
 	lexerState{
+		kind: UNKNOWN,
+		isEOF: false,
+		isNullable: true,
+		validNextKinds: []TokenKind{
+
+			PREFIX,
+			NUMERIC,
+			BOOLEAN,
+			VARIABLE,
+			PATTERN,
+			FUNCTION,
+			STRING,
+			TIME,
+			CLAUSE,
+		},
+	},
+
+	lexerState{
 
 		kind:       CLAUSE,
 		isEOF:      false,
@@ -286,6 +304,11 @@ func checkExpressionSyntax(tokens []ExpressionToken) error {
 	for _, token := range tokens {
 
 		if !state.canTransitionTo(token.Kind) {
+
+			// call out a specific error for tokens looking like they want to be functions.
+			if lastToken.Kind == VARIABLE && token.Kind == CLAUSE {
+				return errors.New("Undefined function " + lastToken.Value.(string))
+			}
 
 			firstStateName := fmt.Sprintf("%s [%v]", GetTokenKindString(state.kind), lastToken.Value)
 			nextStateName := fmt.Sprintf("%s [%v]", GetTokenKindString(token.Kind), token.Value)

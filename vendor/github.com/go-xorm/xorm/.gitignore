@@ -21,9 +21,10 @@ _cgo_export.*
 _testmain.go
 
 *.exe
-vendor
 
 *.log
 .vendor
 temp_test.go
 .vscode
+xorm.test
+*.sqlite3

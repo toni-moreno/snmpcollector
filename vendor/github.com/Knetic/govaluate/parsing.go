@@ -48,7 +48,7 @@ func parseTokens(expression string, functions map[string]ExpressionFunction) ([]
 		return nil, err
 	}
 
-	return optimizeTokens(ret)
+	return ret, nil
 }
 
 func readToken(stream *lexerStream, state lexerState, functions map[string]ExpressionFunction) (ExpressionToken, error, bool) {
@@ -441,7 +441,7 @@ func tryParseExactTime(candidate string, format string) (time.Time, bool) {
 	var ret time.Time
 	var err error
 
-	ret, err = time.Parse(format, candidate)
+	ret, err = time.ParseInLocation(format, candidate, time.Local)
 	if err != nil {
 		return time.Now(), false
 	}

@@ -279,24 +279,29 @@ func (b *Base) ForUpdateSql(query string) string {
 func (b *Base) LogSQL(sql string, args []interface{}) {
 	if b.logger != nil && b.logger.IsShowSQL() {
 		if len(args) > 0 {
-			b.logger.Info("[sql]", sql, args)
+			b.logger.Infof("[SQL] %v %v", sql, args)
 		} else {
-			b.logger.Info("[sql]", sql)
+			b.logger.Infof("[SQL] %v", sql)
 		}
 	}
 }
 
 var (
-	dialects = map[DbType]func() Dialect{}
+	dialects = map[string]func() Dialect{}
 )
 
+// RegisterDialect register database dialect
 func RegisterDialect(dbName DbType, dialectFunc func() Dialect) {
 	if dialectFunc == nil {
 		panic("core: Register dialect is nil")
 	}
-	dialects[dbName] = dialectFunc // !nashtsai! allow override dialect
+	dialects[strings.ToLower(string(dbName))] = dialectFunc // !nashtsai! allow override dialect
 }
 
+// QueryDialect query if registed database dialect
 func QueryDialect(dbName DbType) Dialect {
-	return dialects[dbName]()
+	if d, ok := dialects[strings.ToLower(string(dbName))]; ok {
+		return d()
+	}
+	return nil
 }
