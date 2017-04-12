@@ -374,13 +374,10 @@ func (sp *UsmSecurityParameters) isAuthentic(packetBytes []byte, packet *SnmpPac
 		return false, err
 	}
 	// TODO: investigate call chain to determine if this is really the best spot for this
-	var secretKey = genlocalkey(sp.AuthenticationProtocol,
-		sp.AuthenticationPassphrase,
-		sp.AuthoritativeEngineID)
 
 	var extkey [64]byte
 
-	copy(extkey[:], secretKey)
+	copy(extkey[:], sp.secretKey)
 
 	var k1, k2 [64]byte
 
