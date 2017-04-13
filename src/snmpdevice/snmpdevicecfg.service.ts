@@ -18,12 +18,11 @@ export class SnmpDeviceService {
             key == 'Retries' ||
             key == 'Timeout' ||
             key == 'Repeat' ||
-            key == 'Freq'  ||
+            key == 'Freq' ||
             key == 'MaxRepetitions'  ||
-            key == 'UpdateFltFreq' ) {
+            key == 'UpdateFltFreq') {
                 return parseInt(value);
             }
-
             if ( key == 'Active' ||
             key == 'SnmpDebug' ||
             key == 'DisableBulk' ||
@@ -47,7 +46,7 @@ export class SnmpDeviceService {
             key == 'Retries' ||
             key == 'Timeout' ||
             key == 'Repeat' ||
-            key == 'Freq'  ||
+            key == 'Freq' ||
             key == 'MaxRepetitions'  ||
             key == 'UpdateFltFreq') {
                 return parseInt(value);
@@ -137,12 +136,15 @@ export class SnmpDeviceService {
             key == 'Retries' ||
             key == 'Timeout' ||
             key == 'Repeat' ||
-            key == 'Freq' ) {
+            key == 'Freq' ||
+            key == 'MaxRepetitions'  ||
+            key == 'UpdateFltFreq') {
                 return parseInt(value);
             }
             if ( key == 'Active' ||
             key == 'SnmpDebug' ||
-            key == 'DisableBulk' ) return ( value === "true" || value === true);
+            key == 'DisableBulk' ||
+            key == 'ConcurrentGather') return ( value === "true" || value === true);
             if ( key == 'ExtraTags' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
@@ -160,12 +162,15 @@ export class SnmpDeviceService {
             key == 'Retries' ||
             key == 'Timeout' ||
             key == 'Repeat' ||
-            key == 'Freq' ) {
+            key == 'Freq' ||
+            key == 'MaxRepetitions'  ||
+            key == 'UpdateFltFreq') {
                 return parseInt(value);
             }
             if ( key == 'Active' ||
             key == 'SnmpDebug' ||
-            key == 'DisableBulk' ) return ( value === "true" || value === true);
+            key == 'DisableBulk' ||
+            key == 'ConcurrentGather') return ( value === "true" || value === true);
             if ( key == 'ExtraTags' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
