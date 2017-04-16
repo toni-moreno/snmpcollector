@@ -118,7 +118,7 @@ export class SnmpDeviceCfgComponent {
       SnmpDebug: [this.snmpdevForm ? this.snmpdevForm.value.SnmpDebug : 'false', Validators.required],
       DeviceTagName: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagName : '', Validators.required],
       DeviceTagValue: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagValue : 'id'],
-      ExtraTags: [this.snmpdevForm ? this.snmpdevForm.value.ExtraTags : null, Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
+      ExtraTags: [this.snmpdevForm ? this.snmpdevForm.value.ExtraTags : "", Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
       MeasurementGroups: [this.snmpdevForm ? this.snmpdevForm.value.MeasurementGroups : null],
       MeasFilters: [this.snmpdevForm ? this.snmpdevForm.value.MeasFilters : null],
       Description: [this.snmpdevForm ? this.snmpdevForm.value.Description : ''],
