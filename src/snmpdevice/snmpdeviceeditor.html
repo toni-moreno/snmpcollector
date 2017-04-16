@@ -118,7 +118,7 @@
 
       <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '1' ">
         <label class="control-label col-sm-2" for="MaxRepetitions">MaxRepetitions</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set de MaxRepetitions value for BULKWALK SNMP Queries"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the MaxRepetitions value for BULKWALK SNMP Queries"></i>
         <div class="col-sm-9">
           <input formControlName="MaxRepetitions" id="MaxRepetitions" />
           <control-messages [control]="snmpdevForm.controls.MaxRepetitions"></control-messages>
@@ -219,7 +219,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="ConcurrentGather">ConcurrentGather</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="open a new snmp connection for each meaurments and send concurrent queries over de device "></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Open a new snmp connection for each measurement and send concurrent queries over the device "></i>
         <div class="col-sm-9">
           <select formControlName="ConcurrentGather" id="ConcurrentGather" >
             <option value="true">True</option>
@@ -429,7 +429,7 @@
 
       <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '1' ">
         <label class="control-label col-sm-2" for="MaxRepetitions">MaxRepetitions</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set de MaxRepetitions value for BULKWALK SNMP Queries"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the MaxRepetitions value for BULKWALK SNMP Queries"></i>
         <div class="col-sm-9">
           <input formControlName="MaxRepetitions" id="MaxRepetitions"  [ngModel]="snmpdevForm.value.MaxRepetitions" />
           <control-messages [control]="snmpdevForm.controls.MaxRepetitions"></control-messages>
@@ -532,7 +532,7 @@
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="ConcurrentGather">ConcurrentGather</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="open a new snmp connection for each meaurments and send concurrent queries over de device "></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Open a new snmp connection for each measurement and send concurrent queries over the device "></i>
         <div class="col-sm-9">
           <select formControlName="ConcurrentGather" id="ConcurrentGather" [ngModel]="snmpdevForm.value.ConcurrentGather">
             <option value="true">True</option>
