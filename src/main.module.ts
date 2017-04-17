@@ -19,6 +19,8 @@ import { AppRoutes } from './app/app.routes';
 //common
 import { ControlMessagesComponent } from './common/control-messages.component';
 import { MultiselectDropdownModule } from './common/multiselect-dropdown'
+import { PasswordToggleDirective } from './common/custom-directives'
+
 //snmpcollector components
 
 import { SnmpDeviceCfgComponent } from './snmpdevice/snmpdevicecfg.component';
@@ -57,6 +59,7 @@ import { SpinnerComponent } from './common/spinner';
 @NgModule({
   bootstrap: [App],
   declarations: [
+    PasswordToggleDirective,
     ObjectParserPipe,
     SplitCommaPipe,
     ControlMessagesComponent,

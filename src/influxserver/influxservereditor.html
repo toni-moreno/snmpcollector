@@ -83,7 +83,8 @@
         <label class="control-label col-sm-2" for="Password">Password</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentification password to the DB of the user {{influxserverForm.value.User}}"></i>
         <div class="col-sm-9">
-          <input formControlName="Password" id="Password" type="password" />
+          <input #inputPassword formControlName="Password" id="Password" type="password"  />
+          <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputPassword.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputPassword"> </i>
           <control-messages [control]="influxserverForm.controls.Password"></control-messages>
         </div>
       </div>
@@ -208,7 +209,8 @@
         <label class="control-label col-sm-2" for="Password">Password</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentification password to the DB of the user {{influxserverForm.value.User}}"></i>
         <div class="col-sm-9">
-          <input formControlName="Password" id="Password" type="password" [ngModel]="influxserverForm.value.Password" />
+          <input #inputPassword formControlName="Password" id="Password" type="password" [ngModel]="influxserverForm.value.Password" />
+          <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputPassword.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputPassword"> </i>
           <control-messages [control]="influxserverForm.controls.Password"></control-messages>
         </div>
       </div>
