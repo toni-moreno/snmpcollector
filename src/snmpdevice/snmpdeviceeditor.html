@@ -160,7 +160,8 @@
           <label class="control-label col-sm-2" for="V3AuthPass">V3AuthPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication password"></i>
           <div class="col-sm-9">
-            <input formControlName="V3AuthPass" id="V3AuthPass" type="password" />
+            <input #inputV3AuthPass formControlName="V3AuthPass" id="V3AuthPass" type="password" />
+            <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputV3AuthPass.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputV3AuthPass"> </i>
             <control-messages [control]="snmpdevForm.controls.V3AuthPass"></control-messages>
           </div>
         </div>
@@ -181,7 +182,8 @@
           <label class="control-label col-sm-2" for="V3PrivPass">V3PrivPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Privacy password"></i>
           <div class="col-sm-9">
-            <input formControlName="V3PrivPass" id="V3PrivPass" type="password" />
+            <input #inputV3PrivPass formControlName="V3PrivPass" id="V3PrivPass" type="password" />
+            <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputV3PrivPass.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputV3PrivPass"> </i>
             <control-messages [control]="snmpdevForm.controls.V3PrivPass"></control-messages>
           </div>
         </div>
@@ -472,7 +474,8 @@
           <label class="control-label col-sm-2" for="V3AuthPass">V3AuthPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication password"></i>
           <div class="col-sm-9">
-            <input formControlName="V3AuthPass" id="V3AuthPass" type="password" [ngModel]="snmpdevForm.value.V3AuthPass" />
+            <input #inputV3AuthPass formControlName="V3AuthPass" id="V3AuthPass" type="password" [ngModel]="snmpdevForm.value.V3AuthPass" />
+            <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputV3AuthPass.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputV3AuthPass"> </i>
             <control-messages [control]="snmpdevForm.controls.V3AuthPass"></control-messages>
           </div>
         </div>
@@ -493,7 +496,8 @@
           <label class="control-label col-sm-2" for="V3PrivPass">V3PrivPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Privacy password"></i>
           <div class="col-sm-9">
-            <input formControlName="V3PrivPass" id="V3PrivPass" type="password" [ngModel]="snmpdevForm.value.V3PrivPass" />
+            <input #inputV3PrivPass formControlName="V3PrivPass" id="V3PrivPass" type="password" [ngModel]="snmpdevForm.value.V3PrivPass" />
+            <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputV3PrivPass.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputV3PrivPass"> </i>
             <control-messages [control]="snmpdevForm.controls.V3PrivPass"></control-messages>
           </div>
         </div>
