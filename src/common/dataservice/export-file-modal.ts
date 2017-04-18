@@ -3,6 +3,7 @@ import { ModalDirective } from 'ng2-bootstrap';
 import { Validators, FormGroup, FormControl, FormArray, FormBuilder } from '@angular/forms';
 import { ExportServiceCfg } from './export.service'
 import { TreeView} from './treeview';
+import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../multiselect-dropdown';
 
 //Services
 import { InfluxServerService } from '../../influxserver/influxservercfg.service';
@@ -48,8 +49,15 @@ import { CustomFilterService } from '../../customfilter/customfilter.service';
                     <div>
                       2. Select Items of type <label [ngClass]="['label label-'+selectedType.Class]"> {{selectedType.Type}}</label>  <span class="badge" style="margin-left: 10px">{{resultArray.length}} Results</span>
                     </div>
-                    <div class="text-left" style="margin-top: 10px">
-                      Filter: <input type=text [(ngModel)]="filter" placeholder="Filter items..." (ngModelChange)="onChange($event)">
+                    <div dropdown class="text-left" style="margin-top: 10px">
+                    <span class="dropdown-toggle-split">Filter by</span>
+                    <ss-multiselect-dropdown style="border: none" class="text-primary" [options]="listFilterProp" [texts]="myTexts" [settings]="propSettings" [(ngModel)]="selectedFilterProp" (ngModelChange)="onChange(filter)"></ss-multiselect-dropdown>
+                      <input type=text [(ngModel)]="filter" placeholder="Filter items..." (ngModelChange)="onChange($event)">
+                      <label [tooltip]="'Clear Filter'" container="body" (click)="filter=''; onChange(filter)"><i class="glyphicon glyphicon-trash text-primary"></i></label>
+                    </div>
+                    <div class="text-right">
+                    <label class="label label-success" (click)=selectAllItems(true)>Select All</label>
+                    <label class="label label-danger" (click)=selectAllItems(false)>Deselect All</label>
                     </div>
                   </div>
                   <div style="max-height: 400px; overflow-y:auto">
@@ -61,7 +69,10 @@ import { CustomFilterService } from '../../customfilter/customfilter.service';
                   </div>
                   <div class="col-md-5">
                   <div *ngIf="finalArray.length !== 0">
-                    <div class="panel-heading"> 3. Items ready to export: {{finalArray.length}}
+                    <div class="panel-heading"> 3. Items ready to export: <span class="badge">{{finalArray.length}}</span>
+                    <div class="text-right">
+                      <label class="label label-danger" (click)="finalArray = []">Clear All</label>
+                    </div>
                     </div>
                     <div style="max-height: 400px; overflow-y:auto">
                       <div *ngFor="let res of finalArray;  let i = index" class="col-md-12">
@@ -205,6 +216,11 @@ export class ExportFileModal {
 
   resultArray : any = [];
   dataArray : any = [];
+  selectedFilterProp : any = [];
+  listFilterProp: IMultiSelectOption[] = [];
+  private propSettings: IMultiSelectSettings = {
+      singleSelect: true,
+  };
 
   //Bulk Export - SelectedType
   selectedType : any = null;
@@ -266,9 +282,13 @@ export class ExportFileModal {
 
   onChange(event){
     let tmpArray = this.dataArray.filter((item: any) => {
-      return item['ID'].match(event);
+      if (item[this.selectedFilterProp]) return item[this.selectedFilterProp].toString().match(event);
+      else if (event === "" && !item[this.selectedFilterProp]) return item;
     });
     this.resultArray = tmpArray;
+  }
+  changeFilterProp(prop){
+    this.selectedFilterProp = prop;
   }
 
   //Load items from selection type
@@ -299,11 +319,27 @@ export class ExportFileModal {
    findIndexItem(checkArray, checkItem: any) : any {
      for (let a in checkArray) {
        if (checkItem === checkArray[a].ObjectID) {
-         console.log("a",a);
          return a;
        }
      }
    }
+
+   selectAllItems(selectAll) {
+     //Creates the form array
+     if (selectAll === true) {
+       for (let a of this.resultArray) {
+         if (this.checkItems(a.ID, this.selectedType)) {
+           this.finalArray.push({ "ObjectID" : a.ID, ObjectTypeID: this.selectedType.Type, "Options" : {'Recursive': false }});
+         }
+       }
+     } else {
+       for (let a of this.resultArray) {
+         let index = this.findIndexItem(this.finalArray, a.ID);
+           if (index) this.removeItem(index);
+       }
+     }
+   }
+
    //Select item to add it to the FinalArray or delete it if its alreay selected
   selectItem(event) {
     if (this.checkItems(event.ObjectID, event.ObjectTypeID)) {
@@ -363,6 +399,9 @@ export class ExportFileModal {
 //Load items functions from services depending on items selected Type
   loadItems(type, filter?) {
     this.resultArray = [];
+    this.selectedFilterProp = ["ID"];
+    this.listFilterProp = [];
+
     switch (type) {
       case 'snmpdevicecfg':
        this.snmpDeviceService.getDevices(filter)
@@ -371,6 +410,9 @@ export class ExportFileModal {
          //Load items on selection
          this.dataArray = data;
          this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -383,6 +425,9 @@ export class ExportFileModal {
        data => {
          this.dataArray=data;
          this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -394,6 +439,9 @@ export class ExportFileModal {
        data => {
          this.dataArray=data;
          this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -405,6 +453,9 @@ export class ExportFileModal {
        data => {
          this.dataArray=data;
          this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -416,6 +467,9 @@ export class ExportFileModal {
        data => {
          this.dataArray=data;
          this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -427,6 +481,9 @@ export class ExportFileModal {
        data => {
          this.dataArray=data;
          this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -438,6 +495,9 @@ export class ExportFileModal {
        data => {
          this.dataArray=data;
          this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
        },
        err => {console.log(err)},
        () => {console.log("DONE")}
@@ -449,6 +509,9 @@ export class ExportFileModal {
        data => {
          this.dataArray=data;
          this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
        },
        err => {console.log(err)},
        () => {console.log("DONE")}

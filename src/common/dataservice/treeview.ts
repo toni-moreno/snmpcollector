@@ -14,9 +14,8 @@ import { ExportServiceCfg } from './export.service'
           <span>{{title}}</span>
           <label *ngIf="type && showType === true" [ngClass]="['label label-'+colorsObject[type]]"> {{type}} </label>
           </div>
-
           <div style="display: inline" class="text-right col-md-4">
-            <i *ngIf="addClickEnable===true" [ngClass]="alreadySelected === true ? ['text-success glyphicon glyphicon-ok-circle'] : ['text-danger glyphicon glyphicon-ban-circle']" (click)="addItem(title, type)" style="float:right"></i>
+            <i *ngIf="addClickEnable===true" role="button" [ngClass]="alreadySelected === false ? ['text-success glyphicon glyphicon-ok-circle'] : ['glyphicon glyphicon-arrow-right']" (click)="addItem(title, type)" style="float:right"></i>
             <span *ngIf="recursiveToogle === true">
               <input type="checkbox" [checked]="this.recursive" (click)="recursiveClick()"> Recursive
               </span>
