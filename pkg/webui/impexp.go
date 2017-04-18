@@ -9,12 +9,11 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"os"
-	"strconv"
-	"time"
 )
 
 type UploadForm struct {
 	AutoRename bool
+	OverWrite  bool
 	ExportFile *multipart.FileHeader
 }
 
@@ -79,36 +78,11 @@ func ImportDataFile(ctx *Context, uf UploadForm) {
 
 	a, err := ImportedData.ImportCheck()
 
-	if err != nil && uf.AutoRename == false {
+	if err != nil && uf.AutoRename == false && uf.OverWrite == false {
 		ctx.JSON(200, &ImportCheck{IsOk: false, Message: err.Error(), Data: a})
 		return
 	}
-	if err != nil && uf.AutoRename == true {
-		timestamp := time.Now().Unix()
-		replaced := buf.Bytes()
-		//duplicated data in Object array
-		for _, v := range a.Objects {
-			oldid := v.ObjectID
-			newid := v.ObjectID + "_" + strconv.FormatInt(timestamp, 10)
-			log.Debugf("replacind old ID %s for new one %s", oldid, newid)
-			replaced = bytes.Replace(replaced, []byte(oldid), []byte(newid), -1)
-		}
-		ImportedData = impexp.ExportData{}
-		if err = json.Unmarshal(replaced, &ImportedData); err != nil {
-			log.Errorf("Error in data to struct (json-unmarshal) procces: %s", err)
-			ctx.JSON(404, err.Error())
-			return
-		}
-		err = ImportedData.Import()
-		if err != nil {
-			log.Errorf("Some Error happened on import data: %s", err)
-			ctx.JSON(200, &ImportCheck{IsOk: false, Message: err.Error(), Data: &ImportedData})
-			return
-		}
-		ctx.JSON(200, &ImportCheck{IsOk: true, Message: "all duplicated ID's have been replaced", Data: &ImportedData})
-		return
-	}
-	err = ImportedData.Import()
+	err = ImportedData.Import(uf.OverWrite, uf.AutoRename)
 	if err != nil {
 		log.Errorf("Some Error happened on import data: %s", err)
 		ctx.JSON(200, &ImportCheck{IsOk: false, Message: err.Error(), Data: &ImportedData})

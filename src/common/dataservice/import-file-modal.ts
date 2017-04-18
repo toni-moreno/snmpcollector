@@ -46,6 +46,13 @@ import { TreeView} from './treeview';
                     <option value="false">False</option>
                   </select>
               </div>
+              <div class="text-right">
+                <label class="control-label" for="OverWrite">OverWrite</label>
+                  <select name="over_write" id="over_write" [(ngModel)]="over_write">
+                    <option value="true">True</option>
+                    <option value="false">False</option>
+                  </select>
+              </div>
                 <div style="max-height:350px; overflow-y:scroll">
                 <div *ngFor="let a of importResult.Data.Objects;  let i = index" >
                 <treeview [visible]="false" [visibleToogleEnable]="true" [title]="a.ObjectID" [type]="a.ObjectTypeID" [object]="a.ObjectCfg"> </treeview>
@@ -60,6 +67,14 @@ import { TreeView} from './treeview';
                   <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Auto rename duplicated objects"></i>
                   <div class="col-sm-9">
                     <select name="auto_rename" id="auto_rename" [(ngModel)]="auto_rename">
+                      <option value="true">True</option>
+                      <option value="false">False</option>
+                    </select>
+                  </div>
+                  <label class="control-label col-sm-2" for="OverWrite">OverWrite</label>
+                  <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="overwrite existing objects"></i>
+                  <div class="col-sm-9">
+                    <select name="over_write" id="over_write" [(ngModel)]="over_write">
                       <option value="true">True</option>
                       <option value="false">False</option>
                     </select>
@@ -80,7 +95,7 @@ import { TreeView} from './treeview';
                <button type="button" class="btn btn-primary" (click)="childModal.hide()">Close</button>
                <button *ngIf="!importResult" type="button" class="btn btn-primary" [disabled]="!files" (click)="uploadFile()">{{textValidation ? textValidation : Save}}</button>
                <span *ngIf="importResult">
-               <button *ngIf="importResult.IsOk === false" type="button" class="btn btn-primary" [disabled]="auto_rename === false" (click)="uploadFile()">Import</button>
+               <button *ngIf="importResult.IsOk === false" type="button" class="btn btn-primary" [disabled]="auto_rename === false && over_write === false" (click)="uploadFile()">Import</button>
                </span>
 
              </div>
@@ -106,6 +121,7 @@ export class ImportFileModal {
 
   public files: File;
   public auto_rename: boolean = true;
+  public over_write: boolean = true;
   public builder: any;
   public exportForm: any;
   public importResult: any;
@@ -122,6 +138,7 @@ export class ImportFileModal {
     this.files = null;
     this.importResult = null;
     this.auto_rename = false;
+    this.over_write = false;
     this.childModal.show();
   }
 
@@ -130,7 +147,7 @@ export class ImportFileModal {
   }
 
   uploadFile() {
-    this.importServiceCfg.importItem({ 'auto_rename': this.auto_rename, 'files': this.files })
+    this.importServiceCfg.importItem({ 'auto_rename': this.auto_rename, 'over_write': this.over_write, 'files': this.files })
       .subscribe(
       data => {
         this.importResult = data;

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"strconv"
+	"time"
 )
 
 func (e *ExportData) ImportCheck() (*ExportData, error) {
@@ -63,11 +65,12 @@ func (e *ExportData) ImportCheck() (*ExportData, error) {
 	return &ExportData{Info: e.Info, Objects: duplicated}, nil
 }
 
-func (e *ExportData) Import() error {
+func (e *ExportData) Import(overwrite bool, autorename bool) error {
 
-	a, err := e.ImportCheck()
-	if len(a.Objects) > 0 {
-		return fmt.Errorf("Error there is  %d objects already in database: %s", len(a.Objects), err)
+	var suffix string
+	if autorename == true {
+		timestamp := time.Now().Unix()
+		suffix = "_" + strconv.FormatInt(timestamp, 10)
 	}
 
 	for i := 0; i < len(e.Objects); i++ {
@@ -86,15 +89,44 @@ func (e *ExportData) Import() error {
 			log.Debugf("Importing snmpdevicecfg : %+v", o.ObjectCfg)
 			data := config.SnmpDeviceCfg{}
 			json.Unmarshal(raw, &data)
-			_, err := dbc.AddSnmpDeviceCfg(data)
+			var err error
+			_, err = dbc.GetSnmpDeviceCfgByID(o.ObjectID)
+			if err == nil { //value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateSnmpDeviceCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddSnmpDeviceCfg(data)
 			if err != nil {
 				return err
 			}
+
 		case "influxcfg":
 			log.Debugf("Importing influxcfg : %+v", o.ObjectCfg)
 			data := config.InfluxCfg{}
 			json.Unmarshal(raw, &data)
-			_, err := dbc.AddInfluxCfg(data)
+			var err error
+			_, err = dbc.GetInfluxCfgByID(o.ObjectID)
+			if err == nil { //value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateInfluxCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddInfluxCfg(data)
 			if err != nil {
 				return err
 			}
@@ -102,7 +134,21 @@ func (e *ExportData) Import() error {
 			log.Debugf("Importing measfiltercfg : %+v", o.ObjectCfg)
 			data := config.MeasFilterCfg{}
 			json.Unmarshal(raw, &data)
-			_, err := dbc.AddMeasFilterCfg(data)
+			var err error
+			_, err = dbc.GetMeasFilterCfgByID(o.ObjectID)
+			if err == nil { //value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateMeasFilterCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddMeasFilterCfg(data)
 			if err != nil {
 				return err
 			}
@@ -110,7 +156,21 @@ func (e *ExportData) Import() error {
 			log.Debugf("Importing customfiltercfg : %+v", o.ObjectCfg)
 			data := config.CustomFilterCfg{}
 			json.Unmarshal(raw, &data)
-			_, err := dbc.AddCustomFilterCfg(data)
+			var err error
+			_, err = dbc.GetCustomFilterCfgByID(o.ObjectID)
+			if err == nil { //value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateCustomFilterCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddCustomFilterCfg(data)
 			if err != nil {
 				return err
 			}
@@ -118,14 +178,42 @@ func (e *ExportData) Import() error {
 			log.Debugf("Importing oidconfitioncfg : %+v", o.ObjectCfg)
 			data := config.OidConditionCfg{}
 			json.Unmarshal(raw, &data)
-			_, err := dbc.AddOidConditionCfg(data)
+			var err error
+			_, err = dbc.GetOidConditionCfgByID(o.ObjectID)
+			if err == nil { //value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateOidConditionCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddOidConditionCfg(data)
 			if err != nil {
 				return err
 			}
 		case "measurementcfg":
 			data := config.MeasurementCfg{}
 			json.Unmarshal(raw, &data)
-			_, err := dbc.AddMeasurementCfg(data)
+			var err error
+			_, err = dbc.GetMeasurementCfgByID(o.ObjectID)
+			if err == nil { //value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateMeasurementCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddMeasurementCfg(data)
 			if err != nil {
 				return err
 			}
@@ -133,7 +221,21 @@ func (e *ExportData) Import() error {
 			log.Debugf("Importing snmpmetric : %+v", o.ObjectCfg)
 			data := config.SnmpMetricCfg{}
 			json.Unmarshal(raw, &data)
-			_, err := dbc.AddSnmpMetricCfg(data)
+			var err error
+			_, err = dbc.GetSnmpMetricCfgByID(o.ObjectID)
+			if err == nil { //value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateSnmpMetricCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddSnmpMetricCfg(data)
 			if err != nil {
 				return err
 			}
@@ -141,7 +243,21 @@ func (e *ExportData) Import() error {
 			log.Debugf("Importing measgroupcfg : %+v", o.ObjectCfg)
 			data := config.MGroupsCfg{}
 			json.Unmarshal(raw, &data)
-			_, err := dbc.AddMGroupsCfg(data)
+			var err error
+			_, err = dbc.GetMGroupsCfgByID(o.ObjectID)
+			if err == nil { //value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateMGroupsCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddMGroupsCfg(data)
 			if err != nil {
 				return err
 			}
