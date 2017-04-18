@@ -2,9 +2,10 @@
 ### New Features
 * added a gonsmp fix for snmpv3 performance problems.
 * updated all dependencies
+* added overwrite option to the config import dialog
 
 ### fixes
-* fix for #169
+* fix for #169, #172
 
 ### breaking changes
 
@@ -17,7 +18,7 @@
 * added MaxConnections device settins for SNMP BULKWALK queries
 * Added Concurrent SNMP Gathering, one GOROUTINE per measurement
 * Updated gosnmp library with performance improvements
-* Improved Tag Format with a new ${VAR|SELECTOR|TRANSFORMATOR} defintion
+* Improved Tag Format with a new ${VAR|SELECTOR|TRANSFORMATOR} definition
 * passwords now will be hidden( Thanx to @TeraHz)
 
 ### fixes
