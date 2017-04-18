@@ -57,7 +57,7 @@ type UsmSecurityParameters struct {
 	AuthenticationPassphrase string
 	PrivacyPassphrase        string
 
-	secretKey []byte
+	secretKey  []byte
 	privacyKey []byte
 
 	localDESSalt uint32
@@ -78,8 +78,8 @@ func (sp *UsmSecurityParameters) Copy() SnmpV3SecurityParameters {
 		PrivacyProtocol:          sp.PrivacyProtocol,
 		AuthenticationPassphrase: sp.AuthenticationPassphrase,
 		PrivacyPassphrase:        sp.PrivacyPassphrase,
-		secretKey:		  sp.secretKey,
-		privacyKey:		  sp.privacyKey,
+		secretKey:                sp.secretKey,
+		privacyKey:               sp.privacyKey,
 		localDESSalt:             sp.localDESSalt,
 		localAESSalt:             sp.localAESSalt,
 		Logger:                   sp.Logger,
@@ -580,8 +580,20 @@ func (sp *UsmSecurityParameters) unmarshal(flags SnmpV3MsgFlags, packet []byte, 
 	}
 	cursor += count
 	if AuthoritativeEngineID, ok := rawMsgAuthoritativeEngineID.(string); ok {
-		sp.AuthoritativeEngineID = AuthoritativeEngineID
-		sp.Logger.Printf("Parsed authoritativeEngineID %s", AuthoritativeEngineID)
+		if sp.AuthoritativeEngineID != AuthoritativeEngineID {
+			sp.AuthoritativeEngineID = AuthoritativeEngineID
+			sp.Logger.Printf("Parsed authoritativeEngineID %s", AuthoritativeEngineID)
+			if sp.AuthenticationProtocol > NoAuth {
+				sp.secretKey = genlocalkey(sp.AuthenticationProtocol,
+					sp.AuthenticationPassphrase,
+					sp.AuthoritativeEngineID)
+			}
+			if sp.PrivacyProtocol > NoPriv {
+				sp.privacyKey = genlocalkey(sp.AuthenticationProtocol,
+					sp.PrivacyPassphrase,
+					sp.AuthoritativeEngineID)
+			}
+		}
 	}
 
 	rawMsgAuthoritativeEngineBoots, count, err := parseRawField(packet[cursor:], "msgAuthoritativeEngineBoots")
