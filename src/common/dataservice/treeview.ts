@@ -12,8 +12,10 @@ import { ExportServiceCfg } from './export.service'
           <div style="display: inline" class="text-left col-md-8">
           <i role=button *ngIf="visibleToogleEnable" [ngClass]="visible === true ? ['glyphicon glyphicon-minus'] : ['glyphicon glyphicon-plus']" (click)="toggleVisible()" style="padding-right: 10px"></i>
           <span>{{title}}</span>
+          <label *ngIf="keyProperty && keyProperty != 'ID'" class="label label-default">{{keyProperty}} : {{object[keyProperty] ? object[keyProperty] : "--"}} </label>
           <label *ngIf="type && showType === true" [ngClass]="['label label-'+colorsObject[type]]"> {{type}} </label>
           </div>
+
           <div style="display: inline" class="text-right col-md-4">
             <i *ngIf="addClickEnable===true" role="button" [ngClass]="alreadySelected === false ? ['text-success glyphicon glyphicon-ok-circle'] : ['glyphicon glyphicon-arrow-right']" (click)="addItem(title, type)" style="float:right"></i>
             <span *ngIf="recursiveToogle === true">
@@ -33,6 +35,7 @@ import { ExportServiceCfg } from './export.service'
 export class TreeView {
   @Input() title : any;
   @Input() type: any;
+  @Input() keyProperty : any;
   @Input() visible : boolean;
   @Input() object : any;
   @Input() index : any;

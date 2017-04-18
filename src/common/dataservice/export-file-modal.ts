@@ -62,7 +62,7 @@ import { CustomFilterService } from '../../customfilter/customfilter.service';
                   </div>
                   <div style="max-height: 400px; overflow-y:auto">
                     <div *ngFor="let res of resultArray;  let i = index" style="margin-bottom: 0px" >
-                      <treeview [showType]="false" [visible]="false" [title]="res.ID" [object]="res" [alreadySelected]="checkItems(res.ID, selectedType.Type)" [type]="selectedType.Type" [visibleToogleEnable]="true" [addClickEnable]="true" (addClicked)="selectItem($event,index)"  style="margin-bottom:0px !important">{{res}}</treeview>
+                      <treeview [keyProperty]="selectedFilterProp" [showType]="false" [visible]="false" [title]="res.ID" [object]="res" [alreadySelected]="checkItems(res.ID, selectedType.Type)" [type]="selectedType.Type" [visibleToogleEnable]="true" [addClickEnable]="true" (addClicked)="selectItem($event,index)"  style="margin-bottom:0px !important">{{res}}</treeview>
                     </div>
                   </div>
                   </div>
@@ -225,7 +225,7 @@ export class ExportFileModal {
   //Bulk Export - SelectedType
   selectedType : any = null;
   finalArray : any = [];
-  filter : any;
+  filter : any = "";
   //Bulk Objects
   public objectTypes : any = [
    {'Type': "snmpdevicecfg", 'Class' : 'danger', 'Visible': false},
@@ -300,7 +300,7 @@ export class ExportFileModal {
      }
      this.objectTypes[i].Visible = true;
      this.selectedType = this.objectTypes[i];
-     this.filter = null;
+     this.filter = "";
      this.loadItems(type,null);
    }
 
