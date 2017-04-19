@@ -45,9 +45,7 @@ import { TreeView} from './treeview';
                     <option value="true">True</option>
                     <option value="false">False</option>
                   </select>
-              </div>
-              <div class="text-right">
-                <label class="control-label" for="OverWrite">OverWrite</label>
+                <label class="control-label" for="OverWrite" style="margin-left: 10px">OverWrite</label>
                   <select name="over_write" id="over_write" [(ngModel)]="over_write">
                     <option value="true">True</option>
                     <option value="false">False</option>
@@ -66,15 +64,17 @@ import { TreeView} from './treeview';
                   <label class="control-label col-sm-2" for="AutoRename">AutoRename</label>
                   <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Auto rename duplicated objects"></i>
                   <div class="col-sm-9">
-                    <select name="auto_rename" id="auto_rename" [(ngModel)]="auto_rename">
+                    <select name="auto_rename" id="auto_rename" [(ngModel)]="auto_rename" [disabled]="over_write.toString() === 'true'">
                       <option value="true">True</option>
                       <option value="false">False</option>
                     </select>
                   </div>
+                </div>
+                <div class="form-group">
                   <label class="control-label col-sm-2" for="OverWrite">OverWrite</label>
-                  <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="overwrite existing objects"></i>
+                  <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Overwrite existing objects"></i>
                   <div class="col-sm-9">
-                    <select name="over_write" id="over_write" [(ngModel)]="over_write">
+                    <select name="over_write" id="over_write" [(ngModel)]="over_write" [disabled]="auto_rename.toString() === 'true'">
                       <option value="true">True</option>
                       <option value="false">False</option>
                     </select>
@@ -95,7 +95,7 @@ import { TreeView} from './treeview';
                <button type="button" class="btn btn-primary" (click)="childModal.hide()">Close</button>
                <button *ngIf="!importResult" type="button" class="btn btn-primary" [disabled]="!files" (click)="uploadFile()">{{textValidation ? textValidation : Save}}</button>
                <span *ngIf="importResult">
-               <button *ngIf="importResult.IsOk === false" type="button" class="btn btn-primary" [disabled]="auto_rename === false && over_write === false" (click)="uploadFile()">Import</button>
+               <button *ngIf="importResult.IsOk === false" type="button" class="btn btn-primary" [disabled]="auto_rename.toString() === 'false' && over_write.toString() === 'false'" (click)="uploadFile()">Import</button>
                </span>
 
              </div>
@@ -143,7 +143,8 @@ export class ImportFileModal {
   }
 
   selectFile(event) {
-    this.files = event.srcElement.files;
+    if (event.srcElement.files.length != 0) this.files = event.srcElement.files;
+    else this.files = null;
   }
 
   uploadFile() {
