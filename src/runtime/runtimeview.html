@@ -35,8 +35,8 @@
     <span>Tags: <label style="margin-left: 10px" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label> </span>
 
     <hr>
-    <div class="row" *ngIf="runtime_dev['DeviceConnected'] !== false">
-      <div class="col-md-6">
+    <div class="row">
+      <div class="col-md-6" *ngIf="runtime_dev['DeviceConnected'] !== false">
         <div class="panel panel-default">
           <div class="panel-heading">SysInfo</div>
           <div class="panel-body" style="overflow-x: scroll !important">
