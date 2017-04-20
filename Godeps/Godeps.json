@@ -58,8 +58,8 @@
 		},
 		{
 			"ImportPath": "github.com/go-xorm/xorm",
-			"Comment": "v0.5.8-62-g71e934b",
-			"Rev": "71e934b5c6c369ed26dedcb22bacd7338198c7d9"
+			"Comment": "v0.6.2-9-gd52a762",
+			"Rev": "d52a762fba17a2ed265463c1c7b608c14836eaaf"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl",

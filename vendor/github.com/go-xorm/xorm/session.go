@@ -377,9 +377,11 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 			if fieldValue.CanAddr() {
 				if structConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
 					if data, err := value2Bytes(&rawValue); err == nil {
-						structConvert.FromDB(data)
+						if err := structConvert.FromDB(data); err != nil {
+							return nil, err
+						}
 					} else {
-						session.Engine.logger.Error(err)
+						return nil, err
 					}
 					continue
 				}
@@ -392,7 +394,7 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 					}
 					fieldValue.Interface().(core.Conversion).FromDB(data)
 				} else {
-					session.Engine.logger.Error(err)
+					return nil, err
 				}
 				continue
 			}
@@ -422,14 +424,12 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 					if fieldValue.CanAddr() {
 						err := json.Unmarshal(bs, fieldValue.Addr().Interface())
 						if err != nil {
-							session.Engine.logger.Error(key, err)
 							return nil, err
 						}
 					} else {
 						x := reflect.New(fieldType)
 						err := json.Unmarshal(bs, x.Interface())
 						if err != nil {
-							session.Engine.logger.Error(key, err)
 							return nil, err
 						}
 						fieldValue.Set(x.Elem())
@@ -454,14 +454,12 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 					if fieldValue.CanAddr() {
 						err := json.Unmarshal(bs, fieldValue.Addr().Interface())
 						if err != nil {
-							session.Engine.logger.Error(err)
 							return nil, err
 						}
 					} else {
 						x := reflect.New(fieldType)
 						err := json.Unmarshal(bs, x.Interface())
 						if err != nil {
-							session.Engine.logger.Error(err)
 							return nil, err
 						}
 						fieldValue.Set(x.Elem())
@@ -478,14 +476,19 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 								x := reflect.New(fieldType)
 								err := json.Unmarshal(vv.Bytes(), x.Interface())
 								if err != nil {
-									session.Engine.logger.Error(err)
 									return nil, err
 								}
 								fieldValue.Set(x.Elem())
 							} else {
-								for i := 0; i < fieldValue.Len(); i++ {
-									if i < vv.Len() {
-										fieldValue.Index(i).Set(vv.Index(i))
+								if fieldValue.Len() > 0 {
+									for i := 0; i < fieldValue.Len(); i++ {
+										if i < vv.Len() {
+											fieldValue.Index(i).Set(vv.Index(i))
+										}
+									}
+								} else {
+									for i := 0; i < vv.Len(); i++ {
+										fieldValue.Set(reflect.Append(*fieldValue, vv.Index(i)))
 									}
 								}
 							}
@@ -548,16 +551,11 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 						// !nashtsai! convert to engine location
 						t = t.In(tz)
 						fieldValue.Set(reflect.ValueOf(t).Convert(fieldType))
-
-						// t = fieldValue.Interface().(time.Time)
-						// z, _ = t.Zone()
-						// session.Engine.LogDebug("fieldValue key[%v]: %v | zone: %v | location: %+v\n", key, t, z, *t.Location())
 					} else if rawValueType == core.IntType || rawValueType == core.Int64Type ||
 						rawValueType == core.Int32Type {
 						hasAssigned = true
 
 						t := time.Unix(vv.Int(), 0).In(tz)
-						//vv = reflect.ValueOf(t)
 						fieldValue.Set(reflect.ValueOf(t).Convert(fieldType))
 					} else {
 						if d, ok := vv.Interface().([]uint8); ok {
@@ -596,7 +594,6 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 						if len([]byte(vv.String())) > 0 {
 							err := json.Unmarshal([]byte(vv.String()), x.Interface())
 							if err != nil {
-								session.Engine.logger.Error(err)
 								return nil, err
 							}
 							fieldValue.Set(x.Elem())
@@ -607,7 +604,6 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 						if len(vv.Bytes()) > 0 {
 							err := json.Unmarshal(vv.Bytes(), x.Interface())
 							if err != nil {
-								session.Engine.logger.Error(err)
 								return nil, err
 							}
 							fieldValue.Set(x.Elem())
@@ -641,8 +637,6 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 							return nil, err
 						}
 						if has {
-							//v := structInter.Elem().Interface()
-							//fieldValue.Set(reflect.ValueOf(v))
 							fieldValue.Set(structInter.Elem())
 						} else {
 							return nil, errors.New("cascade obj is not exist")
@@ -651,7 +645,6 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 				}
 			case reflect.Ptr:
 				// !nashtsai! TODO merge duplicated codes above
-				//typeStr := fieldType.String()
 				switch fieldType {
 				// following types case matching ptr's native type, therefore assign ptr directly
 				case core.PtrStringType:
@@ -749,10 +742,9 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 					if len([]byte(vv.String())) > 0 {
 						err := json.Unmarshal([]byte(vv.String()), &x)
 						if err != nil {
-							session.Engine.logger.Error(err)
-						} else {
-							fieldValue.Set(reflect.ValueOf(&x))
+							return nil, err
 						}
+						fieldValue.Set(reflect.ValueOf(&x))
 					}
 					hasAssigned = true
 				case core.Complex128Type:
@@ -760,24 +752,23 @@ func (session *Session) row2Bean(rows *core.Rows, fields []string, fieldsCount i
 					if len([]byte(vv.String())) > 0 {
 						err := json.Unmarshal([]byte(vv.String()), &x)
 						if err != nil {
-							session.Engine.logger.Error(err)
-						} else {
-							fieldValue.Set(reflect.ValueOf(&x))
+							return nil, err
 						}
+						fieldValue.Set(reflect.ValueOf(&x))
 					}
 					hasAssigned = true
 				} // switch fieldType
-				// default:
-				// 	session.Engine.LogError("unsupported type in Scan: ", reflect.TypeOf(v).String())
 			} // switch fieldType.Kind()
 
 			// !nashtsai! for value can't be assigned directly fallback to convert to []byte then back to value
 			if !hasAssigned {
 				data, err := value2Bytes(&rawValue)
-				if err == nil {
-					session.bytes2Value(col, fieldValue, data)
-				} else {
-					session.Engine.logger.Error(err.Error())
+				if err != nil {
+					return nil, err
+				}
+
+				if err = session.bytes2Value(col, fieldValue, data); err != nil {
+					return nil, err
 				}
 			}
 		}

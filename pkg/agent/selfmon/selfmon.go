@@ -119,7 +119,7 @@ func (sm *SelfMon) SetOutput(val *output.InfluxDB) {
 	defer sm.mutex.Unlock()
 	sm.Influx = val
 	//Creating a bachpoint to begin writing data
-	sm.bps = sm.Influx.BP()
+	sm.bps, _ = sm.Influx.BP()
 }
 
 func (sm *SelfMon) sendData() {
@@ -127,14 +127,15 @@ func (sm *SelfMon) sendData() {
 	defer sm.mutex.Unlock()
 	sm.Influx.Send(sm.bps)
 	//BatchPoint Init again
-	sm.bps = sm.Influx.BP()
+	sm.bps, _ = sm.Influx.BP()
 }
 
 func (sm *SelfMon) addDataPoint(pt *client.Point) {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
-	(*sm.bps).AddPoint(pt)
-
+	if sm.bps != nil {
+		(*sm.bps).AddPoint(pt)
+	}
 }
 
 // AddDeviceMetrics add data from devices

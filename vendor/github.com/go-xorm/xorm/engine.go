@@ -943,7 +943,7 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 						ctx.preTag = strings.ToUpper(tags[j-1])
 					}
 					if j < len(tags)-1 {
-						ctx.nextTag = strings.ToUpper(tags[j+1])
+						ctx.nextTag = tags[j+1]
 					} else {
 						ctx.nextTag = ""
 					}
@@ -1289,18 +1289,6 @@ func (engine *Engine) Sync2(beans ...interface{}) error {
 	s := engine.NewSession()
 	defer s.Close()
 	return s.Sync2(beans...)
-}
-
-func (engine *Engine) unMap(beans ...interface{}) (e error) {
-	engine.mutex.Lock()
-	defer engine.mutex.Unlock()
-	for _, bean := range beans {
-		t := rType(bean)
-		if _, ok := engine.Tables[t]; ok {
-			delete(engine.Tables, t)
-		}
-	}
-	return
 }
 
 // Drop all mapped table

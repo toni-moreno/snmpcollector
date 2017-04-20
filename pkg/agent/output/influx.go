@@ -65,25 +65,29 @@ func (db *InfluxDB) addErrors(n int64) {
 }
 
 //BP create a Batch point influx object
-func (db *InfluxDB) BP() *client.BatchPoints {
+func (db *InfluxDB) BP() (*client.BatchPoints, error) {
 	if db.dummy == true {
 		bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
 			Database:        "dbdummy",
 			RetentionPolicy: "dbretention",
 			Precision:       "ns", //Default precision for Time lib
 		})
-		return &bp
+		return &bp, nil
 	}
 	//
 	if len(db.cfg.Retention) == 0 {
 		db.cfg.Retention = "autogen"
 	}
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:        db.cfg.DB,
 		RetentionPolicy: db.cfg.Retention,
 		Precision:       db.cfg.Precision, //Default precision for Time lib
 	})
-	return &bp
+	if err != nil {
+		log.Errorf("Error on create BatchPoint: %s", err)
+		return nil, err
+	}
+	return &bp, err
 }
 
 // Ping InfluxDB Server
