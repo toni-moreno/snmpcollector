@@ -5,7 +5,7 @@
 * added overwrite option to the config import dialog
 
 ### fixes
-* fix for #169, #172
+* fix for #169, #172, #173, #177, #181, #182
 
 ### breaking changes
 
