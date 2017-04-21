@@ -17,7 +17,7 @@ type UploadForm struct {
 	ExportFile *multipart.FileHeader
 }
 
-func NewImportExport(m *macaron.Macaron) error {
+func NewApiCfgImportExport(m *macaron.Macaron) error {
 
 	bind := binding.Bind
 
