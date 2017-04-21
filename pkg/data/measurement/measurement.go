@@ -361,7 +361,6 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 							continue
 						}
 					}
-
 					m.Debugf("generating Tag for Metric: %s : tagname: %s", v_mtr.GetFieldName(), tag)
 					Tags[v_mtr.GetFieldName()] = tag
 				} else {
@@ -379,11 +378,10 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 							continue
 						}
 					}
-					m.Debugf("generating field for Metric: %s : value %f", v_mtr.GetFieldName(), v_mtr.CookedValue.(float64))
+					m.Debugf("generating field for Metric: %s : value %#v", v_mtr.GetFieldName(), v_mtr.CookedValue)
 					m.Debugf("DEBUG METRIC %+v", v_mtr)
 					Fields[v_mtr.GetFieldName()] = v_mtr.CookedValue
 				}
-
 				t = v_mtr.CurTime
 			}
 			m.Debugf("FIELDS:%+v TAGS:%+v", Fields, Tags)
