@@ -55,8 +55,9 @@ type ExportObject struct {
 
 // ExportData the runtime measurement config
 type ExportData struct {
-	Info    *ExportInfo
-	Objects []*ExportObject
+	Info       *ExportInfo
+	Objects    []*ExportObject
+	tmpObjects []*ExportObject //only for temporal use
 }
 
 func NewExport(info *ExportInfo) *ExportData {
@@ -73,8 +74,8 @@ func NewExport(info *ExportInfo) *ExportData {
 	}
 }
 
-func (e *ExportData) checkIfExist(ObjType string, id string) bool {
-	for _, v := range e.Objects {
+func checkIfExistOnArray(list []*ExportObject, ObjType string, id string) bool {
+	for _, v := range list {
 		if v.ObjectTypeID == ObjType && v.ObjectID == id {
 			return true
 		}
@@ -83,14 +84,27 @@ func (e *ExportData) checkIfExist(ObjType string, id string) bool {
 }
 
 func (e *ExportData) PrependObject(obj *ExportObject) {
-	if e.checkIfExist(obj.ObjectTypeID, obj.ObjectID) {
+	if checkIfExistOnArray(e.Objects, obj.ObjectTypeID, obj.ObjectID) == true {
 		return
 	}
-	e.Objects = append([]*ExportObject{obj}, e.Objects...)
+	e.tmpObjects = append([]*ExportObject{obj}, e.tmpObjects...)
+}
+
+func (e *ExportData) UpdateTmpObject() {
+	//we need remove duplicated objects on the auxiliar array
+	objectList := []*ExportObject{}
+	for i := 0; i < len(e.tmpObjects); i++ {
+		v := e.tmpObjects[i]
+		if checkIfExistOnArray(objectList, v.ObjectTypeID, v.ObjectID) == false {
+			objectList = append(objectList, v)
+		}
+	}
+	e.Objects = append(e.Objects, objectList...)
+	e.tmpObjects = nil
 }
 
 // Export  exports data
-func (e *ExportData) Export(ObjType string, id string, recursive bool) error {
+func (e *ExportData) Export(ObjType string, id string, recursive bool, level int) error {
 
 	switch ObjType {
 	case "snmpdevicecfg":
@@ -101,15 +115,15 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool) error {
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "snmpdevicecfg", ObjectID: id, ObjectCfg: v})
 		if !recursive {
-			return nil
+			break
 		}
 		for _, val := range v.MeasurementGroups {
-			e.Export("measgroupcfg", val, recursive)
+			e.Export("measgroupcfg", val, recursive, level+1)
 		}
 		for _, val := range v.MeasFilters {
-			e.Export("measfiltercfg", val, recursive)
+			e.Export("measfiltercfg", val, recursive, level+1)
 		}
-		e.Export("influxcfg", v.OutDB, recursive)
+		e.Export("influxcfg", v.OutDB, recursive, level+1)
 	case "influxcfg":
 		//contains sensible probable
 		v, err := dbc.GetInfluxCfgByID(id)
@@ -124,20 +138,21 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool) error {
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "measfiltercfg", ObjectID: id, ObjectCfg: v})
 		if !recursive {
-			return nil
+			break
 		}
 		switch v.FType {
 		case "file":
 		case "OIDCondition":
-			e.Export("oidconditioncfg", v.FilterName, recursive)
+			e.Export("oidconditioncfg", v.FilterName, recursive, level+1)
 		case "CustomFilter":
-			e.Export("customfiltercfg", v.FilterName, recursive)
+			e.Export("customfiltercfg", v.FilterName, recursive, level+1)
 		}
 	case "customfiltercfg":
 		v, err := dbc.GetCustomFilterCfgByID(id)
 		if err != nil {
 			return err
 		}
+
 		e.PrependObject(&ExportObject{ObjectTypeID: "customfiltercfg", ObjectID: id, ObjectCfg: v})
 	case "oidconditioncfg":
 		v, err := dbc.GetOidConditionCfgByID(id)
@@ -146,7 +161,7 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool) error {
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: id, ObjectCfg: v})
 		if !recursive {
-			return nil
+			break
 		}
 		if v.IsMultiple {
 			expression, err := govaluate.NewEvaluableExpression(v.OIDCond)
@@ -159,6 +174,7 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool) error {
 				if err != nil {
 					return fmt.Errorf("Error on initializing , evaluation : %s (subcondition %s): ERROR : %s", v.OIDCond, par, err)
 				}
+				//TODO review if this should be a recursive export better than prepend
 				e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: par, ObjectCfg: oidcond})
 			}
 		}
@@ -169,10 +185,10 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool) error {
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "measurementcfg", ObjectID: id, ObjectCfg: v})
 		if !recursive {
-			return nil
+			break
 		}
 		for _, val := range v.Fields {
-			e.Export("snmpmetriccfg", val.ID, recursive)
+			e.Export("snmpmetriccfg", val.ID, recursive, level+1)
 		}
 	case "snmpmetriccfg":
 		v, err := dbc.GetSnmpMetricCfgByID(id)
@@ -181,7 +197,7 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool) error {
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "snmpmetriccfg", ObjectID: id, ObjectCfg: v})
 		if v.DataSrcType == "CONDITIONEVAL" {
-			e.Export("oidconditioncfg", v.ExtraData, recursive)
+			e.Export("oidconditioncfg", v.ExtraData, recursive, level+1)
 		}
 	case "measgroupcfg":
 		v, err := dbc.GetMGroupsCfgByID(id)
@@ -190,15 +206,17 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool) error {
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "measgroupcfg", ObjectID: id, ObjectCfg: v})
 		if !recursive {
-			return nil
+			break
 		}
 		for _, val := range v.Measurements {
-			e.Export("measurementcfg", val, recursive)
+			e.Export("measurementcfg", val, recursive, level+1)
 		}
 
 	default:
-		return fmt.Errorf("Unknown type object type %s ", ObjType)
+		return fmt.Errorf("Unknown type obje$$$ type %s ", ObjType)
 	}
-
+	if level == 0 {
+		e.UpdateTmpObject()
+	}
 	return nil
 }
