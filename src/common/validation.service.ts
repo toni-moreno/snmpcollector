@@ -54,10 +54,8 @@ export class ValidationService {
     }
 
     static OIDValidator(control) {
-        // {6,100}           - Assert password is between 6 and 100 characters
-        // (?=.*[0-9])       - Assert a string has at least one number
         if (control.value){
-            if (control.value.match(/^\.[^\.].*[^\.]$/g) || control.value == "") {
+            if (control.value.match(/^\.[^\.]*[^\.]$/g) ||  control.value.match(/^[\.0-9]+$/)  || control.value == "") {
                 return null;
             } else {
                 return { 'invalidOID': true };
