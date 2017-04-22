@@ -4,16 +4,16 @@ import ()
 
 // SnmpDeviceCfg contains all snmp related device definitions
 type SnmpDeviceCfg struct {
-	ID string `xorm:"'id' unique"`
+	ID string `xorm:"'id' unique" binding:"Required"`
 	//snmp connection config
-	Host    string `xorm:"host"`
-	Port    int    `xorm:"port"`
+	Host    string `xorm:"host" binding:"Required"`
+	Port    int    `xorm:"port" binding:"Required"`
 	Retries int    `xorm:"retries"`
 	Timeout int    `xorm:"timeout"`
 	Repeat  int    `xorm:"repeat"`
 	Active  bool   `xorm:"'active' default 1"`
 	//snmp auth  config
-	SnmpVersion string `xorm:"snmpversion"`
+	SnmpVersion string `xorm:"snmpversion" binding:"Required;In(1,2c,3)"`
 	Community   string `xorm:"community"`
 	V3SecLevel  string `xorm:"v3seclevel"`
 	V3AuthUser  string `xorm:"v3authuser"`
@@ -23,23 +23,22 @@ type SnmpDeviceCfg struct {
 	V3PrivProt  string `xorm:"v3privprot"`
 	//snmp workarround for some devices
 	DisableBulk    bool  `xorm:"'disablebulk' default 0"`
-	MaxRepetitions uint8 `xorm:"'maxrepetitions' default 50"`
+	MaxRepetitions uint8 `xorm:"'maxrepetitions' default 50" binding:"Default(50);IntegerNotZero"`
 	//snmp runtime config
-	Freq             int  `xorm:"'freq' default 60"`
-	UpdateFltFreq    int  `xorm:"'update_flt_freq' default 60"`
-	ConcurrentGather bool `xorm:"'concurrent_gather' default 1"`
+	Freq             int  `xorm:"'freq' default 60" binding:"Default(60);IntegerNotZero"`
+	UpdateFltFreq    int  `xorm:"'update_flt_freq' default 60" binding:"Default(60);IntegerNotZero"`
+	ConcurrentGather bool `xorm:"'concurrent_gather' default 1" binding:"Default(1)"`
 
 	OutDB    string `xorm:"outdb"`
-	LogLevel string `xorm:"loglevel"`
+	LogLevel string `xorm:"loglevel" binding:"Default(info)"`
 	LogFile  string `xorm:"logfile"`
 
-	SnmpDebug bool `xorm:"snmpdebug"`
+	SnmpDebug bool `xorm:"snmpdebug" binding:"Default(0)"`
 	//influx tags
-	DeviceTagName  string   `xorm:"devicetagname"`
-	DeviceTagValue string   `xorm:"devicetagvalue"`
+	DeviceTagName  string   `xorm:"devicetagname" binding:"Default(hostname)"`
+	DeviceTagValue string   `xorm:"devicetagvalue" binding:"Default(id)"`
 	ExtraTags      []string `xorm:"extra-tags"`
 	Description    string   `xorm:"description"`
-
 	//Filters for measurements
 	MeasurementGroups []string `xorm:"-"`
 	MeasFilters       []string `xorm:"-"`
