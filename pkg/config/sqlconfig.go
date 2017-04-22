@@ -26,7 +26,7 @@ type SnmpDeviceCfg struct {
 	MaxRepetitions uint8 `xorm:"'maxrepetitions' default 50" binding:"Default(50);IntegerNotZero"`
 	//snmp runtime config
 	Freq             int  `xorm:"'freq' default 60" binding:"Default(60);IntegerNotZero"`
-	UpdateFltFreq    int  `xorm:"'update_flt_freq' default 60" binding:"Default(60);IntegerNotZero"`
+	UpdateFltFreq    int  `xorm:"'update_flt_freq' default 60" binding:"Default(60);UIntegerAndLessOne"`
 	ConcurrentGather bool `xorm:"'concurrent_gather' default 1" binding:"Default(1)"`
 
 	OutDB    string `xorm:"outdb"`
