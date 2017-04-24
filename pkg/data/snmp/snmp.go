@@ -384,7 +384,7 @@ const (
 )
 
 // GetClient xx
-func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger) (*gosnmp.GoSNMP, *SysInfo, error) {
+func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string) (*gosnmp.GoSNMP, *SysInfo, error) {
 	var client *gosnmp.GoSNMP
 	hostIPs, err := net.LookupHost(s.Host)
 	if err != nil {
@@ -528,7 +528,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger) (*gosnmp.GoSNMP, *SysI
 		return nil, nil, ers.New("Error on snmp Version")
 	}
 	if s.SnmpDebug {
-		client.Logger = GetDebugLogger(s.ID)
+		client.Logger = GetDebugLogger(s.ID + "_" + meas)
 	}
 	//first connect
 	err = client.Connect()
