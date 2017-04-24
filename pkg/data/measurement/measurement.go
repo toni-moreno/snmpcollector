@@ -417,7 +417,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, error) {
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
 		m.Debugf("received SNMP  pdu:%+v", pdu)
-		sent++
+
 		if pdu.Value == nil {
 			m.Warnf("no value retured by pdu :%+v", pdu)
 			errs++
@@ -425,6 +425,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, error) {
 		}
 		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
 			m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
+			sent++
 			metr.SetRawData(pdu, now)
 		} else {
 			m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v", pdu.Name, m.cfg.ID)
@@ -435,6 +436,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, error) {
 	for _, v := range m.cfg.FieldMetric {
 		if err := m.Walk(v.BaseOID, setRawData); err != nil {
 			m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
+			errs += int64(len(m.MetricTable))
 		}
 	}
 
@@ -545,7 +547,6 @@ func (m *Measurement) SnmpGetData() (int64, int64, error) {
 		end := i + snmp.MaxOids
 		if end > l {
 			end = len(m.snmpOids)
-			sent += (int64(end) - int64(i))
 		}
 		m.Debugf("Getting snmp data from %d to %d", i, end)
 		//	log.Printf("DEBUG oids:%+v", m.snmpOids)
@@ -568,6 +569,7 @@ func (m *Measurement) SnmpGetData() (int64, int64, error) {
 			val := pdu.Value
 			if metr, ok := m.OidSnmpMap[oid]; ok {
 				m.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %+v ", m.cfg.ID, oid, val)
+				sent++
 				metr.SetRawData(pdu, now)
 			} else {
 				m.Errorf("OID %s Not Found in measurement %s", oid, m.cfg.ID)
