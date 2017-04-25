@@ -401,11 +401,12 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string) (*gosnmp.
 	switch s.SnmpVersion {
 	case "1":
 		client = &gosnmp.GoSNMP{
-			Target:  hostIPs[0],
-			Port:    uint16(s.Port),
-			Version: gosnmp.Version1,
-			Timeout: time.Duration(s.Timeout) * time.Second,
-			Retries: s.Retries,
+			Target:    hostIPs[0],
+			Port:      uint16(s.Port),
+			Community: s.Community,
+			Version:   gosnmp.Version1,
+			Timeout:   time.Duration(s.Timeout) * time.Second,
+			Retries:   s.Retries,
 		}
 	case "2c":
 		//validate community

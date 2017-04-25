@@ -109,6 +109,7 @@ export class SnmpDeviceCfgComponent {
       Active: [this.snmpdevForm ? this.snmpdevForm.value.Active : 'true', Validators.required],
       SnmpVersion: [this.snmpdevForm ? this.snmpdevForm.value.SnmpVersion : '2c', Validators.required],
       DisableBulk: [this.snmpdevForm ? this.snmpdevForm.value.DisableBulk : 'false'],
+      Community: [this.snmpdevForm ? this.snmpdevForm.value.Community : 'public'],
       MaxRepetitions: [this.snmpdevForm ? this.snmpdevForm.value.MaxRepetitions : 50, Validators.required],
       Freq: [this.snmpdevForm ? this.snmpdevForm.value.Freq : 60, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       UpdateFltFreq: [this.snmpdevForm ? this.snmpdevForm.value.UpdateFltFreq : 60, Validators.compose([Validators.required, ValidationService.uintegerAndLessOneValidator])],
@@ -166,6 +167,7 @@ export class SnmpDeviceCfgComponent {
       controlArray.push({'ID': 'V3AuthUser', 'defVal' : '', 'Validators' : Validators.required });
       break;
       case '1':
+      controlArray.push({'ID': 'Community', 'defVal' : 'public', 'Validators' : Validators.required });
       break;
       case '2c':
       controlArray.push({'ID': 'Community', 'defVal' : 'public', 'Validators' : Validators.required });
