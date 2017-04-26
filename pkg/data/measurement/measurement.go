@@ -109,6 +109,18 @@ func (m *Measurement) Init() error {
 	return nil
 }
 
+func (m *Measurement) SetSnmpClient(cli *gosnmp.GoSNMP) {
+
+	m.snmpClient = cli
+
+	switch {
+	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
+		m.Walk = m.snmpClient.Walk
+	default:
+		m.Walk = m.snmpClient.BulkWalk
+	}
+}
+
 // GetMode Returns mode info
 func (m *Measurement) GetMode() string {
 	return m.cfg.GetMode

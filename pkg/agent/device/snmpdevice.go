@@ -2,8 +2,6 @@ package device
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 
 	"strings"
@@ -257,13 +255,13 @@ func (d *SnmpDevice) InitDevMeasurements() {
 			} else {
 				d.Debugf("MEASUREMENT CFG KEY: %s VALUE %s | Connection [%s] %+v", val, mVal.Name, val, d.snmpClientMap[mVal.ID])
 				//
-				err := d.InitSnmpConnect(mVal.ID)
+				c, err := d.InitSnmpConnect(mVal.ID, d.cfg.SnmpDebug)
 				if err != nil {
 					d.Errorf("Error on snmpconnection initialization on measurement %s : Error: %s", mVal.ID, err)
 					continue
 				}
 				//creating a new measurement runtime object and asigning to array
-				imeas, err := measurement.New(mVal, d.log, d.snmpClientMap[mVal.ID], d.cfg.DisableBulk)
+				imeas, err := measurement.New(mVal, d.log, c, d.cfg.DisableBulk)
 				if err != nil {
 					d.Errorf("Error on measurement initialization  Error: %s", err)
 					continue
@@ -344,6 +342,8 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	d.log.Formatter = customFormatter
 	customFormatter.FullTimestamp = true
 
+	d.StateDebug = d.cfg.SnmpDebug
+
 	d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
 
 	//Init channels
@@ -420,21 +420,21 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 }
 
 // InitSnmpConnect does the  SNMP client conection and retrieve system info
-func (d *SnmpDevice) InitSnmpConnect(mkey string) error {
+func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool) (*gosnmp.GoSNMP, error) {
 	d.Infof("Beginning SNMP connection")
-	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey)
+	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug)
 	if err != nil {
 		d.DeviceConnected = false
 		d.Errorf("Client connect error to device  error :%s", err)
 		d.snmpClientMap[mkey] = nil
-		return err
+		return nil, err
 	}
 
 	d.Infof("SNMP connection stablished Successfully for device  and measurement %s", mkey)
 	d.snmpClientMap[mkey] = client
 	d.SysInfo = sysinfo
 	d.DeviceConnected = true
-	return nil
+	return client, nil
 }
 
 func (d *SnmpDevice) addRequests(n int64) {
@@ -492,7 +492,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 		FORCEINIT:
 			//check if device is online
 			if d.DeviceConnected == false {
-				err := d.InitSnmpConnect("init")
+				_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug)
 				if err == nil {
 					startSnmp := time.Now()
 					d.InitDevMeasurements()
@@ -562,18 +562,15 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 			case debug := <-d.chDebug:
 				d.StateDebug = debug
 				d.Infof(" invoked DEBUG  ACTIVE  [%t] ", debug)
-				if debug {
-					d.Infof(" Activating snmp debug for this device")
-					for k, v := range d.snmpClientMap {
-						v.Logger = snmp.GetDebugLogger(d.cfg.ID + "_" + k)
+				d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
+				for _, m := range d.Measurements {
+					c, err := d.InitSnmpConnect(m.ID, debug)
+					if err != nil {
+						d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
 					}
-
-				} else {
-					d.Infof("De Activating snmp debug for this device")
-					for _, v := range d.snmpClientMap {
-						v.Logger = log.New(ioutil.Discard, "", 0)
-					}
+					m.SetSnmpClient(c)
 				}
+
 			case status := <-d.chEnabled:
 				d.DeviceActive = status
 				d.Infof("device STATUS  ACTIVE  [%t] ", status)

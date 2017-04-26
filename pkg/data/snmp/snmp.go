@@ -183,7 +183,7 @@ func GetDebugLogger(filename string) *log.Logger {
 	if l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644); err == nil {
 		return log.New(l, "", 0)
 	} else {
-		fmt.Fprintln(os.Stderr, err)
+		mainlog.Warnf("Error on create debug file : %s ", err)
 		return nil
 	}
 }
@@ -384,7 +384,7 @@ const (
 )
 
 // GetClient xx
-func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string) (*gosnmp.GoSNMP, *SysInfo, error) {
+func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug bool) (*gosnmp.GoSNMP, *SysInfo, error) {
 	var client *gosnmp.GoSNMP
 	hostIPs, err := net.LookupHost(s.Host)
 	if err != nil {
@@ -528,7 +528,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string) (*gosnmp.
 		l.Errorf("Error no snmpversion found %s in host %s", s.SnmpVersion, s.Host)
 		return nil, nil, ers.New("Error on snmp Version")
 	}
-	if s.SnmpDebug {
+	if debug {
 		client.Logger = GetDebugLogger(s.ID + "_" + meas)
 	}
 	//first connect
