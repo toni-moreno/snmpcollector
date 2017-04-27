@@ -8,12 +8,11 @@ import (
 
 //MeasurementCfg the measurement configuration
 type MeasurementCfg struct {
-	ID   string `xorm:"'id' unique"`
-	Name string `xorm:"name"`
-
-	GetMode        string `xorm:"getmode"`  //value ,indexed  (direct tag), indexed_it ( indirect_tag)
-	IndexOID       string `xorm:"indexoid"` //only valid if Indexed (direct or indirect)
-	TagOID         string `xorm:"tagoid"`   //only valid if inderecta TAG indexeded
+	ID             string `xorm:"'id' unique" binding:"Required"`
+	Name           string `xorm:"name" binding:"Required"`
+	GetMode        string `xorm:"getmode" binding:"In(value,indexed,indexed_it)"` //value ,indexed  (direct tag), indexed_it ( indirect_tag)
+	IndexOID       string `xorm:"indexoid"`                                       //only valid if Indexed (direct or indirect)
+	TagOID         string `xorm:"tagoid"`                                         //only valid if inderecta TAG indexeded
 	IndexTag       string `xorm:"indextag"`
 	IndexTagFormat string `xorm:"indextagformat"`
 	IndexAsValue   bool   `xorm:"'indexasvalue' default 0"`
