@@ -46,26 +46,26 @@ type SnmpDeviceCfg struct {
 
 // InfluxCfg is the main configuration for any InfluxDB TSDB
 type InfluxCfg struct {
-	ID          string `xorm:"'id' unique"`
-	Host        string `xorm:"host"`
-	Port        int    `xorm:"port"`
-	DB          string `xorm:"db"`
-	User        string `xorm:"user"`
-	Password    string `xorm:"password"`
-	Retention   string `xorm:"retention"`
-	Precision   string `xorm:"'precision' default 's'"` //posible values [h,m,s,ms,u,ns] default seconds for the nature of data
-	Timeout     int    `xorm:"'timeout' default 30"`
-	UserAgent   string `xorm:"useragent"`
+	ID          string `xorm:"'id' unique" binding:"Required"`
+	Host        string `xorm:"host" binding:"Required"`
+	Port        int    `xorm:"port" binding:"Required;IntegerNotZero"`
+	DB          string `xorm:"db" binding:"Required"`
+	User        string `xorm:"user" binding:"Required"`
+	Password    string `xorm:"password" binding:"Required"`
+	Retention   string `xorm:"'retention' default 'autogen'" binding:"Required"`
+	Precision   string `xorm:"'precision' default 's'" binding:"Default(s);OmitEmpty;In(h,m,s,ms,u,ns)"` //posible values [h,m,s,ms,u,ns] default seconds for the nature of data
+	Timeout     int    `xorm:"'timeout' default 30" binding:"Default(30);IntegerNotZero"`
+	UserAgent   string `xorm:"useragent" binding:"Default(snmpcollector)"`
 	Description string `xorm:"description"`
 }
 
 //MeasFilterCfg the filter configuration
 type MeasFilterCfg struct {
-	ID               string `xorm:"'id' unique"`
+	ID               string `xorm:"'id' unique" binding:"Required"`
 	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
-	FType            string `xorm:"filter_type"`  //file/OIDCondition/CustomFilter
-	FilterName       string `xorm:"filter_name"`  // valid identificator for the filter depending on the type
-	EnableAlias      bool   `xorm:"enable_alias"` //only valid if file/Custom
+	FType            string `xorm:"filter_type" binding:"Required"` //file/OIDCondition/CustomFilter
+	FilterName       string `xorm:"filter_name" binding:"Required"` // valid identificator for the filter depending on the type
+	EnableAlias      bool   `xorm:"enable_alias"`                   //only valid if file/Custom
 	Description      string `xorm:"description"`
 }
 
@@ -87,7 +87,7 @@ type CustomFilterItems struct {
 
 // CustomFilterCfg table with user custom choosed indexes
 type CustomFilterCfg struct {
-	ID          string `xorm:"'id' unique"`
+	ID          string `xorm:"'id' unique" binding:"Required"`
 	Description string `xorm:"description"`
 	RelatedDev  string `xorm:"related_dev"`
 	RelatedMeas string `xorm:"related_meas"`
@@ -99,9 +99,9 @@ type CustomFilterCfg struct {
 
 // OidConditionCfg condition config for filters and metrics
 type OidConditionCfg struct {
-	ID          string `xorm:"'id' unique"`
-	IsMultiple  bool   `xorm:"is_multiple"`
-	OIDCond     string `xorm:"cond_oid"`
+	ID          string `xorm:"'id' unique" binding:"Required"`
+	IsMultiple  bool   `xorm:"is_multiple" binding:"Required"`
+	OIDCond     string `xorm:"cond_oid" binding:"Required"`
 	CondType    string `xorm:"cond_type"`
 	CondValue   string `xorm:"cond_value"`
 	Description string `xorm:"description"`
@@ -115,7 +115,7 @@ type SnmpDevFilters struct {
 
 //MGroupsCfg measurement groups to asign to devices
 type MGroupsCfg struct {
-	ID           string   `xorm:"'id' unique"`
+	ID           string   `xorm:"'id' unique" binding:"Required"`
 	Measurements []string `xorm:"-"`
 	Description  string   `xorm:"description"`
 }

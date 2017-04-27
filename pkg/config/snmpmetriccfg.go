@@ -10,8 +10,8 @@ import (
 
 //SnmpMetricCfg Metric config
 type SnmpMetricCfg struct {
-	ID          string  `xorm:"'id' unique"` //name of the key in the config array
-	FieldName   string  `xorm:"field_name"`
+	ID          string  `xorm:"'id' unique" binding:"Required"` //name of the key in the config array
+	FieldName   string  `xorm:"field_name" binding:"Required"`
 	Description string  `xorm:"description"`
 	BaseOID     string  `xorm:"baseoid"`
 	DataSrcType string  `xorm:"datasrctype"`
