@@ -26,34 +26,34 @@ export class HttpAPI {
     }
 
     get(url:string) : Observable<any> {
-        return this._http.get(url)
+        return this._http.get(encodeURI(url))
             .catch(this.handleError.bind(this));
     }
 
     post(url:string, data:any, args?: RequestOptionsArgs) : Observable<any> {
         if (args == null) args = {};
         if (args.headers === undefined) args.headers = this.headers;
-        return this._http.post(url, data, args)
+        return this._http.post(encodeURI(url), data, args)
             .catch(this.handleError.bind(this));
     }
 
     postFile(url:string, data:any, args?: RequestOptionsArgs) : Observable<any> {
         if (args == null) args = {};
         args.headers = this.headersUpload;
-        return this._http.post(url, data, this.headersUpload)
+        return this._http.post(encodeURI(url), data, this.headersUpload)
             .catch(this.handleError.bind(this));
     }
 
     put(url:string, data:any, args?: RequestOptionsArgs) : Observable<any> {
         if (args == null) args = {};
         if (args.headers === undefined) args.headers = this.headers;
-        return this._http.put(url, data, args)
+        return this._http.put(encodeURI(url), data, args)
             .catch(this.handleError.bind(this));
     }
 
     delete(url: string, data?: any, args?: RequestOptionsArgs): Observable<any> {
         if (args == null) args = {};
-        args.url = url;
+        args.url = encodeURI(url);
         args.method = RequestMethod.Delete;
         if (!args.headers) args.headers = this.headers;
         args.body  = data ? (data) : null;
