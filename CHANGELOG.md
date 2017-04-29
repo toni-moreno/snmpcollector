@@ -1,11 +1,18 @@
-# v 0.7.0 (not released yet)
+# v 0.7.1 (unreleased)
+### New Features
+
+### fixes
+
+### breaking changes
+
+# v 0.7.0 (2017-04-29)
 ### New Features
 * added a gonsmp fix for snmpv3 performance problems.
 * updated all dependencies
 * added overwrite option to the config import dialog
 
 ### fixes
-* fix for #169, #172, #173, #177, #181, #182
+* fix for #169, #172, #173, #177, #181, #182 , #184, #186, #188, #190, #193, #194, #195
 
 ### breaking changes
 
