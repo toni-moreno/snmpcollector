@@ -83,6 +83,7 @@ func main() {
 		case "pkg-min-tar":
 			os.Mkdir("./dist", 0755)
 			createMinTar()
+			sha1FilesInDist()
 		case "pkg-rpm":
 			os.Mkdir("./dist", 0755)
 			createRpmPackages()
@@ -382,7 +383,7 @@ func rmr(paths ...string) {
 
 func clean() {
 	//	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
-	rmr("dist")
+	rmr("public")
 	//rmr("tmp")
 	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/toni-moreno/snmpcollector", goos, goarch)))
 }
