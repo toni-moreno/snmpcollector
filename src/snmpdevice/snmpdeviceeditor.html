@@ -118,7 +118,7 @@
 
       <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '1' ">
         <label class="control-label col-sm-2" for="MaxRepetitions">MaxRepetitions</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the MaxRepetitions value for BULKWALK SNMP Queries"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the MaxRepetitions value for BULKWALK SNMP Queries (valid ranges is 1-255) default 50"></i>
         <div class="col-sm-9">
           <input formControlName="MaxRepetitions" id="MaxRepetitions" />
           <control-messages [control]="snmpdevForm.controls.MaxRepetitions"></control-messages>

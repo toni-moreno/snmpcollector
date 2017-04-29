@@ -11,6 +11,8 @@ export class ValidationService {
             'invalidExtraTags': 'Invalid format. Must be key=value, separated by commas',
             'invalidWhiteSpaces': 'Invalid. Can\'t contain white spaces',
             'invalidUInteger': 'Invalid Number . Must be a Unsigned (positive) Integer',
+            'invalidUInteger8': 'Invalid Number . Must be a Unsigned (positive) Integer with range 0-255',
+            'invalidUInteger8NotZero': 'Invalid Number . Must be a Unsigned (positive) Integer with range 1-255',
             'invalidUIntegerNotZero': 'Invalid Number . Must be a Unsigned (positive) Integer not Zero',
             'invalidUIntegerAndLessOne': 'Invalid Number . Must be a Unsigned (positive) Integer or -1'
         };
@@ -89,6 +91,27 @@ export class ValidationService {
                 return null;
             } else {
                 return { 'invalidUInteger': true };
+            }
+        }
+    }
+
+    static uinteger8Validator(control) {
+        if (control.value){
+            if (control.value.toString().match(/^([1-9]+\d*)$|^0$/) && control.value < 256) {
+                return null;
+            } else {
+                return { 'invalidUInteger8': true };
+            }
+        }
+    }
+
+
+    static uinteger8NotZeroValidator(control) {
+        if (control.value){
+            if (control.value.toString().match(/^([1-9]+\d*)$/) && control.value < 256) {
+                return null;
+            } else {
+                return { 'invalidUInteger8NotZero': true };
             }
         }
     }

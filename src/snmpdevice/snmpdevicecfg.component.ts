@@ -110,7 +110,7 @@ export class SnmpDeviceCfgComponent {
       SnmpVersion: [this.snmpdevForm ? this.snmpdevForm.value.SnmpVersion : '2c', Validators.required],
       DisableBulk: [this.snmpdevForm ? this.snmpdevForm.value.DisableBulk : 'false'],
       Community: [this.snmpdevForm ? this.snmpdevForm.value.Community : 'public'],
-      MaxRepetitions: [this.snmpdevForm ? this.snmpdevForm.value.MaxRepetitions : 50, Validators.required],
+      MaxRepetitions: [this.snmpdevForm ? this.snmpdevForm.value.MaxRepetitions : 50, Validators.compose([Validators.required,ValidationService.uinteger8NotZeroValidator])],
       Freq: [this.snmpdevForm ? this.snmpdevForm.value.Freq : 60, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       UpdateFltFreq: [this.snmpdevForm ? this.snmpdevForm.value.UpdateFltFreq : 60, Validators.compose([Validators.required, ValidationService.uintegerAndLessOneValidator])],
       ConcurrentGather: [this.snmpdevForm ? this.snmpdevForm.value.ConcurrentGather : 'true', Validators.required],
