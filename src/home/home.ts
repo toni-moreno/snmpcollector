@@ -23,6 +23,7 @@ export class Home {
   @ViewChild('blocker', { read: ViewContainerRef }) container: ViewContainerRef;
   @ViewChild('importFileModal') public importFileModal : ImportFileModal;
   @ViewChild('exportBulkFileModal') public exportBulkFileModal : ExportFileModal;
+  @ViewChild('aboutModal') public aboutModal : AboutModal;
 
   response: string;
   api: string;
@@ -82,6 +83,10 @@ export class Home {
 
   showExportBulkModal() {
     this.exportBulkFileModal.initExportModal(null, false);
+  }
+
+  showAboutModal() {
+    this.aboutModal.showModal(this.version);
   }
 
   reloadConfig() {

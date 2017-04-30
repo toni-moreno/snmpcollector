@@ -1,5 +1,6 @@
 <div #blocker></div>
 <ng-container *ngIf="userIn === true">
+<about-modal #aboutModal [showValidation]="true" titleName='About: SNMPCollector'></about-modal>
 <div id="wrapper">
   <!-- Sidebar -->
   <div id="sidebar-wrapper" [ngStyle]="mode === true ? {'width.px': '0'} : {'width.px': '215'}">
@@ -108,13 +109,13 @@
    </ul>
    <ul class="nav navbar-nav navbar-right">
      <li class="active">
-       <a role="text" class="glyphicon glyphicon-info-sign"></a>
+       <a role="button" class="glyphicon glyphicon-info-sign" (click)="showAboutModal()"></a>
      </li>
      <li class="active">
-       <a role="text" class="glyphicon glyphicon-question-sign"></a>
+       <a role="button" class="glyphicon glyphicon-question-sign"></a>
      </li>
      <li class="active">
-       <a role="text" class="glyphicon glyphicon-off" (click)="logout()"></a>
+       <a role="button" class="glyphicon glyphicon-off" (click)="logout()"></a>
      </li>
      <!--li>
        <p class="navbar-text" *ngIf="version">SNMPCollector - {{version.Version}} - {{version.Commit}} ({{version.BuildStamp*1000 | date}}) </p>
