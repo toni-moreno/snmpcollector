@@ -41,6 +41,7 @@ import { ModalDirective } from 'ng2-bootstrap';
 
 import { GenericModal } from './common/generic-modal';
 import { ExportFileModal } from './common/dataservice/export-file-modal';
+import { AboutModal } from './home/about-modal';
 import { TreeView } from './common/dataservice/treeview';
 import { TestConnectionModal } from './common/test-connection-modal';
 import { TestFilterModal } from './customfilter/test-filter-modal';
@@ -73,6 +74,7 @@ import { SpinnerComponent } from './common/spinner';
     CustomFilterCfgComponent,
     RuntimeComponent,
     GenericModal,
+    AboutModal,
     ExportFileModal,
     ImportFileModal,
     BlockUIComponent,

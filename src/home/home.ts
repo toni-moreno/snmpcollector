@@ -7,14 +7,15 @@ import { BlockUIService } from '../common/blockui/blockui-service';
 import { BlockUIComponent } from '../common/blockui/blockui-component'; // error
 import { ImportFileModal } from '../common/dataservice/import-file-modal';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
-
+import { HomeService } from './home.service';
+import { AboutModal } from './about-modal'
 declare var _:any;
 
 @Component({
   selector: 'home',
   templateUrl: './home.html',
   styleUrls: [ './home.css' ],
-  providers: [BlockUIService]
+  providers: [BlockUIService, HomeService]
 })
 
 export class Home {
@@ -22,12 +23,13 @@ export class Home {
   @ViewChild('blocker', { read: ViewContainerRef }) container: ViewContainerRef;
   @ViewChild('importFileModal') public importFileModal : ImportFileModal;
   @ViewChild('exportBulkFileModal') public exportBulkFileModal : ExportFileModal;
+  @ViewChild('aboutModal') public aboutModal : AboutModal;
 
   response: string;
   api: string;
   item_type: string;
   version: any;
-  menuItems : Array<any> = [
+  configurationItems : Array<any> = [
   {'title': 'Influx Servers', 'selector' : 'influxserver'},
   {'title': 'OID Conditions', 'selector' : 'oidcondition'},
   {'title': 'SNMP Metrics', 'selector' : 'snmpmetric'},
@@ -36,18 +38,25 @@ export class Home {
   {'title': 'Measurement Filters', 'selector' : 'measfilter'},
   {'title': 'Custom Filters', 'selector' : 'customfilter'},
   {'title': 'SNMP Devices', 'selector' : 'snmpdevice'},
-  {'title': 'Runtime', 'selector' : 'runtime'},
   ];
+
+  runtimeItems : Array<any> = [
+  {'title': 'Device status', 'selector' : 'runtime'},
+  ];
+
+  mode : boolean = false;
+  userIn : boolean = false;
+
   elapsedReload: string = '';
   lastReload: Date;
 
-  constructor(public router: Router, public httpAPI: HttpAPI, private _blocker: BlockUIService) {
-    this.item_type= "runtime";
+  constructor(public router: Router, public httpAPI: HttpAPI, private _blocker: BlockUIService, public homeService: HomeService) {
     this.getFooterInfo();
+    this.item_type= "runtime";
   }
 
   logout() {
-    this.httpAPI.post('/logout','')
+    this.homeService.userLogout()
     .subscribe(
     response => {
       this.router.navigate(['/login']);
@@ -57,6 +66,9 @@ export class Home {
       console.log(error.text());
     }
     );
+  }
+  changeModeMenu() {
+    this.mode = !this.mode
   }
 
   clickMenu(selected : string) : void {
@@ -72,13 +84,17 @@ export class Home {
     this.exportBulkFileModal.initExportModal(null, false);
   }
 
+  showAboutModal() {
+    this.aboutModal.showModal(this.version);
+  }
+
   reloadConfig() {
     this._blocker.start(this.container, "Reloading Conf. Please wait...");
-    this.httpAPI.get('/api/rt/agent/reload/')
+    this.homeService.reloadConfig()
     .subscribe(
     response => {
       this.lastReload = new Date();
-      this.elapsedReload = response.json();
+      this.elapsedReload = response;
       this._blocker.stop();
     },
     error => {
@@ -90,19 +106,13 @@ export class Home {
   }
 
   getFooterInfo() {
-    this.getInfo(null)
+    this.homeService.getInfo()
     .subscribe(data => {
       this.version = data;
+      this.userIn = true;
     },
     err => console.error(err),
     () =>  {}
     );
   }
-
-  getInfo(filter_s: string) {
-    // return an observable
-    return this.httpAPI.get('/api/rt/agent/info/version/')
-    .map( (responseData) => {
-      return responseData.json()});
-    }
-  }
+}
