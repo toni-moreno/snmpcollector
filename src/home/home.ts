@@ -41,10 +41,10 @@ export class Home {
   ];
 
   runtimeItems : Array<any> = [
-  {'title': 'Runtime', 'selector' : 'runtime'},
+  {'title': 'Device status', 'selector' : 'runtime'},
   ];
 
-  mode : boolean = true;
+  mode : boolean = false;
   userIn : boolean = false;
 
   elapsedReload: string = '';
@@ -69,7 +69,6 @@ export class Home {
   }
   changeModeMenu() {
     this.mode = !this.mode
-    console.log(this.mode)
   }
 
   clickMenu(selected : string) : void {

@@ -13,10 +13,16 @@ import { ModalDirective } from 'ng2-bootstrap';
                 <button type="button" class="close" (click)="childModal.hide()" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
-                <h4 class="modal-title">{{titleName}}</h4>
+                <h4 class="modal-title"><i class="glyphicon glyphicon-info-sign"></i> {{titleName}}</h4>
               </div>
               <div class="modal-body" *ngIf="info">
-              <h4> SNMPCollector </h4>
+              <h4 class="text-primary"> <b>SNMPCollector</b> </h4>
+              <span> SNMPCollector is a full featured generic SNMP data collector with web administration interface. It is an open Source tool which has as main goal simplify the configuration for getting data from any device with SNMP protocol support and send resulting data to an InfluxDB backend</span>
+              <div class="text-right">
+                <a href="https://github.com/toni-moreno/snmpcollector" class="text-link"> More info <i class="glyphicon glyphicon-plus-sign"></i></a>
+              </div>
+              <hr/>
+              <h4> Release information </h4>
                 <dl class="dl-horizontal">
                   <ng-container *ngFor="let item of info | objectParser">
                     <dt>{{item.key}}</dt>
@@ -24,6 +30,10 @@ import { ModalDirective } from 'ng2-bootstrap';
                       {{item.value}}
                     </dd>
                   </ng-container>
+                  <dt>License</dt>
+                  <dd>
+                    MIT License
+                  </dd>
                 </dl>
                 <hr>
               <h4> Authors: </h4>
@@ -38,12 +48,6 @@ import { ModalDirective } from 'ng2-bootstrap';
                   </dd>
               </dl>
               <hr>
-              <h4> License: </h4>
-              <dl class="dl-horizontal">
-                <dt> MIT License </dt>
-                  <dd>A short and simple permissive license with conditions only requiring preservation of copyright and license notices. Licensed works, modifications, and larger works may be distributed under different terms and without source code.
-                  </dd>
-                </dl>
               </div>
               <div class="modal-footer" *ngIf="showValidation === true">
                <button type="button" class="btn btn-primary" (click)="childModal.hide()">Close</button>
