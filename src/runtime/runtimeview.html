@@ -54,19 +54,19 @@
             <table class="table-striped table-bordered">
               <tr>
                 <span style="padding-right:10px">Gets</span>
-                <td style="padding-left:10px">{{runtime_dev['Gets']}}</td>
+                <td style="padding-left:10px">{{runtime_dev['Stats'].Gets}}</td>
               </tr>
               <tr>
                 <span style="padding-right:10px">Errors</span>
-                <td style="padding-left:10px">{{runtime_dev['Errors']}}</td>
+                <td style="padding-left:10px">{{runtime_dev['Stats'].Errors}}</td>
               </tr>
               <tr>
                 <span style="padding-right:10px">Last Gather Duration</span>
-                <td style="padding-left:10px">{{runtime_dev['LastGatherDuration'] / 1000000000  }}</td>
+                <td style="padding-left:10px">{{runtime_dev['Stats'].LastGatherDuration / 1000000000  }}</td>
               </tr>
               <tr>
                 <span style="padding-right:10px">Last Filter Duration</span>
-                <td style="padding-left:10px">{{runtime_dev['LastFltUpdateDuration'] / 1000000000 }}</td>
+                <td style="padding-left:10px">{{runtime_dev['Stats'].LastFltUpdateDuration / 1000000000 }}</td>
               </tr>
 
             </table>

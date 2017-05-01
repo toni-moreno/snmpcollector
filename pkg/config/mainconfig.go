@@ -28,10 +28,11 @@ type DatabaseCfg struct {
 
 //SelfMonConfig configuration for self monitoring
 type SelfMonConfig struct {
-	Enabled   bool     `toml:"enabled"`
-	Freq      int      `toml:"freq"`
-	Prefix    string   `toml:"prefix"`
-	ExtraTags []string `toml:"extra-tags"`
+	Enabled           bool     `toml:"enabled"`
+	Freq              int      `toml:"freq"`
+	Prefix            string   `toml:"prefix"`
+	InheritDeviceTags bool     `toml:"inheritdevicetags"`
+	ExtraTags         []string `toml:"extra-tags"`
 }
 
 //HTTPConfig has webserver config options

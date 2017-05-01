@@ -63,6 +63,8 @@
  freq = 60
  #prefix for measurement naming
  prefix = ""
+ #inherit device tags
+ inheritdevicetags = true
  #adds extra tags to the measurement config should be set as a csv - tag=value1,tag2=value2,...,tagN=valN
  extratags = [ "instance=snmpcollector01" ]
 

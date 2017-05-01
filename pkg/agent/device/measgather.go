@@ -7,9 +7,6 @@ import (
 )
 
 func (d *SnmpDevice) measConcurrentGatherAndSend() {
-	var totalGets int64
-	var totalErrors int64
-
 	startSnmpStats := time.Now()
 	var wg sync.WaitGroup
 	for _, m := range d.Measurements {
@@ -20,20 +17,19 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 			d.Debugf("-------Processing measurement : %s", m.ID)
 
 			nGets, nErrors, _ := m.GetData()
-			totalGets += nGets
-			totalErrors += nErrors
 
 			m.ComputeEvaluatedMetrics()
 			m.ComputeOidConditionalMetrics()
 
 			if nGets > 0 {
-				d.addGets(nGets)
+				d.stats.AddGets(nGets)
 			}
 			if nErrors > 0 {
-				d.addErrors(nErrors)
+				d.stats.AddErrors(nErrors)
 			}
 			//prepare batchpoint
 			points := m.GetInfluxPoint(d.TagMap)
+			startInfluxStats := time.Now()
 			if bpts != nil {
 				(*bpts).AddPoints(points)
 				//send data
@@ -41,21 +37,14 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 			} else {
 				d.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
 			}
+			elapsedInfluxStats := time.Since(startInfluxStats)
+			d.stats.AddSentDuration(elapsedInfluxStats)
+
 		}(m)
 	}
 	wg.Wait()
 	elapsedSnmpStats := time.Since(startSnmpStats)
-	d.Infof("snmp pooling took [%s] SNMP: Gets [%d] Errors [%d]", elapsedSnmpStats, totalGets, totalErrors)
-	d.setGatherStats(startSnmpStats, elapsedSnmpStats)
-	if d.selfmon != nil {
-		fields := map[string]interface{}{
-			"process_t": elapsedSnmpStats.Seconds(),
-			"getsent":   totalGets,
-			"geterror":  totalErrors,
-		}
-		d.selfmon.AddDeviceMetrics(d.cfg.ID, fields)
-	}
-
+	d.stats.SetGatherDuration(startSnmpStats, elapsedSnmpStats)
 }
 
 func (d *SnmpDevice) measSeqGatherAndSend() {
@@ -74,12 +63,6 @@ func (d *SnmpDevice) measSeqGatherAndSend() {
 		m.ComputeEvaluatedMetrics()
 		m.ComputeOidConditionalMetrics()
 
-		if nGets > 0 {
-			d.addGets(nGets)
-		}
-		if nErrors > 0 {
-			d.addErrors(nErrors)
-		}
 		//prepare batchpoint
 		points := m.GetInfluxPoint(d.TagMap)
 		if bpts != nil {
@@ -87,17 +70,14 @@ func (d *SnmpDevice) measSeqGatherAndSend() {
 		}
 	}
 
-	elapsedSnmpStats := time.Since(startSnmpStats)
-	d.Infof("snmp pooling took [%s] SNMP: Gets [%d] Errors [%d]", elapsedSnmpStats, totalGets, totalErrors)
-	d.setGatherStats(startSnmpStats, elapsedSnmpStats)
-	if d.selfmon != nil {
-		fields := map[string]interface{}{
-			"process_t": elapsedSnmpStats.Seconds(),
-			"getsent":   totalGets,
-			"geterror":  totalErrors,
-		}
-		d.selfmon.AddDeviceMetrics(d.cfg.ID, fields)
+	if totalGets > 0 {
+		d.stats.AddGets(totalGets)
 	}
+	if totalErrors > 0 {
+		d.stats.AddErrors(totalErrors)
+	}
+	elapsedSnmpStats := time.Since(startSnmpStats)
+	d.stats.SetGatherDuration(startSnmpStats, elapsedSnmpStats)
 	/*************************
 	 *
 	 * Send data to InfluxDB process
@@ -111,6 +91,6 @@ func (d *SnmpDevice) measSeqGatherAndSend() {
 		d.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
 	}
 	elapsedInfluxStats := time.Since(startInfluxStats)
-	d.Infof("influx send took [%s]", elapsedInfluxStats)
+	d.stats.AddSentDuration(elapsedInfluxStats)
 
 }

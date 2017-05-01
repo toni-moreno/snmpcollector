@@ -1,6 +1,6 @@
 [run]
 init_cmds = [
-  ["go", "build", "-o", "./bin/snmpcollector", "./pkg/"],
+  ["go", "build", "-race","-o", "./bin/snmpcollector", "./pkg/"],
 	["./bin/snmpcollector"]
 ]
 watch_all = true
@@ -10,6 +10,6 @@ watch_dirs = [
 watch_exts = [".go", ".toml"]
 build_delay = 1500
 cmds = [
-  ["go", "build", "-o", "./bin/snmpcollector", "./pkg/"],
+  ["go", "build", "-race","-o", "./bin/snmpcollector", "./pkg/"],
 	["./bin/snmpcollector"]
 ]

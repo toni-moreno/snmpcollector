@@ -62,9 +62,13 @@ func (sm *SelfMon) Init() {
 			}
 		}
 	}
+
+	log.Infof("Self monitoring TAGS inheritance set to : %t", sm.cfg.InheritDeviceTags)
+
 	// Measurement Names
 	sm.rt_meas_name = "selfmon_rt"
 	sm.gvm_meas_name = "selfmon_gvm"
+
 	if len(sm.cfg.Prefix) > 0 {
 		sm.rt_meas_name = fmt.Sprintf("%sselfmon_rt", sm.cfg.Prefix)
 		sm.gvm_meas_name = fmt.Sprintf("%sselfmon_gvm", sm.cfg.Prefix)
@@ -84,6 +88,7 @@ func (sm *SelfMon) Init() {
 		"gc.gc_per_second":      0.0,
 		"gc.gc_per_interval":    0.0,
 	}
+
 	sm.chExit = make(chan bool)
 
 }
@@ -139,7 +144,7 @@ func (sm *SelfMon) addDataPoint(pt *client.Point) {
 }
 
 // AddDeviceMetrics add data from devices
-func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface{}) {
+func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface{}, devtags map[string]string) {
 	if !sm.IsInitialized() {
 		return
 	}
@@ -150,6 +155,12 @@ func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface
 	for k, v := range sm.TagMap {
 		tagMap[k] = v
 	}
+	if sm.cfg.InheritDeviceTags {
+		for k, v := range devtags {
+			tagMap[k] = v
+		}
+	}
+
 	tagMap["device"] = deviceid
 	now := time.Now()
 	pt, _ := client.NewPoint(
