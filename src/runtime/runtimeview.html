@@ -52,23 +52,15 @@
           <div class="panel-heading">Statistics SNMP Device</div>
           <div class="panel-body">
             <table class="table-striped table-bordered">
-              <tr>
-                <span style="padding-right:10px">Gets</span>
-                <td style="padding-left:10px">{{runtime_dev['Stats'].Gets}}</td>
-              </tr>
-              <tr>
-                <span style="padding-right:10px">Errors</span>
-                <td style="padding-left:10px">{{runtime_dev['Stats'].Errors}}</td>
-              </tr>
-              <tr>
-                <span style="padding-right:10px">Last Gather Duration</span>
-                <td style="padding-left:10px">{{runtime_dev['Stats'].LastGatherDuration / 1000000000  }}</td>
-              </tr>
-              <tr>
-                <span style="padding-right:10px">Last Filter Duration</span>
-                <td style="padding-left:10px">{{runtime_dev['Stats'].LastFltUpdateDuration / 1000000000 }}</td>
-              </tr>
-
+              <template ngFor let-item [ngForOf]="counterDef" let-i="index" >
+                <tr *ngIf="item.show">
+                  <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
+                  <span style="padding-right:10px"> {{item.label}} </span>
+                  <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i]}}</td>
+                  <td *ngIf="item.type=='time'" style="padding-left:10px">{{ runtime_dev['Stats']['Counters'][i]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                  <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i] }} sec</td>
+                </tr>
+              </template>
             </table>
           </div>
         </div>

@@ -66,11 +66,11 @@ func (sm *SelfMon) Init() {
 	log.Infof("Self monitoring TAGS inheritance set to : %t", sm.cfg.InheritDeviceTags)
 
 	// Measurement Names
-	sm.rt_meas_name = "selfmon_rt"
+	sm.rt_meas_name = "selfmon_device_stats"
 	sm.gvm_meas_name = "selfmon_gvm"
 
 	if len(sm.cfg.Prefix) > 0 {
-		sm.rt_meas_name = fmt.Sprintf("%sselfmon_rt", sm.cfg.Prefix)
+		sm.rt_meas_name = fmt.Sprintf("%sselfmon_device_stats", sm.cfg.Prefix)
 		sm.gvm_meas_name = fmt.Sprintf("%sselfmon_gvm", sm.cfg.Prefix)
 	}
 

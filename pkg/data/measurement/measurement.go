@@ -51,7 +51,7 @@ type Measurement struct {
 	log              *logrus.Logger
 	snmpClient       *gosnmp.GoSNMP
 	DisableBulk      bool
-	GetData          func() (int64, int64, error)        `json:"-"`
+	GetData          func() (int64, int64, int64, error) `json:"-"`
 	Walk             func(string, gosnmp.WalkFunc) error `json:"-"`
 }
 
@@ -291,7 +291,11 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 }
 
 //GetInfluxPoint get points from measuremnetsl
-func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point {
+func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, int64, int64, []*client.Point) {
+	var metSent int64
+	var metError int64
+	var measSent int64
+	var measError int64
 	var ptarray []*client.Point
 
 	switch m.cfg.GetMode {
@@ -302,6 +306,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 		for _, v_mtr := range k {
 			if v_mtr.CookedValue == nil {
 				m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, hostTags, v_mtr)
+				metError++
 				continue
 			}
 			if v_mtr.Report == metric.NeverReport {
@@ -318,6 +323,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 			m.Debugf("DEBUG METRIC %+v", v_mtr)
 			Fields[v_mtr.GetFieldName()] = v_mtr.CookedValue
 			t = v_mtr.CurTime
+			metSent++
 		}
 		m.Debugf("FIELDS:%+v", Fields)
 
@@ -329,9 +335,11 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 		)
 		if err != nil {
 			m.Warnf("error in influx point building:%s", err)
+			measError++
 		} else {
 			m.Debugf("GENERATED INFLUX POINT[%s] value: %+v", m.cfg.Name, pt)
 			ptarray = append(ptarray, pt)
+			measSent++
 		}
 
 	case "indexed", "indexed_it":
@@ -351,6 +359,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 				if v_mtr.IsTag() == true {
 					if v_mtr.CookedValue == nil {
 						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, Tags, v_mtr)
+						metError++ //not sure if an tag error should be count as metric
 						continue
 					}
 					if v_mtr.Report == metric.NeverReport {
@@ -378,6 +387,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 				} else {
 					if v_mtr.CookedValue == nil {
 						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, Tags, v_mtr)
+						metError++
 						continue
 					}
 					if v_mtr.Report == metric.NeverReport {
@@ -394,6 +404,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 					m.Debugf("DEBUG METRIC %+v", v_mtr)
 					Fields[v_mtr.GetFieldName()] = v_mtr.CookedValue
 				}
+				metSent++
 				t = v_mtr.CurTime
 			}
 			m.Debugf("FIELDS:%+v TAGS:%+v", Fields, Tags)
@@ -405,15 +416,17 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 			)
 			if err != nil {
 				m.Warnf("error in influx point creation :%s", err)
+				measError++
 			} else {
 				m.Debugf("GENERATED INFLUX POINT[%s] index [%s]: %+v", m.cfg.Name, k_idx, pt)
 				ptarray = append(ptarray, pt)
+				measSent++
 			}
 		}
 
 	}
 
-	return ptarray
+	return metSent, metError, measSent, measError, ptarray
 
 }
 
@@ -421,23 +434,24 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) []*client.Point
 SnmpBulkData GetSNMP Data
 */
 
-func (m *Measurement) SnmpWalkData() (int64, int64, error) {
+func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 
 	now := time.Now()
-	var sent int64
-	var errs int64
+	var gathered int64
+	var processed int64
+	var errors int64
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
 		m.Debugf("received SNMP  pdu:%+v", pdu)
-
+		gathered++
 		if pdu.Value == nil {
 			m.Warnf("no value retured by pdu :%+v", pdu)
-			errs++
+			errors++
 			return nil //if error return the bulk process will stop
 		}
 		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
 			m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
-			sent++
+			processed++
 			metr.SetRawData(pdu, now)
 		} else {
 			m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v", pdu.Name, m.cfg.ID)
@@ -448,11 +462,11 @@ func (m *Measurement) SnmpWalkData() (int64, int64, error) {
 	for _, v := range m.cfg.FieldMetric {
 		if err := m.Walk(v.BaseOID, setRawData); err != nil {
 			m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
-			errs += int64(len(m.MetricTable))
+			errors += int64(len(m.MetricTable))
 		}
 	}
 
-	return sent, errs, nil
+	return gathered, processed, errors, nil
 }
 
 // ComputeEvaluatedMetrics take evaluated metrics and computes them from the other values
@@ -549,7 +563,7 @@ func (m *Measurement) ComputeEvaluatedMetrics() {
 GetSnmpData GetSNMP Data
 */
 
-func (m *Measurement) SnmpGetData() (int64, int64, error) {
+func (m *Measurement) SnmpGetData() (int64, int64, int64, error) {
 
 	now := time.Now()
 	var sent int64
@@ -589,7 +603,7 @@ func (m *Measurement) SnmpGetData() (int64, int64, error) {
 		}
 	}
 
-	return sent, errs, nil
+	return int64(l), sent, errs, nil
 }
 
 func (m *Measurement) loadIndexedLabels() (map[string]string, error) {

@@ -16,19 +16,15 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 			bpts, _ := d.Influx.BP()
 			d.Debugf("-------Processing measurement : %s", m.ID)
 
-			nGets, nErrors, _ := m.GetData()
+			nGets, nProcs, nErrs, _ := m.GetData()
+			d.stats.UpdateSnmpGetStats(nGets, nProcs, nErrs)
 
 			m.ComputeEvaluatedMetrics()
 			m.ComputeOidConditionalMetrics()
 
-			if nGets > 0 {
-				d.stats.AddGets(nGets)
-			}
-			if nErrors > 0 {
-				d.stats.AddErrors(nErrors)
-			}
 			//prepare batchpoint
-			points := m.GetInfluxPoint(d.TagMap)
+			metSent, metError, measSent, measError, points := m.GetInfluxPoint(d.TagMap)
+			d.stats.AddMeasStats(metSent, metError, measSent, measError)
 			startInfluxStats := time.Now()
 			if bpts != nil {
 				(*bpts).AddPoints(points)
@@ -38,7 +34,7 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 				d.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
 			}
 			elapsedInfluxStats := time.Since(startInfluxStats)
-			d.stats.AddSentDuration(elapsedInfluxStats)
+			d.stats.AddSentDuration(startInfluxStats, elapsedInfluxStats)
 
 		}(m)
 	}
@@ -48,35 +44,33 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 }
 
 func (d *SnmpDevice) measSeqGatherAndSend() {
-	var totalGets int64
-	var totalErrors int64
+	var tnGets int64
+	var tnProc int64
+	var tnErrors int64
 	bpts, _ := d.Influx.BP()
 	startSnmpStats := time.Now()
 	for _, m := range d.Measurements {
 
 		d.Debugf("-------Processing measurement : %s", m.ID)
 
-		nGets, nErrors, _ := m.GetData()
-		totalGets += nGets
-		totalErrors += nErrors
+		nGets, nProc, nErrors, _ := m.GetData()
+		tnGets += nGets
+		tnProc += nProc
+		tnErrors += nErrors
 
 		m.ComputeEvaluatedMetrics()
 		m.ComputeOidConditionalMetrics()
 
 		//prepare batchpoint
-		points := m.GetInfluxPoint(d.TagMap)
+		metSent, metError, measSent, measError, points := m.GetInfluxPoint(d.TagMap)
+		d.stats.AddMeasStats(metSent, metError, measSent, measError)
 		if bpts != nil {
 			(*bpts).AddPoints(points)
 		}
 	}
 
-	if totalGets > 0 {
-		d.stats.AddGets(totalGets)
-	}
-	if totalErrors > 0 {
-		d.stats.AddErrors(totalErrors)
-	}
 	elapsedSnmpStats := time.Since(startSnmpStats)
+	d.stats.UpdateSnmpGetStats(tnGets, tnProc, tnErrors)
 	d.stats.SetGatherDuration(startSnmpStats, elapsedSnmpStats)
 	/*************************
 	 *
@@ -91,6 +85,6 @@ func (d *SnmpDevice) measSeqGatherAndSend() {
 		d.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
 	}
 	elapsedInfluxStats := time.Since(startInfluxStats)
-	d.stats.AddSentDuration(elapsedInfluxStats)
+	d.stats.AddSentDuration(startInfluxStats, elapsedInfluxStats)
 
 }
