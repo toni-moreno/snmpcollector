@@ -58,7 +58,7 @@
                   <span style="padding-right:10px"> {{item.label}} </span>
                   <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i]}}</td>
                   <td *ngIf="item.type=='time'" style="padding-left:10px">{{ runtime_dev['Stats']['Counters'][i]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
-                  <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i] }} sec</td>
+                  <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i] | elapsedseconds:3 }}</td>
                 </tr>
               </template>
             </table>

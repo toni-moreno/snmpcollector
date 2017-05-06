@@ -52,6 +52,7 @@ import { ValidationService } from './common/validation.service';
 import { ExportServiceCfg } from './common/dataservice/export.service'
 //pipes
 import { ObjectParserPipe,SplitCommaPipe } from './common/custom_pipe';
+import { ElapsedSecondsPipe } from './common/elapsedseconds.pipe';
 
 import { BlockUIComponent } from './common/blockui/blockui-component';
 import { SpinnerComponent } from './common/spinner';
@@ -63,6 +64,7 @@ import { SpinnerComponent } from './common/spinner';
     PasswordToggleDirective,
     ObjectParserPipe,
     SplitCommaPipe,
+    ElapsedSecondsPipe,
     ControlMessagesComponent,
     SnmpDeviceCfgComponent,
     OidConditionCfgComponent,
