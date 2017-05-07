@@ -1,9 +1,25 @@
 # v 0.7.1 (unreleased)
 ### New Features
+* Improved self monitoring process, renamed and added new device statistics metrics  
 
 ### fixes
 
 ### breaking changes
+* device measurements and field names have been renamed
+
+__measurement__
+
+Old| New
+---|-------
+selfmon_rt | selfmon_device_stats
+
+__fields__
+
+Old | New
+----|----
+process_t | cicle_gather_duration
+getsent | snmp_oid_get_processed
+geterror | snmp_oid_get_errors
 
 # v 0.7.0 (2017-04-29)
 ### New Features
