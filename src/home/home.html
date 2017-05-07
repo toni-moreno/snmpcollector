@@ -53,7 +53,7 @@
         <a (click)="reloadConfig()" role="button"> <i class="glyphicon glyphicon-refresh" style="display: inline; padding-left: 0px"> </i>Reload Config
           <i *ngIf="elapsedReload" class="glyphicon glyphicon-ok-circle" container="body" [tooltip]="elapsed"></i>
           <template #elapsed>
-            <p>Elapsed: {{elapsedReload}} ns</p>
+            <p>Elapsed: {{ (elapsedReload / 1000000000) | elapsedseconds:3 }} </p>
             <p>Last Reload: {{lastReload}}</p>
           </template>
         </a>
