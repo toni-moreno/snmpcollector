@@ -52,6 +52,10 @@
           <div class="panel-heading">Statistics SNMP Device</div>
           <div class="panel-body">
             <table class="table-striped table-bordered">
+              <tr>
+              <span style="padding-right:10px"> Reload Loop Pending</span>
+              <td style="padding-left:10px">{{ runtime_dev['Stats'].ReloadLoopsPending }}</td>
+              </tr>
               <template ngFor let-item [ngForOf]="counterDef" let-i="index" >
                 <tr *ngIf="item.show">
                   <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
