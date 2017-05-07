@@ -37,7 +37,7 @@ func RTForceFltUpdate(ctx *Context) {
 		ctx.JSON(404, err.Error())
 		return
 	}
-	log.Info("trying to force filter for device %s", id)
+	log.Infof("trying to force filter for device %s", id)
 	d.ForceFltUpdate()
 	ctx.JSON(200, "OK")
 }
@@ -64,7 +64,7 @@ func RTSetLogLevelDev(ctx *Context) {
 	}
 	log.Infof("set runtime log level from device id %s : %s", id, level)
 	dev.RTSetLogLevel(level)
-	ctx.JSON(200, dev)
+	ctx.JSON(200, "OK")
 
 }
 
@@ -78,7 +78,7 @@ func RTActivateDev(ctx *Context) {
 	}
 	log.Infof("activating runtime on device %s", id)
 	dev.RTActivate(true)
-	ctx.JSON(200, dev)
+	ctx.JSON(200, "OK")
 }
 
 //RTDeactivateDev xx
@@ -91,7 +91,7 @@ func RTDeactivateDev(ctx *Context) {
 	}
 	log.Infof("deactivating runtime on device  %s", id)
 	dev.RTActivate(false)
-	ctx.JSON(200, dev)
+	ctx.JSON(200, "OK")
 
 }
 
@@ -105,7 +105,7 @@ func RTActSnmpDebugDev(ctx *Context) {
 	}
 	log.Infof("activating snmpdebug  %s", id)
 	dev.RTActSnmpDebug(true)
-	ctx.JSON(200, dev)
+	ctx.JSON(200, "OK")
 }
 
 //RTDeactSnmpDebugDev xx
@@ -118,21 +118,21 @@ func RTDeactSnmpDebugDev(ctx *Context) {
 	}
 	log.Infof("deactivating snmpdebug  %s", id)
 	dev.RTActSnmpDebug(false)
-	ctx.JSON(200, dev)
+	ctx.JSON(200, "OK")
 }
 
 //RTGetInfo xx
 func RTGetInfo(ctx *Context) {
 	id := ctx.Params(":id")
 	if len(id) > 0 {
-		dev, err := agent.GetDevice(id)
+		json, err := agent.GetDeviceJSONInfo(id)
 		if err != nil {
 			ctx.JSON(404, err.Error())
 			return
 		}
 
 		log.Infof("get runtime data from id %s", id)
-		ctx.JSON(200, dev)
+		ctx.RawAsJSON(200, json)
 
 		//get only one device info
 	} else {

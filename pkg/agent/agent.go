@@ -49,7 +49,7 @@ var (
 
 	log *logrus.Logger
 	//mutex for devices map
-	mutex sync.Mutex
+	mutex sync.RWMutex
 	//reload mutex
 	reloadMutex   sync.Mutex
 	reloadProcess bool
@@ -114,22 +114,34 @@ func PrepareInfluxDBs() map[string]*output.InfluxDB {
 func GetDevice(id string) (*device.SnmpDevice, error) {
 	var dev *device.SnmpDevice
 	var ok bool
-	mutex.Lock()
+	mutex.RLock()
 	if dev, ok = devices[id]; !ok {
 		return nil, fmt.Errorf("there is not any device with id %s running", id)
 	}
-	mutex.Unlock()
-	return dev.GetSelfThreadSafe(), nil
+	mutex.RUnlock()
+	return dev, nil
+}
+
+//GetDevice is a safe method to get a Device Object
+func GetDeviceJSONInfo(id string) ([]byte, error) {
+	var dev *device.SnmpDevice
+	var ok bool
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if dev, ok = devices[id]; !ok {
+		return nil, fmt.Errorf("there is not any device with id %s running", id)
+	}
+	return dev.ToJSON()
 }
 
 // GetDevStats xx
 func GetDevStats() map[string]*device.DevStat {
 	devstats := make(map[string]*device.DevStat)
-	mutex.Lock()
+	mutex.RLock()
 	for k, v := range devices {
 		devstats[k] = v.GetBasicStats()
 	}
-	mutex.Unlock()
+	mutex.RUnlock()
 	return devstats
 }
 
@@ -151,29 +163,29 @@ func ReleaseInfluxOut(idb map[string]*output.InfluxDB) {
 
 // DeviceProcessStop stop all device goroutines
 func DeviceProcessStop() {
-	mutex.Lock()
+	mutex.RLock()
 	for _, c := range devices {
 		c.StopGather()
 	}
-	mutex.Unlock()
+	mutex.RUnlock()
 }
 
 // DeviceProcessStart start all devices goroutines
 func DeviceProcessStart() {
-	mutex.Lock()
+	mutex.RLock()
 	for _, c := range devices {
 		c.StartGather(&gatherWg)
 	}
-	mutex.Unlock()
+	mutex.RUnlock()
 }
 
 // ReleaseDevices Executes End for each device
 func ReleaseDevices() {
-	mutex.Lock()
+	mutex.RLock()
 	for _, c := range devices {
 		c.End()
 	}
-	mutex.Unlock()
+	mutex.RUnlock()
 }
 
 func initSelfMonitoring(idb map[string]*output.InfluxDB) {
@@ -217,8 +229,9 @@ func LoadConf() {
 	config.InitMetricsCfg(&DBConfig)
 
 	//Initialize Device Runtime map
-
+	mutex.Lock()
 	devices = make(map[string]*device.SnmpDevice)
+	mutex.Unlock()
 
 	for k, c := range DBConfig.SnmpDevice {
 		//Inticialize each SNMP device and put pointer to the global map devices
