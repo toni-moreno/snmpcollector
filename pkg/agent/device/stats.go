@@ -124,7 +124,7 @@ func (s *DevStat) getMetricFields() map[string]interface{} {
 		/*17*/ "filter_start_time": s.Counters[FilterStartTime],
 		/*18*/ "filter_duration": s.Counters[FilterDuration],
 		/*19*/ "backend_sent_start_time": s.Counters[BackEndSentStartTime],
-		/*20*/ "backend_sent_Duration": s.Counters[BackEndSentDuration],
+		/*20*/ "backend_sent_duration": s.Counters[BackEndSentDuration],
 	}
 	return fields
 }
