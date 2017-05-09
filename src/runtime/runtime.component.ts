@@ -227,7 +227,7 @@ export class RuntimeComponent implements OnDestroy {
         this.refreshRuntime.LastUpdate = new Date();
         this.loadRuntimeById(id, this.measActive);
         this.ref.markForCheck();
-      }, this.runtime_dev['Freq'] * 1000);
+      }, Math.max(5000,this.runtime_dev['Freq'] * 1000)); //lowest update rate set to 5 sec
     } else {
       this.isRefreshing = false;
       clearInterval(this.intervalStatus);
@@ -301,10 +301,7 @@ export class RuntimeComponent implements OnDestroy {
     this.runtimeService.changeDeviceActive(id, event)
       .subscribe(
       data => {
-        this.runtime_dev = data;
-        this.runtime_dev.DeviceActive = !data.DeviceActive;
-        this.runtime_dev.ID = id;
-        this.reloadData();
+        this.runtime_dev.DeviceActive = !this.runtime_dev.DeviceActive;
       },
       err => console.error(err),
       () => console.log('DONE')
@@ -316,11 +313,7 @@ export class RuntimeComponent implements OnDestroy {
     this.runtimeService.changeStateDebug(id, event)
       .subscribe(
       data => {
-        this.runtime_dev = data;
-        this.runtime_dev.StateDebug = !data.StateDebug;
-        this.runtime_dev.ID = id;
-        this.reloadData();
-
+        this.runtime_dev.StateDebug = !this.runtime_dev.StateDebug;
       },
       err => console.error(err),
       () => console.log('DONE')
@@ -337,11 +330,8 @@ export class RuntimeComponent implements OnDestroy {
     this.runtimeService.changeLogLevel(id, this.newLogLevel)
       .subscribe(
       data => {
-        this.runtime_dev = data;
         this.runtime_dev.CurLogLevel = this.newLogLevel;
-        this.runtime_dev.ID = id;
-        this.islogLevelChanged = !true;
-        this.reloadData();
+        this.islogLevelChanged = false;
       },
       err => console.error(err),
       () => console.log('DONE')

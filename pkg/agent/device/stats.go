@@ -124,7 +124,7 @@ func (s *DevStat) getMetricFields() map[string]interface{} {
 		/*17*/ "filter_start_time": s.Counters[FilterStartTime],
 		/*18*/ "filter_duration": s.Counters[FilterDuration],
 		/*19*/ "backend_sent_start_time": s.Counters[BackEndSentStartTime],
-		/*20*/ "backend_sent_Duration": s.Counters[BackEndSentDuration],
+		/*20*/ "backend_sent_duration": s.Counters[BackEndSentDuration],
 	}
 	return fields
 }
@@ -153,6 +153,7 @@ func (s *DevStat) Send() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.log.Infof("STATS SNMP GET: snmp pooling took [%f seconds] SNMP: Gets [%d] , Processed [%d], Errors [%d]", s.Counters[CicleGatherDuration], s.Counters[SnmpOIDGetAll], s.Counters[SnmpOIDGetProcessed], s.Counters[SnmpOIDGetErrors])
+	s.log.Infof("STATS SNMP FILTER: filter pooling took [%f seconds] ", s.Counters[FilterDuration])
 	s.log.Infof("STATS INFLUX: influx send took [%f seconds]", s.Counters[BackEndSentDuration])
 	if s.selfmon != nil {
 		s.selfmon.AddDeviceMetrics(s.id, s.getMetricFields(), s.tagMap)

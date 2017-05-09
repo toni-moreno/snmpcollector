@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"encoding/json"
 	"strings"
 	"sync"
 	"time"
@@ -56,7 +57,7 @@ type SnmpDevice struct {
 	Stats *DevStat //Public info for thread safe accessing to the data ()
 
 	//runtime controls
-	mutex              sync.Mutex
+	mutex              sync.RWMutex
 	ReloadLoopsPending int
 
 	DeviceActive    bool
@@ -85,15 +86,29 @@ func (d *SnmpDevice) GetLogFilePath() string {
 	return d.cfg.LogFile
 }
 
-func (d *SnmpDevice) GetSelfThreadSafe() *SnmpDevice {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
-	d.Stats = d.GetBasicStats()
-	return d
+func (d *SnmpDevice) ToJSON() ([]byte, error) {
+
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+	d.Stats = d.getBasicStats()
+	result, err := json.MarshalIndent(d, "", "  ")
+	if err != nil {
+		d.Errorf("Error on Get JSON data from device")
+		dummy := []byte{}
+		return dummy, nil
+	}
+	return result, err
 }
 
 // GetBasicStats get basic info for this device
 func (d *SnmpDevice) GetBasicStats() *DevStat {
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+	return d.getBasicStats()
+}
+
+// GetBasicStats get basic info for this device
+func (d *SnmpDevice) getBasicStats() *DevStat {
 
 	sum := 0
 	for _, m := range d.Measurements {
@@ -111,20 +126,14 @@ func (d *SnmpDevice) GetBasicStats() *DevStat {
 //ReloadLoopPending needs to be mutex excluded
 
 func (d *SnmpDevice) setReloadLoopsPending(val int) {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
 	d.ReloadLoopsPending = val
 }
 
 func (d *SnmpDevice) getReloadLoopsPending() int {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
 	return d.ReloadLoopsPending
 }
 
 func (d *SnmpDevice) decReloadLoopsPending() {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
 	if d.ReloadLoopsPending > 0 {
 		d.ReloadLoopsPending--
 	}
@@ -415,11 +424,12 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 	if d.DeviceActive && d.DeviceConnected {
 		d.Infof("Begin first InidevInfo")
 		startSnmp := time.Now()
+		d.mutex.Lock()
 		d.InitDevMeasurements()
+		d.mutex.Unlock()
 		elapsedSnmp := time.Since(startSnmp)
 		d.stats.SetFltUpdateStats(startSnmp, elapsedSnmp)
 		d.Infof("snmp INIT runtime measurements/filters took [%s] ", elapsedSnmp)
-
 	} else {
 		d.Infof("Can not initialize this device: Is Active: %t  |  Conection Active: %t ", d.DeviceActive, d.snmpClientMap != nil)
 	}
@@ -428,6 +438,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 
 	t := time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
 	for {
+		d.mutex.Lock()
 		//if active
 		if d.DeviceActive {
 		FORCEINIT:
@@ -457,7 +468,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				 ***************************/
 				d.stats.ResetCounters()
 				d.Gather()
-				d.stats.Send()
+
 				/*******************************************
 				 *
 				 * Reload Indexes/Filters process(if needed)
@@ -486,12 +497,13 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
 					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
 					d.stats.SetFltUpdateStats(startIdxUpdateStats, elapsedIdxUpdateStats)
-					d.Infof("Index reload took [%s]", elapsedIdxUpdateStats)
 				}
+				d.stats.Send()
 			}
 		} else {
 			d.Infof("Gather process is dissabled")
 		}
+		d.mutex.Unlock()
 	LOOP:
 		for {
 			select {
@@ -501,9 +513,11 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				d.Infof("invoked EXIT from SNMP Gather process ")
 				return
 			case <-d.chFltUpdate:
-
+				d.mutex.Lock()
 				d.setReloadLoopsPending(1)
+				d.mutex.Unlock()
 			case debug := <-d.chDebug:
+				d.mutex.Lock()
 				d.StateDebug = debug
 				d.Infof(" invoked DEBUG  ACTIVE  [%t] ", debug)
 				d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
@@ -514,11 +528,14 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					}
 					m.SetSnmpClient(c)
 				}
-
+				d.mutex.Unlock()
 			case status := <-d.chEnabled:
+				d.mutex.Lock()
 				d.DeviceActive = status
 				d.Infof("device STATUS  ACTIVE  [%t] ", status)
+				d.mutex.Unlock()
 			case level := <-d.chLogLevel:
+				d.mutex.Lock()
 				l, err := logrus.ParseLevel(level)
 				if err != nil {
 					d.Warnf("ERROR on Changing LOGLEVEL to [%t] ", level)
@@ -526,6 +543,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				d.log.Level = l
 				d.Infof("device loglevel Changed  [%s] ", level)
 				d.CurLogLevel = d.log.Level.String()
+				d.mutex.Unlock()
 			}
 		}
 	}

@@ -66,3 +66,11 @@ func GetContextHandler() macaron.Handler {
 		c.Map(ctx)
 	}
 }
+
+func (ctx *Context) RawAsJSON(status int, json []byte) {
+
+	// json rendered fine, write out the result
+	ctx.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	ctx.WriteHeader(status)
+	ctx.Write(json)
+}

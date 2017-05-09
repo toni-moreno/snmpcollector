@@ -193,7 +193,10 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 
 	log.Printf("Server is running on localhost:%d...", port)
 	httpServer := fmt.Sprintf("0.0.0.0:%d", port)
-	log.Println(http.ListenAndServe(httpServer, m))
+	err := http.ListenAndServe(httpServer, m)
+	if err != nil {
+		log.Errorf("Error en starting HTTP server: %s", err)
+	}
 }
 
 /****************/

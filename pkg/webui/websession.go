@@ -3,6 +3,8 @@ package webui
 import (
 	"github.com/go-macaron/session"
 	"gopkg.in/macaron.v1"
+	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -14,6 +16,7 @@ var sessionManager *session.Manager
 var sessionOptions *session.Options
 var startSessionGC func()
 var getSessionCount func() int
+var mutex sync.Mutex
 
 func init() {
 	startSessionGC = func() {
@@ -59,9 +62,13 @@ func Sessioner(options session.Options) macaron.Handler {
 		panic(err)
 	}
 
-	go startSessionGC()
+	// start GC threads after some random seconds
+	rndSeconds := 10 + rand.Int63n(180)
+	time.AfterFunc(time.Duration(rndSeconds)*time.Second, startSessionGC)
 
 	return func(ctx *Context) {
+		mutex.Lock()
+		defer mutex.Unlock()
 		ctx.Next()
 
 		if err = ctx.Session.Release(); err != nil {
