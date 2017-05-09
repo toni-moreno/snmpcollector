@@ -72,6 +72,13 @@ func SetLogger(l *logrus.Logger) {
 //Reload Mutex Related Methods.
 
 // CheckAndSetStarted check if this thread is already working and set if not
+func CheckReloadProcess() bool {
+	reloadMutex.Lock()
+	defer reloadMutex.Unlock()
+	return reloadProcess
+}
+
+// CheckAndSetStarted check if this thread is already working and set if not
 func CheckAndSetReloadProcess() bool {
 	reloadMutex.Lock()
 	defer reloadMutex.Unlock()
@@ -114,6 +121,10 @@ func PrepareInfluxDBs() map[string]*output.InfluxDB {
 func GetDevice(id string) (*device.SnmpDevice, error) {
 	var dev *device.SnmpDevice
 	var ok bool
+	if CheckReloadProcess() == true {
+		log.Warning("There is a reload process running while trying to get device info")
+		return nil, fmt.Errorf("There is a reload process running.... please wait until finished ")
+	}
 	mutex.RLock()
 	if dev, ok = devices[id]; !ok {
 		return nil, fmt.Errorf("there is not any device with id %s running", id)
@@ -126,6 +137,10 @@ func GetDevice(id string) (*device.SnmpDevice, error) {
 func GetDeviceJSONInfo(id string) ([]byte, error) {
 	var dev *device.SnmpDevice
 	var ok bool
+	if CheckReloadProcess() == true {
+		log.Warning("There is a reload process running while trying to get device info")
+		return nil, fmt.Errorf("There is a reload process running.... please wait until finished ")
+	}
 	mutex.RLock()
 	defer mutex.RUnlock()
 	if dev, ok = devices[id]; !ok {

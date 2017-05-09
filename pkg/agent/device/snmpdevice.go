@@ -87,12 +87,10 @@ func (d *SnmpDevice) GetLogFilePath() string {
 }
 
 func (d *SnmpDevice) ToJSON() ([]byte, error) {
-	d.mutex.Lock()
-	d.Stats = d.GetBasicStats()
-	d.mutex.Unlock()
+
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
-
+	d.Stats = d.getBasicStats()
 	result, err := json.MarshalIndent(d, "", "  ")
 	if err != nil {
 		d.Errorf("Error on Get JSON data from device")
@@ -104,6 +102,13 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 
 // GetBasicStats get basic info for this device
 func (d *SnmpDevice) GetBasicStats() *DevStat {
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+	return d.getBasicStats()
+}
+
+// GetBasicStats get basic info for this device
+func (d *SnmpDevice) getBasicStats() *DevStat {
 
 	sum := 0
 	for _, m := range d.Measurements {

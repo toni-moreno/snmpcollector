@@ -227,7 +227,7 @@ export class RuntimeComponent implements OnDestroy {
         this.refreshRuntime.LastUpdate = new Date();
         this.loadRuntimeById(id, this.measActive);
         this.ref.markForCheck();
-      }, this.runtime_dev['Freq'] * 1000);
+      }, Math.max(5000,this.runtime_dev['Freq'] * 1000)); //lowest update rate set to 5 sec
     } else {
       this.isRefreshing = false;
       clearInterval(this.intervalStatus);
