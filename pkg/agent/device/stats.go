@@ -153,6 +153,7 @@ func (s *DevStat) Send() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.log.Infof("STATS SNMP GET: snmp pooling took [%f seconds] SNMP: Gets [%d] , Processed [%d], Errors [%d]", s.Counters[CicleGatherDuration], s.Counters[SnmpOIDGetAll], s.Counters[SnmpOIDGetProcessed], s.Counters[SnmpOIDGetErrors])
+	s.log.Infof("STATS SNMP FILTER: filter pooling took [%f seconds] ", s.Counters[FilterDuration])
 	s.log.Infof("STATS INFLUX: influx send took [%f seconds]", s.Counters[BackEndSentDuration])
 	if s.selfmon != nil {
 		s.selfmon.AddDeviceMetrics(s.id, s.getMetricFields(), s.tagMap)

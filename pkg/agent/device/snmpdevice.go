@@ -468,7 +468,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				 ***************************/
 				d.stats.ResetCounters()
 				d.Gather()
-				d.stats.Send()
+
 				/*******************************************
 				 *
 				 * Reload Indexes/Filters process(if needed)
@@ -497,8 +497,8 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
 					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
 					d.stats.SetFltUpdateStats(startIdxUpdateStats, elapsedIdxUpdateStats)
-					d.Infof("Index reload took [%s]", elapsedIdxUpdateStats)
 				}
+				d.stats.Send()
 			}
 		} else {
 			d.Infof("Gather process is dissabled")
