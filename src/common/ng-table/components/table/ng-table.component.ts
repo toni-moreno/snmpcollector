@@ -39,7 +39,8 @@ import { TooltipModule } from 'ng2-bootstrap';
 					<i class="glyphicon glyphicon-edit"  [tooltip]="'Edit item'" (click)="editItem(row)"></i>
     			<i class="glyphicon glyphicon glyphicon-remove"  [tooltip]="'Remove Item'" (click)="removeItem(row)"></i>
           </td>
-          <td (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(getData(row, column.name))" style="text-align:right">
+          <td [ngClass]="row.tooltipInfo ? (row.tooltipInfo[column.name] ? (row.tooltipInfo[column.name]['Valid'] === true ? ['bg-success'] : ['bg-danger']) : '') : ''" (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(getData(row, column.name))" style="text-align:right">
+
           <template #tooltipValues>
             <h6>Index:{{row.Index }}</h6>
             <h6>Metric:{{column.name}}</h6>

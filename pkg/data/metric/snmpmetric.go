@@ -40,6 +40,7 @@ const (
 type SnmpMetric struct {
 	cfg         *config.SnmpMetricCfg
 	ID          string
+	Valid       bool //indicate if has been updated in the last gathered process
 	CookedValue interface{}
 	CurValue    interface{}
 	LastValue   interface{}
@@ -130,6 +131,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.condflt.Update()
 			s.CookedValue = s.condflt.Count()
 			s.CurTime = time.Now()
+			s.Valid = true
 		}
 		//Sign
 		//set Process Data
@@ -139,6 +141,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.CookedValue = float64(val / 100) //now data in secoonds
 			s.CurTime = now
 			s.Scale()
+			s.Valid = true
 		}
 
 		//Signed Integers
@@ -148,6 +151,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.CookedValue = float64(val)
 			s.CurTime = now
 			s.Scale()
+			s.Valid = true
 		}
 		//Unsigned Integers
 	case "Counter32", "Gauge32", "Counter64", "TimeTicks", "UInteger32", "Unsigned32":
@@ -156,6 +160,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.CookedValue = float64(val)
 			s.CurTime = now
 			s.Scale()
+			s.Valid = true
 		}
 	case "COUNTER32": //Increment computed
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
@@ -163,6 +168,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			val := snmp.PduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
+			s.Valid = true
 			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				val := snmp.PduVal2UInt64(pdu)
 				s.LastTime = s.CurTime
@@ -171,6 +177,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				s.CurTime = now
 				s.Compute()
 				s.Scale()
+				s.Valid = true
 			}
 		}
 		if s.cfg.GetRate == true {
@@ -199,6 +206,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			val := snmp.PduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
+			s.Valid = true
 			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				//log.Debugf("========================================>COUNTER64: the other time:%s", s.RealOID)
 				val := snmp.PduVal2UInt64(pdu)
@@ -208,6 +216,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				s.CurTime = now
 				s.Compute()
 				s.Scale()
+				s.Valid = true
 			}
 		}
 		if s.cfg.GetRate == true {
@@ -237,6 +246,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			val := snmp.PduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
+			s.Valid = true
 			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				val := snmp.PduVal2UInt64(pdu)
 				s.LastTime = s.CurTime
@@ -244,6 +254,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				s.CurValue = val
 				s.CurTime = now
 				s.Compute()
+				s.Valid = true
 			}
 		}
 		if s.cfg.GetRate == true {
@@ -277,16 +288,19 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue = snmp.PduVal2str(pdu)
 			s.CurTime = now
+			s.Valid = true
 		}
 	case "IpAddress":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue, _ = snmp.PduVal2IPaddr(pdu)
 			s.CurTime = now
+			s.Valid = true
 		}
 	case "HWADDR":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue, _ = snmp.PduVal2Hwaddr(pdu)
 			s.CurTime = now
+			s.Valid = true
 		}
 	case "STRINGPARSER":
 		//get Regexp
@@ -316,6 +330,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.CookedValue = value
 			s.CurTime = now
 			s.Scale()
+			s.Valid = true
 		}
 	case "STRINGEVAL":
 
@@ -342,10 +357,14 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 					s.log.Warnf("Warning in metric %s On EVAL string: %s : Value is not a valid Floating Pint (NaN/Inf) : %f", s.cfg.ID, s.cfg.ExtraData, v)
 					return
 				}
+			default:
+				s.log.Warnf("Warning in metric %s On EVAL string: %s : Value has not a valid format ", s.cfg.ID, s.cfg.ExtraData)
+				return
 			}
 			s.CookedValue = result
 			s.CurTime = time.Now()
 			s.Scale()
+			s.Valid = true
 		}
 	}
 	return nil

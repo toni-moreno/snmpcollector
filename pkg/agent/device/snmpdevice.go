@@ -90,7 +90,6 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
-	d.Stats = d.getBasicStats()
 	result, err := json.MarshalIndent(d, "", "  ")
 	if err != nil {
 		d.Errorf("Error on Get JSON data from device")
@@ -104,7 +103,7 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 func (d *SnmpDevice) GetBasicStats() *DevStat {
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
-	return d.getBasicStats()
+	return d.Stats
 }
 
 // GetBasicStats get basic info for this device
@@ -275,6 +274,14 @@ func (d *SnmpDevice) InitDevMeasurements() {
 	//Initialize all snmpMetrics  objects and OID array
 	//get data first time
 	// useful to inicialize counter all value and test device snmp availability
+}
+
+// this method puts all metrics as invalid once sent to the backend
+// it lets us to know if any of them has not been updated in the gathering process
+func (d *SnmpDevice) invalidateMetrics() {
+	for _, v := range d.Measurements {
+		v.InvalidateMetrics()
+	}
 }
 
 /*
@@ -466,6 +473,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				 * SNMP Gather data process
 				 *
 				 ***************************/
+				d.invalidateMetrics()
 				d.stats.ResetCounters()
 				d.Gather()
 
@@ -503,6 +511,8 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 		} else {
 			d.Infof("Gather process is dissabled")
 		}
+		//get Ready a copy of the stats to
+		d.Stats = d.getBasicStats()
 		d.mutex.Unlock()
 	LOOP:
 		for {
