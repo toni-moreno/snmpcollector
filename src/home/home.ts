@@ -91,7 +91,7 @@ export class Home {
 
   reloadConfig() {
     this._blocker.start(this.container, "Reloading Conf. Please wait...");
-    this.rt.updateRuntimeInfo(null,null,false)
+    if (this.rt) this.rt.updateRuntimeInfo(null,null,false);
     this.homeService.reloadConfig()
     .subscribe(
     response => {
