@@ -421,13 +421,13 @@ func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool) (*gosnmp.GoSNMP, e
 
 // StartGather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) StartGather(wg *sync.WaitGroup) {
-
+	wg.Add(1)
 	go d.startGatherGo(wg)
 }
 
 func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 	defer wg.Done()
-	wg.Add(1)
+
 	if d.DeviceActive && d.DeviceConnected {
 		d.Infof("Begin first InidevInfo")
 		startSnmp := time.Now()
