@@ -9,7 +9,7 @@ import { ExportFileModal } from '../common/dataservice/export-file-modal';
 
 import { GenericModal } from '../common/generic-modal';
 import { ExportServiceCfg } from '../common/dataservice/export.service'
-
+import { ItemsPerPageOptions } from '../common/global-constants';
 @Component({
   selector: 'oidconditions',
   providers: [OidConditionService],
@@ -22,6 +22,7 @@ export class OidConditionCfgComponent {
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
+  itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
   oidconditions: Array<any>;
   filter: string;
@@ -245,7 +246,7 @@ export class OidConditionCfgComponent {
   exportItem(item : any) : void {
     this.exportFileModal.initExportModal(item);
   }
-  
+
   removeItem(row) {
     let id = row.ID;
     console.log('remove', id);

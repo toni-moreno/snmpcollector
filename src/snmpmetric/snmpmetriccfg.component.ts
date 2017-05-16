@@ -10,6 +10,7 @@ import { ExportFileModal } from '../common/dataservice/export-file-modal';
 
 import { GenericModal } from '../common/generic-modal';
 import { ExportServiceCfg } from '../common/dataservice/export.service'
+import { ItemsPerPageOptions } from '../common/global-constants';
 
 @Component({
   selector: 'snmpmetrics',
@@ -23,6 +24,7 @@ export class SnmpMetricCfgComponent {
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
+  itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
   snmpmetrics: Array<any>;
   filter: string;

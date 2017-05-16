@@ -8,6 +8,7 @@ import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 import { GenericModal } from '../common/generic-modal';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
+import { ItemsPerPageOptions } from '../common/global-constants';
 
 @Component({
   selector: 'influxservers',
@@ -21,7 +22,7 @@ export class InfluxServerCfgComponent {
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
-
+  itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
   influxservers: Array<any>;
   filter: string;

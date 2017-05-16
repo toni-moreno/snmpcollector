@@ -17,10 +17,8 @@
     </div>
     <div class="col-md-4 text-right">
         <span style="margin-left: 20px"> Items per page: </span>
-        <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage" (ngModelChange)="changeItemsPerPage($event)">
-          <option style="padding-left:2px" [value]="10">10</option>
-          <option style="padding-left:2px" [value]="15">15</option>
-          <option style="padding-left:2px" [value]="20">20</option>
+        <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage || 'All'" (ngModelChange)="changeItemsPerPage($event)">
+					<option *ngFor="let option of itemsPerPageOptions" style="padding-left:2px" [value]="option.value">{{option.title}}</option>
         </select>
       </div>
     </div>
