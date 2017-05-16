@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ViewChild, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
 import { RuntimeService } from './runtime.service';
+import { ItemsPerPageOptions } from '../common/global-constants';
 
 @Component({
   selector: 'runtime',
@@ -13,7 +14,7 @@ import { RuntimeService } from './runtime.service';
 
 
 export class RuntimeComponent implements OnDestroy {
-
+  itemsPerPageOptions : any = ItemsPerPageOptions;
   public isRefreshing: boolean = true;
 
   public oneAtATime: boolean = true;
@@ -175,6 +176,14 @@ export class RuntimeComponent implements OnDestroy {
     });
     filteredData = tempArray;
     return filteredData;
+  }
+
+  changeItemsPerPage (items) {
+    if (items) this.itemsPerPage = parseInt(items);
+    else this.itemsPerPage=this.length;
+    let maxPage =  Math.ceil(this.length/this.itemsPerPage);
+    if (this.page > maxPage) this.page = maxPage;
+    this.onChangeTable(this.config);
   }
 
   public onChangeTable(config: any, page: any = { page: this.page, itemsPerPage: this.itemsPerPage }): any {

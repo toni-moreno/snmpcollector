@@ -9,6 +9,7 @@ import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 import { GenericModal } from '../common/generic-modal';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
+import { ItemsPerPageOptions } from '../common/global-constants';
 
 declare var _:any;
 
@@ -24,6 +25,7 @@ export class InfluxMeasCfgComponent {
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
+  itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
   influxmeas: Array<any>;
   filter: string;

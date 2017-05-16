@@ -16,6 +16,7 @@ import { ExportFileModal } from '../common/dataservice/export-file-modal';
 import { TestConnectionModal } from '../common/test-connection-modal';
 import { TestFilterModal } from '../customfilter/test-filter-modal'
 import { ExportServiceCfg } from '../common/dataservice/export.service'
+import { ItemsPerPageOptions } from '../common/global-constants';
 
 
 @Component({
@@ -32,7 +33,7 @@ export class SnmpDeviceCfgComponent {
   @ViewChild('viewTestFilterModal') public viewTestFilterModal: TestFilterModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
-
+  itemsPerPageOptions : any = ItemsPerPageOptions;
   //ADDED
   editmode: string; //list , create, modify
   snmpdevs: Array<any>;

@@ -12,6 +12,7 @@ import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../
 
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
 import { GenericModal } from '../common/generic-modal';
+import { ItemsPerPageOptions } from '../common/global-constants';
 
 @Component({
   selector: 'measfilters',
@@ -25,6 +26,7 @@ export class MeasFilterCfgComponent {
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
+  itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
   measfilters: Array<any>;
   filter: string;

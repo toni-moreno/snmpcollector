@@ -9,6 +9,7 @@ import { ValidationService } from '../common/validation.service'
 import { GenericModal } from '../common/generic-modal';
 import { TestFilterModal } from './test-filter-modal';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
+import { ItemsPerPageOptions } from '../common/global-constants';
 
 
 @Component({
@@ -24,6 +25,7 @@ export class CustomFilterCfgComponent {
   @ViewChild('viewTestFilterModal') public viewTestFilterModal: TestFilterModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
+  itemsPerPageOptions : any = ItemsPerPageOptions;
 
   editmode: string; //list , create, modify
   customfilters: Array<any>;

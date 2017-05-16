@@ -17,10 +17,12 @@
     </div>
     <div class="col-md-4 text-right">
         <span style="margin-left: 20px"> Items per page: </span>
-        <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage" (ngModelChange)="changeItemsPerPage($event)">
+        <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage || All" (ngModelChange)="changeItemsPerPage($event)">
           <option style="padding-left:2px" [value]="10">10</option>
-          <option style="padding-left:2px" [value]="15">15</option>
           <option style="padding-left:2px" [value]="20">20</option>
+          <option style="padding-left:2px" [value]="50">50</option>
+          <option style="padding-left:2px" [value]="100">100</option>
+          <option style="padding-left:2px" [value]="All">All</option>
         </select>
       </div>
     </div>
