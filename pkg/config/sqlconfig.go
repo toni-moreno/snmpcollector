@@ -27,13 +27,13 @@ type SnmpDeviceCfg struct {
 	//snmp runtime config
 	Freq             int  `xorm:"'freq' default 60" binding:"Default(60);IntegerNotZero"`
 	UpdateFltFreq    int  `xorm:"'update_flt_freq' default 60" binding:"Default(60);UIntegerAndLessOne"`
-	ConcurrentGather bool `xorm:"'concurrent_gather' default 1" binding:"Default(1)"`
+	ConcurrentGather bool `xorm:"'concurrent_gather' default 1"`
 
 	OutDB    string `xorm:"outdb"`
 	LogLevel string `xorm:"loglevel" binding:"Default(info)"`
 	LogFile  string `xorm:"logfile"`
 
-	SnmpDebug bool `xorm:"snmpdebug" binding:"Default(0)"`
+	SnmpDebug bool `xorm:"'snmpdebug' default 0"`
 	//influx tags
 	DeviceTagName  string   `xorm:"devicetagname" binding:"Default(hostname)"`
 	DeviceTagValue string   `xorm:"devicetagvalue" binding:"Default(id)"`
