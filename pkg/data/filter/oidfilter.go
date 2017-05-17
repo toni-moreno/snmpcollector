@@ -97,17 +97,23 @@ func (of *OidFilter) Update() error {
 			vci = int64(vc)
 			//TODO review types
 			value = snmp.PduVal2Int64(pdu)
-			fallthrough
-		case of.TypeCond == "neq":
-			cond = (value == vci)
-		case of.TypeCond == "nlt":
-			cond = (value < vci)
-		case of.TypeCond == "ngt":
-			cond = (value > vci)
-		case of.TypeCond == "nge":
-			cond = (value >= vci)
-		case of.TypeCond == "nle":
-			cond = (value <= vci)
+			switch {
+			case of.TypeCond == "neq":
+				cond = (value == vci)
+				of.log.Debugf("OIDFILTER [%s] type [%s] snmp value [%d], condition [%d] RESULT[%t]", of.OidCond, of.TypeCond, value, vci, cond)
+			case of.TypeCond == "nlt":
+				cond = (value < vci)
+				of.log.Debugf("OIDFILTER [%s] type [%s] snmp value [%d], condition [%d] RESULT[%t]", of.OidCond, of.TypeCond, value, vci, cond)
+			case of.TypeCond == "ngt":
+				cond = (value > vci)
+				of.log.Debugf("OIDFILTER [%s] type [%s] snmp value [%d], condition [%d] RESULT[%t]", of.OidCond, of.TypeCond, value, vci, cond)
+			case of.TypeCond == "nge":
+				cond = (value >= vci)
+				of.log.Debugf("OIDFILTER [%s] type [%s] snmp value [%d], condition [%d] RESULT[%t]", of.OidCond, of.TypeCond, value, vci, cond)
+			case of.TypeCond == "nle":
+				cond = (value <= vci)
+				of.log.Debugf("OIDFILTER [%s] type [%s] snmp value [%d], condition [%d] RESULT[%t]", of.OidCond, of.TypeCond, value, vci, cond)
+			}
 		default:
 			of.log.Errorf("OIDFILTER [%s] Error in Condition filter  Type: %s ValCond: %s ", of.OidCond, of.TypeCond, of.ValueCond)
 		}
