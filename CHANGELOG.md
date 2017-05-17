@@ -1,8 +1,10 @@
 # v 0.7.1 (unreleased)
 ### New Features
-* Improved self monitoring process, renamed and added new device statistics metrics  
+* Improved self monitoring process, renamed and added new device statistics metrics.
+* Added backgound colours on runtime data to validate or invalidate data.
 
 ### fixes
+* fix for #197, #203, #204, #206, #208, #209
 
 ### breaking changes
 * device measurements and field names have been renamed
