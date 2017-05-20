@@ -1,4 +1,15 @@
-# v 0.7.1 (unreleased)
+# v 0.7.2 (unreleased)
+### New Features
+* added new ndif oid condition comparison
+* added new comunication Bus, improves webui to devices message send in unicast and broadcast mode
+
+### fixes
+* fix for #211
+
+### breaking changes
+
+
+# v 0.7.1 (2017-05-17)
 ### New Features
 * Improved self monitoring process, renamed and added new device statistics metrics.
 * Added backgound colours on runtime data to validate or invalidate data.
