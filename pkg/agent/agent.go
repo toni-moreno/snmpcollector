@@ -3,6 +3,7 @@ package agent
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
@@ -40,6 +41,7 @@ func GetRInfo() *RInfo {
 }
 
 var (
+	Bus = bus.NewBus()
 
 	// MainConfig has all configuration
 	MainConfig config.Config
@@ -178,11 +180,7 @@ func ReleaseInfluxOut(idb map[string]*output.InfluxDB) {
 
 // DeviceProcessStop stop all device goroutines
 func DeviceProcessStop() {
-	mutex.RLock()
-	for _, c := range devices {
-		c.StopGather()
-	}
-	mutex.RUnlock()
+	Bus.Broadcast(&bus.Message{Type: "exit"})
 }
 
 // DeviceProcessStart start all devices goroutines
@@ -201,6 +199,10 @@ func ReleaseDevices() {
 		c.End()
 	}
 	mutex.RUnlock()
+}
+
+func init() {
+	go Bus.Start()
 }
 
 func initSelfMonitoring(idb map[string]*output.InfluxDB) {
@@ -251,6 +253,7 @@ func LoadConf() {
 	for k, c := range DBConfig.SnmpDevice {
 		//Inticialize each SNMP device and put pointer to the global map devices
 		dev := device.New(c)
+		dev.AttachToBus(Bus)
 		dev.SetSelfMonitoring(selfmonProc)
 		//send db's map to initialize each one its own db if needed and not yet initialized
 

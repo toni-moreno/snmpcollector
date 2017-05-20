@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
@@ -160,6 +161,7 @@ func init() {
 	agent.SetLogger(log)
 
 	impexp.SetLogger(log)
+	bus.SetLogger(log)
 	//
 	log.Infof("Set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n -Home: %s\n", appdir, confDir, logDir, homeDir)
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
@@ -65,11 +66,7 @@ type SnmpDevice struct {
 	DeviceConnected bool
 	StateDebug      bool
 
-	chDebug     chan bool
-	chEnabled   chan bool
-	chLogLevel  chan string
-	chExit      chan bool
-	chFltUpdate chan bool
+	Node *bus.Node `json:"-"`
 
 	CurLogLevel string
 	Gather      func() `json:"-"`
@@ -157,27 +154,27 @@ func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*output.InfluxDB) (
 
 // ForceFltUpdate send info to update the filter counter to the next execution
 func (d *SnmpDevice) ForceFltUpdate() {
-	d.chFltUpdate <- true
+	d.Node.SendMsg(&bus.Message{Type: "filterupdate"})
 }
 
 // StopGather send signal to stop the Gathering process
 func (d *SnmpDevice) StopGather() {
-	d.chExit <- true
+	d.Node.SendMsg(&bus.Message{Type: "exit"})
 }
 
 //RTActivate change activatio state in runtime
 func (d *SnmpDevice) RTActivate(activate bool) {
-	d.chEnabled <- activate
+	d.Node.SendMsg(&bus.Message{Type: "enabled", Data: activate})
 }
 
 //RTActSnmpDebug change snmp debug runtime
 func (d *SnmpDevice) RTActSnmpDebug(activate bool) {
-	d.chDebug <- activate
+	d.Node.SendMsg(&bus.Message{Type: "snmpdebug", Data: activate})
 }
 
 // RTSetLogLevel set the log level for this device
 func (d *SnmpDevice) RTSetLogLevel(level string) {
-	d.chLogLevel <- level
+	d.Node.SendMsg(&bus.Message{Type: "loglevel", Data: level})
 }
 
 /*
@@ -325,12 +322,6 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 
 	d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
 
-	//Init channels
-	d.chDebug = make(chan bool)
-	d.chEnabled = make(chan bool)
-	d.chLogLevel = make(chan string)
-	d.chExit = make(chan bool)
-	d.chFltUpdate = make(chan bool)
 	d.DeviceActive = d.cfg.Active
 
 	//Init Device Tags
@@ -385,13 +376,14 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	return nil
 }
 
+func (d *SnmpDevice) AttachToBus(b *bus.Bus) {
+	d.Node = bus.NewNode(d.cfg.ID)
+	b.Join(d.Node)
+}
+
 // End The Oposite of Init() uninitialize all variables
 func (d *SnmpDevice) End() {
-	close(d.chDebug)
-	close(d.chEnabled)
-	close(d.chLogLevel)
-	close(d.chExit)
-	close(d.chFltUpdate)
+	d.Node.Close()
 	//release files
 	//os.Close(d.log.Out)
 	//release snmp resources
@@ -523,41 +515,49 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 			select {
 			case <-t.C:
 				break LOOP
-			case <-d.chExit:
-				d.Infof("invoked EXIT from SNMP Gather process ")
-				return
-			case <-d.chFltUpdate:
-				d.rtData.Lock()
-				d.setReloadLoopsPending(1)
-				d.rtData.Unlock()
-			case debug := <-d.chDebug:
-				d.rtData.Lock()
-				d.StateDebug = debug
-				d.Infof(" invoked DEBUG  ACTIVE  [%t] ", debug)
-				d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
-				for _, m := range d.Measurements {
-					c, err := d.InitSnmpConnect(m.ID, debug)
-					if err != nil {
-						d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
+			case val := <-d.Node.Read:
+				d.Infof("Received Message...%s: %+v", val.Type, val.Data)
+				switch val.Type {
+				case "exit":
+					d.Infof("invoked EXIT from SNMP Gather process ")
+					return
+				case "filterupdate":
+					d.rtData.Lock()
+					d.setReloadLoopsPending(1)
+					d.rtData.Unlock()
+				case "snmpdebug":
+					debug := val.Data.(bool)
+					d.rtData.Lock()
+					d.StateDebug = debug
+					d.Infof(" invoked DEBUG  ACTIVE  [%t] ", debug)
+					d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
+					for _, m := range d.Measurements {
+						c, err := d.InitSnmpConnect(m.ID, debug)
+						if err != nil {
+							d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
+						}
+						m.SetSnmpClient(c)
 					}
-					m.SetSnmpClient(c)
+					d.rtData.Unlock()
+				case "enabled":
+					status := val.Data.(bool)
+					d.rtData.Lock()
+					d.DeviceActive = status
+					d.Infof("device STATUS  ACTIVE  [%t] ", status)
+					d.rtData.Unlock()
+				case "loglevel":
+					level := val.Data.(string)
+					l, err := logrus.ParseLevel(level)
+					if err != nil {
+						d.Warnf("ERROR on Changing LOGLEVEL to [%t] ", level)
+						break
+					}
+					d.rtData.Lock()
+					d.log.Level = l
+					d.Infof("device loglevel Changed  [%s] ", level)
+					d.CurLogLevel = d.log.Level.String()
+					d.rtData.Unlock()
 				}
-				d.rtData.Unlock()
-			case status := <-d.chEnabled:
-				d.rtData.Lock()
-				d.DeviceActive = status
-				d.Infof("device STATUS  ACTIVE  [%t] ", status)
-				d.rtData.Unlock()
-			case level := <-d.chLogLevel:
-				d.rtData.Lock()
-				l, err := logrus.ParseLevel(level)
-				if err != nil {
-					d.Warnf("ERROR on Changing LOGLEVEL to [%t] ", level)
-				}
-				d.log.Level = l
-				d.Infof("device loglevel Changed  [%s] ", level)
-				d.CurLogLevel = d.log.Level.String()
-				d.rtData.Unlock()
 			}
 		}
 	}
