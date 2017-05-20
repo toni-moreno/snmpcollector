@@ -113,6 +113,10 @@ func (of *OidFilter) Update() error {
 			case of.TypeCond == "nle":
 				cond = (value <= vci)
 				of.log.Debugf("OIDFILTER [%s] type [%s] snmp value [%d], condition [%d] RESULT[%t]", of.OidCond, of.TypeCond, value, vci, cond)
+			case of.TypeCond == "ndif":
+				cond = (value != vci)
+				of.log.Debugf("OIDFILTER [%s] type [%s] snmp value [%d], condition [%d] RESULT[%t]", of.OidCond, of.TypeCond, value, vci, cond)
+
 			}
 		default:
 			of.log.Errorf("OIDFILTER [%s] Error in Condition filter  Type: %s ValCond: %s ", of.OidCond, of.TypeCond, of.ValueCond)
