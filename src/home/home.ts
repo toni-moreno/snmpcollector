@@ -29,7 +29,7 @@ export class Home {
   response: string;
   api: string;
   item_type: string;
-  version: any;
+  version: RInfo;
   configurationItems : Array<any> = [
   {'title': 'Influx Servers', 'selector' : 'influxserver'},
   {'title': 'OID Conditions', 'selector' : 'oidcondition'},

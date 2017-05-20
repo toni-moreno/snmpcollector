@@ -24,16 +24,11 @@ import { ModalDirective } from 'ng2-bootstrap';
               <hr/>
               <h4> Release information </h4>
                 <dl class="dl-horizontal">
-                  <ng-container *ngFor="let item of info | objectParser">
-                    <dt>{{item.key}}</dt>
-                    <dd>
-                      {{item.value}}
-                    </dd>
-                  </ng-container>
-                  <dt>License</dt>
-                  <dd>
-                    MIT License
-                  </dd>
+                  <dt>Instance ID:</dt><dd>{{ info.InstanceID}}</dd>
+                  <dt>Version:</dt><dd>{{info.Version}}</dd>
+                  <dt>Commit:</dt><dd>{{info.Commit}}</dd>
+                  <dt>Build Date:</dt><dd>{{ info.BuildStamp*1000 | date:'yyyy/M/d HH:mm:ss' }}</dd>
+                  <dt>License:</dt><dd>MIT License</dd>
                 </dl>
                 <hr>
               <h4> Authors: </h4>
@@ -66,7 +61,7 @@ export class AboutModal {
 
   @Output() public validationClicked:EventEmitter<any> = new EventEmitter();
 
-  public info : any;
+  public info : RInfo;
 
   public validationClick(myId: string):void {
     this.validationClicked.emit(myId);
@@ -74,7 +69,7 @@ export class AboutModal {
 
   constructor() { }
 
-  showModal(info : any){
+  showModal(info : RInfo){
     this.info = info;
     this.childModal.show();
   }

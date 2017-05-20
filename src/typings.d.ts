@@ -7,3 +7,11 @@ type CounterType = {
   type: string;
   tooltip: string;
 };
+
+type RInfo = {
+  InstanceID: string;
+  Version:    string;
+  Commit:     string;
+  Branch:     string;
+  BuildStamp: string;
+};
