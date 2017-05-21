@@ -1,7 +1,7 @@
 import { Component, Input, Output, Pipe, PipeTransform, ViewChild, EventEmitter } from '@angular/core';
 import { FormGroup,FormControl } from '@angular/forms';
 import { ModalDirective } from 'ng2-bootstrap';
-
+import { WindowRef } from '../common/windowref';
 
 @Component({
     selector: 'about-modal',
@@ -19,7 +19,7 @@ import { ModalDirective } from 'ng2-bootstrap';
               <h4 class="text-primary"> <b>SNMPCollector</b> </h4>
               <span> SNMPCollector is a full featured generic SNMP data collector with web administration interface. It is an open Source tool which has as main goal simplify the configuration for getting data from any device with SNMP protocol support and send resulting data to an InfluxDB backend</span>
               <div class="text-right">
-                <a href="https://github.com/toni-moreno/snmpcollector" class="text-link"> More info <i class="glyphicon glyphicon-plus-sign"></i></a>
+                <a href="javaScript:void(0);"  (click)="link('https://github.com/toni-moreno/snmpcollector')" class="text-link"> More info <i class="glyphicon glyphicon-plus-sign"></i></a>
               </div>
               <hr/>
               <h4> Release information </h4>
@@ -35,11 +35,11 @@ import { ModalDirective } from 'ng2-bootstrap';
               <dl class="dl-horizontal">
                   <dt>Toni Moreno</dt>
                   <dd>
-                    <a href="http://github.com/toni-moreno">GitHub</a>
+                    <a href="javascript:void(0);" (click)="link('http://github.com/toni-moreno')">GitHub</a>
                   </dd>
                   <dt>Sergio Bengoechea</dt>
                   <dd>
-                    <a href="http://github.com/sbengo">GitHub</a>
+                    <a href="javascript:void(0);" (click)="link('http://github.com/sbengo')">GitHub</a>
                   </dd>
               </dl>
               <hr>
@@ -66,12 +66,18 @@ export class AboutModal {
   public validationClick(myId: string):void {
     this.validationClicked.emit(myId);
   }
-
-  constructor() { }
+  nativeWindow: any
+  constructor(private winRef: WindowRef) {
+    this.nativeWindow = winRef.nativeWindow;
+  }
 
   showModal(info : RInfo){
     this.info = info;
     this.childModal.show();
+  }
+
+  link(url: string) {
+    this.nativeWindow.open(url);
   }
 
   hide() {

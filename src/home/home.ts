@@ -9,6 +9,7 @@ import { ImportFileModal } from '../common/dataservice/import-file-modal';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
 import { HomeService } from './home.service';
 import { AboutModal } from './about-modal'
+import { WindowRef } from '../common/windowref';
 declare var _:any;
 
 @Component({
@@ -25,7 +26,7 @@ export class Home {
   @ViewChild('exportBulkFileModal') public exportBulkFileModal : ExportFileModal;
   @ViewChild('aboutModal') public aboutModal : AboutModal;
   @ViewChild('RuntimeComponent') public rt : any;
-
+  nativeWindow: any
   response: string;
   api: string;
   item_type: string;
@@ -51,10 +52,16 @@ export class Home {
   elapsedReload: string = '';
   lastReload: Date;
 
-  constructor(public router: Router, public httpAPI: HttpAPI, private _blocker: BlockUIService, public homeService: HomeService) {
+  constructor(private winRef: WindowRef,public router: Router, public httpAPI: HttpAPI, private _blocker: BlockUIService, public homeService: HomeService) {
+    this.nativeWindow = winRef.nativeWindow;
     this.getFooterInfo();
     this.item_type= "runtime";
   }
+
+  link(url: string) {
+    this.nativeWindow.open(url);
+  }
+
 
   logout() {
     this.homeService.userLogout()

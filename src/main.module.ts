@@ -48,6 +48,7 @@ import { TestFilterModal } from './customfilter/test-filter-modal';
 import { ImportFileModal } from './common/dataservice/import-file-modal'
 
 //others
+import { WindowRef } from './common/windowref';
 import { ValidationService } from './common/validation.service';
 import { ExportServiceCfg } from './common/dataservice/export.service'
 //pipes
@@ -104,6 +105,7 @@ import { SpinnerComponent } from './common/spinner';
     RouterModule.forRoot(AppRoutes)
   ],
   providers: [
+    WindowRef,
     HttpAPI,
     ExportServiceCfg,
     ValidationService,
