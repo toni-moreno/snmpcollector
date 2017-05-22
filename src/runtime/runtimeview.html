@@ -128,6 +128,18 @@
 
               <li class="list-group-item">
                 <div class="row">
+                  <div class="col-md-8 text-left">
+                    <span>Force SNMP Reset</span>
+                    <span class="glyphicon glyphicon-question-sign" tooltip="Force Snmp conection Reset "></span>
+                  </div>
+                  <div class="col-md-4 text-right">
+                    <button type="button" (click)="forceSnmpReset(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Reset</button>
+                  </div>
+                </div>
+              </li>
+
+              <li class="list-group-item">
+                <div class="row">
                   <div class="col-md-7 text-left">
                     <span>Download Log file</span>
                     <span class="glyphicon glyphicon-question-sign" tooltip="Download the device related log file"></span>

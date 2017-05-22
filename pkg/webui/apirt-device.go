@@ -17,6 +17,7 @@ func NewApiRtDevice(m *macaron.Macaron) error {
 		m.Put("/status/deactivate/:id", reqSignedIn, RTDeactivateDev)
 		m.Put("/debug/activate/:id", reqSignedIn, RTActSnmpDebugDev)
 		m.Put("/debug/deactivate/:id", reqSignedIn, RTDeactSnmpDebugDev)
+		m.Get("/snmpreset/:id", reqSignedIn, RTSnmpReset)
 		m.Put("/log/setloglevel/:id/:level", reqSignedIn, RTSetLogLevelDev)
 		m.Get("/log/getdevicelog/:id", reqSignedIn, RTGetLogFileDev)
 		m.Get("/filter/forcefltupdate/:id", reqSignedIn, RTForceFltUpdate)
@@ -66,6 +67,20 @@ func RTSetLogLevelDev(ctx *Context) {
 	dev.RTSetLogLevel(level)
 	ctx.JSON(200, "OK")
 
+}
+
+//RTSnmpReset
+func RTSnmpReset(ctx *Context) {
+	id := ctx.Params(":id")
+	log.Infof("activating runtime on device %s", id)
+	dev, err := agent.GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
+		return
+	}
+	log.Infof("activating runtime on device %s", id)
+	dev.SnmpReset()
+	ctx.JSON(200, "OK")
 }
 
 //RTActivateDev xx

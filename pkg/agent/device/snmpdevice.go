@@ -157,6 +157,11 @@ func (d *SnmpDevice) ForceFltUpdate() {
 	d.Node.SendMsg(&bus.Message{Type: "filterupdate"})
 }
 
+// ForceFltUpdate send info to update the filter counter to the next execution
+func (d *SnmpDevice) SnmpReset() {
+	d.Node.SendMsg(&bus.Message{Type: "snmpreset"})
+}
+
 // StopGather send signal to stop the Gathering process
 func (d *SnmpDevice) StopGather() {
 	d.Node.SendMsg(&bus.Message{Type: "exit"})
@@ -412,6 +417,18 @@ func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool) (*gosnmp.GoSNMP, e
 	return client, nil
 }
 
+func (d *SnmpDevice) snmpReset(debug bool) {
+	d.Infof(" Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
+	d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
+	for _, m := range d.Measurements {
+		c, err := d.InitSnmpConnect(m.ID, debug)
+		if err != nil {
+			d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
+		}
+		m.SetSnmpClient(c)
+	}
+}
+
 // StartGather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) StartGather(wg *sync.WaitGroup) {
 	wg.Add(1)
@@ -525,19 +542,15 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					d.rtData.Lock()
 					d.setReloadLoopsPending(1)
 					d.rtData.Unlock()
+				case "snmpreset":
+					d.rtData.Lock()
+					d.snmpReset(false)
+					d.rtData.Unlock()
 				case "snmpdebug":
 					debug := val.Data.(bool)
 					d.rtData.Lock()
 					d.StateDebug = debug
-					d.Infof(" invoked DEBUG  ACTIVE  [%t] ", debug)
-					d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
-					for _, m := range d.Measurements {
-						c, err := d.InitSnmpConnect(m.ID, debug)
-						if err != nil {
-							d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
-						}
-						m.SetSnmpClient(c)
-					}
+					d.snmpReset(debug)
 					d.rtData.Unlock()
 				case "enabled":
 					status := val.Data.(bool)

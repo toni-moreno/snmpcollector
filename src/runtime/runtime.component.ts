@@ -368,7 +368,19 @@ export class RuntimeComponent implements OnDestroy {
     this.runtimeService.forceFltUpdate(id)
       .subscribe(
       data => {
-        console.log("download done")
+        console.log("filter update done")
+      },
+      err => console.error(err),
+      () => console.log('DONE')
+      );
+  }
+
+  forceSnmpReset(id) {
+    console.log("ID,event", id, event);
+    this.runtimeService.forceSnmpReset(id)
+      .subscribe(
+      data => {
+        console.log("reset done")
       },
       err => console.error(err),
       () => console.log('DONE')
