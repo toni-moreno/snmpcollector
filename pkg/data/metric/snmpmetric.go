@@ -290,6 +290,12 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.CurTime = now
 			s.Valid = true
 		}
+	case "OID":
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			s.CookedValue = snmp.PduVal2OID(pdu)
+			s.CurTime = now
+			s.Valid = true
+		}
 	case "IpAddress":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue, _ = snmp.PduVal2IPaddr(pdu)

@@ -266,6 +266,15 @@ func PduVal2str(pdu gosnmp.SnmpPDU) string {
 	return ""
 }
 
+// PduVal2str transform PDU data to string
+func PduVal2OID(pdu gosnmp.SnmpPDU) string {
+	value := pdu.Value
+	if pdu.Type == gosnmp.ObjectIdentifier {
+		return value.(string)
+	}
+	return ""
+}
+
 // PduVal2Int64 transform PDU data to Int64
 func PduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 	value := pdu.Value

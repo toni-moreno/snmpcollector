@@ -48,6 +48,7 @@ func (m *SnmpMetricCfg) Init() error {
 	case "COUNTERXX": //raw and Coocked increment with non_negative behaivour of Counters
 	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
 	case "OCTETSTRING":
+	case "OID":
 	case "HWADDR":
 	case "IpAddress":
 	case "STRINGPARSER":
