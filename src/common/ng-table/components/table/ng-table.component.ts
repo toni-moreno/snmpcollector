@@ -10,6 +10,11 @@ import { TooltipModule } from 'ng2-bootstrap';
            role="grid" style="width: 100%;">
       <thead>
         <tr role="row">
+        <th *ngIf="editMode == true">
+        <p>Select</p>
+        <label (click)="selectAllItems(true)" class="glyphicon glyphicon-check text-success"></label>-
+        <label (click)="selectAllItems(false)" class="glyphicon glyphicon-unchecked text-danger"></label>
+        </th>
           <th *ngIf="showCustom == true" [ngStyle]="exportType ? {'min-width': '95px'} : {'min-width': '80px'}">
           </th>
           <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column"
@@ -33,6 +38,9 @@ import { TooltipModule } from 'ng2-bootstrap';
         </td>
       </tr>
         <tr *ngFor="let row of rows">
+        <td *ngIf="editMode == true">
+        <i [ngClass]="checkItems(row.ID) ? ['glyphicon glyphicon-unchecked text-danger'] : ['glyphicon glyphicon-check text-success']" (click)="selectItem(row)"></i>
+        </td>
           <td *ngIf="showCustom == true">
           <i *ngIf="exportType" class="glyphicon glyphicon-download-alt" [tooltip]="'Export item'" (click)="exportItem(row, exportType)"></i>
           <i class="glyphicon glyphicon-eye-open" [tooltip]="'View item'" (click)="viewItem(row)"></i>
@@ -69,7 +77,9 @@ export class NgTableComponent {
   // Table values
   @Input() public rows: Array<any> = [];
   @Input() public showCustom: boolean;
+  @Input() public editMode: boolean = false;
   @Input() public exportType: string;
+  @Input() checkedItems: Array<any>;
 
   @Input()
   public set config(conf: any) {
@@ -175,7 +185,6 @@ export class NgTableComponent {
         sortColumns.push(column);
       }
     });
-
     return { columns: sortColumns };
   }
 
@@ -190,6 +199,55 @@ export class NgTableComponent {
 
   public getData(row: any, propertyName: string): string {
     return propertyName.split('.').reduce((prev: any, curr: string) => prev[curr], row);
+  }
+
+  selectAllItems(selectAll) {
+    //Creates the form array
+    if (selectAll === true) {
+      for (let row of this.rows) {
+        if (this.checkItems(row.ID)) {
+          this.checkedItems.push(row);
+        }
+      }
+    } else {
+      for (let row of this.rows) {
+        let index = this.findIndexItem(row.ID);
+          if (index) this.deleteItem(index);
+      }
+    }
+  }
+
+  checkItems(item: any) : boolean {
+    //Extract the ID from finalArray and loaded Items:
+    let exist = true;
+    for (let a of this.checkedItems) {
+      if (item === a.ID) {
+        exist = false;
+      }
+    }
+    return exist;
+  }
+
+  selectItem(row : any) : void {
+    if (this.checkItems(row.ID)) {
+      this.checkedItems.push(row);
+    }
+    else {
+      let index = this.findIndexItem(row.ID);
+      this.deleteItem(index);
+    }
+  }
+  //Remove item from Array
+  deleteItem(index) {
+    this.checkedItems.splice(index,1);
+  }
+
+  findIndexItem(ID) : any {
+    for (let a in this.checkedItems) {
+      if (ID === this.checkedItems[a].ID) {
+        return a;
+      }
+    }
   }
 
   public cellClick(row: any, column: any): void {

@@ -7,7 +7,7 @@ import { MeasGroupService } from '../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
 import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ValidationService } from '../common/validation.service'
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs/Rx';
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
 
@@ -17,6 +17,8 @@ import { TestConnectionModal } from '../common/test-connection-modal';
 import { TestFilterModal } from '../customfilter/test-filter-modal'
 import { ExportServiceCfg } from '../common/dataservice/export.service'
 import { ItemsPerPageOptions } from '../common/global-constants';
+import { TableActions } from '../common/table-actions';
+import {SpinnerComponent} from '../common/spinner';
 
 
 @Component({
@@ -32,6 +34,43 @@ export class SnmpDeviceCfgComponent {
   @ViewChild('viewTestConnectionModal') public viewTestConnectionModal: TestConnectionModal;
   @ViewChild('viewTestFilterModal') public viewTestFilterModal: TestFilterModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
+
+  editEnabled : boolean = false;
+  selectedArray : any = [];
+  tableAvailableActions = [
+    {'title': 'Remove', 'content' :
+      {'type' : 'button','action' : 'RemoveAllSelected'}
+    },
+    {'title': 'Change property', 'content' :
+      {'type' : 'selector', 'action' : 'ChangeProperty', 'options' : [
+        {'title' : 'Active', 'type':'boolean', 'options' : [
+          'true','false'
+          ]
+        },
+        {'title' : 'LogLevel', 'type':'boolean', 'options' : [
+          'panic','fatal','error','warning','info','debug'
+          ]
+        },
+        {'title' : 'ConcurrentGather', 'type':'boolean', 'options' : [
+          'true','false'
+          ]
+        },
+        {'title' : 'DisableBulk', 'type':'boolean', 'options' : [
+          'true','false'
+          ]
+        },
+        {'title' : 'SnmpDebug', 'type':'boolean', 'options' : [
+          'true','false'
+          ]
+        },
+        {'title': 'Freq','type':'input'},
+        {'title': 'MaxRepetitions','type':'input'}
+      ]},
+    }
+  ];
+  public isRequesting : boolean;
+  public counterItems : number = null;
+  public counterErrors: any = [];
 
   itemsPerPageOptions : any = ItemsPerPageOptions;
   //ADDED
@@ -183,10 +222,14 @@ export class SnmpDeviceCfgComponent {
   }
 
   reloadData() {
+    //In order to avoid issues with the array we clean it every time we refresh data
+    this.selectedArray = [];
+    this.isRequesting = true;
     // now it's a simple subscription to the observable
     this.snmpDeviceService.getDevices(null)
       .subscribe(
       data => {
+        this.isRequesting = false;
         this.snmpdevs = data;
         this.data = data;
         this.onChangeTable(this.config);
@@ -201,6 +244,24 @@ export class SnmpDeviceCfgComponent {
     this.myFilterValue = "";
     this.config.filtering = {filtering: { filterString: '' }};
     this.onChangeTable(this.config);
+  }
+
+  applyAction(test : any) : void {
+    //test.devices = [];
+    //test.devices = this.selectedArray.map((item) => {return item.ID});
+    switch(test.action) {
+       case "RemoveAllSelected": {
+          this.removeAllSelectedItems(this.selectedArray);
+          break;
+       }
+       case "ChangeProperty": {
+          this.updateAllSelectedItems(this.selectedArray,test.field,test.value)
+          break;
+       }
+       default: {
+          break;
+       }
+    }
   }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
@@ -268,7 +329,7 @@ export class SnmpDeviceCfgComponent {
       let flag = false;
       this.columns.forEach((column: any) => {
         if (item[column.name] === null) {
-          item[column.name] = '--'
+        item[column.name] = ''
         }
         if (item[column.name].toString().match(this.config.filtering.filterString)) {
           flag = true;
@@ -304,10 +365,6 @@ export class SnmpDeviceCfgComponent {
     this.length = sortedData.length;
   }
 
-  public onCellClick(data: any): any {
-    console.log(data);
-  }
-
   onFilter() {
     this.reloadData();
   }
@@ -319,6 +376,18 @@ export class SnmpDeviceCfgComponent {
 
   exportItem(item : any) : void {
     this.exportFileModal.initExportModal(item);
+  }
+
+  removeAllSelectedItems(myArray) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    for (let i in myArray) {
+      console.log("Removing ",myArray[i].ID)
+      this.deleteSnmpDevice(myArray[i].ID,true);
+      obsArray.push(this.deleteSnmpDevice(myArray[i].ID,true));
+    }
+    this.genericForkJoin(obsArray);
   }
 
   removeItem(row) {
@@ -368,13 +437,20 @@ export class SnmpDeviceCfgComponent {
       err => console.error(err),
     );
   }
-  deleteSnmpDevice(id) {
-    this.snmpDeviceService.deleteDevice(id)
+
+  deleteSnmpDevice(id, recursive?) {
+    console.log(id)
+    if (!recursive) {
+      this.snmpDeviceService.deleteDevice(id)
       .subscribe(data => { },
-      err => console.error(err),
-      () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
-      );
+        err => console.error(err),
+        () => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
+        );
+    } else {
+      return this.snmpDeviceService.deleteDevice(id);
+    }
   }
+
   cancelEdit() {
     this.reloadData();
     this.viewTestConnectionModal.hide();
@@ -390,20 +466,57 @@ export class SnmpDeviceCfgComponent {
     }
   }
 
-  updateSnmpDev() {
-    if (this.snmpdevForm.valid) {
-      var r = true;
-      if (this.snmpdevForm.value.ID != this.oldID) {
-        r = confirm("Changing Device ID from " + this.oldID + " to " + this.snmpdevForm.value.ID + ". Proceed?");
-      }
-      if (r == true) {
-        this.snmpDeviceService.editDevice(this.snmpdevForm.value, this.oldID)
-          .subscribe(data => { console.log(data) },
-          err => console.error(err),
-          () => { this.editmode = "list"; this.reloadData() }
-          );
+updateAllSelectedItems(mySelectedArray,field,value) {
+  let obsArray = [];
+  this.counterItems = 0;
+  this.isRequesting = true;
+  for (let component of mySelectedArray) {
+    component[field] = value;
+    obsArray.push(this.updateSnmpDev(true,component));
+  }
+  this.genericForkJoin(obsArray);
+  //Make sync calls and wait the result
+  this.counterErrors = [];
+}
+
+  updateSnmpDev(recursive?,component?) {
+    if(!recursive) {
+      if (this.snmpdevForm.valid) {
+        var r = true;
+        if (this.snmpdevForm.value.ID != this.oldID) {
+          r = confirm("Changing Device ID from " + this.oldID + " to " + this.snmpdevForm.value.ID + ". Proceed?");
+        }
+        if (r == true) {
+          this.snmpDeviceService.editDevice(this.snmpdevForm.value, this.oldID)
+            .subscribe(data => { console.log(data) },
+            err => console.error(err),
+            () => { this.editmode = "list"; this.reloadData() }
+            );
+        }
       }
     }
+    else {
+      return this.snmpDeviceService.editDevice(component, component.ID)
+      .catch((err) => {
+        return Observable.of({'ID': component.ID , 'error': err['_body']})
+      })
+    }
+  }
+
+  genericForkJoin(obsArray: any) {
+    Observable.forkJoin(obsArray)
+              .subscribe(
+                data => {
+                  for (let a of data) {
+                    if(a['error']) this.counterErrors.push({'ID': a['ID'], 'error' : a['error']});
+                    else this.counterItems++;
+                    console.log(a);
+                  }
+                  this.selectedArray = [];
+                  this.reloadData()
+                },
+                err => console.error(err),
+              );
   }
 
   showTestConnectionModal() {
