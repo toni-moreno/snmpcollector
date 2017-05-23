@@ -20,6 +20,7 @@ import { AppRoutes } from './app/app.routes';
 import { ControlMessagesComponent } from './common/control-messages.component';
 import { MultiselectDropdownModule } from './common/multiselect-dropdown'
 import { PasswordToggleDirective } from './common/custom-directives'
+import { TableActions } from './common/table-actions';
 
 //snmpcollector components
 
@@ -38,6 +39,7 @@ import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap';
 import { TooltipModule } from 'ng2-bootstrap';
 import { ModalModule } from 'ng2-bootstrap';
 import { ModalDirective } from 'ng2-bootstrap';
+import { ProgressbarModule } from 'ng2-bootstrap';
 
 import { GenericModal } from './common/generic-modal';
 import { ExportFileModal } from './common/dataservice/export-file-modal';
@@ -66,6 +68,7 @@ import { SpinnerComponent } from './common/spinner';
     ObjectParserPipe,
     SplitCommaPipe,
     ElapsedSecondsPipe,
+    TableActions,
     ControlMessagesComponent,
     SnmpDeviceCfgComponent,
     OidConditionCfgComponent,
@@ -95,6 +98,7 @@ import { SpinnerComponent } from './common/spinner';
     FormsModule,
     ReactiveFormsModule,
     MultiselectDropdownModule,
+    ProgressbarModule.forRoot(),
     AccordionModule.forRoot(),
     TooltipModule.forRoot(),
     ModalModule.forRoot(),
