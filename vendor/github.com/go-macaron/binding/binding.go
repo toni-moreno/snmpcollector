@@ -32,7 +32,7 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-const _VERSION = "0.3.2"
+const _VERSION = "0.5.0"
 
 func Version() string {
 	return _VERSION
@@ -211,13 +211,35 @@ func Json(jsonStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 	}
 }
 
+// RawValidate is same as Validate but does not require a HTTP context,
+// and can be used independently just for validation.
+// This function does not support Validator interface.
+func RawValidate(obj interface{}) Errors {
+	var errs Errors
+	v := reflect.ValueOf(obj)
+	k := v.Kind()
+	if k == reflect.Interface || k == reflect.Ptr {
+		v = v.Elem()
+		k = v.Kind()
+	}
+	if k == reflect.Slice || k == reflect.Array {
+		for i := 0; i < v.Len(); i++ {
+			e := v.Index(i).Interface()
+			errs = validateStruct(errs, e)
+		}
+	} else {
+		errs = validateStruct(errs, obj)
+	}
+	return errs
+}
+
 // Validate is middleware to enforce required fields. If the struct
 // passed in implements Validator, then the user-defined Validate method
 // is executed, and its errors are mapped to the context. This middleware
 // performs no error handling: it merely detects errors and maps them.
 func Validate(obj interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
-		var errors Errors
+		var errs Errors
 		v := reflect.ValueOf(obj)
 		k := v.Kind()
 		if k == reflect.Interface || k == reflect.Ptr {
@@ -227,18 +249,18 @@ func Validate(obj interface{}) macaron.Handler {
 		if k == reflect.Slice || k == reflect.Array {
 			for i := 0; i < v.Len(); i++ {
 				e := v.Index(i).Interface()
-				errors = validateStruct(errors, e)
+				errs = validateStruct(errs, e)
 				if validator, ok := e.(Validator); ok {
-					errors = validator.Validate(ctx, errors)
+					errs = validator.Validate(ctx, errs)
 				}
 			}
 		} else {
-			errors = validateStruct(errors, obj)
+			errs = validateStruct(errs, obj)
 			if validator, ok := obj.(Validator); ok {
-				errors = validator.Validate(ctx, errors)
+				errs = validator.Validate(ctx, errs)
 			}
 		}
-		ctx.Map(errors)
+		ctx.Map(errs)
 	}
 }
 
@@ -257,16 +279,32 @@ type (
 		// IsValid applies validation rule to condition.
 		IsValid func(Errors, string, interface{}) (bool, Errors)
 	}
-	// RuleMapper represents a validation rule mapper,
+
+	// ParamRule does same thing as Rule but passes rule itself to IsValid method.
+	ParamRule struct {
+		// IsMatch checks if rule matches.
+		IsMatch func(string) bool
+		// IsValid applies validation rule to condition.
+		IsValid func(Errors, string, string, interface{}) (bool, Errors)
+	}
+
+	// RuleMapper and ParamRuleMapper represent validation rule mappers,
 	// it allwos users to add custom validation rules.
-	RuleMapper []*Rule
+	RuleMapper      []*Rule
+	ParamRuleMapper []*ParamRule
 )
 
 var ruleMapper RuleMapper
+var paramRuleMapper ParamRuleMapper
 
 // AddRule adds new validation rule.
 func AddRule(r *Rule) {
 	ruleMapper = append(ruleMapper, r)
+}
+
+// AddParamRule adds new validation rule.
+func AddParamRule(r *ParamRule) {
+	paramRuleMapper = append(paramRuleMapper, r)
 }
 
 func in(fieldValue interface{}, arr string) bool {
@@ -356,6 +394,16 @@ VALIDATE_RULES:
 				break VALIDATE_RULES
 			}
 		case rule == "Required":
+			v := reflect.ValueOf(fieldValue)
+			if v.Kind() == reflect.Slice {
+				if v.Len() == 0 {
+					errors.Add([]string{field.Name}, ERR_REQUIRED, "Required")
+					break VALIDATE_RULES
+				}
+
+				continue
+			}
+
 			if reflect.DeepEqual(zero, fieldValue) {
 				errors.Add([]string{field.Name}, ERR_REQUIRED, "Required")
 				break VALIDATE_RULES
@@ -456,11 +504,19 @@ VALIDATE_RULES:
 				}
 			}
 		default:
-			// Apply custom validation rules.
+			// Apply custom validation rules
 			var isValid bool
 			for i := range ruleMapper {
 				if ruleMapper[i].IsMatch(rule) {
 					isValid, errors = ruleMapper[i].IsValid(errors, field.Name, fieldValue)
+					if !isValid {
+						break VALIDATE_RULES
+					}
+				}
+			}
+			for i := range paramRuleMapper {
+				if paramRuleMapper[i].IsMatch(rule) {
+					isValid, errors = paramRuleMapper[i].IsValid(errors, rule, field.Name, fieldValue)
 					if !isValid {
 						break VALIDATE_RULES
 					}

@@ -28,7 +28,7 @@
 		},
 		{
 			"ImportPath": "github.com/go-macaron/binding",
-			"Rev": "48920167fa152d02f228cfbece7e0f1e452d200a"
+			"Rev": "1513c901915731e941815f60ede6a9c21c69a550"
 		},
 		{
 			"ImportPath": "github.com/go-macaron/inject",
