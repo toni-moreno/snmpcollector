@@ -289,7 +289,9 @@ export class TestConnectionModal implements OnInit  {
       data => {
         this.selectors[index].Array = [];
         for (let entry of data) {
-          this.selectors[index].Array.push({'id' : entry.ID , 'name': entry.ID, 'OID' : entry.OIDCond});
+          if (!entry.IsMultiple) {
+              this.selectors[index].Array.push({'id' : entry.ID , 'name': entry.ID, 'OID' : entry.OIDCond});
+          }
         }
       },
       err => console.error(err),
