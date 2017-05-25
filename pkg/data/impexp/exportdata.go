@@ -51,6 +51,7 @@ type ExportObject struct {
 	ObjectID     string
 	Options      *EIOptions
 	ObjectCfg    interface{}
+	Error        string
 }
 
 // ExportData the runtime measurement config

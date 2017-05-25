@@ -2,7 +2,9 @@ package impexp
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/go-macaron/binding"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"strconv"
 	"time"
@@ -14,54 +16,146 @@ func (e *ExportData) ImportCheck() (*ExportData, error) {
 
 	for i := 0; i < len(e.Objects); i++ {
 		o := e.Objects[i]
+		log.Debugf("Checking object %+v", o)
+		if o.ObjectCfg == nil {
+			o.Error = fmt.Sprintf("Error inconsistent data not ObjectCfg found on Imported data for id: %s", o.ObjectID)
+			return nil, errors.New(o.Error)
+		}
+		raw, err := json.Marshal(o.ObjectCfg)
+		if err != nil {
+			o.Error = fmt.Sprintf("error on reformating object %s: error: %s ", o.ObjectID, err)
+			return nil, errors.New(o.Error)
+		}
 		switch o.ObjectTypeID {
 		case "snmpdevicecfg":
+			data := config.SnmpDeviceCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
 			_, err := dbc.GetSnmpDeviceCfgByID(o.ObjectID)
 			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
 				duplicated = append(duplicated, o)
 			}
 		case "influxcfg":
+			data := config.InfluxCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
 			_, err := dbc.GetInfluxCfgByID(o.ObjectID)
 			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
 				duplicated = append(duplicated, o)
 			}
 		case "measfiltercfg":
+			data := config.MeasFilterCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
 			_, err := dbc.GetMeasFilterCfgByID(o.ObjectID)
 			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
 				duplicated = append(duplicated, o)
 			}
 		case "customfiltercfg":
+			data := config.CustomFilterCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
 			_, err := dbc.GetCustomFilterCfgByID(o.ObjectID)
 			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
 				duplicated = append(duplicated, o)
 			}
 		case "oidconditioncfg":
+			data := config.OidConditionCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
 			_, err := dbc.GetOidConditionCfgByID(o.ObjectID)
 			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
 				duplicated = append(duplicated, o)
 			}
 		case "measurementcfg":
+			data := config.MeasurementCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
 			_, err := dbc.GetMeasurementCfgByID(o.ObjectID)
 			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
 				duplicated = append(duplicated, o)
 			}
 		case "snmpmetriccfg":
+			data := config.SnmpMetricCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
 			_, err := dbc.GetSnmpMetricCfgByID(o.ObjectID)
 			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
 				duplicated = append(duplicated, o)
 			}
 		case "measgroupcfg":
+			data := config.MGroupsCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
 			_, err := dbc.GetMGroupsCfgByID(o.ObjectID)
 			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
 				duplicated = append(duplicated, o)
 			}
 		default:
 			return &ExportData{Info: e.Info, Objects: duplicated}, fmt.Errorf("Unknown type object type %s ", o.ObjectTypeID)
 		}
 	}
+
 	if len(duplicated) > 0 {
-		return &ExportData{Info: e.Info, Objects: duplicated}, fmt.Errorf("There is %d objects duplicated in the config database ", len(duplicated))
+		return &ExportData{Info: e.Info, Objects: duplicated}, fmt.Errorf("There is %d objects with errors in the imported file", len(duplicated))
 	}
+
 	return &ExportData{Info: e.Info, Objects: duplicated}, nil
 }
 
@@ -74,15 +168,17 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 	}
 
 	for i := 0; i < len(e.Objects); i++ {
-
 		o := e.Objects[i]
+		o.Error = "" //reset error if exist becaouse we
 		log.Debugf("Importing object %+v", o)
 		if o.ObjectCfg == nil {
-			return fmt.Errorf("Error inconsistent data not ObjectCfg found on Imported data for id: %s", o.ObjectID)
+			o.Error = fmt.Sprintf("Error inconsistent data not ObjectCfg found on Imported data for id: %s", o.ObjectID)
+			return errors.New(o.Error)
 		}
 		raw, err := json.Marshal(o.ObjectCfg)
 		if err != nil {
-			return fmt.Errorf("error on reformating object %s: error: %s ", o.ObjectID, err)
+			o.Error = fmt.Sprintf("error on reformating object %s: error: %s ", o.ObjectID, err)
+			return errors.New(o.Error)
 		}
 		switch o.ObjectTypeID {
 		case "snmpdevicecfg":

@@ -15,12 +15,17 @@ import { ExportServiceCfg } from './export.service'
           <label *ngIf="keyProperty && keyProperty != 'ID'" class="label label-default">{{keyProperty}} : {{object[keyProperty] ? object[keyProperty] : "--"}} </label>
           <label *ngIf="type && showType === true" [ngClass]="['label label-'+colorsObject[type]]"> {{type}} </label>
           </div>
-
+          <div *ngIf="error" style="display: inline; width: 100%" class="text-left col-md-8 ">
+          <h4 [ngClass]="error ? ['text-danger'] : ['text-success']">
+          <i [ngClass]="error ? ['glyphicon glyphicon-warning-sign'] : ['glyphicon glyphicon-ok-sign']" tooltipAnimation="true" tooltip="{{error}}"></i>
+          {{error | json }}
+          </h4>
+          </div>
           <div style="display: inline" class="text-right col-md-4">
             <i *ngIf="addClickEnable===true" role="button" [ngClass]="alreadySelected === false ? ['text-success glyphicon glyphicon-ok-circle'] : ['glyphicon glyphicon-arrow-right']" (click)="addItem(title, type)" style="float:right"></i>
             <span *ngIf="recursiveToogle === true">
               <input type="checkbox" [checked]="this.recursive" (click)="recursiveClick()"> Recursive
-              </span>
+            </span>
           </div>
         </div>
         <div class="panel-body" *ngIf="visible === true">
@@ -38,6 +43,7 @@ export class TreeView {
   @Input() keyProperty : any;
   @Input() visible : boolean;
   @Input() object : any;
+  @Input() error: string;
   @Input() index : any;
   @Input() showType: boolean = true;
   @Input() addClickEnable: boolean = false;
