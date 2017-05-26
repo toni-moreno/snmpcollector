@@ -36,6 +36,7 @@ func SetDB(db *config.DatabaseCfg) {
 type Measurement struct {
 	cfg              *config.MeasurementCfg
 	ID               string
+	MName            string
 	MetricTable      map[string]map[string]*metric.SnmpMetric //snmpMetric mapped with metric_names and Index
 	snmpOids         []string
 	OidSnmpMap       map[string]*metric.SnmpMetric `json:"-"` //snmpMetric mapped with real OID's
@@ -55,7 +56,7 @@ type Measurement struct {
 
 //New  creates object with config , log + goSnmp client
 func New(c *config.MeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool) (*Measurement, error) {
-	m := &Measurement{ID: c.ID, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
+	m := &Measurement{ID: c.ID, MName: c.Name, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
 	err := m.Init()
 	return m, err
 }

@@ -179,7 +179,7 @@
             <h5 class="pull-left" style="margin-right:20px">Measurements <span class="badge">{{runtime_dev['Measurements'].length}}</span></h5>
             <span class="input-group-btn" style="white-space: normal;">
               <button type="button" class="btn btn-default" *ngFor="let measurement of runtime_dev['Measurements']; let i = index" (click)="showTable(i)" [ngClass]="i === measActive ? 'btn-primary' : 'btn-default'" container=body [tooltip]="measInfo">
-                {{measurement.ID}}
+                {{measurement.MName}}
                 <template #measInfo>
                     <dl class="text-left">
                       <p><dt class="margin-bottom:5px">Metrics <span class="badge">{{finalColumns[i].length > 0 ? finalColumns[i].length-1 : '0'}}</span></dt></p>

@@ -262,7 +262,8 @@ export class RuntimeComponent implements OnDestroy {
                 this.tmpcolumns = [];
                 this.tmpcolumns.push({ title: 'Index', name: 'Index' });
                 for (let metricId in measKey['MetricTable'][indexKey]) {
-                  let tmpColumn: any = { title: metricId, name: metricId }
+                  let fieldName = measKey['MetricTable'][indexKey][metricId].FieldName
+                  let tmpColumn: any = { title: fieldName, name: fieldName }
                   this.tmpcolumns.push(tmpColumn);
                 }
                 this.finalColumns.push(this.tmpcolumns);
@@ -277,8 +278,9 @@ export class RuntimeComponent implements OnDestroy {
               let tmpTable: any = { tooltipInfo: {} };
               tmpTable.Index = indexKey;
               for (let metricId in measKey['MetricTable'][indexKey]) {
-                tmpTable[metricId] = measKey['MetricTable'][indexKey][metricId]['CookedValue'];
-                tmpTable['tooltipInfo'][metricId] = measKey['MetricTable'][indexKey][metricId];
+                let fieldName = measKey['MetricTable'][indexKey][metricId].FieldName
+                tmpTable[fieldName] = measKey['MetricTable'][indexKey][metricId]['CookedValue'];
+                tmpTable['tooltipInfo'][fieldName] = measKey['MetricTable'][indexKey][metricId];
               }
               this.dataTable.push(tmpTable);
             }

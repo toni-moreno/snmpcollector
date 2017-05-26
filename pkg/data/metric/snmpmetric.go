@@ -40,6 +40,7 @@ const (
 type SnmpMetric struct {
 	cfg         *config.SnmpMetricCfg
 	ID          string
+	FieldName   string
 	Valid       bool //indicate if has been updated in the last gathered process
 	CookedValue interface{}
 	CurValue    interface{}
@@ -105,6 +106,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	s.cfg = c
 	s.RealOID = c.BaseOID
 	s.ID = s.cfg.ID
+	s.FieldName = s.cfg.FieldName // this id will be shown in the runtime webui and we need the FielName (as it will be used in the backend)
 	if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
 		s.Scale = func() {
 			s.CookedValue = (s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift
