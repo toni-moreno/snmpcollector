@@ -1,10 +1,14 @@
-# v 0.7.2 (unreleased)
+# v 0.7.2 (2017-05-27)
 ### New Features
-* added new ndif oid condition comparison
-* added new comunication Bus, improves webui to devices message send in unicast and broadcast mode
+* added new ndif (numeric different) oid condition comparison
+* added new comunication Bus, improves webui to devices message send in unicast and broadcast mode.
+* added import validations.
+* updated golang version to 1.8.3.
+* Addedd new OID snmpmetric type.
+* Runtime web-ui shows now Measurement Names and FieldNames instead of ID's.
 
 ### fixes
-* fix for #211
+* fix for #211,
 
 ### breaking changes
 
