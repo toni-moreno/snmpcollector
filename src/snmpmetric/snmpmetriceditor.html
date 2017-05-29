@@ -63,6 +63,7 @@
             <option value="Counter32">(SNMP SMI Type) Counter32 </option>
             <option value="Counter64">(SNMP SMI Type) Counter64 </option>
             <option value="TimeTicks">(SNMP SMI Type) TimeTicks</option>
+            <option value="BITS">(SNMP SMI Type) BIT STRING (needs a named-number enumeration in extradata)</option>
             <option value="OCTETSTRING">(SNMP SMI Type) OCTETSTRING</option>
             <option value="OID">(SNMP SMI Type) OBJECT IDENTIFIER</option>
             <option value="IpAddress">(SNMP SMI Type) IpAddress</option>
@@ -112,7 +113,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL')">
+      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' || snmpmetForm.value.DataSrcType == 'BITS' ) ">
         <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
         <div class="col-sm-9">
@@ -199,6 +200,7 @@
             <option value="Counter32">(SNMP SMI Type) Counter32 </option>
             <option value="Counter64">(SNMP SMI Type) Counter64 </option>
             <option value="TimeTicks">(SNMP SMI Type) TimeTicks</option>
+            <option value="BITS">(SNMP SMI Type) BIT STRING (needs a named-number enumeration in extradata)</option>
             <option value="OCTETSTRING">(SNMP SMI Type) OCTETSTRING</option>
             <option value="OID">(SNMP SMI Type) OBJECT IDENTIFIER</option>
             <option value="IpAddress">(SNMP SMI Type) IpAddress</option>
@@ -250,7 +252,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData&&(snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL')">
+      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' || snmpmetForm.value.DataSrcType == 'BITS' )">
         <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
         <div class="col-sm-9">
@@ -259,7 +261,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData&&snmpmetForm.value.DataSrcType == 'CONDITIONEVAL'">
+      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && snmpmetForm.value.DataSrcType == 'CONDITIONEVAL'">
         <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Selector of available OID conditions"></i>
         <div class="col-sm-9">

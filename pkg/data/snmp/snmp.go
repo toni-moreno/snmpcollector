@@ -39,6 +39,25 @@ type SysInfo struct {
 	SysLocation string
 }
 
+func PduVal2BoolArray(pdu gosnmp.SnmpPDU) []bool {
+	data := pdu.Value.([]byte)
+	mainlog.Errorf("PduVal2BoolArray: %+v\n", data)
+	barray := make([]bool, len(data)*8)
+	cnt := 0
+	for _, d := range data {
+		for i := 0; i < 8; i++ {
+			if (d & 0x80) == 0x80 {
+				barray[cnt] = true
+			} else {
+				barray[cnt] = false
+			}
+			d <<= 1
+			cnt++
+		}
+	}
+	return barray
+}
+
 // PduVal2Cooked to get data from any defined type in gosnmp
 func PduVal2Cooked(pdu gosnmp.SnmpPDU) interface{} {
 	switch pdu.Type {

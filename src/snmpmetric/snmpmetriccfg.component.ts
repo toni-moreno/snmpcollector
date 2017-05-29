@@ -108,6 +108,8 @@ export class SnmpMetricCfgComponent {
     let controlArray : Array<any> = [];
 
     switch (field) {
+      case 'BITS':
+        controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
       case 'OCTETSTRING':
       case 'HWADDR':
       case 'IpAddress':

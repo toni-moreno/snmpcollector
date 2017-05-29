@@ -47,6 +47,7 @@ func (m *SnmpMetricCfg) Init() error {
 	case "Counter64", "COUNTER64": //raw and Cooked increment of Counter64
 	case "COUNTERXX": //raw and Coocked increment with non_negative behaivour of Counters
 	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
+	case "BITS":
 	case "OCTETSTRING":
 	case "OID":
 	case "HWADDR":
@@ -56,6 +57,9 @@ func (m *SnmpMetricCfg) Init() error {
 	case "CONDITIONEVAL":
 	default:
 		return errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
+	}
+	if m.DataSrcType == "BITS" && len(m.ExtraData) == 0 {
+		return errors.New("BITS type requires extradata to work " + m.ID)
 	}
 	if m.DataSrcType != "STRINGEVAL" && m.DataSrcType != "CONDITIONEVAL" && !strings.HasPrefix(m.BaseOID, ".") {
 		return errors.New("Bad BaseOid format:" + m.BaseOID + " in metric Config " + m.ID)

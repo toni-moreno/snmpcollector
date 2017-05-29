@@ -11,6 +11,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -285,6 +286,27 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 					s.log.Warnf("Warning Negative COUNTER increment [current: %d | last: %d ] last value will be sent %f", s.CurValue, s.LastValue, s.CookedValue)
 				}
 			}
+		}
+	case "BITS":
+		s.re = regexp.MustCompile("([a-zA-Z0-9]+)\\(([0-9]+)\\)")
+		m := make(map[int]string)
+		str := s.re.FindAllStringSubmatch(s.cfg.ExtraData, -1)
+		for _, x := range str {
+			i, _ := strconv.Atoi(x[2])
+			m[i] = x[1]
+		}
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			barray := snmp.PduVal2BoolArray(pdu)
+			names := []string{}
+			for i, b := range barray {
+				if b {
+					names = append(names, m[i])
+				}
+			}
+			s.CookedValue = strings.Join(names, ",")
+			s.CurTime = now
+			s.Valid = true
+			s.log.Debugf("SETRAW BITS %+v, RESULT %s", m, s.CookedValue)
 		}
 	case "OCTETSTRING":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
