@@ -1,3 +1,13 @@
+# v 0.7.3 (Unreleased)
+### New Features
+* added new BITS snmp SMI type to send named array strings as Fields or tags.
+* added new BITS Check (BITSCHK) cooked type to check only a specific position.
+
+### fixes
+
+
+### breaking changes
+
 # v 0.7.2 (2017-05-27)
 ### New Features
 * added new ndif (numeric different) oid condition comparison

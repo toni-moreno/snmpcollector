@@ -109,6 +109,7 @@ export class SnmpMetricCfgComponent {
 
     switch (field) {
       case 'BITS':
+      case 'BITSCHK':
         controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
       case 'OCTETSTRING':
       case 'HWADDR':

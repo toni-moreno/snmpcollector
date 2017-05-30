@@ -288,25 +288,33 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			}
 		}
 	case "BITS":
-		s.re = regexp.MustCompile("([a-zA-Z0-9]+)\\(([0-9]+)\\)")
-		m := make(map[int]string)
-		str := s.re.FindAllStringSubmatch(s.cfg.ExtraData, -1)
-		for _, x := range str {
-			i, _ := strconv.Atoi(x[2])
-			m[i] = x[1]
-		}
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			barray := snmp.PduVal2BoolArray(pdu)
 			names := []string{}
 			for i, b := range barray {
 				if b {
-					names = append(names, m[i])
+					names = append(names, s.cfg.Names[i])
 				}
 			}
 			s.CookedValue = strings.Join(names, ",")
 			s.CurTime = now
 			s.Valid = true
-			s.log.Debugf("SETRAW BITS %+v, RESULT %s", m, s.CookedValue)
+			s.log.Debugf("SETRAW BITS %+v, RESULT %s", s.cfg.Names, s.CookedValue)
+		}
+	case "BITSCHK":
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			barray := snmp.PduVal2BoolArray(pdu)
+			index, _ := strconv.Atoi(s.cfg.ExtraData)
+			b := barray[index]
+			if b {
+				s.CookedValue = 1.0
+			} else {
+				s.CookedValue = 0.0
+			}
+
+			s.CurTime = now
+			s.Valid = true
+			s.log.Debugf("BITS CHECK bit %+v, Position %d , RESULT %t", barray, index, s.CookedValue)
 		}
 	case "OCTETSTRING":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {

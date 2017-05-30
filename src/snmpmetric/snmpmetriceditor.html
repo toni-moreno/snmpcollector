@@ -75,6 +75,7 @@
             <option value="STRINGPARSER">(Cooked type) STRINGPARSER [ Compute values from Regex ]</option>
             <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate math expressions from other Field names in the mesurement]</option>
             <option value="CONDITIONEVAL">(Cooked type) CONDITIONEVAL [evaluate OID table with boolean conditions and get number of true values ]</option>
+            <option value="BITSCHK">(Cooked Type) BIT STRING CHECK (needs the number bit to check in extradata , returns 1 or 0)</option>
           </select>
           <control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
         </div>
@@ -113,7 +114,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' || snmpmetForm.value.DataSrcType == 'BITS' ) ">
+      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' || snmpmetForm.value.DataSrcType == 'BITS'|| snmpmetForm.value.DataSrcType == 'BITSCHK' ) ">
         <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
         <div class="col-sm-9">
@@ -212,6 +213,7 @@
             <option value="STRINGPARSER">(Cooked type) STRINGPARSER [ Compute values from Regex ]</option>
             <option value="STRINGEVAL">(Cooked type) STRINGEVAL [evaluate math expressions from other Field names in the mesurement]</option>
             <option value="CONDITIONEVAL">(Cooked type) CONDITIONEVAL [evaluate OID table with boolean conditions and get number of true values ]</option>
+            <option value="BITSCHK">(Cooked Type) BIT STRING CHECK (needs the number bit to check in extradata , returns 1 or 0)</option>
           </select>
           <control-messages [control]="snmpmetForm.controls.DataSrcType"></control-messages>
         </div>
@@ -252,7 +254,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' || snmpmetForm.value.DataSrcType == 'BITS' )">
+      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' || snmpmetForm.value.DataSrcType == 'BITS' || snmpmetForm.value.DataSrcType == 'BITSCHK' )">
         <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
         <div class="col-sm-9">
