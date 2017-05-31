@@ -47,13 +47,13 @@ import { TooltipModule } from 'ng2-bootstrap';
 					<i class="glyphicon glyphicon-edit"  [tooltip]="'Edit item'" (click)="editItem(row)"></i>
     			<i class="glyphicon glyphicon glyphicon-remove"  [tooltip]="'Remove Item'" (click)="removeItem(row)"></i>
           </td>
-          <td [ngClass]="row.tooltipInfo ? (row.tooltipInfo[column.name] ? (row.tooltipInfo[column.name]['Valid'] === true ? ['bg-success'] : ['bg-danger']) : '') : ''" (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(getData(row, column.name))" style="text-align:right">
+          <td [ngClass]="row.tooltipInfo ? (row.tooltipInfo[column.name] ? (row.tooltipInfo[column.name]['Valid'] === true ? ['bg-success'] : ['bg-danger']) : '') : ''" (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(row[column.name])" style="text-align:right">
 
           <template #tooltipValues>
             <h6>Index:{{row.Index }}</h6>
-            <h6>Metric:{{column.name}}</h6>
+            <h6>Metric:{{column[name]}}</h6>
             <hr>
-            <div *ngFor="let test of (getData(row.tooltipInfo, column.name) | keyParser)" style="text-align:left !important">
+            <div *ngFor="let test of (row.tooltipInfo[column.name] | keyParser)" style="text-align:left !important">
             <span class="text-left" style="paddint-left: 10px"><b>{{test.key}}</b></span>
             <span class="text-right" *ngIf="test.key === 'CurTime'"> {{test.value | date:'d/M/y H:m:s'}}</span>
             <span class="text-right" *ngIf="test.key === 'LastTime'"> {{test.value | date:'d/M/y H:m:s'}}</span>
@@ -195,10 +195,6 @@ export class NgTableComponent {
       }
     });
     this.tableChanged.emit({ sorting: this.configColumns });
-  }
-
-  public getData(row: any, propertyName: string): string {
-    return propertyName.split('.').reduce((prev: any, curr: string) => prev[curr], row);
   }
 
   selectAllItems(selectAll) {
