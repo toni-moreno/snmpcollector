@@ -73,37 +73,25 @@
         <div class="panel panel-default" style="padding-bottom: 0px">
           <div class="panel-heading">Runtime Operations</div>
           <div class="panel-body">
-
             <ul class="list-group">
+              <!--  Device Gather Process State -->
               <li class="list-group-item">
                 <div class="row">
                   <div class="col-md-7 text-left">
-                    <span>SNMP State</span>
-                    <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the SNMP Active status"></span>
+                    <span> Device Gathering Process</span>
+                    <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the Gathering Process(only online not saved in the configuration database)"></span>
                   </div>
                   <div class="col-md-5 text-right">
                     <button type="button" (click)="runtime_dev.DeviceActive ? changeActiveDevice(runtime_dev.ID,false) : changeActiveDevice(runtime_dev.ID,true)" [ngClass]="runtime_dev.DeviceActive ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.DeviceActive ? 'Disable' : 'Enable'}}</button>
                   </div>
                 </div>
               </li>
-
+              <!--  Device Log Level -->
               <li class="list-group-item">
                 <div class="row">
                   <div class="col-md-7 text-left">
-                    <span>SNMP Debug</span>
-                    <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the SNMP Debug"></span>
-                  </div>
-                  <div class="col-md-5 text-right">
-                    <button type="button" (click)="runtime_dev.StateDebug ? changeStateDebug(runtime_dev.ID,false) : changeStateDebug(runtime_dev.ID,true)" [ngClass]="runtime_dev.StateDebug ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.StateDebug ? 'Disable' : 'Enable'}}</button>
-                  </div>
-                </div>
-              </li>
-
-              <li class="list-group-item">
-                <div class="row">
-                  <div class="col-md-7 text-left">
-                    <span>Log Level</span>
-                    <span class="glyphicon glyphicon-question-sign" tooltip="Change log level of the device"></span>
+                    <span>Device Log Level</span>
+                    <span class="glyphicon glyphicon-question-sign" tooltip="Change log level of the device (only online not saved in the configuration database)"></span>
                     <select style="width:100px" [(ngModel)]="runtime_dev.CurLogLevel" (ngModelChange)="onChangeLogLevel($event)" [ngModelOptions]="{standalone: true}">
                       <option style="padding-left:2px" *ngFor="let loglevel of loglLevelArray" [value]="loglevel">{{loglevel}}</option>
                     </select>
@@ -113,23 +101,48 @@
                   </div>
                 </div>
               </li>
-
+              <!--  Dowload Device Log File-->
               <li class="list-group-item">
                 <div class="row">
-                  <div class="col-md-8 text-left">
-                    <span>Force Flt Update</span>
-                    <span class="glyphicon glyphicon-question-sign" tooltip="Force FIlter update on next cicle"></span>
+                  <div class="col-md-7 text-left">
+                    <span>Download Device Log file</span>
+                    <span class="glyphicon glyphicon-question-sign" tooltip="Download the device related log file"></span>
                   </div>
-                  <div class="col-md-4 text-right">
-                    <button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Force</button>
+                  <div class="col-md-5 text-right">
+                    <button type="button" (click)="downloadLogFile(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Download</button>
                   </div>
                 </div>
               </li>
-
+              <!--  Force Flt Update -->
               <li class="list-group-item">
                 <div class="row">
                   <div class="col-md-8 text-left">
-                    <span>Force SNMP Reset</span>
+                    <span>Force Filter/Indexes Update</span>
+                    <span class="glyphicon glyphicon-question-sign" tooltip="Force Filter update on next gathering cicle "></span>
+                    <span>Pending Cicles: {{ runtime_dev['Stats'].ReloadLoopsPending }} </span>
+                  </div>
+                  <div class="col-md-4 text-right">
+                    <button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Force Now</button>
+                  </div>
+                </div>
+              </li>
+              <!--  SNMP Protocol Debug -->
+              <li class="list-group-item">
+                <div class="row">
+                  <div class="col-md-7 text-left">
+                    <span>SNMP Protocol Debug</span>
+                    <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the SNMP Protocol Debug (only online not saved in the configuration database)"></span>
+                  </div>
+                  <div class="col-md-5 text-right">
+                    <button type="button" (click)="runtime_dev.StateDebug ? changeStateDebug(runtime_dev.ID,false) : changeStateDebug(runtime_dev.ID,true)" [ngClass]="runtime_dev.StateDebug ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.StateDebug ? 'Disable' : 'Enable'}}</button>
+                  </div>
+                </div>
+              </li>
+              <!--  Force Snmp Reset -->
+              <li class="list-group-item">
+                <div class="row">
+                  <div class="col-md-8 text-left">
+                    <span>Force SNMP Connection Reset </span>
                     <span class="glyphicon glyphicon-question-sign" tooltip="Force Snmp conection Reset "></span>
                   </div>
                   <div class="col-md-4 text-right">
@@ -138,17 +151,6 @@
                 </div>
               </li>
 
-              <li class="list-group-item">
-                <div class="row">
-                  <div class="col-md-7 text-left">
-                    <span>Download Log file</span>
-                    <span class="glyphicon glyphicon-question-sign" tooltip="Download the device related log file"></span>
-                  </div>
-                  <div class="col-md-5 text-right">
-                    <button type="button" (click)="downloadLogFile(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Download</button>
-                  </div>
-                </div>
-              </li>
             </ul>
           </div>
         </div>
