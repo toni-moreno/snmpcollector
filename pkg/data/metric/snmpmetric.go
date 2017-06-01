@@ -395,9 +395,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 					s.log.Warnf("Warning in metric %s On EVAL string: %s : Value is not a valid Floating Pint (NaN/Inf) : %f", s.cfg.ID, s.cfg.ExtraData, v)
 					return
 				}
-			default:
-				s.log.Warnf("Warning in metric %s On EVAL string: %s : Value has not a valid format ", s.cfg.ID, s.cfg.ExtraData)
-				return
 			}
 			s.CookedValue = result
 			s.CurTime = time.Now()
