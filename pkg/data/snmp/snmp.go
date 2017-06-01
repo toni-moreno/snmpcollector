@@ -41,7 +41,7 @@ type SysInfo struct {
 
 func PduVal2BoolArray(pdu gosnmp.SnmpPDU) []bool {
 	data := pdu.Value.([]byte)
-	mainlog.Errorf("PduVal2BoolArray: %+v\n", data)
+	//mainlog.Errorf("PduVal2BoolArray: %+v\n", data)
 	barray := make([]bool, len(data)*8)
 	cnt := 0
 	for _, d := range data {
@@ -412,7 +412,7 @@ const (
 )
 
 // GetClient xx
-func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug bool) (*gosnmp.GoSNMP, *SysInfo, error) {
+func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, *SysInfo, error) {
 	var client *gosnmp.GoSNMP
 	hostIPs, err := net.LookupHost(s.Host)
 	if err != nil {
@@ -425,6 +425,10 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 	}
 	if len(hostIPs) > 1 {
 		l.Warnf("Lookup for %s host has more than one IP: %v => Finally used first IP %s", s.Host, hostIPs, hostIPs[0])
+	}
+	if maxrep == 0 {
+		//if not specified use the config value
+		maxrep = s.MaxRepetitions
 	}
 	switch s.SnmpVersion {
 	case "1":
@@ -442,7 +446,6 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 			l.Errorf("Error no community found %s in host %s", s.Community, s.Host)
 			return nil, nil, ers.New("Error on snmp community")
 		}
-
 		client = &gosnmp.GoSNMP{
 			Target:         hostIPs[0],
 			Port:           uint16(s.Port),
@@ -450,7 +453,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 			Version:        gosnmp.Version2c,
 			Timeout:        time.Duration(s.Timeout) * time.Second,
 			Retries:        s.Retries,
-			MaxRepetitions: s.MaxRepetitions,
+			MaxRepetitions: maxrep,
 		}
 	case "3":
 		seclpmap := map[string]gosnmp.SnmpV3MsgFlags{
@@ -547,7 +550,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 			Version:            gosnmp.Version3,
 			Timeout:            time.Duration(s.Timeout) * time.Second,
 			Retries:            s.Retries,
-			MaxRepetitions:     s.MaxRepetitions,
+			MaxRepetitions:     maxrep,
 			SecurityModel:      gosnmp.UserSecurityModel,
 			MsgFlags:           seclpmap[s.V3SecLevel],
 			SecurityParameters: UsmParams,
@@ -565,7 +568,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 		l.Errorf("error on first connect %s", err)
 		return nil, nil, err
 	} else {
-		l.Infof("First SNMP connection to host  %s stablished", s.Host)
+		l.Infof("First SNMP connection to host  %s stablished with MaxRepetitions set to %d", s.Host, maxrep)
 	}
 	//first snmp query
 	si, err := SnmpGetSysInfo(s.ID, client, l)
