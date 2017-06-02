@@ -150,6 +150,21 @@
                   </div>
                 </div>
               </li>
+              <!--  Set Snmp MaxRepetitions -->
+              <li class="list-group-item">
+                <div class="row">
+                  <div class="col-md-8 text-left">
+                    <span>Set SNMP MaxRepetitions(0-255) </span>
+                    <span class="glyphicon glyphicon-question-sign" tooltip="Force Snmp conection Reset "></span>
+                    <span>
+                      <input type=text [(ngModel)]="maxrep" placeholder="50" >
+                    </span>
+                  </div>
+                  <div class="col-md-4 text-right">
+                    <button type="button" (click)="setSnmpMaxRepetitions(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Set</button>
+                  </div>
+                </div>
+              </li>
 
             </ul>
           </div>

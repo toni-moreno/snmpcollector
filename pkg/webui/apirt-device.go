@@ -4,6 +4,7 @@ import (
 	//"github.com/go-macaron/binding"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"gopkg.in/macaron.v1"
+	"strconv"
 )
 
 func NewApiRtDevice(m *macaron.Macaron) error {
@@ -21,6 +22,7 @@ func NewApiRtDevice(m *macaron.Macaron) error {
 		m.Put("/log/setloglevel/:id/:level", reqSignedIn, RTSetLogLevelDev)
 		m.Get("/log/getdevicelog/:id", reqSignedIn, RTGetLogFileDev)
 		m.Get("/filter/forcefltupdate/:id", reqSignedIn, RTForceFltUpdate)
+		m.Get("/snmpmaxrep/:id/:maxrep", reqSignedIn, RTSnmpSetMaxRep)
 	})
 
 	return nil
@@ -29,6 +31,19 @@ func NewApiRtDevice(m *macaron.Macaron) error {
 /****************/
 /*Runtime Info
 /****************/
+func RTSnmpSetMaxRep(ctx *Context) {
+	id := ctx.Params(":id")
+	maxrep := ctx.Params(":maxrep")
+	d, err := agent.GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
+		return
+	}
+	log.Infof("set maxrepetitions for snmp device %s", id)
+	i, _ := strconv.Atoi(maxrep)
+	d.RTActSnmpMaxRep(uint8(i))
+	ctx.JSON(200, "OK")
+}
 
 // RTForceFltUpdate xx
 func RTForceFltUpdate(ctx *Context) {

@@ -111,4 +111,13 @@ export class RuntimeService {
             responseData.json()
         )
     };
+
+    setSnmpMaxRepetitions(id: string, maxrep : string) {
+        console.log(" SERVICE : Set Snmp Max Repeticions : "+ maxrep +" On device: "+id)
+        // return an observable
+        return this.httpAPI.get('/api/rt/device/snmpmaxrep/'+id+'/'+maxrep)
+        .map( (responseData) =>
+            responseData.json()
+        )
+    };
 }

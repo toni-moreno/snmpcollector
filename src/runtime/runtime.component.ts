@@ -35,6 +35,7 @@ export class RuntimeComponent implements OnDestroy {
     'info',
     'debug'
   ];
+  maxrep: any;
   counterDef: CounterType[] = [
   /*0*/    { "show":false, "id": "SnmpGetQueries","label": "SnmpGet Queries","type":"counter", "tooltip": "number of snmp queries"},
   /*1*/    { "show":false, "id": "SnmpWalkQueries","label": "SnmpWalk Queries","type":"counter", "tooltip": "number of snmp walks"},
@@ -387,6 +388,24 @@ export class RuntimeComponent implements OnDestroy {
       err => console.error(err),
       () => console.log('DONE')
       );
+  }
+
+
+  setSnmpMaxRepetitions(id) {
+    if (this.maxrep.toString().match(/^([1-9]+\d*)$/) && this.maxrep < 256) {
+        console.log("Set Snmp Max Repeticions : "+ this.maxrep +" On device: "+id)
+        this.runtimeService.setSnmpMaxRepetitions(id,this.maxrep)
+          .subscribe(
+          data => {
+            console.log("set max repetitions done")
+          },
+          err => console.error(err),
+          () => console.log('DONE')
+          );
+    } else {
+      alert(this.maxrep+' is not an unsigned 8 bits integer')
+    }
+    console.log("ID,event", id, event, this.maxrep);
   }
 
   onChange(event){

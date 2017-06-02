@@ -177,6 +177,11 @@ func (d *SnmpDevice) RTActSnmpDebug(activate bool) {
 	d.Node.SendMsg(&bus.Message{Type: "snmpdebug", Data: activate})
 }
 
+//RTActSnmpMaxRep change snmp MaxRepetitions
+func (d *SnmpDevice) RTActSnmpMaxRep(maxrep uint8) {
+	d.Node.SendMsg(&bus.Message{Type: "setsnmpmaxrep", Data: maxrep})
+}
+
 // RTSetLogLevel set the log level for this device
 func (d *SnmpDevice) RTSetLogLevel(level string) {
 	d.Node.SendMsg(&bus.Message{Type: "loglevel", Data: level})
@@ -228,7 +233,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 			} else {
 				d.Debugf("MEASUREMENT CFG KEY: %s VALUE %s | Connection [%s] %+v", val, mVal.Name, val, d.snmpClientMap[mVal.ID])
 				//
-				c, err := d.InitSnmpConnect(mVal.ID, d.cfg.SnmpDebug)
+				c, err := d.InitSnmpConnect(mVal.ID, d.cfg.SnmpDebug, 0)
 				if err != nil {
 					d.Errorf("Error on snmpconnection initialization on measurement %s : Error: %s", mVal.ID, err)
 					continue
@@ -400,9 +405,9 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 }
 
 // InitSnmpConnect does the  SNMP client conection and retrieve system info
-func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool) (*gosnmp.GoSNMP, error) {
+func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
 	d.Infof("Beginning SNMP connection")
-	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug)
+	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug, maxrep)
 	if err != nil {
 		d.DeviceConnected = false
 		d.Errorf("Client connect error to device  error :%s", err)
@@ -417,11 +422,11 @@ func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool) (*gosnmp.GoSNMP, e
 	return client, nil
 }
 
-func (d *SnmpDevice) snmpReset(debug bool) {
+func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 	d.Infof(" Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
 	d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
 	for _, m := range d.Measurements {
-		c, err := d.InitSnmpConnect(m.ID, debug)
+		c, err := d.InitSnmpConnect(m.ID, debug, maxrep)
 		if err != nil {
 			d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
 		}
@@ -461,7 +466,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 		FORCEINIT:
 			//check if device is online
 			if d.DeviceConnected == false {
-				_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug)
+				_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug, 0)
 				if err == nil {
 					startSnmp := time.Now()
 					d.InitDevMeasurements()
@@ -544,13 +549,18 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					d.rtData.Unlock()
 				case "snmpreset":
 					d.rtData.Lock()
-					d.snmpReset(false)
+					d.snmpReset(false, 0)
 					d.rtData.Unlock()
 				case "snmpdebug":
 					debug := val.Data.(bool)
 					d.rtData.Lock()
 					d.StateDebug = debug
-					d.snmpReset(debug)
+					d.snmpReset(debug, 0)
+					d.rtData.Unlock()
+				case "setsnmpmaxrep":
+					maxrep := val.Data.(uint8)
+					d.rtData.Lock()
+					d.snmpReset(false, maxrep)
 					d.rtData.Unlock()
 				case "enabled":
 					status := val.Data.(bool)

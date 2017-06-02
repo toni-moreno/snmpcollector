@@ -38,7 +38,7 @@ func AgentReloadConf(ctx *Context) {
 func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
-	_, sysinfo, err := snmp.GetClient(&cfg, log, "ping", false)
+	_, sysinfo, err := snmp.GetClient(&cfg, log, "ping", false, 0)
 	if err != nil {
 		log.Debugf("ERROR  on query device : %s", err)
 		ctx.JSON(400, err.Error())
@@ -62,7 +62,7 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 		return
 	}
 
-	snmpcli, info, err := snmp.GetClient(&cfg, log, "query", false)
+	snmpcli, info, err := snmp.GetClient(&cfg, log, "query", false, 0)
 	if err != nil {
 		log.Debugf("ERROR  on open connection with device %s : %s", cfg.ID, err)
 		ctx.JSON(400, err.Error())
