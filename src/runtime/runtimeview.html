@@ -21,7 +21,11 @@
         - {{dev.ID}}
         <template #tooltipMetrics> View {{dev.ID }}
           <br/> #Metrics: {{dev.value.NumMetrics}}
-          <br/>#Measurements: {{dev.value.NumMeasurements}} </template>
+          <br/>#Measurements: {{dev.value.NumMeasurements}}
+        </template>
+
+        <button type="button" (click)="dev.value.DeviceActive ? changeActiveDevice(dev.ID,false) : changeActiveDevice(dev.ID,true)" [ngClass]="dev.value.DeviceActive ? 'btn btn-danger' : 'btn btn-success'">{{dev.value.DeviceActive ? 'Disable' : 'Enable'}}</button>
+        <span>GT: {{dev.value.Counters[16] | elapsedseconds:3 }}</span>
       </li>
     </ul>
   </div>

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ViewChild, ChangeDetectorRef, OnDes
 import { FormBuilder, Validators} from '@angular/forms';
 import { RuntimeService } from './runtime.service';
 import { ItemsPerPageOptions } from '../common/global-constants';
-
+declare var _:any;
 @Component({
   selector: 'runtime',
   providers: [RuntimeService],
@@ -310,10 +310,23 @@ export class RuntimeComponent implements OnDestroy {
 
   changeActiveDevice(id, event) {
     console.log("ID,event", id, event);
+    //console.log(this.runtime_devs);
+
     this.runtimeService.changeDeviceActive(id, event)
       .subscribe(
       data => {
-        this.runtime_dev.DeviceActive = !this.runtime_dev.DeviceActive;
+        _.forEach(this.runtime_devs,function(d,key){
+          //console.log(d,key)
+          if (d.ID == id) {
+            d.value.DeviceActive = !d.value.DeviceActive;
+            return false
+          }
+        })
+            //this.runtime_devs[id]['DeviceActive']=event;
+        if (this.runtime_dev != null) {
+          this.runtime_dev.DeviceActive = !this.runtime_dev.DeviceActive;
+        }
+
       },
       err => console.error(err),
       () => console.log('DONE')
