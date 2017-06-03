@@ -46,12 +46,14 @@ func formatDec2ASCII(input string) string {
 	return stripCtlAndExtFromBytes(string(bArray))
 }
 
-func formatReGexp(input string, pattern string, replace string) string {
+func formatReGexp(l *logrus.Logger, input string, pattern string, replace string) string {
 	re, err := regexp.Compile(pattern)
-	if err == nil {
-		return input
+	if err != nil {
+		l.Errorf("FormatReGexp  Input[%s] Pattern [%s] Error [%s] ", input, pattern, err)
+		return ""
 	}
 	match := re.FindStringSubmatch(input)
+	l.Debugf("FormatReGexp Input[%s] Pattern [%s] Match %+v", input, pattern, match)
 
 	final := replace
 	for i := 1; i < len(match); i++ {
@@ -156,6 +158,23 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 				}
 				section = sectionDotSlice(v, first, last)
 				l.Debugf("FormatTag[%s]: final section first/last[%d/%d] from [%s] took [%s] ", format, first, last, v, section)
+
+			case strings.HasPrefix(sectionmode, "REGEX/"):
+				re2, err := regexp.Compile("REGEX/(.*)/(.*)/")
+				if err != nil {
+					l.Warnf("FormatTag[%s]: REGEX - Regex ERROR %s ", format, err)
+					break
+				}
+				match2 := re2.FindStringSubmatch(sectionmode)
+				if len(match2) < 3 {
+					l.Warnf("FormatTag[%s]: REGEX - ERROR on number or paramters %+v  for string %s", format, match2, sectionmode)
+					break
+				}
+				userRegex := match2[1]
+				userSubst := match2[2]
+				section = formatReGexp(l, v, userRegex, userSubst)
+				l.Debugf("FormatTag[%s]: final section REGEX/%s/%s/ from [%s] took [%s] ", format, userRegex, userSubst, v, section)
+
 			default:
 				l.Warnf("FormatTag[%s]: Unknown SECTION parameters %s ,  pattern %s", format, sectionmode, pattern)
 			}
