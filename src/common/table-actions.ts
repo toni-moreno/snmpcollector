@@ -43,14 +43,18 @@ import { FormsModule, NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/f
         <select *ngIf="selectorSelected.type === 'boolean'" class="select-pages" style="width:auto" [(ngModel)]="propertySelected">
           <option *ngFor="let option of selectorSelected.options" [ngValue]="option" (ngModelChange)="changeProperty($event)">{{option}}</option>
         </select>
-        <input *ngIf="selectorSelected.type === 'input'" [(ngModel)]="propertySelected" style="width:auto"/>
+        <ss-multiselect-dropdown *ngIf="selectorSelected.type === 'multiselector'" [options]="selectorSelected.options" [texts]="myTexts" [settings]="mySettingsInflux" [(ngModel)]="propertySelected"></ss-multiselect-dropdown>
+        <div [formGroup]="selectorSelected.options" *ngIf="selectorSelected.type === 'input'" style="border:none; display:inline">
+              <input formControlName="formControl" id="formControl" [(ngModel)]="propertySelected" style="width:auto"/>
+              <control-messages style="display:block; margin-top:5px" [control]="selectorSelected.options.controls.formControl" ></control-messages>
+        </div>
       </div>
       <div class="col-md-1" *ngIf="propertySelected">
-          <button style="padding-top: 0px; margin-top: 0px;" (click)="applyAction(selectedOption.action,selectorSelected.title,propertySelected)" [disabled]="itemsSelected === 0">Apply</button>
+          <button style="padding-top: 0px; margin-top: 0px;" (click)="applyAction(selectedOption.action,selectorSelected.title,propertySelected)" [disabled]="itemsSelected === 0 || (selectorSelected.type === 'input' ? !selectorSelected.options.valid : false)">Apply</button>
       </div>
       <div class="col-md-3 text-right" *ngIf="actionApplied">
-      <progressbar *ngIf="actionApplied" class="progress-striped active" [value]="itemsApplied === counterErrors.length ? itemsApplied : counterItems" [max]="itemsApplied" [type]="counterItems === itemsApplied ? 'success' : 'danger'">
-        {{counterItems}} <i *ngIf="counterItems !== itemsApplied" class="glyphicon glyphicon-exclamation-sign" [tooltip]="errorTooltip"></i> / {{itemsApplied}}
+      <progressbar *ngIf="actionApplied" class="progress-striped active" [value]="itemsApplied === counterErrors.length ? itemsApplied : counterItems" [max]="itemsApplied" [type]="counterItems === itemsApplied ? 'success' : 'danger'" style="width : auto">
+        {{counterItems}} <i *ngIf="counterItems !== itemsApplied && counterErrors.length > 0" class="glyphicon glyphicon-exclamation-sign" [tooltip]="errorTooltip"></i> / {{itemsApplied}}
       </progressbar>
       <template #errorTooltip>
         <p *ngFor="let error of counterErrors">{{error.ID}} - {{error.error}}</p>
