@@ -74,19 +74,19 @@ export class MultiSelectSearchFilter {
                     </div>
                 </li>
                 <li class="divider" *ngIf="settings.enableSearch"></li>
-                <li *ngIf="settings.showCheckAll">
+                <li *ngIf="settings.showCheckAll && settings.singleSelect === false">
                     <a href="javascript:;" role="menuitem" tabindex="-1" (click)="checkAll()">
                         <span style="width: 16px;" class="glyphicon glyphicon-ok"></span>
                         {{ texts.checkAll }}
                     </a>
                 </li>
-                <li *ngIf="settings.showUncheckAll">
+                <li *ngIf="settings.showUncheckAll && settings.singleSelect === false">
                     <a href="javascript:;" role="menuitem" tabindex="-1" (click)="uncheckAll()">
                         <span style="width: 16px;" class="glyphicon glyphicon-remove"></span>
                         {{ texts.uncheckAll }}
                     </a>
                 </li>
-                <li *ngIf="settings.showCheckAll || settings.showUncheckAll" class="divider"></li>
+                <li *ngIf="(settings.showCheckAll || settings.showUncheckAll) && settings.singleSelect === false" class="divider"></li>
                 <li *ngFor="let option of options | searchFilter:searchFilterText">
                     <a href="javascript:;" role="menuitem" tabindex="-1" (click)="setSelected($event, option)">
                         <input *ngIf="settings.checkedStyle == 'checkboxes'" type="checkbox" [checked]="isSelected(option)" />
@@ -133,8 +133,8 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
         buttonClasses: 'btn btn-default',
         selectionLimit: 0,
         closeOnSelect: false,
-        showCheckAll: false,
-        showUncheckAll: false,
+        showCheckAll: true,
+        showUncheckAll: true,
         dynamicTitleMaxItems: 3,
         maxHeight: '300px',
         singleSelect: false,

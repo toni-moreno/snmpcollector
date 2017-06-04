@@ -14,7 +14,7 @@
         <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
         <span [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']" style="font-size : 100%">{{length}} Results</span>
         <button style ="margin-top: -5px;" type="button" (click)="newDevice()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
-        <button (click)="editEnabled = !editEnabled"><i class="glyphicon glyphicon-edit"></i> {{editEnabled === false ? 'Enable Edit' : 'Disable Edit' }}</button>
+        <button style ="margin-top: -5px;" type="button" (click)="enableEdit()" class="btn btn-primary"><i class="glyphicon glyphicon-edit"></i> {{editEnabled === false ? 'Enable Edit' : 'Disable Edit' }}</button>
     </div>
       <div class="col-md-4 text-right">
         <span style="margin-left: 20px"> Items per page: </span>
