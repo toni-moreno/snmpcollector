@@ -263,7 +263,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		if s.cfg.GetRate == true {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue.(uint64) > s.LastValue.(uint64) {
+				if s.CurValue.(uint64) >= s.LastValue.(uint64) {
 					s.CookedValue = float64(s.CurValue.(uint64)-s.LastValue.(uint64)) / s.ElapsedTime
 					if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
 						s.CookedValue = (s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift
