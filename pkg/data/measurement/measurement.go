@@ -37,7 +37,7 @@ type Measurement struct {
 	cfg              *config.MeasurementCfg
 	ID               string
 	MName            string
-	MetricTable      map[string]map[string]*metric.SnmpMetric //snmpMetric mapped with metric_names and Index
+	MetricTable      *MetricTable
 	snmpOids         []string
 	OidSnmpMap       map[string]*metric.SnmpMetric `json:"-"` //snmpMetric mapped with real OID's
 	AllIndexedLabels map[string]string             //`json:"-"` //all available values on the remote device
@@ -63,9 +63,7 @@ func New(c *config.MeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool
 
 func (m *Measurement) InvalidateMetrics() {
 	//invalidate normal metrics
-	for _, v := range m.OidSnmpMap {
-		v.Valid = false
-	}
+	m.MetricTable.InvalidateTable()
 }
 
 /*Init does:
@@ -111,7 +109,7 @@ func (m *Measurement) Init() error {
 	 * Initialize Metric Runtime data in one array m-values
 	 * ******************************/
 	m.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the walk device] | OID=>Metric MAP")
-	m.InitMetricTable()
+	m.MetricTable = NewMetricTable(m.cfg, m.log, m.CurIndexedLabels)
 	return nil
 }
 
@@ -134,26 +132,14 @@ func (m *Measurement) GetMode() string {
 
 // InitBuildRuntime init
 func (m *Measurement) InitBuildRuntime() {
-	m.snmpOids = []string{}
-	m.OidSnmpMap = make(map[string]*metric.SnmpMetric)
-	//metric level
-	for kIdx, vIdx := range m.MetricTable {
-		m.Debugf("KEY iDX %s", kIdx)
-		//index level
-		for kM, vM := range vIdx {
-			m.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
-			t := vM.GetDataSrcType()
-			switch t {
-			case "STRINGEVAL", "CONDITIONEVAL":
-			default:
-				//this array is used in SnmpGetData to send IOD's to the end device
-				// so it can not contain any other thing than OID's
-				// on string eval it contains a identifier not OID
-				m.snmpOids = append(m.snmpOids, vM.RealOID)
-			}
-			m.OidSnmpMap[vM.RealOID] = vM
-		}
+
+	switch m.cfg.GetMode {
+	case "value":
+		m.snmpOids, m.OidSnmpMap = m.MetricTable.GetSnmpMaps()
+	default:
+		m.OidSnmpMap = m.MetricTable.GetSnmpMap()
 	}
+
 }
 
 // AddFilter attach a filtering process to the measurement
@@ -212,7 +198,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 	//now we have the 	m.Filterlabels array initialized with only those values which we will need
 	//Loading final Values to query with snmp
 	m.CurIndexedLabels = m.Filter.MapLabels(m.AllIndexedLabels)
-	m.InitMetricTable()
+	m.MetricTable = NewMetricTable(m.cfg, m.log, m.CurIndexedLabels)
 	return err
 }
 
@@ -248,10 +234,10 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 		m.Debugf("DELETED INDEXES: %+v", delIndexes)
 
 		if len(delIndexes) > 0 {
-			m.PopMetricTable(delIndexes)
+			m.MetricTable.Pop(delIndexes)
 		}
 		if len(newIndexes) > 0 {
-			m.PushMetricTable(newIndexes)
+			m.MetricTable.Push(newIndexes)
 		}
 		return true, nil
 	}
@@ -287,10 +273,10 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 	m.CurIndexedLabels = newIndexedLabels
 
 	if len(delIndexes) > 0 {
-		m.PopMetricTable(delIndexes)
+		m.MetricTable.Pop(delIndexes)
 	}
 	if len(newIndexes) > 0 {
-		m.PushMetricTable(newIndexes)
+		m.MetricTable.Push(newIndexes)
 	}
 
 	return true, nil
@@ -328,7 +314,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 	for _, v := range m.cfg.FieldMetric {
 		if err := m.Walk(v.BaseOID, setRawData); err != nil {
 			m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
-			errors += int64(len(m.MetricTable))
+			errors += int64(m.MetricTable.Len())
 		}
 	}
 
@@ -423,7 +409,7 @@ func (m *Measurement) ComputeEvaluatedMetrics() {
 					m.Debugf("OK Evaluated metric found %s Eval KEY", evalkey)
 					metr.Compute(parameters)
 					if metr.Valid == true {
-						parameters[v.ID] = metr.CookedValue
+						parameters[v.FieldName] = metr.CookedValue
 					}
 				} else {
 					m.Debugf("Evaluated metric not Found for Eval key %s", evalkey)

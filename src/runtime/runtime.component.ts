@@ -338,32 +338,38 @@ export class RuntimeComponent implements OnDestroy {
         //Generate Columns
         if (data['Measurements'] && data['Measurements'].length > 0) {
           for (let measKey of data['Measurements']) {
+            console.log('measKey: ',measKey)
             //Generate the Coluns array, go over it only once using break
             //Save it as array of arrays on finalColumns
-            if (Object.keys(measKey['MetricTable']).length !== 0) {
-              for (let indexKey in measKey['MetricTable']) {
-                this.tmpcolumns = [];
-                this.tmpcolumns.push({ title: 'Index', name: 'Index' });
-                for (let metricId in measKey['MetricTable'][indexKey]) {
-                  let fieldName = measKey['MetricTable'][indexKey][metricId].FieldName
-                  let tmpColumn: any = { title: fieldName, name: fieldName }
-                  this.tmpcolumns.push(tmpColumn);
-                }
-                this.finalColumns.push(this.tmpcolumns);
-                break;
+            if (Object.keys(measKey['MetricTable']['Header']).length !== 0) {
+              this.tmpcolumns = [];
+              this.tmpcolumns.push({ title: 'Index', name: 'Index' });
+              for (let fieldName in measKey['MetricTable']['Header']) {
+                //console.log('FieldName: ' +fieldName)
+                let tmpColumn: any = { title: fieldName, name: fieldName }
+                this.tmpcolumns.push(tmpColumn);
               }
+
+
+            this.finalColumns.push(this.tmpcolumns);
             } else {
               this.finalColumns.push([]);
             }
             //Go over the array again and get the DATA
             //indexKey contains the Index, must generate the same on multiples arrays
-            for (let indexKey in measKey['MetricTable']) {
+            //console.log(measKey['MetricTable']['Row'])
+            for (let rowid in measKey['MetricTable']['Row']) {
+              let row = measKey['MetricTable']['Row'][rowid]
+              //console.log('row: ',row)
               let tmpTable: any = { tooltipInfo: {} };
-              tmpTable.Index = indexKey;
-              for (let metricId in measKey['MetricTable'][indexKey]) {
-                let fieldName = measKey['MetricTable'][indexKey][metricId].FieldName
-                tmpTable[fieldName] = measKey['MetricTable'][indexKey][metricId]['CookedValue'];
-                tmpTable['tooltipInfo'][fieldName] = measKey['MetricTable'][indexKey][metricId];
+              tmpTable.Index = rowid;
+              for (let metricid in row['Data'] ) {
+                let metric = row['Data'][metricid]
+                //console.log('MetricID: ',metric)
+                let fieldName = metric.FieldName
+                //console.log('fieldName: ',fieldName)
+                tmpTable[fieldName] = metric.CookedValue;
+                tmpTable['tooltipInfo'][fieldName] = metric;
               }
               this.dataTable.push(tmpTable);
             }
