@@ -53,14 +53,29 @@ export class AvailableTableActions {
             'true','false'
             ]
           },
-          {'title': 'Freq','type':'input',' options':
+          {'title': 'Timeout','type':'input', 'options':
             new FormGroup({
-              formControl : new FormControl('', Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator]))
+              formControl : new FormControl('', Validators.compose([Validators.required,ValidationService.uintegerNotZeroValidator]))
+            })
+          },
+          {'title': 'Retries','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl('', Validators.compose([Validators.required,ValidationService.uintegerNotZeroValidator]))
+            })
+          },
+          {'title': 'Freq','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl('', Validators.compose([Validators.required,ValidationService.uintegerNotZeroValidator]))
             })
           },
           {'title': 'MaxRepetitions','type':'input', 'options':
             new FormGroup({
               formControl : new FormControl('', Validators.compose([Validators.required,ValidationService.uinteger8NotZeroValidator]))
+            })
+          },
+          {'title': 'DeviceTagName','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl('', Validators.required)
             })
           },
           {'title' : 'MeasurementGroups', 'type':'multiselector', 'options' :
