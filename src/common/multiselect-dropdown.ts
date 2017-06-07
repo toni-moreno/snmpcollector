@@ -11,6 +11,8 @@ import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs/Rx';
 import { FormsModule, NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 
+declare var _:any;
+
 const MULTISELECT_VALUE_ACCESSOR: any = {
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => MultiselectDropdown),
@@ -63,26 +65,26 @@ export class MultiSelectSearchFilter {
     template: `
         <div class="btn-group">
             <button type="button" class="dropdown-toggle" [ngClass]="settings.buttonClasses" (click)="toggleDropdown()">{{ title }}&nbsp;<span class="caret"></span></button>
-            <ul *ngIf="isVisible" class="dropdown-menu" [class.pull-right]="settings.pullRight" [style.max-height]="settings.maxHeight" style="display: block; height: auto; overflow-y: auto; z-index:1001">
+            <ul *ngIf="isVisible" class="dropdown-menu" [class.pull-right]="settings.pullRight" [style.max-height]="settings.maxHeight" style="display: block; height: auto; overflow-y: auto; z-index:1001; min-width:300px">
                 <li style="margin: 0px 5px 5px 5px;" *ngIf="settings.enableSearch">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-addon" id="sizing-addon3"><i class="fa fa-search"></i></span>
+                        <span class="input-group-addon" id="sizing-addon3" (click)="clearSearch()" role="button"><i class="glyphicon glyphicon-trash"></i></span>
                         <input type="text" class="form-control" placeholder="{{ texts.searchPlaceholder }}" aria-describedby="sizing-addon3" [(ngModel)]="searchFilterText">
-                        <span class="input-group-btn" *ngIf="searchFilterText.length > 0">
-                            <button class="btn btn-default" type="button" (click)="clearSearch()"><i class="fa fa-times"></i></button>
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" role="text"><label style="font-size: 100%" class="label label-info">{{(options|searchFilter:searchFilterText).length}} results</label></button>
                         </span>
                     </div>
                 </li>
                 <li class="divider" *ngIf="settings.enableSearch"></li>
                 <li *ngIf="settings.showCheckAll && settings.singleSelect === false">
                     <a href="javascript:;" role="menuitem" tabindex="-1" (click)="checkAll()">
-                        <span style="width: 16px;" class="glyphicon glyphicon-ok"></span>
+                        <span style="width: 16px;" class="glyphicon glyphicon-ok text-success"></span>
                         {{ texts.checkAll }}
                     </a>
                 </li>
                 <li *ngIf="settings.showUncheckAll && settings.singleSelect === false">
                     <a href="javascript:;" role="menuitem" tabindex="-1" (click)="uncheckAll()">
-                        <span style="width: 16px;" class="glyphicon glyphicon-remove"></span>
+                        <span style="width: 16px;" class="glyphicon glyphicon-remove text-danger"></span>
                         {{ texts.uncheckAll }}
                     </a>
                 </li>
@@ -90,7 +92,7 @@ export class MultiSelectSearchFilter {
                 <li *ngFor="let option of options | searchFilter:searchFilterText">
                     <a href="javascript:;" role="menuitem" tabindex="-1" (click)="setSelected($event, option)">
                         <input *ngIf="settings.checkedStyle == 'checkboxes'" type="checkbox" [checked]="isSelected(option)" />
-                        <span *ngIf="settings.checkedStyle == 'glyphicon'" style="width: 16px;" class="glyphicon" [class.glyphicon-ok]="isSelected(option)"></span>
+                        <span *ngIf="settings.checkedStyle == 'glyphicon'" style="width: 16px;" [ngClass]="isSelected(option) ? ['glyphicon glyphicon-ok' , 'text-success'] : 'glyphicon'"></span>
                         {{ option.name }}
                     </a>
                 </li>
@@ -140,7 +142,7 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
         singleSelect: false,
     };
     protected defaultTexts: IMultiSelectTexts = {
-        checkAll: 'Check all',
+        checkAll: 'Check all filtered',
         uncheckAll: 'Uncheck all',
         checked: 'checked',
         checkedPlural: 'checked',
@@ -254,7 +256,13 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
     }
 
     checkAll() {
-        this.model = this.options.map(option => option.id);
+        if(!this.model) this.model = [];
+        let newEntries = _.differenceWith(new MultiSelectSearchFilter().transform(this.options,this.searchFilterText).map(option => option.id),this.model,_.isEqual);
+        this.model = newEntries.concat(this.model);
+        this.onModelChange(this.model);
+    }
+
+    checkAllFiltered() {
         this.onModelChange(this.model);
     }
 
