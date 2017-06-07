@@ -26,7 +26,7 @@
     <br>
     <table-actions [editEnabled]="editEnabled" [counterErrors]="counterErrors" [counterItems]="counterItems || 0" [itemsSelected]="selectedArray.length" [tableAvailableActions]="tableAvailableActions" (actionApply)="applyAction($event)"></table-actions>
     <my-spinner [isRunning]="isRequesting"></my-spinner>
-    <ng-table *ngIf="isRequesting === false" [config]="config" [(checkedItems)]="selectedArray" [editMode]="editEnabled" (tableChanged)="onChangeTable(config)" (exportedItem)="exportItem($event)" (viewedItem)="viewItem($event)" (editedItem)="editDevice($event)" (removedItem)="removeItem($event)" [showCustom]="true" [rows]="rows" [columns]="columns">
+    <ng-table *ngIf="isRequesting === false" [exportType]="'snmpdevicecfg'" [config]="config" [(checkedItems)]="selectedArray" [editMode]="editEnabled" (tableChanged)="onChangeTable(config)" (exportedItem)="exportItem($event)" (viewedItem)="viewItem($event)" (editedItem)="editDevice($event)" (removedItem)="removeItem($event)" [showCustom]="true" [rows]="rows" [columns]="columns">
     </ng-table>
     <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
     </pagination>
