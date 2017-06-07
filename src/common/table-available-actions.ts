@@ -12,12 +12,14 @@ export class AvailableTableActions {
     switch (type) {
       case 'device':
         return this.getDeviceAvailableActions(data);
+      case 'metric':
+        return this.getMetricAvailableActions();
       default:
         return null;
       }
   }
 
-  constructor (componentType : string, extraData : any) {
+  constructor (componentType : string, extraData? : any) {
     this.availableOptions = this.checkComponentType(componentType, extraData);
   }
 
@@ -90,6 +92,41 @@ export class AvailableTableActions {
           }
           ]
         }
+      }
+    ];
+    return tableAvailableActions;
+  }
+
+
+  //Devices Available Acions:
+  getMetricAvailableActions (data ? : any) : any {
+    let tableAvailableActions = [
+    //Remove Action
+      {'title': 'Remove', 'content' :
+        {'type' : 'button','action' : 'RemoveAllSelected'}
+      },
+    //Change Property Action
+      {'title': 'Change property', 'content' :
+        {'type' : 'selector', 'action' : 'ChangeProperty', 'options' : [
+          {'title' : 'DataSrcType', 'type':'boolean', 'options' : [
+            'INTEGER','Integer32','Gauge32','UInteger32','Unsigned32','Counter32','Counter64','TimeTicks','BITS','OCTETSTRING','OID','IpAddress','TIMETICKS','COUNTER32','COUNTER64','COUNTERXX','HWADDR','STRINGPARSER','STRINGEVAL','CONDITIONEVAL','BITSCHK'
+            ]
+          },
+          {'title': 'Scale','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl('', Validators.compose([Validators.required,ValidationService.floatValidator]))
+            })
+          },
+          {'title': 'Shift','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl('', Validators.compose([Validators.required,ValidationService.floatValidator]))
+            })
+          },
+          {'title' : 'IsTag', 'type':'boolean', 'options' : [
+            'true','false'
+            ]
+          }
+        ]},
       }
     ];
     return tableAvailableActions;

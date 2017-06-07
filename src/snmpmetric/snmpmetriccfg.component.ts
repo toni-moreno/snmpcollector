@@ -7,10 +7,16 @@ import { ControlMessagesComponent } from '../common/control-messages.component'
 import { ValidationService } from '../common/validation.service'
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
+import { Observable } from 'rxjs/Rx';
 
 import { GenericModal } from '../common/generic-modal';
 import { ExportServiceCfg } from '../common/dataservice/export.service'
 import { ItemsPerPageOptions } from '../common/global-constants';
+
+import { TableActions } from '../common/table-actions';
+import { AvailableTableActions } from '../common/table-available-actions';
+
+declare var _:any;
 
 @Component({
   selector: 'snmpmetrics',
@@ -23,6 +29,13 @@ export class SnmpMetricCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
+
+  editEnabled : boolean = false;
+  selectedArray : any = [];
+
+  public isRequesting : boolean;
+  public counterItems : number = null;
+  public counterErrors: any = [];
 
   itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
@@ -52,8 +65,9 @@ export class SnmpMetricCfgComponent {
     { title: 'IsTag', name: 'IsTag' }
   ];
 
+  public tableAvailableActions : any;
   public page: number = 1;
-  public itemsPerPage: number = 10;
+  public itemsPerPage: number = 20;
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
@@ -71,6 +85,13 @@ export class SnmpMetricCfgComponent {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
+  }
+
+  enableEdit() {
+    this.editEnabled = !this.editEnabled;
+    console.log(this.editEnabled);
+    let obsArray = [];
+    this.tableAvailableActions = new AvailableTableActions('metric').availableOptions;
   }
 
   createStaticForm() {
@@ -158,10 +179,14 @@ export class SnmpMetricCfgComponent {
   }
 
   reloadData() {
+    //In order to avoid issues with the array we clean it every time we refresh data
+    this.selectedArray = [];
+    this.isRequesting = true;
     // now it's a simple subscription to the observable
-    this.snmpMetricService.getMetrics(this.filter)
+    this.snmpMetricService.getMetrics(null)
       .subscribe(
       data => {
+        this.isRequesting = false;
         this.snmpmetrics = data;
         this.data = data;
         this.onChangeTable(this.config);
@@ -176,6 +201,25 @@ export class SnmpMetricCfgComponent {
     this.myFilterValue = "";
     this.config.filtering = {filtering: { filterString: '' }};
     this.onChangeTable(this.config);
+  }
+
+  applyAction(test : any) : void {
+    switch(test.action) {
+       case "RemoveAllSelected": {
+          this.removeAllSelectedItems(this.selectedArray);
+          break;
+       }
+       case "ChangeProperty": {
+          this.updateAllSelectedItems(this.selectedArray,test.field,test.value)
+          break;
+       }
+       case "AppendProperty": {
+         this.updateAllSelectedItems(this.selectedArray,test.field,test.value,true);
+       }
+       default: {
+          break;
+       }
+    }
   }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
@@ -280,10 +324,6 @@ export class SnmpMetricCfgComponent {
     this.length = sortedData.length;
   }
 
-  public onCellClick(data: any): any {
-    console.log(data);
-  }
-
   onFilter() {
     this.reloadData();
   }
@@ -295,6 +335,18 @@ export class SnmpMetricCfgComponent {
 
   exportItem(item : any) : void {
     this.exportFileModal.initExportModal(item);
+  }
+
+  removeAllSelectedItems(myArray) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    for (let i in myArray) {
+      console.log("Removing ",myArray[i].ID)
+      this.deleteSNMPMetric(myArray[i].ID,true);
+      obsArray.push(this.deleteSNMPMetric(myArray[i].ID,true));
+    }
+    this.genericForkJoin(obsArray);
   }
 
   removeItem(row) {
@@ -333,12 +385,20 @@ export class SnmpMetricCfgComponent {
       err => console.error(err)
       );
   }
-  deleteSNMPMetric(id) {
-    this.snmpMetricService.deleteMetric(id)
-      .subscribe(data => { },
-      err => console.error(err),
-      () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
+  deleteSNMPMetric(id, recursive?) {
+    if (!recursive) {
+      this.snmpMetricService.deleteMetric(id)
+        .subscribe(data => { },
+        err => console.error(err),
+        () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
+        );
+    } else {
+      return this.snmpMetricService.deleteMetric(id)
+      .do(
+        (test) =>  { this.counterItems++},
+        (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
       );
+    }
   }
 
   cancelEdit() {
@@ -356,20 +416,68 @@ export class SnmpMetricCfgComponent {
     }
   }
 
-  updateSnmpMet() {
-    if (this.snmpmetForm.valid) {
-      var r = true;
-      if (this.snmpmetForm.value.ID != this.oldID) {
-        r = confirm("Changing Metric ID from " + this.oldID + " to " + this.snmpmetForm.value.ID + ". Proceed?");
+  updateAllSelectedItems(mySelectedArray,field,value, append?) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    if (!append)
+    for (let component of mySelectedArray) {
+      component[field] = value;
+      obsArray.push(this.updateSnmpMet(true,component));
+    } else {
+      let tmpArray = [];
+      if(!Array.isArray(value)) value = value.split(',');
+      console.log(value);
+      for (let component of mySelectedArray) {
+        console.log(value);
+        //check if there is some new object to append
+        let newEntries = _.differenceWith(value,component[field],_.isEqual);
+        tmpArray = newEntries.concat(component[field])
+        console.log(tmpArray);
+        component[field] = tmpArray;
+        obsArray.push(this.updateSnmpMet(true,component));
       }
-      if (r == true) {
-        this.snmpMetricService.editMetric(this.snmpmetForm.value, this.oldID)
-          .subscribe(data => { console.log(data) },
-          err => console.error(err),
-          () => { this.editmode = "list"; this.reloadData() }
-          );
+    }
+    this.genericForkJoin(obsArray);
+    //Make sync calls and wait the result
+    this.counterErrors = [];
+  }
+
+  updateSnmpMet(recursive?, component?) {
+    if(!recursive) {
+      if (this.snmpmetForm.valid) {
+        var r = true;
+        if (this.snmpmetForm.value.ID != this.oldID) {
+          r = confirm("Changing Metric ID from " + this.oldID + " to " + this.snmpmetForm.value.ID + ". Proceed?");
+        }
+        if (r == true) {
+          this.snmpMetricService.editMetric(this.snmpmetForm.value, this.oldID)
+            .subscribe(data => { console.log(data) },
+            err => console.error(err),
+            () => { this.editmode = "list"; this.reloadData() }
+            );
+        }
       }
+    } else {
+      return this.snmpMetricService.editMetric(component, component.ID)
+      .do(
+        (test) =>  { this.counterItems++ },
+        (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}
+      )
+      .catch((err) => {
+        return Observable.of({'ID': component.ID , 'error': err['_body']})
+      })
     }
   }
 
+  genericForkJoin(obsArray: any) {
+    Observable.forkJoin(obsArray)
+              .subscribe(
+                data => {
+                  this.selectedArray = [];
+                  this.reloadData()
+                },
+                err => console.error(err),
+              );
+  }
 }

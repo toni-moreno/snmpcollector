@@ -90,7 +90,7 @@ export class SnmpDeviceCfgComponent {
   ];
   public tableAvailableActions : any;
   public page: number = 1;
-  public itemsPerPage: number = 10;
+  public itemsPerPage: number = 20;
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
