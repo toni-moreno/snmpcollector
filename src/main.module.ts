@@ -57,6 +57,8 @@ import { ExportServiceCfg } from './common/dataservice/export.service'
 import { ObjectParserPipe,SplitCommaPipe } from './common/custom_pipe';
 import { ElapsedSecondsPipe } from './common/elapsedseconds.pipe';
 
+import { CustomPipesModule } from './common/custom-pipe-module';
+
 import { BlockUIComponent } from './common/blockui/blockui-component';
 import { SpinnerComponent } from './common/spinner';
 
@@ -66,8 +68,8 @@ import { SpinnerComponent } from './common/spinner';
   declarations: [
     PasswordToggleDirective,
     ObjectParserPipe,
+    //ElapsedSecondsPipe,
     SplitCommaPipe,
-    ElapsedSecondsPipe,
     TableActions,
     ControlMessagesComponent,
     SnmpDeviceCfgComponent,
@@ -93,6 +95,7 @@ import { SpinnerComponent } from './common/spinner';
     App,
   ],
   imports: [
+    CustomPipesModule,
     HttpModule,
     BrowserModule,
     FormsModule,

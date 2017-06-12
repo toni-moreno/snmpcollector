@@ -21,21 +21,23 @@ export class RuntimeService {
             let result = [];
             if (runtime_devs) {
                 _.forEach(runtime_devs,function(value,key){
+                    let tmp : any = {};
                   console.log("KEY: ",key);
                   console.log("FOREACH LOOP",value,key);
-                    if(filter_s && filter_s.length > 0 ) {
-                        console.log("maching: "+key+ "| filter: "+filter_s);
-                        var re = new RegExp(filter_s, 'gi');
-                        if (key.match(filter_s)){
-                            result.push({'ID': key, 'value' :value});
-                        }
-                        console.log(key.match(re));
-                    } else {
-                            result.push({'ID': key, 'value' :value});
-                    }
+                  tmp.ID = key;
+                  _.forEach(value, function(val,key) {
+                     if (key == "Counters") {
+                        let i = 0;
+                         for (let a of val) {
+                             tmp['Counter'+i]=a;
+                             i++;
+                         }
+                     } else tmp[key] = val;
+                  });
+                  result.push(tmp);
+                  //result.push({'ID': key, 'value' :value});
                 });
             }
-            console.log("result:",result);
             return result;
         });
     }
