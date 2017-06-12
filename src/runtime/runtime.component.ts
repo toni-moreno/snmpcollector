@@ -2,25 +2,50 @@ import { ChangeDetectionStrategy, Component, ViewChild, ChangeDetectorRef, OnDes
 import { FormBuilder, Validators} from '@angular/forms';
 import { RuntimeService } from './runtime.service';
 import { ItemsPerPageOptions } from '../common/global-constants';
+
+import { SpinnerComponent } from '../common/spinner';
+import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
+
+import { TestConnectionModal } from '../common/test-connection-modal';
+
 declare var _:any;
 @Component({
   selector: 'runtime',
-  providers: [RuntimeService],
+  providers: [RuntimeService,SnmpDeviceService],
   templateUrl: './runtimeview.html',
   styleUrls: ['./runtimeeditor.css'],
 })
 
 
-
-
 export class RuntimeComponent implements OnDestroy {
+  @ViewChild('viewTestConnectionModal') public viewTestConnectionModal: TestConnectionModal;
+
   itemsPerPageOptions : any = ItemsPerPageOptions;
   public isRefreshing: boolean = true;
 
   public oneAtATime: boolean = true;
   editmode: string; //list , create, modify
   dataArray : any = [];
+  dataArray2 : any = [];
+  isRequesting : boolean = false;
   runtime_devs: Array<any>;
+  runtime_devs2: Array<any>;
+
+  public extraActions: Array<any> =  [
+    { 'title': 'Active', 'type' : 'boolean', 'content': {'enabled': 'Deactivate', 'disabled': 'Activate'}, 'property': 'DeviceActive'},
+    { 'title': 'Reset', 'type' : 'button', 'content': {'enabled': 'Reset'}}
+  ]
+
+  public rt_columns: Array<any> = [
+    { title: 'ID', name: 'ID', tooltip : 'testooltip'},
+    { title: '#Measurements', name: 'NumMeasurements'},
+    { title: '#Metrics', name: 'NumMetrics'},
+    { title: 'EOID' ,name:'Counter7',tooltip: 'SnmpOIDGetErrors'},
+    { title: 'EM',name:'Counter14',tooltip: 'MeasurementSentErrors'},
+    { title: 'GT',name:'Counter16',tooltip: 'CicleGatherDuration', transform : 'elapsedseconds'},
+    { title: 'FT',name:'Counter18',tooltip: 'FilterDuration', transform : 'elapsedseconds'}
+  ];
+  mySubscription : any;
   filter: string;
   measActive: number = 0;
   runtime_dev: any;
@@ -81,12 +106,11 @@ export class RuntimeComponent implements OnDestroy {
 
   public rows: Array<any> = [];
   public page: number = 1;
-  public itemsPerPage: number = 10;
+  public itemsPerPage: number = 20;
   public maxSize: number;
   public numPages: number = 1;
   public length: number = 0;
-  myFilterValue: any;
-
+  public myFilterValue: any;
 
   //Set config
   public config: any = {
@@ -96,10 +120,11 @@ export class RuntimeComponent implements OnDestroy {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public runtimeService: RuntimeService, builder: FormBuilder, private ref: ChangeDetectorRef) {
+  constructor(public runtimeService: RuntimeService, builder: FormBuilder, private ref: ChangeDetectorRef, public snmpDeviceService: SnmpDeviceService) {
     this.editmode = 'list';
     this.reloadData();
   }
+
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
     //Check if we have to change the actual page
@@ -179,6 +204,45 @@ export class RuntimeComponent implements OnDestroy {
     return filteredData;
   }
 
+
+  public changeFilter2(data: any, config: any): any {
+    let filteredData: Array<any> = data;
+    this.columns.forEach((column: any) => {
+      if (column.filtering) {
+        filteredData = filteredData.filter((item: any) => {
+          return item[column.name].match(column.filtering.filterString);
+        });
+      }
+    });
+
+    if (!config.filtering) {
+      return filteredData;
+    }
+
+    if (config.filtering.columnName) {
+      return filteredData.filter((item: any) =>
+        item[config.filtering.columnName].match(this.config.filtering.filterString));
+    }
+
+    let tempArray: Array<any> = [];
+    filteredData.forEach((item: any) => {
+      let flag = false;
+      this.columns.forEach((column: any) => {
+        if (item[column.name] === null) {
+          item[column.name] = '--'
+        }
+        if (item[column.name].toString().match(this.config.filtering.filterString)) {
+          flag = true;
+        }
+      });
+      if (flag) {
+        tempArray.push(item);
+      }
+    });
+    filteredData = tempArray;
+    return filteredData;
+  }
+
   changeItemsPerPage (items) {
     if (items) this.itemsPerPage = parseInt(items);
     else this.itemsPerPage=this.length;
@@ -196,11 +260,27 @@ export class RuntimeComponent implements OnDestroy {
     }
     let filteredData = this.changeFilter(this.data, this.config);
     let sortedData = this.changeSort(filteredData, this.config);
+    console.log(filteredData);
     this.rows = page && this.config.paging ? this.changePage(page, sortedData) : sortedData;
     this.length = sortedData.length;
   }
 
   public onCellClick(data: any): any {
+    if (data.column === "DeviceActive") this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
+    console.log(data);
+  }
+
+  public onExtraActionClicked(data:any) {
+    switch (data.action) {
+      case 'Active' :
+      this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
+      break;
+      case 'Reset' :
+      this.forceSnmpReset(data.row.ID);
+      break;
+      default:
+      break;
+    }
     console.log(data);
   }
 
@@ -213,6 +293,8 @@ export class RuntimeComponent implements OnDestroy {
 
   initRuntimeInfo(id: string, meas: number) {
     //Reset params
+    this.editmode = 'view';
+
     this.isRefreshing = false;
     this.refreshRuntime.Running = false;
     clearInterval(this.intervalStatus);
@@ -246,7 +328,7 @@ export class RuntimeComponent implements OnDestroy {
   }
 
   loadRuntimeById(id: string, selectedMeas: number) {
-    this.runtimeService.getRuntimeById(id)
+    this.mySubscription = this.runtimeService.getRuntimeById(id)
       .subscribe(
       data => {
         this.finalColumns = [];
@@ -300,11 +382,14 @@ export class RuntimeComponent implements OnDestroy {
   showTable(id: number) {
     this.columns = [];
     this.measActive = id;
+    this.myFilterValue = "";
+    this.config.filtering = {filtering: { filterString: '' }};
     //Reload data and column table
     this.data = this.finalData[id];
     this.columns = this.finalColumns[id];
     //Reload config to enable sort
-    this.config.sorting = { columns: this.columns };
+    this.config.sorting = { columns: this.rt_columns };
+    console.log(this.config);
     this.onChangeTable(this.config);
   }
 
@@ -316,12 +401,13 @@ export class RuntimeComponent implements OnDestroy {
       .subscribe(
       data => {
         _.forEach(this.runtime_devs,function(d,key){
-          //console.log(d,key)
+          console.log(d,key)
           if (d.ID == id) {
-            d.value.DeviceActive = !d.value.DeviceActive;
+            d.DeviceActive = !d.DeviceActive;
             return false
           }
         })
+        console.log(this.runtime_devs);
             //this.runtime_devs[id]['DeviceActive']=event;
         if (this.runtime_dev != null) {
           this.runtime_dev.DeviceActive = !this.runtime_dev.DeviceActive;
@@ -379,6 +465,17 @@ export class RuntimeComponent implements OnDestroy {
       );
   }
 
+  showTestConnectionModal(row : any) {
+    console.log(row);
+    console.log(row.ID);
+    this.snmpDeviceService.getDevicesById(row.ID)
+      .subscribe(data => {
+        this.viewTestConnectionModal.show(data);
+      },
+      err => console.error(err),
+    );
+  }
+
   forceFltUpdate(id) {
     console.log("ID,event", id, event);
     this.runtimeService.forceFltUpdate(id)
@@ -421,15 +518,42 @@ export class RuntimeComponent implements OnDestroy {
     console.log("ID,event", id, event, this.maxrep);
   }
 
-  onChange(event){
+/*  onChange(event){
     let tmpArray = this.dataArray.filter((item: any) => {
       return item['ID'].toString().match(event);
     });
     console.log(this.dataArray);
     this.runtime_devs = tmpArray;
   }
+  */
 
   reloadData() {
+
+    this.isRequesting = true;
+    if (this.mySubscription) {
+      console.log("SUBS",this.mySubscription);
+      this.mySubscription.unsubscribe();
+    }
+    clearInterval(this.intervalStatus);
+    this.editmode = "list"
+    this.columns = this.rt_columns
+    this.filter = null;
+    // now it's a simple subscription to the observable
+    this.runtimeService.getRuntime(null)
+      .subscribe(
+      data => {
+        this.runtime_devs = data
+        this.data = this.runtime_devs;
+        this.config.sorting.columns=this.columns,
+        this.isRequesting = false;
+        this.onChangeTable(this.config);
+      },
+      err => console.error(err),
+      () => console.log('DONE')
+      );
+  }
+
+/*  reloadData() {
     this.filter = null;
     // now it's a simple subscription to the observable
     this.runtimeService.getRuntime(null)
@@ -442,6 +566,7 @@ export class RuntimeComponent implements OnDestroy {
       () => console.log('DONE')
       );
   }
+*/
 
   ngOnDestroy() {
     clearInterval(this.intervalStatus);

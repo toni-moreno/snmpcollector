@@ -1,17 +1,65 @@
 <h2>Runtime</h2>
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <hr>
+<p [ngSwitch]="editmode">
+  <template ngSwitchCase="list">
+  <div class="row">
+    <div class="col-md-8 text-left">
+      <label [tooltip]="'Refresh'" container="body" style="margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="glyphicon glyphicon-refresh" (click)="reloadData()"></i></label>
+      <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()" style="margin-top: 10px"><i class="glyphicon glyphicon-trash text-primary"></i></label>
+      <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
+      <label style="font-size:100%" [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']">{{length}} Results</label>
+  </div>
+  <div class="col-md-4 text-right">
+      <span style="margin-left: 20px"> Items per page: </span>
+      <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage || 'All'" (ngModelChange)="changeItemsPerPage($event)">
+        <option *ngFor="let option of itemsPerPageOptions" style="padding-left:2px" [value]="option.value">{{option.title}}</option>
+      </select>
+    </div>
+  </div>
+  <br>
+  <test-connection-modal #viewTestConnectionModal titleName='Test connection for:'>
+  </test-connection-modal>
+  <my-spinner [isRunning]="isRequesting"></my-spinner>
+  <ng-table *ngIf="isRequesting === false" [config]="config" (tableChanged)="onChangeTable(config)" (extraActionClicked)="onExtraActionClicked($event)" (cellClicked)="onCellClick($event)" (viewedItem)="initRuntimeInfo($event.ID)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" (testedConnection)="showTestConnectionModal($event)" [showCustom]="false" [showStatus]="true" [rows]="rows" [columns]="rt_columns" [extraActions]="extraActions">
+  </ng-table>
+  <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
+  </pagination>
+  <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+</template>
+<template ngSwitchCase="view">
+  <!--div class="row" *ngIf="runtime_dev">
+    <div class="well">
+
+        <i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></i>
+        <h4 [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</h4>
+        <span style="margin-left: 10px; font-size: 90%" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</span>
+
+
+        <i style="border-left: 1px solid #1B809E; padding: 0px 10px 0px 10px;" class="glyphicon glyphicon-glass"></i>
+        <i style="border-left: 1px solid #1B809E; padding: 0px 10px 0px 10px;" class="glyphicon glyphicon-music"></i>
+        <i style="border-left: 1px solid #1B809E; padding: 0px 10px 0px 10px;" class="glyphicon glyphicon-search"></i>
+        <i style="border-left: 1px solid #1B809E; padding: 0px 10px 0px 10px;" class="glyphicon glyphicon-heart"></i>
+        <i style="border-left: 1px solid #1B809E; padding: 0px 10px 0px 10px;" class="glyphicon glyphicon-star"></i>
+        <i style="border-left: 1px solid #1B809E; padding: 0px 10px 0px 10px;" class="glyphicon glyphicon-star-empty"></i>
+        <i style="border-left: 1px solid #1B809E; padding: 0px 10px 0px 10px;" class="glyphicon glyphicon-user"></i>
+        <i style="border-left: 1px solid #1B809E; padding: 0px 10px 0px 10px;" class="glyphicon glyphicon-film"></i>
+
+      <div *ngIf="selectedOption" style="float:left; width: auto; border-left: 1px solid #1B809E; padding: 0px 10px 0px 10px;">
+      </div>
+    </div>
+  </div-->
 
 <div class="col-md-12">
-  <div class="col-md-4">
+  <!--div class="col-md-4">
     <h4>
       <li class="glyphicon glyphicon-refresh" (click)="reloadData()"> </li>
       SNMP Devices list
     </h4>
-    <span>
+    <!--span>
       Filter devices: <input type=text [(ngModel)]="filter" placeholder="Filter..." (ngModelChange)="onChange($event)">
-    </span>
-    <hr>
+    </span-->
+    <!--hr>
     <ul class="list-group" style="max-height:400px; overflow-y:auto">
 
       <li class="list-group-item" *ngFor="let dev of runtime_devs">
@@ -28,16 +76,16 @@
         <span>GT: {{dev.value.Counters[16] | elapsedseconds:3 }}</span>
       </li>
     </ul>
-  </div>
-  <div class="col-md-8" *ngIf="runtime_dev">
-    <h4>
-        <i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></i>
-        <span> SNMP Device: </span>
-        <span [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</span>
-        <span *ngIf="runtime_dev['DeviceConnected'] == false" class="text-danger"> - Device is not connected</span>
-      </h4>
-    <span>Tags: <label style="margin-left: 10px" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label> </span>
+  </div-->
+  <div class="col-md-12" *ngIf="runtime_dev">
+    <div class="well">
+      <label [tooltip]="'Back to list'" container="body" style="font-size:130%; margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="text-primary glyphicon glyphicon-tasks" (click)="reloadData()"></i></label>
+      <label [tooltip]="'Refresh'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></i></label>
 
+        <h5 style="display:inline; border-right: 1px solid; padding-right: 5px" [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</h5>
+        <h5 *ngIf="runtime_dev['DeviceConnected'] == false" class="text-danger" style="display:inline; border-right: 1px solid; padding-right: 5px;"> Device is not connected</h5>
+        <label style="margin-left: 10px; font-size: 100%" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label>
+    </div>
     <hr>
     <div class="row">
       <div class="col-md-6" *ngIf="runtime_dev['DeviceConnected'] !== false">
@@ -246,3 +294,4 @@
     </div>
   </div>
 </div>
+</template>
