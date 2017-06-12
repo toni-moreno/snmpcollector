@@ -18,10 +18,10 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 
 	switch m.cfg.GetMode {
 	case "value":
-		k := m.MetricTable["0"]
+		k := m.MetricTable.Row["0"]
 		var t time.Time
 		Fields := make(map[string]interface{})
-		for _, v_mtr := range k {
+		for _, v_mtr := range k.Data {
 			if v_mtr.CookedValue == nil {
 				m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, hostTags, v_mtr)
 				metError++
@@ -62,11 +62,12 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 			m.Debugf("GENERATED INFLUX POINT[%s] value: %+v", m.cfg.Name, pt)
 			ptarray = append(ptarray, pt)
 			measSent++
+			k.Valid = true
 		}
 
 	case "indexed", "indexed_it":
 		var t time.Time
-		for k_idx, v_idx := range m.MetricTable {
+		for k_idx, v_idx := range m.MetricTable.Row {
 			m.Debugf("generating influx point for indexed %s", k_idx)
 			//copy tags and add index tag
 			Tags := make(map[string]string)
@@ -76,7 +77,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 			Tags[m.cfg.IndexTag] = k_idx
 			m.Debugf("IDX :%+v", v_idx)
 			Fields := make(map[string]interface{})
-			for _, v_mtr := range v_idx {
+			for _, v_mtr := range v_idx.Data {
 				v_mtr.PrintDebugCfg()
 				if v_mtr.IsTag() == true {
 					if v_mtr.CookedValue == nil {
@@ -153,6 +154,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 				m.Debugf("GENERATED INFLUX POINT[%s] index [%s]: %+v", m.cfg.Name, k_idx, pt)
 				ptarray = append(ptarray, pt)
 				measSent++
+				v_idx.Valid = true
 			}
 		}
 

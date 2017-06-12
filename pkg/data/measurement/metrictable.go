@@ -2,159 +2,242 @@ package measurement
 
 import (
 	"fmt"
+	"github.com/Sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
 )
 
-// PushMetricTable add map
-func (m *Measurement) PushMetricTable(p map[string]string) error {
-	if m.cfg.GetMode == "value" {
-		return fmt.Errorf("Can not push new values in a measurement type value : %s", m.cfg.ID)
-	}
-	for key, label := range p {
-		idx := make(map[string]*metric.SnmpMetric)
-		m.Infof("initializing [indexed] metric cfg for [%s/%s]", key, label)
-		for k, smcfg := range m.cfg.FieldMetric {
-			metr, err := metric.New(smcfg)
-			if err != nil {
-				m.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
-				continue
-			}
-			metr.SetLogger(m.log)
-			metr.RealOID += "." + key
-			idx[smcfg.ID] = metr
-		}
-		for k, smcfg := range m.cfg.EvalMetric {
-			metr, err := metric.New(smcfg)
-			if err != nil {
-				m.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
-				continue
-			}
-			metr.SetLogger(m.log)
-			metr.RealOID = m.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
-			idx[smcfg.ID] = metr
-		}
-		//setup visibility on db for each metric
-		for k, v := range idx {
-			report := metric.AlwaysReport
-			for _, r := range m.cfg.Fields {
-				if r.ID == k {
-					report = r.Report
-					break
-				}
-			}
-			v.Report = report
-		}
-		m.MetricTable[label] = idx
-	}
-	return nil
+type MetricRow struct {
+	Valid bool
+	Data  map[string]*metric.SnmpMetric
 }
 
-// PopMetricTable add
-func (m *Measurement) PopMetricTable(p map[string]string) error {
-	if m.cfg.GetMode == "value" {
-		return fmt.Errorf("Can not pop values in a measurement type value : %s", m.cfg.ID)
+func (mr *MetricRow) Invalidate() {
+	mr.Valid = false
+	for _, m := range mr.Data {
+		m.Valid = false
 	}
-	for key, label := range p {
-		m.Infof("removing [indexed] metric cfg for [%s/%s]", key, label)
-		delete(m.MetricTable, label)
-	}
-	return nil
 }
 
-/* InitMetricTable
- */
-func (m *Measurement) InitMetricTable() {
-	m.MetricTable = make(map[string]map[string]*metric.SnmpMetric)
+func NewMetricRow() *MetricRow {
+	mr := MetricRow{Valid: true}
+	mr.Data = make(map[string]*metric.SnmpMetric)
+	return &mr
+}
+
+func (mr *MetricRow) Add(id string, m *metric.SnmpMetric) {
+	mr.Data[id] = m
+}
+
+func (mr *MetricRow) SetVisible(ar map[string]int) {
+	for k1, v := range mr.Data {
+		for k2, vis := range ar {
+			if k1 == k2 {
+				v.Report = vis
+				break
+			}
+		}
+	}
+}
+
+type MetricTable struct {
+	Header  map[string]int
+	visible map[string]int
+	log     *logrus.Logger
+	cfg     *config.MeasurementCfg
+	Row     map[string]*MetricRow
+}
+
+func (mt *MetricTable) AddRow(id string, mr *MetricRow) {
+	mt.Row[id] = mr
+}
+
+func (mt *MetricTable) Len() int {
+	return len(mt.Row)
+}
+
+func (mt *MetricTable) InvalidateTable() {
+	for _, r := range mt.Row {
+		r.Invalidate()
+	}
+}
+
+func (mt *MetricTable) GetSnmpMaps() ([]string, map[string]*metric.SnmpMetric) {
+	snmpOids := []string{}
+	OidSnmpMap := make(map[string]*metric.SnmpMetric)
+	for kIdx, row := range mt.Row {
+		mt.Debugf("KEY iDX %s", kIdx)
+		//index level
+		for kM, vM := range row.Data {
+			mt.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
+			t := vM.GetDataSrcType()
+			switch t {
+			case "STRINGEVAL", "CONDITIONEVAL":
+			default:
+				//this array is used in SnmpGetData to send IOD's to the end device
+				// so it can not contain any other thing than OID's
+				// on string eval it contains a identifier not OID
+				snmpOids = append(snmpOids, vM.RealOID)
+			}
+			OidSnmpMap[vM.RealOID] = vM
+		}
+	}
+	return snmpOids, OidSnmpMap
+}
+
+func (mt *MetricTable) GetSnmpMap() map[string]*metric.SnmpMetric {
+
+	OidSnmpMap := make(map[string]*metric.SnmpMetric)
+	for kIdx, row := range mt.Row {
+		mt.Debugf("KEY iDX %s", kIdx)
+		//index level
+		for kM, vM := range row.Data {
+			mt.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
+			OidSnmpMap[vM.RealOID] = vM
+		}
+	}
+	return OidSnmpMap
+}
+
+func NewMetricTable(c *config.MeasurementCfg, l *logrus.Logger, CurIndexedLabels map[string]string) *MetricTable {
+	mt := MetricTable{}
+	mt.Init(c, l, CurIndexedLabels)
+	return &mt
+}
+
+func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndexedLabels map[string]string) {
+	mt.cfg = c
+	mt.log = l
+	mt.Row = make(map[string]*MetricRow)
+	mt.visible = make(map[string]int, len(mt.cfg.Fields))
+	mt.Header = make(map[string]int, len(mt.cfg.Fields))
+	for _, r := range mt.cfg.Fields {
+		mt.visible[r.ID] = r.Report
+		for _, val := range mt.cfg.FieldMetric {
+			if r.ID == val.ID {
+				mt.Header[val.FieldName] = r.Report
+			}
+		}
+	}
 
 	//create metrics.
-	switch m.cfg.GetMode {
+	switch mt.cfg.GetMode {
 	case "value":
 		//for each field
-		idx := make(map[string]*metric.SnmpMetric)
-		for k, smcfg := range m.cfg.FieldMetric {
-			m.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
+		idx := NewMetricRow()
+		for k, smcfg := range mt.cfg.FieldMetric {
+			mt.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
 			metr, err := metric.New(smcfg)
 			if err != nil {
-				m.Errorf("ERROR on create new [value] field metric %d : Error: %s ", k, err)
+				mt.Errorf("ERROR on create new [value] field metric %d : Error: %s ", k, err)
 				continue
 			}
-			metr.SetLogger(m.log)
-			idx[smcfg.ID] = metr
+			metr.SetLogger(mt.log)
+			idx.Add(smcfg.ID, metr)
 		}
-		for k, smcfg := range m.cfg.EvalMetric {
-			m.Debugf("initializing [value] [evaluated] metric cfg %s", smcfg.ID)
+		for k, smcfg := range mt.cfg.EvalMetric {
+			mt.Debugf("initializing [value] [evaluated] metric cfg %s", smcfg.ID)
 			metr, err := metric.New(smcfg)
 			if err != nil {
-				m.Errorf("ERROR on create new [value] [evaluated] field metric %d : Error: %s ", k, err)
+				mt.Errorf("ERROR on create new [value] [evaluated] field metric %d : Error: %s ", k, err)
 				continue
 			}
-			metr.SetLogger(m.log)
-			metr.RealOID = m.cfg.ID + "." + smcfg.ID
-			idx[smcfg.ID] = metr
+			metr.SetLogger(mt.log)
+			metr.RealOID = mt.cfg.ID + "." + smcfg.ID
+			idx.Add(smcfg.ID, metr)
 		}
-		for k, smcfg := range m.cfg.OidCondMetric {
-			m.Debugf("initializing [value] [oid condition evaluated] metric cfg %s", smcfg.ID)
-			metr, err := metric.NewWithLog(smcfg, m.log)
+		for k, smcfg := range mt.cfg.OidCondMetric {
+			mt.Debugf("initializing [value] [oid condition evaluated] metric cfg %s", smcfg.ID)
+			metr, err := metric.NewWithLog(smcfg, mt.log)
 			if err != nil {
-				m.Errorf("ERROR on create new [value] [oid condition evaluated] field metric %d : Error: %s ", k, err)
+				mt.Errorf("ERROR on create new [value] [oid condition evaluated] field metric %d : Error: %s ", k, err)
 				continue
 			}
-			metr.RealOID = m.cfg.ID + "." + smcfg.ID
-			idx[smcfg.ID] = metr
+			metr.RealOID = mt.cfg.ID + "." + smcfg.ID
+			idx.Add(smcfg.ID, metr)
 		}
 		//setup visibility on db for each metric
-		for k, v := range idx {
-			report := metric.AlwaysReport
-			for _, r := range m.cfg.Fields {
-				if r.ID == k {
-					report = r.Report
-					break
-				}
-			}
-			v.Report = report
-		}
-		m.MetricTable["0"] = idx
+
+		idx.SetVisible(mt.visible)
+		mt.AddRow("0", idx)
 
 	case "indexed", "indexed_it":
 		//for each field an each index (previously initialized)
-		for key, label := range m.CurIndexedLabels {
-			idx := make(map[string]*metric.SnmpMetric)
-			m.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
-			for k, smcfg := range m.cfg.FieldMetric {
+		for key, label := range CurIndexedLabels {
+			idx := NewMetricRow()
+			mt.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
+			for k, smcfg := range mt.cfg.FieldMetric {
 				metr, err := metric.New(smcfg)
 				if err != nil {
-					m.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
+					mt.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
 					continue
 				}
-				metr.SetLogger(m.log)
+				metr.SetLogger(mt.log)
 				metr.RealOID += "." + key
-				idx[smcfg.ID] = metr
+				idx.Add(smcfg.ID, metr)
 			}
-			for k, smcfg := range m.cfg.EvalMetric {
+			for k, smcfg := range mt.cfg.EvalMetric {
 				metr, err := metric.New(smcfg)
 				if err != nil {
-					m.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
+					mt.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
 					continue
 				}
-				metr.SetLogger(m.log)
-				metr.RealOID = m.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
-				idx[smcfg.ID] = metr
+				metr.SetLogger(mt.log)
+				metr.RealOID = mt.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
+				idx.Add(smcfg.ID, metr)
 			}
 			//setup visibility on db for each metric
-			for k, v := range idx {
-				report := metric.AlwaysReport
-				for _, r := range m.cfg.Fields {
-					if r.ID == k {
-						report = r.Report
-						break
-					}
-				}
-				v.Report = report
-			}
-			m.MetricTable[label] = idx
+			idx.SetVisible(mt.visible)
+			mt.AddRow(label, idx)
 		}
 
 	default:
-		m.Errorf("Unknown Measurement GetMode Config :%s", m.cfg.GetMode)
+		mt.Errorf("Unknown Measurement GetMode Config :%s", mt.cfg.GetMode)
 	}
+}
+
+// PopMetricTable add
+func (mt *MetricTable) Pop(p map[string]string) error {
+	if mt.cfg.GetMode == "value" {
+		return fmt.Errorf("Can not pop values in a measurement type value : %s", mt.cfg.ID)
+	}
+	for key, label := range p {
+		mt.Infof("removing [indexed] metric cfg for [%s/%s]", key, label)
+		delete(mt.Row, label)
+	}
+	return nil
+}
+
+// PushMetricTable add map
+func (mt *MetricTable) Push(p map[string]string) error {
+	if mt.cfg.GetMode == "value" {
+		return fmt.Errorf("Can not push new values in a measurement type value : %s", mt.cfg.ID)
+	}
+	for key, label := range p {
+		idx := NewMetricRow()
+		mt.Infof("initializing [indexed] metric cfg for [%s/%s]", key, label)
+		for k, smcfg := range mt.cfg.FieldMetric {
+			metr, err := metric.New(smcfg)
+			if err != nil {
+				mt.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
+				continue
+			}
+			metr.SetLogger(mt.log)
+			metr.RealOID += "." + key
+			idx.Add(smcfg.ID, metr)
+		}
+		for k, smcfg := range mt.cfg.EvalMetric {
+			metr, err := metric.New(smcfg)
+			if err != nil {
+				mt.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
+				continue
+			}
+			metr.SetLogger(mt.log)
+			metr.RealOID = mt.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
+			idx.Add(smcfg.ID, metr)
+		}
+		idx.SetVisible(mt.visible)
+		mt.AddRow(label, idx)
+	}
+	return nil
 }
