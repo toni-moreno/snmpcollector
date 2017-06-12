@@ -32,18 +32,18 @@ export class RuntimeComponent implements OnDestroy {
   runtime_devs2: Array<any>;
 
   public extraActions: Array<any> =  [
-    { 'title': 'Active', 'type' : 'boolean', 'content': {'enabled': 'Deactivate', 'disabled': 'Activate'}, 'property': 'DeviceActive'},
-    { 'title': 'Reset', 'type' : 'button', 'content': {'enabled': 'Reset'}}
+    { 'title': 'SetActive', 'type' : 'boolean', 'content': {'enabled': 'Deactivate', 'disabled': 'Activate'}, 'property': 'DeviceActive'},
+    { 'title': 'SnmpReset', 'type' : 'button', 'content': {'enabled': 'Reset'}}
   ]
 
   public rt_columns: Array<any> = [
     { title: 'ID', name: 'ID', tooltip : 'testooltip'},
-    { title: '#Measurements', name: 'NumMeasurements'},
+    { title: '#Meas', name: 'NumMeasurements',tooltip: 'Num Measurements configured'},
     { title: '#Metrics', name: 'NumMetrics'},
-    { title: 'EOID' ,name:'Counter7',tooltip: 'SnmpOIDGetErrors'},
-    { title: 'EM',name:'Counter14',tooltip: 'MeasurementSentErrors'},
-    { title: 'GT',name:'Counter16',tooltip: 'CicleGatherDuration', transform : 'elapsedseconds'},
-    { title: 'FT',name:'Counter18',tooltip: 'FilterDuration', transform : 'elapsedseconds'}
+    { title: 'Get.Errs' ,name:'Counter7',tooltip: 'SnmpOIDGetErrors:number of  oid with errors for all measurements '},
+    { title: 'M.Errs',name:'Counter14',tooltip: 'MeasurementSentErrors: number of measuremenets  formatted with errors '},
+    { title: 'G.Time',name:'Counter16',tooltip: 'CicleGatherDuration time: elapsed time taken to get all measurement info', transform : 'elapsedseconds'},
+    { title: 'F.Time',name:'Counter18',tooltip: 'CicleGatherDuration time: elapsed time taken to compute all applicable filters on the device', transform : 'elapsedseconds'}
   ];
   mySubscription : any;
   filter: string;
