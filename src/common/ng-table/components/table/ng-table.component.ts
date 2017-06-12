@@ -22,7 +22,7 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
           </th>
           <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column"
               (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important;" container="body" [tooltip]="column.tooltip">
-            {{column.title}} <i *ngIf="column.icon" [ngClass]="'glypicon glyphicon-'+column.icon"></i>
+            {{column.title}} <i *ngIf="column.icon" [ngClass]="'glyphicon glyphicon-'+column.icon"></i>
             <i *ngIf="config && column.sort" class="pull-right glyphicon"
               [ngClass]="{'glyphicon-chevron-down': column.sort === 'desc', 'glyphicon-chevron-up': column.sort === 'asc'}"></i>
           </th>

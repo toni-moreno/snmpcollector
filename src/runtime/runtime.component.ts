@@ -345,8 +345,26 @@ export class RuntimeComponent implements OnDestroy {
               this.tmpcolumns = [];
               this.tmpcolumns.push({ title: 'Index', name: 'Index' });
               for (let fieldName in measKey['MetricTable']['Header']) {
+                let mode = measKey['MetricTable']['Header'][fieldName]
+                let micon = ''
+                let tt = ''
+                 switch(mode) {
+                   case 0: //never send
+                    micon = 'remove-circle'
+                    tt = 'this field won\'t be sent'
+                   break;
+                   case 1: //always send
+                    micon = 'ok-circle'
+                    tt = 'this always will send'
+                   break;
+                   case 2: //send i non zero
+                    micon = 'ban-circle'
+                    tt = 'this field only will be sent if non zero'
+                   break
+
+                 }
                 //console.log('FieldName: ' +fieldName)
-                let tmpColumn: any = { title: fieldName, name: fieldName }
+                let tmpColumn: any = { title: fieldName, name: fieldName , icon: micon, tooltip: tt }
                 this.tmpcolumns.push(tmpColumn);
               }
 
