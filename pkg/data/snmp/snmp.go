@@ -411,6 +411,10 @@ const (
 	MaxOids = 60 // const in gosnmp
 )
 
+func Release(client *gosnmp.GoSNMP) {
+	client.Conn.Close()
+}
+
 // GetClient xx
 func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, *SysInfo, error) {
 	var client *gosnmp.GoSNMP

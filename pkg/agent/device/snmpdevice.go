@@ -394,6 +394,9 @@ func (d *SnmpDevice) AttachToBus(b *bus.Bus) {
 // End The Oposite of Init() uninitialize all variables
 func (d *SnmpDevice) End() {
 	d.Node.Close()
+	for _, val := range d.snmpClientMap {
+		snmp.Release(val)
+	}
 	//release files
 	//os.Close(d.log.Out)
 	//release snmp resources
@@ -406,6 +409,9 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 
 // InitSnmpConnect does the  SNMP client conection and retrieve system info
 func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
+	if val, ok := d.snmpClientMap[mkey]; ok {
+		snmp.Release(val)
+	}
 	d.Infof("Beginning SNMP connection")
 	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug, maxrep)
 	if err != nil {
