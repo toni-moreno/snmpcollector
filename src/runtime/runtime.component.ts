@@ -32,12 +32,12 @@ export class RuntimeComponent implements OnDestroy {
   runtime_devs2: Array<any>;
 
   public extraActions: Array<any> =  [
-    { 'title': 'SetActive', 'type' : 'boolean', 'content': {'enabled': 'Deactivate', 'disabled': 'Activate'}, 'property': 'DeviceActive'},
+    { 'title': 'SetActive', 'type' : 'boolean', 'content': {'enabled': '<i class="glyphicon glyphicon-pause"></i>', 'disabled' : '<i class="glyphicon glyphicon-play"></i>'}, 'property': 'DeviceActive'},
     { 'title': 'SnmpReset', 'type' : 'button', 'content': {'enabled': 'Reset'}}
   ]
 
   public rt_columns: Array<any> = [
-    { title: 'ID', name: 'ID', tooltip : 'testooltip'},
+    { title: 'ID', name: 'ID'},
     { title: '#Meas', name: 'NumMeasurements',tooltip: 'Num Measurements configured'},
     { title: '#Metrics', name: 'NumMetrics'},
     { title: 'Get.Errs' ,name:'Counter7',tooltip: 'SnmpOIDGetErrors:number of  oid with errors for all measurements '},
@@ -60,7 +60,7 @@ export class RuntimeComponent implements OnDestroy {
     'info',
     'debug'
   ];
-  maxrep: any;
+  maxrep: any = '';
   counterDef: CounterType[] = [
   /*0*/    { "show":false, "id": "SnmpGetQueries","label": "SnmpGet Queries","type":"counter", "tooltip": "number of snmp queries"},
   /*1*/    { "show":false, "id": "SnmpWalkQueries","label": "SnmpWalk Queries","type":"counter", "tooltip": "number of snmp walks"},
@@ -260,7 +260,6 @@ export class RuntimeComponent implements OnDestroy {
     }
     let filteredData = this.changeFilter(this.data, this.config);
     let sortedData = this.changeSort(filteredData, this.config);
-    console.log(filteredData);
     this.rows = page && this.config.paging ? this.changePage(page, sortedData) : sortedData;
     this.length = sortedData.length;
   }
@@ -272,7 +271,7 @@ export class RuntimeComponent implements OnDestroy {
 
   public onExtraActionClicked(data:any) {
     switch (data.action) {
-      case 'Active' :
+      case 'SetActive' :
       this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
       break;
       case 'Reset' :
@@ -291,15 +290,17 @@ export class RuntimeComponent implements OnDestroy {
     this.onChangeTable(this.config);
   }
 
-  initRuntimeInfo(id: string, meas: number) {
+  initRuntimeInfo(id: string, meas: number, isRequesting?: boolean) {
     //Reset params
     this.editmode = 'view';
-
+    this.isRequesting = isRequesting || false;
     this.isRefreshing = false;
     this.refreshRuntime.Running = false;
     clearInterval(this.intervalStatus);
     this.measActive = meas || 0;
-    this.loadRuntimeById(id, this.measActive);
+    if (!this.mySubscription) {
+      this.loadRuntimeById(id, this.measActive);
+    }
   }
 
   updateRuntimeInfo(id: string, selectedMeas: number, status: boolean) {
@@ -328,9 +329,12 @@ export class RuntimeComponent implements OnDestroy {
   }
 
   loadRuntimeById(id: string, selectedMeas: number) {
+    console.log(this.isRequesting);
     this.mySubscription = this.runtimeService.getRuntimeById(id)
       .subscribe(
       data => {
+        this.isRequesting = false;
+        this.mySubscription = null;
         this.finalColumns = [];
         this.finalData = [];
         this.runtime_dev = data;
@@ -350,15 +354,15 @@ export class RuntimeComponent implements OnDestroy {
                 let tt = ''
                  switch(mode) {
                    case 0: //never send
-                    micon = 'remove-circle'
+                    micon = 'remove-circle text-danger'
                     tt = 'this field won\'t be sent'
                    break;
                    case 1: //always send
-                    micon = 'ok-circle'
+                    micon = 'ok-circle text-success'
                     tt = 'this always will send'
                    break;
                    case 2: //send i non zero
-                    micon = 'ban-circle'
+                    micon = 'ban-circle text-warning'
                     tt = 'this field only will be sent if non zero'
                    break
 
@@ -367,8 +371,6 @@ export class RuntimeComponent implements OnDestroy {
                 let tmpColumn: any = { title: fieldName, name: fieldName , icon: micon, tooltip: tt }
                 this.tmpcolumns.push(tmpColumn);
               }
-
-
             this.finalColumns.push(this.tmpcolumns);
             } else {
               this.finalColumns.push([]);
@@ -542,15 +544,6 @@ export class RuntimeComponent implements OnDestroy {
     console.log("ID,event", id, event, this.maxrep);
   }
 
-/*  onChange(event){
-    let tmpArray = this.dataArray.filter((item: any) => {
-      return item['ID'].toString().match(event);
-    });
-    console.log(this.dataArray);
-    this.runtime_devs = tmpArray;
-  }
-  */
-
   reloadData() {
 
     this.isRequesting = true;
@@ -563,9 +556,10 @@ export class RuntimeComponent implements OnDestroy {
     this.columns = this.rt_columns
     this.filter = null;
     // now it's a simple subscription to the observable
-    this.runtimeService.getRuntime(null)
+    this.mySubscription = this.runtimeService.getRuntime(null)
       .subscribe(
       data => {
+        this.mySubscription = null;
         this.runtime_devs = data
         this.data = this.runtime_devs;
         this.config.sorting.columns=this.columns,
@@ -594,6 +588,7 @@ export class RuntimeComponent implements OnDestroy {
 
   ngOnDestroy() {
     clearInterval(this.intervalStatus);
+    if (this.mySubscription) this.mySubscription.unsubscribe();
   }
 
 }

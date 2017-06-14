@@ -60,10 +60,13 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
           </td>
           <td *ngIf="showStatus == true">
           <label style="display: inline; margin-right: 2px" container="body" [tooltip]="'View '+ row.ID" class="label label-primary glyphicon glyphicon-eye-open" (click)="viewItem(row)"></label>
-          <label style="display: inline; margin-right: 2px; border-right: 1px solid #1B809E" container="body" [tooltip]="'Test Connection '+ row.ID" class="label label-primary glyphicon glyphicon glyphicon-flash" (click)="testConnection(row)"></label>
-
-          <label style="display: inline; margin-right:2px" container="body" [tooltip]="row.DeviceActive ?  'Active' : 'Not active'" [ngClass]="row.DeviceActive ?  'glyphicon glyphicon-play label label-success' : 'glyphicon glyphicon-pause label label-danger'"></label>
-          <label style="display: inline; margin-right:2px" container="body" [tooltip]="row.DeviceConnected ?  'Connected' : 'Not connected'" [ngClass]="row.DeviceConnected ?  'glyphicon glyphicon-globe label label-success' : 'glyphicon glyphicon-warning-sign label label-danger'"></label>
+          <span style="border-right: 1px solid #1B809E; padding-right: 6px">
+          <label style="display: inline; margin-right: 2px" container="body" [tooltip]="'Test connection '+ row.ID" class="label label-primary glyphicon glyphicon glyphicon-flash" (click)="testConnection(row)"></label>
+          </span>
+          <span style="padding-left: 12px">
+          <label style="display: inline; margin-right: 2px" container="body" [tooltip]="row.DeviceActive ?  'Active' : 'Not active'" [ngClass]="row.DeviceActive ?  'glyphicon glyphicon-play label label-success' : 'glyphicon glyphicon-pause label label-danger'"></label>
+          </span>
+          <label style="display: inline; margin-right: 2px" container="body" [tooltip]="row.DeviceConnected ?  'Connected' : 'Not connected'" [ngClass]="row.DeviceConnected ?  'glyphicon glyphicon-globe label label-success' : 'glyphicon glyphicon-warning-sign label label-danger'"></label>
           </td>
           <td [ngClass]="row.tooltipInfo ? (row.tooltipInfo[column.name] ? (row.tooltipInfo[column.name]['Valid'] === true ? ['bg-success'] : ['bg-danger']) : '') : ''" (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(row[column.name],column.transform)" style="text-align:right">
 
@@ -83,8 +86,7 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
           <ng-container *ngIf="extraActions">
             <td *ngFor="let action of extraActions" style="text-align: center">
               <button *ngIf="action.type == 'boolean'" (click)="extraActionClick(row,action.title,!row[action.property])"
-              [ngClass]="row[action.property] ? ['btn btn-danger'] : ['btn btn-success']">
-                {{row[action.property] ? action.content['enabled'] : action.content['disabled']}}
+                [ngClass]="row[action.property] ?  ['btn btn-success'] : ['btn btn-danger']" [innerHtml]="row[action.property] ? action.content['enabled'] : action.content['disabled']">
               </button>
               <button *ngIf="action.type == 'button'" class="btn btn-primary" (click)="extraActionClick(row,action.title)">
                 <span>{{action.content['enabled']}}</span>
