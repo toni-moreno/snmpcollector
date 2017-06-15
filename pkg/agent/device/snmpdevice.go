@@ -410,7 +410,9 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 // InitSnmpConnect does the  SNMP client conection and retrieve system info
 func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
 	if val, ok := d.snmpClientMap[mkey]; ok {
-		snmp.Release(val)
+		if val != nil {
+			snmp.Release(val)
+		}
 	}
 	d.Infof("Beginning SNMP connection")
 	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug, maxrep)

@@ -412,7 +412,9 @@ const (
 )
 
 func Release(client *gosnmp.GoSNMP) {
-	client.Conn.Close()
+	if client != nil {
+		client.Conn.Close()
+	}
 }
 
 // GetClient xx
