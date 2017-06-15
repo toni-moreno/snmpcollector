@@ -116,6 +116,19 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 		for _, val := range mt.cfg.FieldMetric {
 			if r.ID == val.ID {
 				mt.Header[val.FieldName] = r.Report
+				continue
+			}
+		}
+		for _, val := range mt.cfg.EvalMetric {
+			if r.ID == val.ID {
+				mt.Header[val.FieldName] = r.Report
+				continue
+			}
+		}
+		for _, val := range mt.cfg.OidCondMetric {
+			if r.ID == val.ID {
+				mt.Header[val.FieldName] = r.Report
+				continue
 			}
 		}
 	}
