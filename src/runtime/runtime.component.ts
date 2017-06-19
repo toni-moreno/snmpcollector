@@ -38,6 +38,8 @@ export class RuntimeComponent implements OnDestroy {
 
   public rt_columns: Array<any> = [
     { title: 'ID', name: 'ID'},
+    { title: 'TagMap', name: 'TagMap',tooltip: 'Num Measurements configured'},
+    { title: 'SysDesc', name: 'SysDescription'},
     { title: '#Meas', name: 'NumMeasurements',tooltip: 'Num Measurements configured'},
     { title: '#Metrics', name: 'NumMetrics'},
     { title: 'Get.Errs' ,name:'Counter7',tooltip: 'SnmpOIDGetErrors:number of  oid with errors for all measurements '},
@@ -329,7 +331,6 @@ export class RuntimeComponent implements OnDestroy {
   }
 
   loadRuntimeById(id: string, selectedMeas: number) {
-    console.log(this.isRequesting);
     this.mySubscription = this.runtimeService.getRuntimeById(id)
       .subscribe(
       data => {

@@ -38,7 +38,7 @@ const (
 type DevStat struct {
 	//ID
 	id     string
-	tagMap map[string]string
+	TagMap map[string]string
 	//Control
 	log     *logrus.Logger
 	selfmon *selfmon.SelfMon
@@ -53,6 +53,7 @@ type DevStat struct {
 	DeviceConnected    bool
 	//extra measurement statistics
 	NumMeasurements int
+	SysDescription  string
 	NumMetrics      int
 }
 
@@ -61,7 +62,7 @@ func (s *DevStat) Init(id string, tm map[string]string, l *logrus.Logger) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.id = id
-	s.tagMap = tm
+	s.TagMap = tm
 	s.log = l
 	s.Counters = make([]interface{}, DevStatTypeSize)
 	s.Counters[SnmpGetQueries] = 0
@@ -141,7 +142,7 @@ func (s *DevStat) ThSafeCopy() *DevStat {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	st := &DevStat{}
-	st.Init(s.id, s.tagMap, s.log)
+	st.Init(s.id, s.TagMap, s.log)
 	for k, v := range s.Counters {
 		st.Counters[k] = v
 	}
@@ -156,7 +157,7 @@ func (s *DevStat) Send() {
 	s.log.Infof("STATS SNMP FILTER: filter pooling took [%f seconds] ", s.Counters[FilterDuration])
 	s.log.Infof("STATS INFLUX: influx send took [%f seconds]", s.Counters[BackEndSentDuration])
 	if s.selfmon != nil {
-		s.selfmon.AddDeviceMetrics(s.id, s.getMetricFields(), s.tagMap)
+		s.selfmon.AddDeviceMetrics(s.id, s.getMetricFields(), s.TagMap)
 	}
 }
 
