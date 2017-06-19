@@ -113,10 +113,16 @@ func (d *SnmpDevice) getBasicStats() *DevStat {
 	}
 	stat := d.stats.ThSafeCopy()
 	stat.ReloadLoopsPending = d.ReloadLoopsPending
+	stat.TagMap = d.TagMap
 	stat.DeviceActive = d.DeviceActive
 	stat.DeviceConnected = d.DeviceConnected
 	stat.NumMeasurements = len(d.Measurements)
 	stat.NumMetrics = sum
+	if d.SysInfo != nil {
+		stat.SysDescription = d.SysInfo.SysDescr
+	} else {
+		stat.SysDescription = ""
+	}
 	return stat
 }
 

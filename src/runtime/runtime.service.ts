@@ -33,6 +33,12 @@ export class RuntimeService {
                              i++;
                          }
                      } else tmp[key] = val;
+                     if (key == "TagMap") {
+                         tmp['TagMap']=[];
+                         for (let a in val) {
+                             tmp['TagMap'].push(a+'='+val[a])
+                         }
+                     }
                   });
                   result.push(tmp);
                   //result.push({'ID': key, 'value' :value});

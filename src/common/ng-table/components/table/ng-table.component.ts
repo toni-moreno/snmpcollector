@@ -58,7 +58,7 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
 					<i class="glyphicon glyphicon-edit"  [tooltip]="'Edit item'" (click)="editItem(row)"></i>
     			<i class="glyphicon glyphicon glyphicon-remove"  [tooltip]="'Remove Item'" (click)="removeItem(row)"></i>
           </td>
-          <td *ngIf="showStatus == true">
+          <td *ngIf="showStatus == true" style="min-width: 170px">
           <label style="display: inline; margin-right: 2px" container="body" [tooltip]="'View '+ row.ID" class="label label-primary glyphicon glyphicon-eye-open" (click)="viewItem(row)"></label>
           <span style="border-right: 1px solid #1B809E; padding-right: 6px">
           <label style="display: inline; margin-right: 2px" container="body" [tooltip]="'Test connection '+ row.ID" class="label label-primary glyphicon glyphicon glyphicon-flash" (click)="testConnection(row)"></label>
