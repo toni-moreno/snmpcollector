@@ -1,6 +1,7 @@
 package measurement
 
 import (
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	"regexp"
 	"strconv"
@@ -62,7 +63,7 @@ func formatReGexp(l *logrus.Logger, input string, pattern string, replace string
 	return final
 }
 
-func sectionDotSlice(input string, first int, last int) string {
+func sectionDotSlice(input string, first int, last int) (string, error) {
 	sArray := strings.Split(input, ".")
 	n := len(sArray)
 
@@ -70,21 +71,25 @@ func sectionDotSlice(input string, first int, last int) string {
 		last = n - 1
 	}
 	if last < first {
-		return input
+		return input, fmt.Errorf("Last index (%d) should be greater than first(%d)", last, first)
 	}
 
-	if first > n {
-		return input
+	if first >= n {
+		return input, fmt.Errorf("First index (%d) should be lower than total num of doted strings (%d)", first, n)
 	}
 
-	if last < n {
-		n = last
+	var err error = nil
+
+	if last >= n {
+		err = fmt.Errorf("Last index (%d), shoud be lower than total number of doted separated strings (%d)", last, n)
+		last = n - 1
 	}
+
 	output := sArray[first]
-	for i := first + 1; i <= n; i++ {
+	for i := first + 1; i <= last; i++ {
 		output = output + "." + sArray[i]
 	}
-	return output
+	return output, err
 }
 
 func formatTag(l *logrus.Logger, format string, data map[string]string, def string) string {
@@ -156,7 +161,11 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 					l.Warnf("FormatTag[%s]: DOT -  error decode last position [%s]   error  %s", format, dotEnd, err)
 					last = -1
 				}
-				section = sectionDotSlice(v, first, last)
+
+				section, err = sectionDotSlice(v, first, last)
+				if err != nil {
+					l.Warnf("SectionDotSlice Error: %s", err)
+				}
 				l.Debugf("FormatTag[%s]: final section first/last[%d/%d] from [%s] took [%s] ", format, first, last, v, section)
 
 			case strings.HasPrefix(sectionmode, "REGEX/"):
