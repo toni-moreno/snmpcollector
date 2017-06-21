@@ -138,8 +138,8 @@
 		},
 		{
 			"ImportPath": "github.com/soniah/gosnmp",
-			"Comment": "v1.9-memory-112-gcfe685e",
-			"Rev": "cfe685e0bca91d7bc4a95eab3d1faddf66b32e02"
+			"Comment": "v1.9-memory-125-g55acec0",
+			"Rev": "55acec044875c95a3fb3fbc37160cb766501939f"
 		},
 		{
 			"ImportPath": "github.com/spf13/afero",
