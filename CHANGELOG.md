@@ -2,9 +2,15 @@
 ### New Features
 * added new BITS snmp SMI type to send named array strings as Fields or tags.
 * added new BITS Check (BITSCHK) cooked type to check only a specific position.
+* Add MeasFilters, MeasGroups and Extradata as available options on table actions.
+* Added Table Actions on SNMP Devices, SNMPMetrics. This will allow the user to Remove several items at once and change some properties
+* Added default items per page as 20
+* complete runtime view refactor.
+* updated gosnmp base library with fixes
 
 ### fixes
 
+* fix for #229, #233, #238, #243
 
 ### breaking changes
 
@@ -16,6 +22,7 @@
 * updated golang version to 1.8.3.
 * Addedd new OID snmpmetric type.
 * Runtime web-ui shows now Measurement Names and FieldNames instead of ID's.
+
 
 ### fixes
 * fix for #211,
