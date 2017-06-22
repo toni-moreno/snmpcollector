@@ -1,7 +1,5 @@
 package bus
 
-import ()
-
 type Message struct {
 	Type string
 	Data interface{}

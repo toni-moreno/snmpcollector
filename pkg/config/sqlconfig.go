@@ -1,7 +1,5 @@
 package config
 
-import ()
-
 // SnmpDeviceCfg contains all snmp related device definitions
 type SnmpDeviceCfg struct {
 	ID string `xorm:"'id' unique" binding:"Required"`

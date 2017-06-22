@@ -1,7 +1,5 @@
 package filter
 
-import ()
-
 // Filter Interface to operate with filters
 type Filter interface {
 	Init(arg ...interface{}) error
