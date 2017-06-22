@@ -84,7 +84,7 @@ func (b *Bus) Leave(leaving *Node) error {
 		}
 	}
 	if nodeIndex == -1 {
-		return errors.New("Could not find provided memeber for removal")
+		return errors.New("Could not find provided member for removal")
 	}
 	b.nodes = append(b.nodes[:nodeIndex], b.nodes[nodeIndex+1:]...)
 	//leaving.close <- true

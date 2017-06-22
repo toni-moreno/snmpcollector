@@ -258,10 +258,10 @@ func (d *SnmpDevice) InitDevMeasurements() {
 	/*For each  measurement look for filters and  Add to the measurement with this Filter after it initializes the runtime for the measurement  	*/
 
 	for _, m := range d.Measurements {
-		//check for filters asociated with this measurement
+		//check for filters associated with this measurement
 		var mfilter *config.MeasFilterCfg
 		for _, f := range d.cfg.MeasFilters {
-			//we seach if exist in the filter Database
+			//we search if exist in the filter Database
 			if filter, ok := cfg.MFilters[f]; ok {
 				if filter.IDMeasurementCfg == m.ID {
 					mfilter = filter
@@ -280,7 +280,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 		}
 		//Initialize internal structs after
 		m.InitBuildRuntime()
-		//Get Data First Time ( usefull for counters)
+		//Get Data First Time ( useful for counters)
 		m.GetData()
 	}
 	//Initialize all snmpMetrics  objects and OID array
@@ -397,7 +397,7 @@ func (d *SnmpDevice) AttachToBus(b *bus.Bus) {
 	b.Join(d.Node)
 }
 
-// End The Oposite of Init() uninitialize all variables
+// End The Opposite of Init() uninitialize all variables
 func (d *SnmpDevice) End() {
 	d.Node.Close()
 	for _, val := range d.snmpClientMap {
@@ -408,12 +408,12 @@ func (d *SnmpDevice) End() {
 	//release snmp resources
 }
 
-// SetSelfMonitoring set the ouput device where send monitoring metrics
+// SetSelfMonitoring set the output device where send monitoring metrics
 func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	d.stats.SetSelfMonitoring(cfg)
 }
 
-// InitSnmpConnect does the  SNMP client conection and retrieve system info
+// InitSnmpConnect does the  SNMP client connection and retrieve system info
 func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
 	if val, ok := d.snmpClientMap[mkey]; ok {
 		if val != nil {
@@ -467,7 +467,7 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 		d.stats.SetFltUpdateStats(startSnmp, elapsedSnmp)
 		d.Infof("snmp INIT runtime measurements/filters took [%s] ", elapsedSnmp)
 	} else {
-		d.Infof("Can not initialize this device: Is Active: %t  |  Conection Active: %t ", d.DeviceActive, d.snmpClientMap != nil)
+		d.Infof("Can not initialize this device: Is Active: %t  |  Connection Active: %t ", d.DeviceActive, d.snmpClientMap != nil)
 	}
 
 	d.Infof("Beginning gather process for device on host (%s)", d.cfg.Host)

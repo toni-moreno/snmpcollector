@@ -111,7 +111,7 @@ type SnmpDevFilters struct {
 	IDFilter  string `xorm:"id_filter"`
 }
 
-//MGroupsCfg measurement groups to asign to devices
+//MGroupsCfg measurement groups to assign to devices
 type MGroupsCfg struct {
 	ID           string   `xorm:"'id' unique" binding:"Required"`
 	Measurements []string `xorm:"-"`

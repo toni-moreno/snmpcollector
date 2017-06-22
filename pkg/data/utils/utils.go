@@ -70,7 +70,7 @@ func DiffKeyValuesInMap(X, Y map[string]string) map[string]string {
 		} else {
 			//exist
 			if vX != vY {
-				//but value is diferent
+				//but value is different
 				diff[kX] = vX
 			}
 		}

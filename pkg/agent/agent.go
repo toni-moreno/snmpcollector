@@ -112,7 +112,7 @@ func PrepareInfluxDBs() map[string]*output.InfluxDB {
 		idb[k] = output.NewNotInitInfluxDB(c)
 	}
 	if defFound == false {
-		//no devices configured  as default device we need to set some device as itcan send data transparant to snmpdevices goroutines
+		//no devices configured  as default device we need to set some device as itcan send data transparent to snmpdevices goroutines
 		log.Warn("No Output default found influxdb devices found !!")
 		idb["default"] = output.DummyDB
 	}

@@ -252,7 +252,7 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 	if m.Filter.Count() == 0 {
 		m.Warnf("WARNING after applying filter no values on this measurement will be sent")
 	}
-	//check if newfilterlabels are diferent than previous.
+	//check if newfilterlabels are different than previous.
 
 	//now we have the 	m.Filter,m.ls array initialized with only those values which we will need
 	//Loading final Values to query with snmp

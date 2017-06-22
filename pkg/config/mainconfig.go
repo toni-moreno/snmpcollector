@@ -4,7 +4,7 @@ import (
 	"github.com/go-xorm/xorm"
 )
 
-// GeneralConfig has miscelaneous configuration options
+// GeneralConfig has miscellaneous configuration options
 type GeneralConfig struct {
 	InstanceID string `toml:"instanceID"`
 	LogDir     string `toml:"logdir"`

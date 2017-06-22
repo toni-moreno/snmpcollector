@@ -130,7 +130,7 @@ func (s *DevStat) getMetricFields() map[string]interface{} {
 	return fields
 }
 
-// SetSelfMonitoring set the ouput device where send monitoring metrics
+// SetSelfMonitoring set the output device where send monitoring metrics
 func (s *DevStat) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()

@@ -16,6 +16,7 @@ var (
 	log *logrus.Logger
 )
 
+// SetLogger adds a logger to this module
 func SetLogger(l *logrus.Logger) {
 	log = l
 }
@@ -266,7 +267,7 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 
 	time.Sleep(5)
 
-	log.Infof("beggining Influx Sender thread: [%s]", db.cfg.ID)
+	log.Infof("beginning Influx Sender thread: [%s]", db.cfg.ID)
 	for {
 		select {
 		case <-db.chExit:

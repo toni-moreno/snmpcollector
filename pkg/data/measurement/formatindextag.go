@@ -145,7 +145,7 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 				}
 				match2 := re2.FindStringSubmatch(sectionmode)
 				if len(match2) < 3 {
-					l.Warnf("FormatTag[%s]: DOT - ERROR on number or paramters %+v  for string %s", format, match2, sectionmode)
+					l.Warnf("FormatTag[%s]: DOT - ERROR on number or parameters %+v  for string %s", format, match2, sectionmode)
 					break
 				}
 
@@ -176,7 +176,7 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 				}
 				match2 := re2.FindStringSubmatch(sectionmode)
 				if len(match2) < 3 {
-					l.Warnf("FormatTag[%s]: REGEX - ERROR on number or paramters %+v  for string %s", format, match2, sectionmode)
+					l.Warnf("FormatTag[%s]: REGEX - ERROR on number or parameters %+v  for string %s", format, match2, sectionmode)
 					break
 				}
 				userRegex := match2[1]
@@ -198,7 +198,7 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 				decoded = formatDec2ASCII(section)
 				l.Debugf("FormatTag[%s]: DEC2ASCII : value %s : Decoded %s", format, v, decoded)
 			default:
-				l.Warnf("FormatTag[%s]: Unknown TRASNFORMATION parameters %s ,  pattern %s", format, transformation, pattern)
+				l.Warnf("FormatTag[%s]: Unknown TRANSFORMATION parameters %s ,  pattern %s", format, transformation, pattern)
 			}
 			final = strings.Replace(final, match[0], decoded, -1)
 			l.Debugf("Result After Iteration on var Instance [%s]-[%s]", k, final)

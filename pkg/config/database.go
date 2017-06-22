@@ -24,7 +24,7 @@ func (dbc *DatabaseCfg) getChanges() int64 {
 	return atomic.LoadInt64(&dbc.numChanges)
 }
 
-//DbObjAction measurement groups to asign to devices
+//DbObjAction measurement groups to assign to devices
 type DbObjAction struct {
 	Type     string
 	TypeDesc string
@@ -393,7 +393,7 @@ func (dbc *DatabaseCfg) GetMeasurementCfgArray(filter string) ([]*MeasurementCfg
 	}
 
 	//Load Measurements and metrics relationship
-	//We asign field metric ID to each measurement
+	//We assign field metric ID to each measurement
 	for _, mVal := range devices {
 		for _, mm := range MeasureMetric {
 			if mm.IDMeasurementCfg == mVal.ID {
@@ -1062,7 +1062,7 @@ func (dbc *DatabaseCfg) GetSnmpDeviceCfgArray(filter string) ([]*SnmpDeviceCfg, 
 	}
 
 	//Load Measurements and metrics relationship
-	//We asign field metric ID to each measurement
+	//We assign field metric ID to each measurement
 	for _, mVal := range devices {
 		for _, mg := range snmpdevmgroups {
 			if mg.IDSnmpDev == mVal.ID {
@@ -1079,7 +1079,7 @@ func (dbc *DatabaseCfg) GetSnmpDeviceCfgArray(filter string) ([]*SnmpDeviceCfg, 
 	}
 
 	//Load Measurements and metrics relationship
-	//We asign field metric ID to each measurement
+	//We assign field metric ID to each measurement
 	for _, mVal := range devices {
 		for _, mf := range snmpdevfilters {
 			if mf.IDSnmpDev == mVal.ID {

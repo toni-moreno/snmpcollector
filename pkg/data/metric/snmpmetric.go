@@ -53,7 +53,7 @@ type SnmpMetric struct {
 	Scale       func()                                  `json:"-"`
 	SetRawData  func(pdu gosnmp.SnmpPDU, now time.Time) `json:"-"`
 	RealOID     string
-	Report      int //if false this metric won't be sent to the ouput buffer (is just taken as a coomputed input for other metrics)
+	Report      int //if false this metric won't be sent to the output buffer (is just taken as a coomputed input for other metrics)
 	//for STRINGPARSER
 	re   *regexp.Regexp
 	expr *govaluate.EvaluableExpression
