@@ -20,6 +20,11 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
           </th>
           <th *ngIf="showStatus == true" [ngStyle]="exportType ? {'min-width': '95px'} : {'min-width': '80px'}">
           </th>
+          <ng-container *ngIf="checkRows">
+          <th style="width: 80px; text-align: center; padding-bottom: 15px;" [ngClass]="rows.length === 0 ? ['bg-warning'] : ''">
+            <i *ngIf="rows.length == 0" class="glyphicon glyphicon-warning-sign label label-warning" container=body [tooltip]="'No results'"> </i>
+          </th>
+          </ng-container>
           <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column"
               (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important;" container="body" [tooltip]="column.tooltip">
             {{column.title}} <i *ngIf="column.icon" [ngClass]="'glyphicon glyphicon-'+column.icon"></i>
@@ -68,6 +73,11 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
           </span>
           <label style="display: inline; margin-right: 2px" container="body" [tooltip]="row.DeviceConnected ?  'Connected' : 'Not connected'" [ngClass]="row.DeviceConnected ?  'glyphicon glyphicon-globe label label-success' : 'glyphicon glyphicon-warning-sign label label-danger'"></label>
           </td>
+          <ng-container *ngIf="checkRows">
+          <td style="width: 80px; text-align: center; padding-top: 15px;" [ngClass]="row.valid === true? ['bg-success'] : ['bg-warning']">
+            <i [ngClass]="row.valid === true ? ['glyphicon glyphicon-ok-sign label label-success'] : ['glyphicon glyphicon-warning-sign label label-warning']"> </i>
+          </td>
+          </ng-container>
           <td [ngClass]="row.tooltipInfo ? (row.tooltipInfo[column.name] ? (row.tooltipInfo[column.name]['Valid'] === true ? ['bg-success'] : ['bg-danger']) : '') : ''" (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(row[column.name],column.transform)" style="text-align:right">
 
           <template #tooltipValues>
@@ -114,6 +124,7 @@ export class NgTableComponent {
   @Input() public exportType: string;
   @Input() public extraActions: Array<any>;
   @Input() checkedItems: Array<any>;
+  @Input() checkRows: Array<any>;
 
   @Input()
   public set config(conf: any) {

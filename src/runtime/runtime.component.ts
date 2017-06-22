@@ -93,6 +93,7 @@ export class RuntimeComponent implements OnDestroy {
   //TABLE
   // CHECK DATA, our data is array of arrays?!
   private data: Array<any> = [];
+  public activeDevices : any = [];
 
   public dataTable: Array<any> = [];
   public finalData: Array<Array<any>> = [];
@@ -206,45 +207,6 @@ export class RuntimeComponent implements OnDestroy {
     return filteredData;
   }
 
-
-  public changeFilter2(data: any, config: any): any {
-    let filteredData: Array<any> = data;
-    this.columns.forEach((column: any) => {
-      if (column.filtering) {
-        filteredData = filteredData.filter((item: any) => {
-          return item[column.name].match(column.filtering.filterString);
-        });
-      }
-    });
-
-    if (!config.filtering) {
-      return filteredData;
-    }
-
-    if (config.filtering.columnName) {
-      return filteredData.filter((item: any) =>
-        item[config.filtering.columnName].match(this.config.filtering.filterString));
-    }
-
-    let tempArray: Array<any> = [];
-    filteredData.forEach((item: any) => {
-      let flag = false;
-      this.columns.forEach((column: any) => {
-        if (item[column.name] === null) {
-          item[column.name] = '--'
-        }
-        if (item[column.name].toString().match(this.config.filtering.filterString)) {
-          flag = true;
-        }
-      });
-      if (flag) {
-        tempArray.push(item);
-      }
-    });
-    filteredData = tempArray;
-    return filteredData;
-  }
-
   changeItemsPerPage (items) {
     if (items) this.itemsPerPage = parseInt(items);
     else this.itemsPerPage=this.length;
@@ -264,11 +226,7 @@ export class RuntimeComponent implements OnDestroy {
     let sortedData = this.changeSort(filteredData, this.config);
     this.rows = page && this.config.paging ? this.changePage(page, sortedData) : sortedData;
     this.length = sortedData.length;
-  }
-
-  public onCellClick(data: any): any {
-    if (data.column === "DeviceActive") this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
-    console.log(data);
+    this.activeDevices = sortedData.filter((item) => {return item.DeviceActive}).length
   }
 
   public onExtraActionClicked(data:any) {
@@ -295,7 +253,10 @@ export class RuntimeComponent implements OnDestroy {
   initRuntimeInfo(id: string, meas: number, isRequesting?: boolean) {
     //Reset params
     this.editmode = 'view';
-    this.isRequesting = isRequesting || false;
+    if (isRequesting) {
+      this.isRequesting = isRequesting;
+      this.runtime_dev = null;
+    }
     this.isRefreshing = false;
     this.refreshRuntime.Running = false;
     clearInterval(this.intervalStatus);
@@ -314,7 +275,6 @@ export class RuntimeComponent implements OnDestroy {
       this.refreshRuntime.LastUpdate = new Date();
       //Cargamos interval y dejamos actualizando la información:
       this.intervalStatus = setInterval(() => {
-        //this.refreshing = !this.refreshing;
         this.isRefreshing = false;
         setTimeout(() => {
           this.isRefreshing = true;
@@ -327,7 +287,6 @@ export class RuntimeComponent implements OnDestroy {
       this.isRefreshing = false;
       clearInterval(this.intervalStatus);
     }
-    //this.loadRuntimeById(id,this.measActive);
   }
 
   loadRuntimeById(id: string, selectedMeas: number) {
@@ -368,7 +327,6 @@ export class RuntimeComponent implements OnDestroy {
                    break
 
                  }
-                //console.log('FieldName: ' +fieldName)
                 let tmpColumn: any = { title: fieldName, name: fieldName , icon: micon, tooltip: tt }
                 this.tmpcolumns.push(tmpColumn);
               }
@@ -378,17 +336,14 @@ export class RuntimeComponent implements OnDestroy {
             }
             //Go over the array again and get the DATA
             //indexKey contains the Index, must generate the same on multiples arrays
-            //console.log(measKey['MetricTable']['Row'])
             for (let rowid in measKey['MetricTable']['Row']) {
               let row = measKey['MetricTable']['Row'][rowid]
-              //console.log('row: ',row)
               let tmpTable: any = { tooltipInfo: {} };
+              tmpTable['valid']=row['Valid'];
               tmpTable.Index = rowid;
               for (let metricid in row['Data'] ) {
                 let metric = row['Data'][metricid]
-                //console.log('MetricID: ',metric)
                 let fieldName = metric.FieldName
-                //console.log('fieldName: ',fieldName)
                 tmpTable[fieldName] = metric.CookedValue;
                 tmpTable['tooltipInfo'][fieldName] = metric;
               }
@@ -415,14 +370,12 @@ export class RuntimeComponent implements OnDestroy {
     this.data = this.finalData[id];
     this.columns = this.finalColumns[id];
     //Reload config to enable sort
-    this.config.sorting = { columns: this.rt_columns };
-    console.log(this.config);
+    this.config.sorting = { columns: this.columns };
     this.onChangeTable(this.config);
   }
 
   changeActiveDevice(id, event) {
     console.log("ID,event", id, event);
-    //console.log(this.runtime_devs);
 
     this.runtimeService.changeDeviceActive(id, event)
       .subscribe(
@@ -435,7 +388,6 @@ export class RuntimeComponent implements OnDestroy {
           }
         })
         console.log(this.runtime_devs);
-            //this.runtime_devs[id]['DeviceActive']=event;
         if (this.runtime_dev != null) {
           this.runtime_dev.DeviceActive = !this.runtime_dev.DeviceActive;
         }
@@ -493,8 +445,6 @@ export class RuntimeComponent implements OnDestroy {
   }
 
   showTestConnectionModal(row : any) {
-    console.log(row);
-    console.log(row.ID);
     this.snmpDeviceService.getDevicesById(row.ID)
       .subscribe(data => {
         this.viewTestConnectionModal.show(data);
@@ -546,10 +496,9 @@ export class RuntimeComponent implements OnDestroy {
   }
 
   reloadData() {
-
+    this.itemsPerPage=20;
     this.isRequesting = true;
     if (this.mySubscription) {
-      console.log("SUBS",this.mySubscription);
       this.mySubscription.unsubscribe();
     }
     clearInterval(this.intervalStatus);
@@ -571,21 +520,6 @@ export class RuntimeComponent implements OnDestroy {
       () => console.log('DONE')
       );
   }
-
-/*  reloadData() {
-    this.filter = null;
-    // now it's a simple subscription to the observable
-    this.runtimeService.getRuntime(null)
-      .subscribe(
-      data => {
-        this.runtime_devs = data
-        this.dataArray = this.runtime_devs
-      },
-      err => console.error(err),
-      () => console.log('DONE')
-      );
-  }
-*/
 
   ngOnDestroy() {
     clearInterval(this.intervalStatus);
