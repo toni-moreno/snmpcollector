@@ -15,6 +15,6 @@ Please include this information:
 - If related with process panics.
   - Include the related log files indicated in the troubleshooting guide.(snmpcollector.log `<deviceid>.log`)
 - If related with configuration issues.
-  - Include all configuration
+  - Include all  related configuration data ( and export file, a webui screenshot or writted by hand if you prefer)
 - If webui seems to be freezed , :
-  - Eeload in another window de webui and, include raw network request & response: get by opening Chrome Dev Tools (F12, Ctrl+Shift+I on windows, Cmd+Opt+I on Mac), go the network tab.Review browser console for errors and also Include them.
+  - Reload in another window de webui and, include raw network request & response: get by opening Chrome Dev Tools (F12, Ctrl+Shift+I on windows, Cmd+Opt+I on Mac), go the network tab.Review browser console for errors and also Include them.

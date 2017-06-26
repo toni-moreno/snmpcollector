@@ -1,4 +1,4 @@
-# v 0.7.3 (Unreleased)
+# v 0.7.3 (2017-06-26)
 ### New Features
 * added new BITS snmp SMI type to send named array strings as Fields or tags.
 * added new BITS Check (BITSCHK) cooked type to check only a specific position.
@@ -7,6 +7,7 @@
 * Added default items per page as 20
 * complete runtime view refactor.
 * updated gosnmp base library with fixes
+* Added Github Issue Template.
 
 ### fixes
 
