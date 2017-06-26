@@ -11,6 +11,8 @@
       <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()" style="margin-top: 10px"><i class="glyphicon glyphicon-trash text-primary"></i></label>
       <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
       <label style="font-size:100%" [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']">{{length}} Results</label>
+      <label style="font-size:100%" [ngClass]="['label label-success']">{{activeDevices}} Active</label>
+      <label style="font-size:100%" [ngClass]="['label label-danger']">{{length - activeDevices}} Deactived</label>
   </div>
   <div class="col-md-4 text-right">
       <span style="margin-left: 20px"> Items per page: </span>
@@ -21,27 +23,27 @@
   </div>
   <br>
   <my-spinner [isRunning]="isRequesting"></my-spinner>
-  <ng-table *ngIf="isRequesting === false" [config]="config" (tableChanged)="onChangeTable(config)" (extraActionClicked)="onExtraActionClicked($event)" (viewedItem)="initRuntimeInfo($event.ID,null, true)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" (testedConnection)="showTestConnectionModal($event)" [showCustom]="false" [showStatus]="true" [rows]="rows" [columns]="rt_columns" [extraActions]="extraActions">
+  <ng-table *ngIf="isRequesting === false" [config]="config" (tableChanged)="onChangeTable(config)" (extraActionClicked)="onExtraActionClicked($event)" (viewedItem)="initRuntimeInfo($event.ID,null, true)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" (testedConnection)="showTestConnectionModal($event)" [showCustom]="false" [showStatus]="true" [rows]="rows" [columns]="columns" [extraActions]="extraActions">
   </ng-table>
   <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
   </pagination>
   <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
 </template>
 <template ngSwitchCase="view">
+  <div class="well">
+    <label [tooltip]="'Back to list'" container="body" style="font-size:130%; margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="text-primary glyphicon glyphicon-tasks" (click)="reloadData()"></i></label>
+    <ng-container *ngIf="runtime_dev">
+      <label [tooltip]="'Refresh'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></i></label>
+      <label *ngIf [tooltip]="'Test Connection'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i [ngClass]="runtime_dev['DeviceConnected'] === false ? ['text-danger glyphicon glyphicon-flash'] : ['text-warning glyphicon glyphicon-flash']" (click)="showTestConnectionModal(runtime_dev)"></i></label>
+      <h4 style="display:inline; border-right: 1px solid; padding-right: 5px" [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</h4>
+      <h4 *ngIf="runtime_dev['DeviceConnected'] == false" class="text-danger" style="display:inline; border-right: 1px solid; padding-right: 5px;"> Device is not connected</h4>
+      <label style="margin-left: 10px; font-size: 100%" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label>
+    </ng-container>
+  </div>
   <my-spinner [isRunning]="isRequesting"></my-spinner>
 
 <div class="col-md-12" *ngIf="isRequesting == false">
   <div class="col-md-12" *ngIf="runtime_dev">
-    <div class="well">
-      <label [tooltip]="'Back to list'" container="body" style="font-size:130%; margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="text-primary glyphicon glyphicon-tasks" (click)="reloadData()"></i></label>
-      <label [tooltip]="'Refresh'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></i></label>
-      <label [tooltip]="'Test Connection'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i [ngClass]="runtime_dev['DeviceConnected'] === false ? ['text-danger glyphicon glyphicon-flash'] : ['text-warning glyphicon glyphicon-flash']" (click)="showTestConnectionModal(runtime_dev)"></i></label>
-
-        <h4 style="display:inline; border-right: 1px solid; padding-right: 5px" [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</h4>
-        <h4 *ngIf="runtime_dev['DeviceConnected'] == false" class="text-danger" style="display:inline; border-right: 1px solid; padding-right: 5px;"> Device is not connected</h4>
-        <label style="margin-left: 10px; font-size: 100%" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label>
-    </div>
-    <hr>
     <div class="row">
       <div class="col-md-6" *ngIf="runtime_dev['DeviceConnected'] !== false">
         <div class="panel panel-default">
@@ -236,7 +238,7 @@
             </template>
           </div>
           <div style="overflow-x: scroll" class="col-md-12">
-            <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (cellClicked)="onCellClick($event)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns">
+            <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns" [checkRows]="true">
             </ng-table>
           </div>
           <div class="col-md-12">
