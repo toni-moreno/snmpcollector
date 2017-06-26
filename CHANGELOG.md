@@ -5,8 +5,8 @@
 * Add MeasFilters, MeasGroups and Extradata as available options on table actions.
 * Added Table Actions on SNMP Devices, SNMPMetrics. This will allow the user to Remove several items at once and change some properties
 * Added default items per page as 20
-* complete runtime view refactor.
-* updated gosnmp base library with fixes
+* complete runtime view refactor, a main view with a statistic and basic operation table, you can now filter also by sysDescription, and tag map. The detail view with detailed info on measuremet and field errors.
+* updated gosnmp base library with our CiscoAXA and peformance fixes
 * Added Github Issue Template.
 
 ### fixes
