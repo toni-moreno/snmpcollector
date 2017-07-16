@@ -234,7 +234,7 @@ export class RuntimeComponent implements OnDestroy {
       case 'SetActive' :
       this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
       break;
-      case 'Reset' :
+      case 'SnmpReset' :
       this.forceSnmpReset(data.row.ID);
       break;
       default:
