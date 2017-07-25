@@ -634,7 +634,8 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 	}
 	//first snmp query
 
-	if len(s.SystemOIDs) > 0 {
+	if len(s.SystemOIDs) > 0 && len(s.SystemOIDs[0]) > 0 {
+		l.Infof("Detected alternate %d SystemOID's ", len(s.SystemOIDs))
 		// this device has an alternate System Description (Non MIB-2 based systems)
 		si, err := SnmpGetAlternateSysInfo(s.ID, client, l, s.SystemOIDs)
 		if err != nil {
