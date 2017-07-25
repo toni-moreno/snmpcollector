@@ -27,7 +27,8 @@ export class SnmpDeviceService {
             key == 'SnmpDebug' ||
             key == 'DisableBulk' ||
             key == 'ConcurrentGather') return ( value === "true" || value === true);
-            if ( key == 'ExtraTags' ) return  String(value).split(',');
+            if ( key == 'ExtraTags' ||
+                 key == 'SystemOIDs' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
                 if (value == "") return null;
@@ -55,7 +56,8 @@ export class SnmpDeviceService {
             key == 'SnmpDebug' ||
             key == 'DisableBulk' ||
             key == 'ConcurrentGather') return ( value === "true" || value === true);
-            if ( key == 'ExtraTags' ) return  String(value).split(',');
+            if ( key == 'ExtraTags' ||
+                 key == 'SystemOIDs' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
                 if (value == "") return null;
@@ -145,7 +147,8 @@ export class SnmpDeviceService {
             key == 'SnmpDebug' ||
             key == 'DisableBulk' ||
             key == 'ConcurrentGather') return ( value === "true" || value === true);
-            if ( key == 'ExtraTags' ) return  String(value).split(',');
+            if ( key == 'ExtraTags' ||
+                 key == 'SystemOIDs' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
                 if (value == "") return null;
@@ -171,7 +174,8 @@ export class SnmpDeviceService {
             key == 'SnmpDebug' ||
             key == 'DisableBulk' ||
             key == 'ConcurrentGather') return ( value === "true" || value === true);
-            if ( key == 'ExtraTags' ) return  String(value).split(',');
+            if ( key == 'ExtraTags' ||
+                 key == 'SystemOIDs' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
                 if (value == "") return null;

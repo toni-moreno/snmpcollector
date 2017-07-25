@@ -80,6 +80,15 @@
       </div>
 
       <div class="form-group">
+        <label class="control-label col-sm-2" for="SystemOIDs">Alternate System OID's</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set OID to get like MIB-2::System Info (NEEDED TO CHECK connectivity to the device!!! for non MIB-2 based devices)"></i>
+        <div class="col-sm-9">
+          <input formControlName="SystemOIDs" id="SystemOIDs" />
+          <control-messages [control]="snmpdevForm.controls.SystemOIDs"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
         <label class="control-label col-sm-2" for="SnmpDebug">Active</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Active on Collector reboot"></i>
         <div class="col-sm-9">
@@ -390,6 +399,15 @@
         <div class="col-sm-9">
           <input formControlName="Retries" id="Retries" [ngModel]="snmpdevForm.value.Retries" />
           <control-messages [control]="snmpdevForm.controls.Retries"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="SystemOIDs">Alternate System OID's</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set OID to get like MIB-2::System Info (NEEDED TO CHECK connectivity to the device!!! for non MIB-2 based devices)"></i>
+        <div class="col-sm-9">
+          <input formControlName="SystemOIDs" id="SystemOIDs" [ngModel]="snmpdevForm.value.SystemOIDs"  />
+          <control-messages [control]="snmpdevForm.controls.SystemOIDs"></control-messages>
         </div>
       </div>
 

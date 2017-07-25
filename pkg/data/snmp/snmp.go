@@ -30,7 +30,7 @@ func SetLogDir(dir string) {
 	logDir = dir
 }
 
-// SysInfo basic information for any SNMP device
+// Sytem Info basic information for any SNMP based MIB-2 System
 type SysInfo struct {
 	SysDescr    string
 	SysUptime   time.Duration
@@ -205,6 +205,62 @@ func GetDebugLogger(filename string) *log.Logger {
 		mainlog.Warnf("Error on create debug file : %s ", err)
 		return nil
 	}
+}
+
+// SnmpGetSysInfo got system basic info from a snmp client
+func SnmpGetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, SystemOIDs []string) (SysInfo, error) {
+	//Get System Info from Alternate SystemOIDs
+	sysOids := []string{}
+	sysOidsiMap := make(map[string]string) //inverse map to get Key name from OID
+
+	info := SysInfo{SysDescr: "", SysUptime: time.Duration(0), SysContact: "", SysName: "", SysLocation: ""}
+
+	for _, v := range SystemOIDs {
+		s := strings.Split(v, "=")
+		if len(s) == 2 {
+			key, value := s[0], s[1]
+			sysOids = append(sysOids, value)
+			sysOidsiMap[value] = key
+		} else {
+			return info, fmt.Errorf("Error on AlternateSystemInfo OID definition TAG=OID [ %s ]", v)
+		}
+	}
+
+	pkt, err := client.Get(sysOids)
+
+	if err != nil {
+		l.Errorf("Error on getting initial basic system, Info to device %s: %s", id, err)
+		return info, err
+	}
+
+	tmpDesc := []string{}
+
+	for _, pdu := range pkt.Variables {
+		l.Debugf("DEBUG pdu:%+v", pdu)
+		if pdu.Value == nil {
+			continue
+		}
+		oidname := ""
+		if val, ok := sysOidsiMap[pdu.Name]; ok {
+			oidname = val
+		}
+		switch pdu.Type {
+		case gosnmp.OctetString: //  like SysDescr
+			value := fmt.Sprintf("%s = %s", oidname, string(pdu.Value.([]byte)))
+			tmpDesc = append(tmpDesc, value)
+		case gosnmp.TimeTicks: // like sysUpTime
+			seconds := uint32(pdu.Value.(int)) / 100
+			value := fmt.Sprintf("%d seconds", seconds)
+			tmpDesc = append(tmpDesc, value)
+		}
+	}
+	info.SysDescr = strings.Join(tmpDesc[:], " | ")
+
+	//sometimes (authenticacion error on v3) client.get doesn't return error but the connection is not still available
+	if len(info.SysDescr) == 0 {
+		return info, fmt.Errorf("Some Error happened while getting alternate system info for device %s", id)
+	}
+	return info, nil
 }
 
 // SnmpGetSysInfo got system basic info from a snmp client
@@ -577,6 +633,19 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 		l.Infof("First SNMP connection to host  %s stablished with MaxRepetitions set to %d", s.Host, maxrep)
 	}
 	//first snmp query
+
+	if len(s.SystemOIDs) > 0 {
+		// this device has an alternate System Description (Non MIB-2 based systems)
+		si, err := SnmpGetAlternateSysInfo(s.ID, client, l, s.SystemOIDs)
+		if err != nil {
+			l.Errorf("error on get Alternate System Info ERROR [%s] for OID's [%s] ", err, strings.Join(s.SystemOIDs[:], ","))
+			return nil, nil, err
+		} else {
+			l.Infof("Got basic system info %#v ", si)
+		}
+		return client, &si, err
+	}
+	//For most devices System Description could be got with MIB-2::System base OID's
 	si, err := SnmpGetSysInfo(s.ID, client, l)
 	if err != nil {
 		l.Errorf("error on get System Info %s", err)

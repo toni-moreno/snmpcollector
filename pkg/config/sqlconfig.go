@@ -4,12 +4,13 @@ package config
 type SnmpDeviceCfg struct {
 	ID string `xorm:"'id' unique" binding:"Required"`
 	//snmp connection config
-	Host    string `xorm:"host" binding:"Required"`
-	Port    int    `xorm:"port" binding:"Required"`
-	Retries int    `xorm:"retries"`
-	Timeout int    `xorm:"timeout"`
-	Repeat  int    `xorm:"repeat"`
-	Active  bool   `xorm:"'active' default 1"`
+	Host       string   `xorm:"host" binding:"Required"`
+	Port       int      `xorm:"port" binding:"Required"`
+	SystemOIDs []string `xorm:systemoids` //for non MIB-2 based devices
+	Retries    int      `xorm:"retries"`
+	Timeout    int      `xorm:"timeout"`
+	Repeat     int      `xorm:"repeat"`
+	Active     bool     `xorm:"'active' default 1"`
 	//snmp auth  config
 	SnmpVersion string `xorm:"snmpversion" binding:"Required;In(1,2c,3)"`
 	Community   string `xorm:"community"`
