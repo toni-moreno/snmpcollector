@@ -439,12 +439,22 @@ func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool, maxrep uint8) (*go
 func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 	d.Infof(" Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
 	d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
+	initerrors := 0
 	for _, m := range d.Measurements {
 		c, err := d.InitSnmpConnect(m.ID, debug, maxrep)
 		if err != nil {
 			d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
+			initerrors++
+		} else {
+			m.SetSnmpClient(c)
 		}
-		m.SetSnmpClient(c)
+	}
+	if initerrors > 0 {
+		d.Warnf("Error on reset snmp connection for %d  measurements", initerrors)
+	}
+	if initerrors == len(d.Measurements) {
+		d.Errorf("Error on reset snmp connection all (%d) measurements without valid connection : disconnecting now...  ", initerrors)
+		d.DeviceConnected = false
 	}
 }
 
@@ -596,6 +606,10 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					d.rtData.Unlock()
 				}
 			}
+			//Some online actions can change Stats
+			d.statsData.Lock()
+			d.Stats = d.getBasicStats()
+			d.statsData.Unlock()
 		}
 	}
 }
