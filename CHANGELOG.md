@@ -1,3 +1,13 @@
+# v 0.7.4 (unreleased)
+### New Features
+* added new Alternate SystemOID's map to extend snmpcollector to non MIB-2 based devices (as by example Proxy Squid), is important to get system description and also to check connectivity with the device.
+
+### fixes
+
+* fix for #247, #249
+
+### breaking changes
+
 # v 0.7.3 (2017-06-26)
 ### New Features
 * added new BITS snmp SMI type to send named array strings as Fields or tags.
