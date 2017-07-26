@@ -6,10 +6,14 @@ import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
 import { ValidationService } from '../common/validation.service'
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 import { ExportServiceCfg } from '../common/dataservice/export.service'
+import { Observable } from 'rxjs/Rx';
 
 import { GenericModal } from '../common/generic-modal';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
 import { ItemsPerPageOptions } from '../common/global-constants';
+
+import { TableActions } from '../common/table-actions';
+import { AvailableTableActions } from '../common/table-available-actions';
 
 declare var _:any;
 
@@ -24,6 +28,12 @@ export class InfluxMeasCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
+
+  editEnabled : boolean = false;
+  selectedArray : any = [];
+  public isRequesting : boolean;
+  public counterItems : number = null;
+  public counterErrors: any = [];
 
   itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
@@ -57,8 +67,10 @@ export class InfluxMeasCfgComponent {
     { title: 'Metric Fields', name: 'Fields' }
   ];
 
+  public tableAvailableActions : any;
+
   public page: number = 1;
-  public itemsPerPage: number = 10;
+  public itemsPerPage: number = 20;
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
@@ -77,6 +89,13 @@ export class InfluxMeasCfgComponent {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
+  }
+
+  enableEdit() {
+    this.editEnabled = !this.editEnabled;
+    console.log(this.editEnabled);
+    let obsArray = [];
+    this.tableAvailableActions = new AvailableTableActions('measurement').availableOptions;
   }
 
   createStaticForm() {
@@ -250,15 +269,14 @@ export class InfluxMeasCfgComponent {
     this.length = sortedData.length;
   }
 
-  public onCellClick(data: any): any {
-    console.log(data);
-  }
-
   reloadData() {
+    this.selectedArray = [];
+    this.isRequesting = true;
     // now it's a simple subscription to the observable
     this.influxMeasService.getMeas(this.filter)
       .subscribe(
       data => {
+        this.isRequesting = false;
         this.influxmeas = data
         this.data = data;
         this.onChangeTable(this.config);
@@ -275,6 +293,27 @@ export class InfluxMeasCfgComponent {
     this.onChangeTable(this.config);
   }
 
+  applyAction(test : any) : void {
+    //test.devices = [];
+    //test.devices = this.selectedArray.map((item) => {return item.ID});
+    switch(test.action) {
+       case "RemoveAllSelected": {
+          this.removeAllSelectedItems(this.selectedArray);
+          break;
+       }
+       case "ChangeProperty": {
+          this.updateAllSelectedItems(this.selectedArray,test.field,test.value)
+          break;
+       }
+       case "AppendProperty": {
+         this.updateAllSelectedItems(this.selectedArray,test.field,test.value,true);
+       }
+       default: {
+          break;
+       }
+    }
+  }
+
   onFilter() {
     this.reloadData();
   }
@@ -286,6 +325,18 @@ export class InfluxMeasCfgComponent {
 
   exportItem(item : any) : void {
     this.exportFileModal.initExportModal(item);
+  }
+
+  removeAllSelectedItems(myArray) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    for (let i in myArray) {
+      console.log("Removing ",myArray[i].ID)
+      this.deleteInfluxMeas(myArray[i].ID,true);
+      obsArray.push(this.deleteInfluxMeas(myArray[i].ID,true));
+    }
+    this.genericForkJoin(obsArray);
   }
 
   removeItem(row) {
@@ -336,12 +387,20 @@ export class InfluxMeasCfgComponent {
       );
   }
 
-  deleteInfluxMeas(id) {
-    this.influxMeasService.deleteMeas(id)
-      .subscribe(data => { },
-      err => console.error(err),
-      () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
+  deleteInfluxMeas(id, recursive?) {
+    if(!recursive) {
+      this.influxMeasService.deleteMeas(id)
+        .subscribe(data => { },
+        err => console.error(err),
+        () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
+        );
+    } else {
+      return this.influxMeasService.deleteMeas(id)
+      .do(
+        (test) =>  { this.counterItems++},
+        (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
       );
+    }
   }
 
   cancelEdit() {
@@ -360,23 +419,67 @@ export class InfluxMeasCfgComponent {
     }
   }
 
-  updateInfluxMeas() {
-    console.log(this.oldID);
-    console.log(this.influxmeasForm.value.id);
-    if (this.influxmeasForm.valid) {
-      var r = true;
-      if (this.influxmeasForm.value.ID != this.oldID) {
-        r = confirm("Changing Measurement ID from " + this.oldID + " to " + this.influxmeasForm.value.ID + ". Proceed?");
-      }
-      if (r == true) {
-        this.influxmeasForm.value['Fields'] = this.metricArray;
-        this.influxMeasService.editMeas(this.influxmeasForm.value, this.oldID)
-          .subscribe(data => { console.log(data) },
-          err => console.error(err),
-          () => { this.editmode = "list"; this.reloadData() }
-          );
+  updateAllSelectedItems(mySelectedArray,field,value, append?) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    if (!append)
+    for (let component of mySelectedArray) {
+      component[field] = value;
+      obsArray.push(this.updateInfluxMeas(true,component));
+    } else {
+      let tmpArray = [];
+      if(!Array.isArray(value)) value = value.split(',');
+      console.log(value);
+      for (let component of mySelectedArray) {
+        console.log(value);
+        //check if there is some new object to append
+        let newEntries = _.differenceWith(value,component[field],_.isEqual);
+        tmpArray = newEntries.concat(component[field])
+        console.log(tmpArray);
+        component[field] = tmpArray;
+        obsArray.push(this.updateInfluxMeas(true,component));
       }
     }
+    this.genericForkJoin(obsArray);
+    //Make sync calls and wait the result
+    this.counterErrors = [];
+  }
+
+  updateInfluxMeas(recursive?, component?) {
+    if (!recursive) {
+      if (this.influxmeasForm.valid) {
+        var r = true;
+        if (this.influxmeasForm.value.ID != this.oldID) {
+          r = confirm("Changing Measurement ID from " + this.oldID + " to " + this.influxmeasForm.value.ID + ". Proceed?");
+        }
+        if (r == true) {
+          this.influxmeasForm.value['Fields'] = this.metricArray;
+          this.influxMeasService.editMeas(this.influxmeasForm.value, this.oldID)
+            .subscribe(data => { console.log(data) },
+            err => console.error(err),
+            () => { this.editmode = "list"; this.reloadData() }
+            );
+        }
+      }
+    } else {
+      return this.influxMeasService.editMeas(component, component.ID)
+      .do(
+        (test) =>  { this.counterItems++ },
+        (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}
+      )
+      .catch((err) => {
+        return Observable.of({'ID': component.ID , 'error': err['_body']})
+      })
+    }
+  }
+
+  createMultiselectArray(tempArray) : any {
+    let myarray = [];
+    for (let entry of tempArray) {
+      myarray.push({ 'id': entry.ID, 'name': entry.ID });
+    }
+    return myarray;
   }
 
   getMetricsforMeas() {
@@ -386,12 +489,25 @@ export class InfluxMeasCfgComponent {
         this.snmpmetrics = data;
         this.selectmetrics = [];
         this.influxmeasForm.controls['Fields'].reset();
-        for (let entry of data) {
+        this.selectmetrics = this.createMultiselectArray(data);
+        /*for (let entry of data) {
           this.selectmetrics.push({ 'id': entry.ID, 'name': entry.ID });
-        }
+        }*/
       },
       err => console.error(err),
       () => console.log('DONE')
       );
   }
+
+  genericForkJoin(obsArray: any) {
+    Observable.forkJoin(obsArray)
+              .subscribe(
+                data => {
+                  this.selectedArray = [];
+                  this.reloadData()
+                },
+                err => console.error(err),
+              );
+  }
+
 }
