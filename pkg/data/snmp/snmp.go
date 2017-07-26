@@ -219,6 +219,10 @@ func SnmpGetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger,
 		s := strings.Split(v, "=")
 		if len(s) == 2 {
 			key, value := s[0], s[1]
+			//add initial dot to the OID if it has not.
+			if strings.HasPrefix(value, ".") == false {
+				value = "." + value
+			}
 			sysOids = append(sysOids, value)
 			sysOidsiMap[value] = key
 		} else {
@@ -250,7 +254,7 @@ func SnmpGetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger,
 			tmpDesc = append(tmpDesc, value)
 		case gosnmp.TimeTicks: // like sysUpTime
 			seconds := uint32(pdu.Value.(int)) / 100
-			value := fmt.Sprintf("%d seconds", seconds)
+			value := fmt.Sprintf("%s = %d seconds", oidname, seconds)
 			tmpDesc = append(tmpDesc, value)
 		}
 	}
