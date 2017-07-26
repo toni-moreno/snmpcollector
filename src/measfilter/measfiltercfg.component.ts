@@ -6,6 +6,7 @@ import { CustomFilterService } from '../customfilter/customfilter.service';
 import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 import { ExportServiceCfg } from '../common/dataservice/export.service'
+import { Observable } from 'rxjs/Rx';
 
 import { ValidationService } from '../common/validation.service'
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
@@ -13,6 +14,10 @@ import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
 import { GenericModal } from '../common/generic-modal';
 import { ItemsPerPageOptions } from '../common/global-constants';
+import { TableActions } from '../common/table-actions';
+import { AvailableTableActions } from '../common/table-available-actions';
+
+declare var _:any;
 
 @Component({
   selector: 'measfilters',
@@ -25,6 +30,14 @@ export class MeasFilterCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
+
+  editEnabled : boolean = false;
+  selectedArray : any = [];
+  public isRequesting : boolean;
+  public counterItems : number = null;
+  public counterErrors: any = [];
+
+  public tableAvailableActions : any;
 
   itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
@@ -56,7 +69,7 @@ export class MeasFilterCfgComponent {
   ];
 
   public page: number = 1;
-  public itemsPerPage: number = 10;
+  public itemsPerPage: number = 20;
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
@@ -74,6 +87,13 @@ export class MeasFilterCfgComponent {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
+  }
+
+  enableEdit() {
+    this.editEnabled = !this.editEnabled;
+    console.log(this.editEnabled);
+    let obsArray = [];
+    this.tableAvailableActions = new AvailableTableActions('measfilter').availableOptions;
   }
 
   createStaticForm() {
@@ -133,6 +153,18 @@ export class MeasFilterCfgComponent {
     this.myFilterValue = "";
     this.config.filtering = {filtering: { filterString: '' }};
     this.onChangeTable(this.config);
+  }
+
+  applyAction(test : any) : void {
+    switch(test.action) {
+       case "RemoveAllSelected": {
+          this.removeAllSelectedItems(this.selectedArray);
+          break;
+       }
+       default: {
+          break;
+       }
+    }
   }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
@@ -236,15 +268,14 @@ export class MeasFilterCfgComponent {
     this.length = sortedData.length;
   }
 
-  public onCellClick(data: any): any {
-    console.log(data);
-  }
-
   reloadData() {
+    this.selectedArray = [];
+    this.isRequesting = true;
     // now it's a simple subscription to the observable
     this.measFilterService.getMeasFilter(this.filter)
       .subscribe(
       data => {
+        this.isRequesting = false;
         this.measfilters = data;
         this.data = data;
         this.onChangeTable(this.config);
@@ -265,6 +296,18 @@ export class MeasFilterCfgComponent {
 
   exportItem(item : any) : void {
     this.exportFileModal.initExportModal(item);
+  }
+
+  removeAllSelectedItems(myArray) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    for (let i in myArray) {
+      console.log("Removing ",myArray[i].ID)
+      this.deleteMeasFilter(myArray[i].ID,true);
+      obsArray.push(this.deleteMeasFilter(myArray[i].ID,true));
+    }
+    this.genericForkJoin(obsArray);
   }
 
   removeItem(row) {
@@ -307,12 +350,20 @@ export class MeasFilterCfgComponent {
       );
   }
 
-  deleteMeasFilter(id) {
-    this.measFilterService.deleteMeasFilter(id)
-      .subscribe(data => { },
-      err => console.error(err),
-      () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
+  deleteMeasFilter(id, recursive?) {
+    if (!recursive) {
+      this.measFilterService.deleteMeasFilter(id)
+        .subscribe(data => { },
+        err => console.error(err),
+        () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
+        );
+    } else {
+      return this.measFilterService.deleteMeasFilter(id)
+      .do(
+        (test) =>  { this.counterItems++},
+        (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
       );
+    }
   }
 
   cancelEdit() {
@@ -328,19 +379,57 @@ export class MeasFilterCfgComponent {
     }
   }
 
-  updateMeasFilter() {
-    if (this.measfilterForm.valid) {
-      var r = true;
-      if (this.measfilterForm.value.ID != this.oldID) {
-        r = confirm("Changing Measurement Filter ID from " + this.oldID + " to " + this.measfilterForm.value.ID + ". Proceed?");
+  updateAllSelectedItems(mySelectedArray,field,value, append?) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    if (!append)
+    for (let component of mySelectedArray) {
+      component[field] = value;
+      obsArray.push(this.updateMeasFilter(true,component));
+    } else {
+      let tmpArray = [];
+      if(!Array.isArray(value)) value = value.split(',');
+      console.log(value);
+      for (let component of mySelectedArray) {
+        console.log(value);
+        //check if there is some new object to append
+        let newEntries = _.differenceWith(value,component[field],_.isEqual);
+        tmpArray = newEntries.concat(component[field])
+        console.log(tmpArray);
+        component[field] = tmpArray;
+        obsArray.push(this.updateMeasFilter(true,component));
       }
-      if (r == true) {
-        this.measFilterService.editMeasFilter(this.measfilterForm.value, this.oldID)
-          .subscribe(data => { console.log(data) },
-          err => console.error(err),
-          () => { this.editmode = "list"; this.reloadData() }
-          );
+    }
+    this.genericForkJoin(obsArray);
+    //Make sync calls and wait the result
+    this.counterErrors = [];
+  }
+
+  updateMeasFilter(recursive?, component?) {
+    if(!recursive) {
+      if (this.measfilterForm.valid) {
+        var r = true;
+        if (this.measfilterForm.value.ID != this.oldID) {
+          r = confirm("Changing Measurement Filter ID from " + this.oldID + " to " + this.measfilterForm.value.ID + ". Proceed?");
+        }
+        if (r == true) {
+          this.measFilterService.editMeasFilter(this.measfilterForm.value, this.oldID)
+            .subscribe(data => { console.log(data) },
+            err => console.error(err),
+            () => { this.editmode = "list"; this.reloadData() }
+            );
+        }
       }
+    } else {
+      return this.measFilterService.editMeasFilter(component, component.ID)
+      .do(
+        (test) =>  { this.counterItems++ },
+        (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}
+      )
+      .catch((err) => {
+        return Observable.of({'ID': component.ID , 'error': err['_body']})
+      })
     }
   }
 
@@ -377,7 +466,6 @@ export class MeasFilterCfgComponent {
       );
   }
 
-
   getCustomFiltersforMeasFilters() {
     this.customFilterService.getCustomFilter(null)
       .subscribe(
@@ -392,5 +480,14 @@ export class MeasFilterCfgComponent {
       () => console.log('DONE')
       );
   }
-
+  genericForkJoin(obsArray: any) {
+    Observable.forkJoin(obsArray)
+              .subscribe(
+                data => {
+                  this.selectedArray = [];
+                  this.reloadData()
+                },
+                err => console.error(err),
+              );
+  }
 }
