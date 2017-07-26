@@ -436,6 +436,20 @@ func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool, maxrep uint8) (*go
 	return client, nil
 }
 
+func (d *SnmpDevice) CheckDeviceConnectivity() {
+
+	ProcessedStat := d.stats.GetCounter(SnmpOIDGetProcessed)
+
+	if value, ok := ProcessedStat.(int); ok {
+		//check if no processed SNMP data (when this happens means there is not connectivity with the device )
+		if value == 0 {
+			d.DeviceConnected = false
+		}
+	} else {
+		d.Warnf("Error in check Processd Stats %#+v ", ProcessedStat)
+	}
+}
+
 func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 	d.Infof(" Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
 	d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
@@ -545,10 +559,13 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
 					d.stats.SetFltUpdateStats(startIdxUpdateStats, elapsedIdxUpdateStats)
 				}
+
+				d.CheckDeviceConnectivity()
+
 				d.stats.Send()
 			}
 		} else {
-			d.Infof("Gather process is dissabled")
+			d.Infof("Gather process is disabled")
 		}
 		//get Ready a copy of the stats to
 

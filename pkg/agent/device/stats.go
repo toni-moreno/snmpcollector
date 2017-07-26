@@ -103,6 +103,12 @@ func (s *DevStat) reset() {
 	}
 }
 
+func (s *DevStat) GetCounter(stat DevStatType) interface{} {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.Counters[stat]
+}
+
 func (s *DevStat) getMetricFields() map[string]interface{} {
 	fields := map[string]interface{}{
 		/*0*/ //"snmp_get_queries": s.Counters[SnmpGetQueries],
