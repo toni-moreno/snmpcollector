@@ -6,10 +6,17 @@ import { ValidationService } from '../common/validation.service'
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 import { TypeaheadModule } from 'ng2-bootstrap/typeahead';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
+import { Observable } from 'rxjs/Rx';
 
 import { GenericModal } from '../common/generic-modal';
 import { ExportServiceCfg } from '../common/dataservice/export.service'
 import { ItemsPerPageOptions } from '../common/global-constants';
+
+import { TableActions } from '../common/table-actions';
+import { AvailableTableActions } from '../common/table-available-actions';
+
+declare var _:any;
+
 @Component({
   selector: 'oidconditions',
   providers: [OidConditionService],
@@ -21,6 +28,13 @@ export class OidConditionCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
+
+
+  editEnabled : boolean = false;
+  selectedArray : any = [];
+  public isRequesting : boolean;
+  public counterItems : number = null;
+  public counterErrors: any = [];
 
   itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
@@ -40,8 +54,9 @@ export class OidConditionCfgComponent {
     { title: 'CondValue', name: 'CondValue' }
   ];
 
+  public tableAvailableActions : any;
   public page: number = 1;
-  public itemsPerPage: number = 10;
+  public itemsPerPage: number = 20;
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
@@ -59,6 +74,13 @@ export class OidConditionCfgComponent {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
+  }
+
+  enableEdit() {
+    this.editEnabled = !this.editEnabled;
+    console.log(this.editEnabled);
+    let obsArray = [];
+    this.tableAvailableActions = new AvailableTableActions('oidcondition').availableOptions;
   }
 
   createStaticForm() {
@@ -108,10 +130,13 @@ export class OidConditionCfgComponent {
   }
 
   reloadData() {
+    this.selectedArray = [];
+    this.isRequesting = true;
     // now it's a simple subscription to the observable
-    this.oidConditionService.getConditions(this.filter)
+    this.oidConditionService.getConditions(null)
       .subscribe(
       data => {
+        this.isRequesting = false;
         this.oidconditions = data;
         this.data = data;
         this.onChangeTable(this.config);
@@ -126,6 +151,18 @@ export class OidConditionCfgComponent {
     this.myFilterValue = "";
     this.config.filtering = {filtering: { filterString: '' }};
     this.onChangeTable(this.config);
+  }
+
+  applyAction(test : any) : void {
+    switch(test.action) {
+       case "RemoveAllSelected": {
+          this.removeAllSelectedItems(this.selectedArray);
+          break;
+       }
+       default: {
+          break;
+       }
+    }
   }
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
@@ -229,10 +266,6 @@ export class OidConditionCfgComponent {
     this.length = sortedData.length;
   }
 
-  public onCellClick(data: any): any {
-    console.log(data);
-  }
-
   onFilter() {
     this.reloadData();
   }
@@ -245,6 +278,18 @@ export class OidConditionCfgComponent {
 
   exportItem(item : any) : void {
     this.exportFileModal.initExportModal(item);
+  }
+
+  removeAllSelectedItems(myArray) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    for (let i in myArray) {
+      console.log("Removing ",myArray[i].ID)
+      this.deleteOidCondition(myArray[i].ID,true);
+      obsArray.push(this.deleteOidCondition(myArray[i].ID,true));
+    }
+    this.genericForkJoin(obsArray);
   }
 
   removeItem(row) {
@@ -283,12 +328,20 @@ export class OidConditionCfgComponent {
       err => console.error(err)
       );
   }
-  deleteOidCondition(id) {
-    this.oidConditionService.deleteCondition(id)
+  deleteOidCondition(id, recursive?) {
+    if (!recursive) {
+      this.oidConditionService.deleteCondition(id)
       .subscribe(data => { },
       err => console.error(err),
       () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
       );
+    } else {
+      return this.oidConditionService.deleteCondition(id)
+      .do(
+        (test) =>  { this.counterItems++},
+        (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
+      );
+    }
   }
 
   cancelEdit() {
@@ -305,20 +358,68 @@ export class OidConditionCfgComponent {
     }
   }
 
-  updateOidCondition() {
-    if (this.oidconditionForm.valid) {
-      var r = true;
-      if (this.oidconditionForm.value.ID != this.oldID) {
-        r = confirm("Changing Condition ID from " + this.oldID + " to " + this.oidconditionForm.value.ID + ". Proceed?");
+  updateAllSelectedItems(mySelectedArray,field,value, append?) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    if (!append)
+    for (let component of mySelectedArray) {
+      component[field] = value;
+      obsArray.push(this.updateOidCondition(true,component));
+    } else {
+      let tmpArray = [];
+      if(!Array.isArray(value)) value = value.split(',');
+      console.log(value);
+      for (let component of mySelectedArray) {
+        console.log(value);
+        //check if there is some new object to append
+        let newEntries = _.differenceWith(value,component[field],_.isEqual);
+        tmpArray = newEntries.concat(component[field])
+        console.log(tmpArray);
+        component[field] = tmpArray;
+        obsArray.push(this.updateOidCondition(true,component));
       }
-      if (r == true) {
-        this.oidConditionService.editCondition(this.oidconditionForm.value, this.oldID)
-          .subscribe(data => { console.log(data) },
-          err => console.error(err),
-          () => { this.editmode = "list"; this.reloadData() }
-          );
+    }
+    this.genericForkJoin(obsArray);
+    //Make sync calls and wait the result
+    this.counterErrors = [];
+  }
+
+  updateOidCondition(recursive?, component?) {
+    if (!recursive) {
+      if (this.oidconditionForm.valid) {
+        var r = true;
+        if (this.oidconditionForm.value.ID != this.oldID) {
+          r = confirm("Changing Condition ID from " + this.oldID + " to " + this.oidconditionForm.value.ID + ". Proceed?");
+        }
+        if (r == true) {
+          this.oidConditionService.editCondition(this.oidconditionForm.value, this.oldID)
+            .subscribe(data => { console.log(data) },
+            err => console.error(err),
+            () => { this.editmode = "list"; this.reloadData() }
+            );
+        }
       }
+    } else {
+      return this.oidConditionService.editCondition(component, component.ID)
+      .do(
+        (test) =>  { this.counterItems++ },
+        (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}
+      )
+      .catch((err) => {
+        return Observable.of({'ID': component.ID , 'error': err['_body']})
+      })
     }
   }
 
+  genericForkJoin(obsArray: any) {
+    Observable.forkJoin(obsArray)
+              .subscribe(
+                data => {
+                  this.selectedArray = [];
+                  this.reloadData()
+                },
+                err => console.error(err),
+              );
+  }
 }
