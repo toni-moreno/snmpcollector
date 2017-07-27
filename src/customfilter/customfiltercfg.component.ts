@@ -5,12 +5,16 @@ import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 import { ExportServiceCfg } from '../common/dataservice/export.service'
 
 import { ValidationService } from '../common/validation.service'
+import { Observable } from 'rxjs/Rx';
 
 import { GenericModal } from '../common/generic-modal';
 import { TestFilterModal } from './test-filter-modal';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
 import { ItemsPerPageOptions } from '../common/global-constants';
+import { TableActions } from '../common/table-actions';
+import { AvailableTableActions } from '../common/table-available-actions';
 
+declare var _:any;
 
 @Component({
   selector: 'customfilters',
@@ -25,6 +29,14 @@ export class CustomFilterCfgComponent {
   @ViewChild('viewTestFilterModal') public viewTestFilterModal: TestFilterModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
+  public tableAvailableActions : any;
+
+  editEnabled : boolean = false;
+  selectedArray : any = [];
+  public isRequesting : boolean;
+  public counterItems : number = null;
+  public counterErrors: any = [];
+
   itemsPerPageOptions : any = ItemsPerPageOptions;
 
   editmode: string; //list , create, modify
@@ -33,7 +45,6 @@ export class CustomFilterCfgComponent {
   customfilterForm: any;
   testinfluxservers: any;
   myFilterValue: any;
-
 
   //Initialization data, rows, colunms for Table
   private data: Array<any> = [];
@@ -46,7 +57,7 @@ export class CustomFilterCfgComponent {
   ];
 
   public page: number = 1;
-  public itemsPerPage: number = 10;
+  public itemsPerPage: number = 20;
   public maxSize: number = 5;
   public numPages: number = 1;
   public length: number = 0;
@@ -64,11 +75,22 @@ export class CustomFilterCfgComponent {
     this.reloadData();
   }
 
+  enableEdit() {
+    this.editEnabled = !this.editEnabled;
+    console.log(this.editEnabled);
+    let obsArray = [];
+    this.tableAvailableActions = new AvailableTableActions('customfilter').availableOptions;
+  }
+
+
   reloadData() {
+    this.selectedArray = [];
+    this.isRequesting = true;
     // now it's a simple subscription to the observable
     this.customFilterService.getCustomFilter(null)
       .subscribe(
       data => {
+        this.isRequesting = false;
         this.customfilters = data
         this.data = data;
         this.onChangeTable(this.config)
@@ -76,6 +98,18 @@ export class CustomFilterCfgComponent {
       err => console.error(err),
       () => console.log('DONE')
       );
+  }
+
+  applyAction(test : any) : void {
+    switch(test.action) {
+       case "RemoveAllSelected": {
+          this.removeAllSelectedItems(this.selectedArray);
+          break;
+       }
+       default: {
+          break;
+       }
+    }
   }
 
   onResetFilter(): void {
@@ -185,10 +219,6 @@ export class CustomFilterCfgComponent {
     this.length = sortedData.length;
   }
 
-  public onCellClick(data: any): any {
-    console.log(data);
-  }
-
   onFilter() {
     this.reloadData();
   }
@@ -196,6 +226,18 @@ export class CustomFilterCfgComponent {
   viewItem(id, event) {
     console.log('view', id);
     this.viewModal.parseObject(id);
+  }
+
+  removeAllSelectedItems(myArray) {
+    let obsArray = [];
+    this.counterItems = 0;
+    this.isRequesting = true;
+    for (let i in myArray) {
+      console.log("Removing ",myArray[i].ID)
+      this.deleteCustomFilter(myArray[i].ID,true);
+      obsArray.push(this.deleteCustomFilter(myArray[i].ID,true));
+    }
+    this.genericForkJoin(obsArray);
   }
 
   exportItem(item : any) : void {
@@ -234,12 +276,20 @@ export class CustomFilterCfgComponent {
     )
  	}
 
-  deleteCustomFilter(id) {
-    this.customFilterService.deleteCustomFilter(id)
-      .subscribe(data => { },
-      err => console.error(err),
-      () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
+  deleteCustomFilter(id,recursive?) {
+    if(!recursive){
+      this.customFilterService.deleteCustomFilter(id)
+        .subscribe(data => { },
+        err => console.error(err),
+        () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
+        );
+    } else {
+      return this.customFilterService.deleteCustomFilter(id)
+      .do(
+        (test) =>  { this.counterItems++},
+        (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
       );
+    }
   }
 
   cancelEdit() {
@@ -255,5 +305,15 @@ export class CustomFilterCfgComponent {
         () => { this.editmode = "list"; this.reloadData() }
         );
     }
+  }
+  genericForkJoin(obsArray: any) {
+    Observable.forkJoin(obsArray)
+              .subscribe(
+                data => {
+                  this.selectedArray = [];
+                  this.reloadData()
+                },
+                err => console.error(err),
+              );
   }
 }

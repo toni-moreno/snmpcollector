@@ -14,6 +14,18 @@ export class AvailableTableActions {
         return this.getDeviceAvailableActions(data);
       case 'metric':
         return this.getMetricAvailableActions();
+      case 'influxserver':
+        return this.getInfluxServersAvailableActions();
+      case 'oidcondition':
+        return this.getOIDConditionsAvailableActions();
+      case 'measgroup':
+          return this.getMeasGroupsAvailableActions();
+      case 'measfilter':
+          return this.getMeasFiltersAvailableActions();
+      case 'customfilter':
+          return this.getCustomFiltersAvailableActions();
+      case 'measurement':
+          return this.getMeasurementsAvailableActions();
       default:
         return null;
       }
@@ -112,8 +124,7 @@ export class AvailableTableActions {
     return tableAvailableActions;
   }
 
-
-  //Devices Available Acions:
+  //Metric Available Acions:
   getMetricAvailableActions (data ? : any) : any {
     let tableAvailableActions = [
     //Remove Action
@@ -146,4 +157,97 @@ export class AvailableTableActions {
     ];
     return tableAvailableActions;
   }
+
+  getInfluxServersAvailableActions (data ? : any) : any {
+    let tableAvailableActions = [
+    //Remove Action
+      {'title': 'Remove', 'content' :
+        {'type' : 'button','action' : 'RemoveAllSelected'}
+      },
+    //Change Property Action
+      {'title': 'Change property', 'content' :
+        {'type' : 'selector', 'action' : 'ChangeProperty', 'options' : [
+          {'title' : 'Precision', 'type':'boolean', 'options' : [
+            'h','m','s','ms','u','ns']
+          },
+          {'title': 'Retention','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl('', Validators.required)
+            })
+          },
+          {'title': 'Timeout','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl('', Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator]))
+            })
+          }
+        ]},
+      }
+    ];
+    return tableAvailableActions;
+  }
+
+  getMeasGroupsAvailableActions (data ? : any) : any {
+    let tableAvailableActions = [
+    //Remove Action
+      {'title': 'Remove', 'content' :
+        {'type' : 'button','action' : 'RemoveAllSelected'}
+      }
+    ];
+    return tableAvailableActions;
+  }
+
+  getCustomFiltersAvailableActions (data ? : any) : any {
+    let tableAvailableActions = [
+    //Remove Action
+      {'title': 'Remove', 'content' :
+        {'type' : 'button','action' : 'RemoveAllSelected'}
+      },
+    ];
+    return tableAvailableActions;
+  }
+
+  getOIDConditionsAvailableActions (data ? : any) : any {
+    let tableAvailableActions = [
+    //Remove Action
+      {'title': 'Remove', 'content' :
+        {'type' : 'button','action' : 'RemoveAllSelected'}
+      },
+    ];
+    return tableAvailableActions;
+  }
+
+  getMeasFiltersAvailableActions (data ? : any) : any {
+    let tableAvailableActions = [
+    //Remove Action
+      {'title': 'Remove', 'content' :
+        {'type' : 'button','action' : 'RemoveAllSelected'}
+      },
+    ];
+    return tableAvailableActions;
+  }
+
+  getMeasurementsAvailableActions (data ? : any) : any {
+    let tableAvailableActions = [
+    //Remove Action
+      {'title': 'Remove', 'content' :
+        {'type' : 'button','action' : 'RemoveAllSelected'}
+      },
+    //Change Property Action
+      {'title': 'Change property', 'content' :
+        {'type' : 'selector', 'action' : 'ChangeProperty', 'options' : [
+          {'title': 'IndexTag','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl('', Validators.required)
+            })
+          },
+          {'title' : 'IndexAsValue', 'type':'boolean', 'options' : [
+            'true','false'
+            ]
+          }
+        ]},
+      }
+    ];
+    return tableAvailableActions;
+  }
+
 }
