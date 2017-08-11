@@ -84,6 +84,7 @@ export class TestFilterModal implements OnInit {
 
   newCustomFilter(formValues? : any) {
     //Reset forms!
+    this.showNewFilterForm = false;
     this.mode = "new";
     this.clearQuery();
     this.clearItems();
