@@ -293,7 +293,7 @@
         <div class="col-sm-9">
           <select formControlName="DeviceTagValue" id="DeviceTagValue">
             <option selected="selected" value="id">Id - {{snmpdevForm.controls.ID.value}}</option>
-            <option value="name">Host - {{snmpdevForm.controls.Host.value}}</option>
+            <option value="host">Host - {{snmpdevForm.controls.Host.value}}</option>
           </select>
           <control-messages [control]="snmpdevForm.controls.DeviceTagValue"></control-messages>
         </div>
@@ -618,7 +618,7 @@
         <div class="col-sm-9">
           <select formControlName="DeviceTagValue" id="DeviceTagValue" [ngModel]="snmpdevForm.value.DeviceTagValue">
             <option selected="selected" value="id">Id - {{snmpdevForm.controls.ID.value}}</option>
-            <option value="name">Host - {{snmpdevForm.controls.Host.value}}</option>
+            <option value="host">Host - {{snmpdevForm.controls.Host.value}}</option>
           </select>
           <control-messages [control]="snmpdevForm.controls.DeviceTagValue"></control-messages>
         </div>
