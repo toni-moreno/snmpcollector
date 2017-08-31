@@ -621,6 +621,13 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 			MsgFlags:           seclpmap[s.V3SecLevel],
 			SecurityParameters: UsmParams,
 		}
+
+		if len(s.V3ContextName) > 0 {
+			client.ContextName = s.V3ContextName
+		}
+		if len(s.V3ContextEngineID) > 0 {
+			client.ContextEngineID = s.V3ContextEngineID
+		}
 	default:
 		l.Errorf("Error no snmpversion found %s in host %s", s.SnmpVersion, s.Host)
 		return nil, nil, ers.New("Error on snmp Version")

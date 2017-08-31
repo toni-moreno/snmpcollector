@@ -12,14 +12,16 @@ type SnmpDeviceCfg struct {
 	Repeat     int      `xorm:"repeat"`
 	Active     bool     `xorm:"'active' default 1"`
 	//snmp auth  config
-	SnmpVersion string `xorm:"snmpversion" binding:"Required;In(1,2c,3)"`
-	Community   string `xorm:"community"`
-	V3SecLevel  string `xorm:"v3seclevel"`
-	V3AuthUser  string `xorm:"v3authuser"`
-	V3AuthPass  string `xorm:"v3authpass"`
-	V3AuthProt  string `xorm:"v3authprot"`
-	V3PrivPass  string `xorm:"v3privpass"`
-	V3PrivProt  string `xorm:"v3privprot"`
+	SnmpVersion       string `xorm:"snmpversion" binding:"Required;In(1,2c,3)"`
+	Community         string `xorm:"community"`
+	V3SecLevel        string `xorm:"v3seclevel"`
+	V3AuthUser        string `xorm:"v3authuser"`
+	V3AuthPass        string `xorm:"v3authpass"`
+	V3AuthProt        string `xorm:"v3authprot"`
+	V3PrivPass        string `xorm:"v3privpass"`
+	V3PrivProt        string `xorm:"v3privprot"`
+	V3ContextEngineID string `xorm:"v3contextengineid"`
+	V3ContextName     string `xorm:"v3contextname"`
 	//snmp workarround for some devices
 	DisableBulk    bool  `xorm:"'disablebulk' default 0"`
 	MaxRepetitions uint8 `xorm:"'maxrepetitions' default 50" binding:"Default(50);IntegerNotZero"`

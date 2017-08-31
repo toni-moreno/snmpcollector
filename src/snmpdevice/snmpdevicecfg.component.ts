@@ -182,16 +182,24 @@ export class SnmpDeviceCfgComponent {
 
     switch (field) {
       case 'AuthPriv':
+      controlArray.push({'ID': 'V3ContextEngineID', 'defVal' : '', 'Validators' : Validators.nullValidator });
+      controlArray.push({'ID': 'V3ContextName', 'defVal' : '', 'Validators' : Validators.nullValidator });
       controlArray.push({'ID': 'V3PrivPass', 'defVal' : '', 'Validators' : Validators.required });
       controlArray.push({'ID': 'V3PrivProt', 'defVal' : '', 'Validators' : Validators.required });
       case 'AuthNoPriv':
+      controlArray.push({'ID': 'V3ContextEngineID', 'defVal' : '', 'Validators' : Validators.nullValidator });
+      controlArray.push({'ID': 'V3ContextName', 'defVal' : '', 'Validators' : Validators.nullValidator });
       controlArray.push({'ID': 'V3AuthPass', 'defVal' : '', 'Validators' : Validators.required });
       controlArray.push({'ID': 'V3AuthProt', 'defVal' : '', 'Validators' : Validators.required });
       case 'NoAuthNoPriv':
+      controlArray.push({'ID': 'V3ContextEngineID', 'defVal' : '', 'Validators' : Validators.nullValidator });
+      controlArray.push({'ID': 'V3ContextName', 'defVal' : '', 'Validators' : Validators.nullValidator });
       controlArray.push({'ID': 'V3SecLevel', 'defVal' : field, 'Validators' : Validators.required });
       controlArray.push({'ID': 'V3AuthUser', 'defVal' : '', 'Validators' : Validators.required });
       break;
       case '3':
+      controlArray.push({'ID': 'V3ContextEngineID', 'defVal' : '', 'Validators' : Validators.nullValidator });
+      controlArray.push({'ID': 'V3ContextName', 'defVal' : '', 'Validators' : Validators.nullValidator });
       controlArray.push({'ID': 'V3SecLevel', 'defVal' : 'NoAuthNoPriv', 'Validators' : Validators.required });
       controlArray.push({'ID': 'V3AuthUser', 'defVal' : '', 'Validators' : Validators.required });
       break;

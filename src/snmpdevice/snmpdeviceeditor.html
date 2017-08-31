@@ -157,6 +157,7 @@
             <control-messages [control]="snmpdevForm.controls.V3SecLevel"></control-messages>
           </div>
         </div>
+
         <div class="form-group" *ngIf="snmpdevForm.controls.V3AuthUser">
           <label class="control-label col-sm-2" for="V3AuthUser">V3AuthUser</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication user"></i>
@@ -209,6 +210,25 @@
             <control-messages [control]="snmpdevForm.controls.V3PrivProt"></control-messages>
           </div>
         </div>
+
+        <div class="form-group" *ngIf="snmpdevForm.controls.V3ContextEngineID">
+          <label class="control-label col-sm-2" for="V3ContextEngineID">V3ContextEngineID</label>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMPV3 ContextEngineID in ScopedPDU (equivalent to the net-snmp -E paramenter)"></i>
+          <div class="col-sm-9">
+            <input formControlName="V3ContextEngineID" id="V3ContextEngineID"   />
+            <control-messages [control]="snmpdevForm.controls.V3ContextEngineID"></control-messages>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="snmpdevForm.controls.V3ContextName">
+          <label class="control-label col-sm-2" for="V3ContextName">V3ContextName</label>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMPV3 ContextName in ScopedPDU ( equivalent to the net-snmp -n parameter)"></i>
+          <div class="col-sm-9">
+            <input formControlName="V3ContextName" id="V3ContextName" />
+            <control-messages [control]="snmpdevForm.controls.V3ContextName"></control-messages>
+          </div>
+        </div>
+
       </div>
 
       <div class="form-group">
@@ -534,7 +554,27 @@
           </div>
 
         </div>
+
+        <div class="form-group" *ngIf="snmpdevForm.controls.V3ContextEngineID">
+          <label class="control-label col-sm-2" for="V3ContextEngineID">V3ContextEngineID</label>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMPV3 ContextEngineID in ScopedPDU (equivalent to the net-snmp -E paramenter)"></i>
+          <div class="col-sm-9">
+            <input formControlName="V3ContextEngineID" id="V3ContextEngineID"  [ngModel]="snmpdevForm.value.V3ContextEngineID" />
+            <control-messages [control]="snmpdevForm.controls.V3ContextEngineID"></control-messages>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="snmpdevForm.controls.V3ContextName">
+
+          <label class="control-label col-sm-2" for="V3ContextName">V3ContextName</label>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMPV3 ContextName in ScopedPDU ( equivalent to the net-snmp -n parameter)"></i>
+          <div class="col-sm-9">
+            <input formControlName="V3ContextName" id="V3ContextName"  [ngModel]="snmpdevForm.value.V3ContextName" />
+            <control-messages [control]="snmpdevForm.controls.V3ContextName"></control-messages>
+          </div>
+        </div>
       </div>
+
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Freq">Freq</label>
