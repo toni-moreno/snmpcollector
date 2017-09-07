@@ -144,7 +144,7 @@ export class ImportFileModal {
   }
 
   selectFile(event) {
-    if (event.srcElement.files.length != 0) this.files = event.srcElement.files;
+    if (event.target.files.length != 0) this.files = event.target.files;
     else this.files = null;
   }
 
