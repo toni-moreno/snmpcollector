@@ -2,10 +2,11 @@
 ### New Features
 * added new Alternate SystemOID's map to extend snmpcollector to non MIB-2 based devices (as by example Proxy Squid), is important to get system description and also to check connectivity with the device.
 * added new SNMPv3 parameters ContextEngineID and ContextName
+* added Table Actions on InfluxDB Servers, Measurements, Measurement Filters, Measurement Groups, Custom Filters and OID Conditions
 
 ### fixes
 
-* fix for #247, #249, #254
+* fix for #247, #249, #254, #258, #256 (PR)
 
 ### breaking changes
 
