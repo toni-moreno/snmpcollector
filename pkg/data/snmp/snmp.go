@@ -79,7 +79,10 @@ func PduVal2Cooked(pdu gosnmp.SnmpPDU) interface{} {
 	case gosnmp.ObjectDescription:
 		return PduVal2str(pdu)
 	case gosnmp.IPAddress:
-		ip, _ := PduVal2IPaddr(pdu)
+		ip, err := PduVal2IPaddr(pdu)
+		if err != nil {
+			mainlog.Errorf("Error on SNMP IPAddress decode on PDU[%#+v] Error: %s\n", pdu, err)
+		}
 		return ip
 	case gosnmp.Counter32:
 		return PduVal2Int64(pdu)
@@ -451,20 +454,20 @@ func PduVal2IPaddr(pdu gosnmp.SnmpPDU) (string, error) {
 	switch vt := value.(type) {
 	case string:
 		ipbs = []byte(vt)
+		return string(ipbs), nil
 	case []byte:
 		ipbs = vt
+		switch len(ipbs) {
+		case 4, 16:
+			value = net.IP(ipbs).String()
+		default:
+			return "", fmt.Errorf("invalid length (%d) for ipaddr conversion", len(ipbs))
+		}
+		return string(value.([]byte)), nil
 	default:
 		return "", fmt.Errorf("invalid type (%T) for ipaddr conversion", value)
 	}
-
-	switch len(ipbs) {
-	case 4, 16:
-		value = net.IP(ipbs).String()
-	default:
-		return "", fmt.Errorf("invalid length (%d) for ipaddr conversion", len(ipbs))
-	}
-
-	return string(value.([]byte)), nil
+	return "", nil
 }
 
 const (
