@@ -6,20 +6,24 @@
 <p [ngSwitch]="editmode">
   <template ngSwitchCase="list">
   <div class="row">
-    <div class="col-md-8 text-left">
+    <div class="col-md-9 text-left">
       <label [tooltip]="'Refresh'" container="body" style="margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="glyphicon glyphicon-refresh" (click)="reloadData()"></i></label>
       <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()" style="margin-top: 10px"><i class="glyphicon glyphicon-trash text-primary"></i></label>
       <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
       <label style="font-size:100%" [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']">{{length}} Results</label>
-      <label style="font-size:100%" [ngClass]="['label label-success']">{{activeDevices}} Active</label>
-      <label style="font-size:100%" [ngClass]="['label label-danger']">{{length - activeDevices}} Deactived</label>
   </div>
-  <div class="col-md-4 text-right">
+  <div class="col-md-3 text-right">
       <span style="margin-left: 20px"> Items per page: </span>
       <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage || 'All'" (ngModelChange)="changeItemsPerPage($event)">
         <option *ngFor="let option of itemsPerPageOptions" style="padding-left:2px" [value]="option.value">{{option.title}}</option>
       </select>
-    </div>
+  </div>
+  </div>
+  <div class="row well" *ngIf="isRequesting === false"  style="margin-top: 10px; padding: 10px 0px 10px 15px;">
+    <span> Status: </span>
+    <label style="font-size:100%" [ngClass]="['label label-success']" (click)="toogleActiveFilter('active')" container="body" tooltip="Filter actived devices">{{activeDevices}} Actived <i [ngClass]="activeFilter === true ? ['glyphicon glyphicon-ok'] : ['glyphicon glyphicon-unchecked']"></i></label>
+    <label style="font-size:100%;margin-left:15px" [ngClass]="['label label-danger']" (click)="toogleActiveFilter('deactive')" container="body" tooltip="Filter deactived devices">{{length - activeDevices}} Deactived <i [ngClass]="deactiveFilter === true ? ['glyphicon glyphicon-ok'] : ['glyphicon glyphicon-unchecked']"></i></label>
+    <label *ngIf="noConnectedDevices > 0" [ngClass]="['label label-warning']" style="margin-left:15px; font-size:100%" (click)="toogleActiveFilter('noconnected')" tooltip="Filter actived but no connected devices"><i class="glyphicon glyphicon-warning-sign"></i> Warning {{noConnectedDevices}} {{noConnectedDevices > 1 ? 'devices' : 'device'}} trying to connect... <i [ngClass]="noConnectedFilter === true ? ['glyphicon glyphicon-ok'] : ['glyphicon glyphicon-unchecked']"></i></label>
   </div>
   <br>
   <my-spinner [isRunning]="isRequesting"></my-spinner>

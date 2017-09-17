@@ -6,7 +6,7 @@
 
 ### fixes
 
-* fix for #247, #249, #254, #258, #256 (PR)
+* fix for #247, #249, #254, #258, #256 (PR), #260
 
 ### breaking changes
 

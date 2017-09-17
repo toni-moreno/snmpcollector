@@ -1,3 +1,4 @@
+
 import { ChangeDetectionStrategy, Component, ViewChild, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
 import { RuntimeService } from './runtime.service';
@@ -93,8 +94,8 @@ export class RuntimeComponent implements OnDestroy {
   //TABLE
   // CHECK DATA, our data is array of arrays?!
   private data: Array<any> = [];
-  public activeDevices : any = [];
-
+  public activeDevices : number;
+  public noConnectedDevices : number;
   public dataTable: Array<any> = [];
   public finalData: Array<Array<any>> = [];
   public columns: Array<any> = [];
@@ -114,6 +115,9 @@ export class RuntimeComponent implements OnDestroy {
   public numPages: number = 1;
   public length: number = 0;
   public myFilterValue: any;
+  public activeFilter: boolean = false;
+  public deactiveFilter: boolean = false;
+  public noConnectedFilter  : boolean = false;
 
   //Set config
   public config: any = {
@@ -227,6 +231,7 @@ export class RuntimeComponent implements OnDestroy {
     this.rows = page && this.config.paging ? this.changePage(page, sortedData) : sortedData;
     this.length = sortedData.length;
     this.activeDevices = sortedData.filter((item) => {return item.DeviceActive}).length
+    this.noConnectedDevices = sortedData.filter((item) => { if(item.DeviceActive === true && item.DeviceConnected  === false) return true }).length
   }
 
   public onExtraActionClicked(data:any) {
@@ -514,11 +519,37 @@ export class RuntimeComponent implements OnDestroy {
         this.data = this.runtime_devs;
         this.config.sorting.columns=this.columns,
         this.isRequesting = false;
+        this.activeFilter = this.deactiveFilter = this.noConnectedFilter = false;
         this.onChangeTable(this.config);
       },
       err => console.error(err),
       () => console.log('DONE')
       );
+  }
+
+  toogleActiveFilter(option : string) {
+    if (this.activeFilter === false && option === 'active') {
+      this.noConnectedFilter = false;
+      this.deactiveFilter = false;
+      this.activeFilter = true;
+      this.data = this.runtime_devs.filter((item) => { if(item.DeviceActive === true) return true })
+    } else if (this.deactiveFilter === false && option === 'deactive' ) {
+      this.noConnectedFilter = false;
+      this.activeFilter = false;
+      this.deactiveFilter = true;
+      this.data = this.runtime_devs.filter((item) => { if(item.DeviceActive === false) return true })
+    } else if (this.noConnectedFilter === false && option === 'noconnected'){
+      this.noConnectedFilter = true;
+      this.activeFilter = false;
+      this.deactiveFilter = false;
+      this.data = this.runtime_devs.filter((item) => { if(item.DeviceConnected === false) return true })
+    } else {
+      this.data = this.runtime_devs;
+      this.noConnectedFilter = false;
+      this.activeFilter = false;
+      this.deactiveFilter = false;
+    }
+    this.onChangeTable(this.config);
   }
 
   ngOnDestroy() {
