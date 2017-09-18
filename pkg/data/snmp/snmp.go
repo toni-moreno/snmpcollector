@@ -6,10 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"log"
 	"net"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -197,17 +194,6 @@ func Query(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error) {
 		result = append(result, EasyPDU{Name: oid, Type: "ERROR", Value: "No Such Instance currently exists at this OID"})
 	}
 	return result, nil
-}
-
-// GetDebugLogger returns a logger handler for snmp debug data
-func GetDebugLogger(filename string) *log.Logger {
-	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(filename, ".", "-", -1)+".log")
-	if l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644); err == nil {
-		return log.New(l, "", 0)
-	} else {
-		mainlog.Warnf("Error on create debug file : %s ", err)
-		return nil
-	}
 }
 
 // SnmpGetSysInfo got system basic info from a snmp client
