@@ -68,8 +68,9 @@ type SnmpDevice struct {
 
 	Node *bus.Node `json:"-"`
 
-	CurLogLevel string
-	Gather      func() `json:"-"`
+	CurLogLevel     string
+	Gather          func()                                                              `json:"-"`
+	InitSnmpConnect func(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) `json:"-"`
 }
 
 // New create and Initialice a device Object
@@ -383,8 +384,10 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 
 	if d.cfg.ConcurrentGather == true {
 		d.Gather = d.measConcurrentGatherAndSend
+		d.InitSnmpConnect = d.initSnmpConnectConcurrent
 	} else {
 		d.Gather = d.measSeqGatherAndSend
+		d.InitSnmpConnect = d.initSnmpConnectSequential
 	}
 	d.statsData.Lock()
 	d.Stats = d.getBasicStats()
@@ -413,14 +416,41 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	d.stats.SetSelfMonitoring(cfg)
 }
 
-// InitSnmpConnect does the  SNMP client connection and retrieve system info
-func (d *SnmpDevice) InitSnmpConnect(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
+// initSnmpConnectConcurrent does the  SNMP client connection and retrieve system info
+func (d *SnmpDevice) initSnmpConnectConcurrent(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
 	if val, ok := d.snmpClientMap[mkey]; ok {
 		if val != nil {
+			d.Infof("Releaseing SNMP connection for measurement %s", mkey)
 			snmp.Release(val)
 		}
 	}
-	d.Infof("Beginning SNMP connection")
+	d.Infof("Beginning SNMP connection for measurement %s", mkey)
+	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug, maxrep)
+	if err != nil {
+		d.DeviceConnected = false
+		d.Errorf("Client connect error to device  error :%s", err)
+		d.snmpClientMap[mkey] = nil
+		return nil, err
+	}
+
+	d.Infof("SNMP connection stablished Successfully for device  and measurement %s", mkey)
+	d.snmpClientMap[mkey] = client
+	d.SysInfo = sysinfo
+	d.DeviceConnected = true
+	return client, nil
+}
+
+// initSnmpConnectConcurrent does the  SNMP client connection and retrieve system info
+func (d *SnmpDevice) initSnmpConnectSequential(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
+	//in sequential this
+	if val, ok := d.snmpClientMap["init"]; ok {
+		if val != nil {
+			d.Infof("Previous SNMP connection found")
+			d.snmpClientMap[mkey] = val
+			return val, nil
+		}
+	}
+	d.Infof("Beginning SNMP connection Sequential")
 	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug, maxrep)
 	if err != nil {
 		d.DeviceConnected = false
@@ -451,24 +481,46 @@ func (d *SnmpDevice) CheckDeviceConnectivity() {
 }
 
 func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
-	d.Infof(" Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
-	d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
-	initerrors := 0
-	for _, m := range d.Measurements {
-		c, err := d.InitSnmpConnect(m.ID, debug, maxrep)
-		if err != nil {
-			d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
-			initerrors++
-		} else {
-			m.SetSnmpClient(c)
+	//On sequential we need release connection first , concurrent has an automatic self release system
+	d.Infof("Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
+	if !d.cfg.ConcurrentGather {
+		if val, ok := d.snmpClientMap["init"]; ok {
+			if val != nil {
+				d.Infof("Releasing snmp connection for %s", "init")
+				snmp.Release(val)
+			}
 		}
 	}
-	if initerrors > 0 {
-		d.Warnf("Error on reset snmp connection for %d  measurements", initerrors)
-	}
-	if initerrors == len(d.Measurements) {
-		d.Errorf("Error on reset snmp connection all (%d) measurements without valid connection : disconnecting now...  ", initerrors)
-		d.DeviceConnected = false
+	//begin reset process
+	d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
+	initerrors := 0
+	if d.cfg.ConcurrentGather == false {
+		c, err := d.InitSnmpConnect("init", debug, maxrep)
+		if err == nil {
+			for _, m := range d.Measurements {
+				m.SetSnmpClient(c)
+			}
+		} else {
+			d.Errorf("Error on reset snmp connection  on device %s: disconnecting now...  ", d.cfg.ID)
+			d.DeviceConnected = false
+		}
+	} else {
+		for _, m := range d.Measurements {
+			c, err := d.InitSnmpConnect(m.ID, debug, maxrep)
+			if err != nil {
+				d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
+				initerrors++
+			} else {
+				m.SetSnmpClient(c)
+			}
+		}
+		if initerrors > 0 {
+			d.Warnf("Error on reset snmp connection for %d  measurements", initerrors)
+		}
+		if initerrors == len(d.Measurements) {
+			d.Errorf("Error on reset snmp connection all (%d) measurements without valid connection : disconnecting now...  ", initerrors)
+			d.DeviceConnected = false
+		}
 	}
 }
 
