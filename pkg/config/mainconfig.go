@@ -15,6 +15,7 @@ type GeneralConfig struct {
 
 //DatabaseCfg de configuration for the database
 type DatabaseCfg struct {
+	numChanges int64  `toml:"-"`
 	Type       string `toml:"type"`
 	Host       string `toml:"host"`
 	Name       string `toml:"name"`
@@ -23,7 +24,6 @@ type DatabaseCfg struct {
 	SQLLogFile string `toml:"sqllogfile"`
 	Debug      string `toml:"debug"`
 	x          *xorm.Engine
-	numChanges int64 `toml:"-"`
 }
 
 //SelfMonConfig configuration for self monitoring

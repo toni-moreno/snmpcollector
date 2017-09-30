@@ -23,6 +23,8 @@ func SetLogger(l *logrus.Logger) {
 
 /*InfluxDB database export */
 type InfluxDB struct {
+	Sent        int64
+	Errors      int64
 	cfg         *config.InfluxCfg
 	initialized bool
 	imutex      sync.Mutex
@@ -33,8 +35,6 @@ type InfluxDB struct {
 	iChan  chan *client.BatchPoints
 	chExit chan bool
 	client client.Client
-	Sent   int64
-	Errors int64
 }
 
 var DummyDB = &InfluxDB{
