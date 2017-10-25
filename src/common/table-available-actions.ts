@@ -85,6 +85,11 @@ export class AvailableTableActions {
               formControl : new FormControl('', Validators.compose([Validators.required,ValidationService.uinteger8NotZeroValidator]))
             })
           },
+          {'title': 'UpdateFltFreq','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl('', Validators.compose([Validators.required, ValidationService.uintegerAndLessOneValidator]))
+            })
+          },
           {'title': 'DeviceTagName','type':'input', 'options':
             new FormGroup({
               formControl : new FormControl('', Validators.required)
