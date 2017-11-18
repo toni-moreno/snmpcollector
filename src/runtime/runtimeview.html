@@ -99,6 +99,18 @@
                   </div>
                 </div>
               </li>
+              <!--  Device Force Gather  -->
+              <li class="list-group-item">
+                <div class="row">
+                  <div class="col-md-7 text-left">
+                    <span> Force Gather/Process Now (be carefull)</span>
+                    <span class="glyphicon glyphicon-question-sign" tooltip="Force the complete gathering of the data for this device (usefull when  testing on non active devices)"></span>
+                  </div>
+                  <div class="col-md-5 text-right">
+                    <button type="button" (click)="forceGatherData(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Gather Now</button>
+                  </div>
+                </div>
+              </li>
               <!--  Device Log Level -->
               <li class="list-group-item">
                 <div class="row">
@@ -156,10 +168,11 @@
                 <div class="row">
                   <div class="col-md-8 text-left">
                     <span>Force SNMP Connection Reset </span>
-                    <span class="glyphicon glyphicon-question-sign" tooltip="Force Snmp conection Reset "></span>
+                    <span class="glyphicon glyphicon-question-sign" tooltip="Force Snmp conection Reset: soft for only recconnet current opened snmp connections and HARD to remap measurements , snmp protocol reconnect and remap filters also "></span>
                   </div>
                   <div class="col-md-4 text-right">
-                    <button type="button" (click)="forceSnmpReset(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Reset</button>
+                    <button type="button" (click)="forceSnmpReset(runtime_dev.ID,'soft')" [ngClass]="'btn btn-primary'">Soft Reset</button>
+                    <button type="button" (click)="forceSnmpReset(runtime_dev.ID,'hard')" [ngClass]="'btn btn-primary'">Hard Reset</button>
                   </div>
                 </div>
               </li>

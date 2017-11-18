@@ -112,9 +112,17 @@ export class RuntimeService {
         )
     };
 
-    forceSnmpReset(id : string) {
+    forceSnmpReset(id : string, mode: string) {
         // return an observable
-        return this.httpAPI.get('/api/rt/device/snmpreset/'+id)
+        return this.httpAPI.get('/api/rt/device/snmpreset/'+id+'/'+mode)
+        .map( (responseData) =>
+            responseData.json()
+        )
+    };
+
+    forceGatherData(id : string) {
+        // return an observable
+        return this.httpAPI.get('/api/rt/device/forcegather/'+id)
         .map( (responseData) =>
             responseData.json()
         )

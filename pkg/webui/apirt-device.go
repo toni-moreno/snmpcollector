@@ -18,7 +18,8 @@ func NewApiRtDevice(m *macaron.Macaron) error {
 		m.Put("/status/deactivate/:id", reqSignedIn, RTDeactivateDev)
 		m.Put("/debug/activate/:id", reqSignedIn, RTActSnmpDebugDev)
 		m.Put("/debug/deactivate/:id", reqSignedIn, RTDeactSnmpDebugDev)
-		m.Get("/snmpreset/:id", reqSignedIn, RTSnmpReset)
+		m.Get("/snmpreset/:id/:mode", reqSignedIn, RTSnmpReset)
+		m.Get("/forcegather/:id", reqSignedIn, RTForceGather)
 		m.Put("/log/setloglevel/:id/:level", reqSignedIn, RTSetLogLevelDev)
 		m.Get("/log/getdevicelog/:id", reqSignedIn, RTGetLogFileDev)
 		m.Get("/filter/forcefltupdate/:id", reqSignedIn, RTForceFltUpdate)
@@ -87,6 +88,7 @@ func RTSetLogLevelDev(ctx *Context) {
 //RTSnmpReset
 func RTSnmpReset(ctx *Context) {
 	id := ctx.Params(":id")
+	mode := ctx.Params(":mode")
 	log.Infof("activating runtime on device %s", id)
 	dev, err := agent.GetDevice(id)
 	if err != nil {
@@ -94,7 +96,21 @@ func RTSnmpReset(ctx *Context) {
 		return
 	}
 	log.Infof("activating runtime on device %s", id)
-	dev.SnmpReset()
+	dev.SnmpReset(mode)
+	ctx.JSON(200, "OK")
+}
+
+//RTSnmpReset
+func RTForceGather(ctx *Context) {
+	id := ctx.Params(":id")
+	log.Infof("activating runtime on device %s", id)
+	dev, err := agent.GetDevice(id)
+	if err != nil {
+		ctx.JSON(404, err.Error())
+		return
+	}
+	log.Infof("activating runtime on device %s", id)
+	dev.ForceGather()
 	ctx.JSON(200, "OK")
 }
 

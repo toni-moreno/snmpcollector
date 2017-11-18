@@ -1,3 +1,15 @@
+# v 0.7.5 (unreleased)
+### New Features
+* Added Hard snmp reset option to remap all measurements again when some problem happens when trying to do snmp connection  init on first attemps. (fix #271)
+* Added a new Runtime option to Force Gather data even if device is not active ( useful for configuration testing )(implements #275)If active the current gathering period won't be changed, and this will be an extra point.
+
+
+### fixes
+
+* fix for #268, #271, #272, #275
+
+### breaking changes
+
 # v 0.7.4 (2017-09-23)
 ### New Features
 * added new Alternate SystemOID's map to extend snmpcollector to non MIB-2 based devices (as by example Proxy Squid), is important to get system description and also to check connectivity with the device.

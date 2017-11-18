@@ -160,13 +160,26 @@ func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*output.InfluxDB) (
 }
 
 // ForceFltUpdate send info to update the filter counter to the next execution
+func (d *SnmpDevice) ForceGather() {
+	d.Node.SendMsg(&bus.Message{Type: "forcegather"})
+}
+
+// ForceFltUpdate send info to update the filter counter to the next execution
 func (d *SnmpDevice) ForceFltUpdate() {
 	d.Node.SendMsg(&bus.Message{Type: "filterupdate"})
 }
 
 // ForceFltUpdate send info to update the filter counter to the next execution
-func (d *SnmpDevice) SnmpReset() {
-	d.Node.SendMsg(&bus.Message{Type: "snmpreset"})
+func (d *SnmpDevice) SnmpReset(mode string) {
+	switch mode {
+	case "hard":
+		d.Node.SendMsg(&bus.Message{Type: "snmpresethard"})
+	case "soft":
+		d.Node.SendMsg(&bus.Message{Type: "snmpreset"})
+	default:
+		d.log.Infof("Unknown mode %s on SNMPRESET ", mode)
+	}
+
 }
 
 // StopGather send signal to stop the Gathering process
@@ -480,6 +493,15 @@ func (d *SnmpDevice) CheckDeviceConnectivity() {
 	}
 }
 
+func (d *SnmpDevice) snmpRelease() {
+	for _, v := range d.snmpClientMap {
+		if v != nil {
+			d.Infof("Releasing snmp connection for %s", "init")
+			snmp.Release(v)
+		}
+	}
+}
+
 func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 	//On sequential we need release connection first , concurrent has an automatic self release system
 	d.Infof("Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
@@ -524,6 +546,90 @@ func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 	}
 }
 
+func (d *SnmpDevice) gatherAndProcessData(t *time.Ticker, force bool) *time.Ticker {
+	d.rtData.Lock()
+	//if active
+	if d.DeviceActive || force {
+	FORCEINIT:
+		//check if device has active snmp connections and Initialize if not
+		if d.DeviceConnected == false {
+			_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug, 0)
+			if err == nil {
+				startSnmp := time.Now()
+				d.InitDevMeasurements()
+				elapsedSnmp := time.Since(startSnmp)
+				d.stats.SetFltUpdateStats(startSnmp, elapsedSnmp)
+				d.Infof("snmp INIT runtime measurements/filters took [%s] ", elapsedSnmp)
+				if force == false {
+					// Round collection to nearest interval by sleeping
+					//and reprogram the ticker to aligned starts
+					// only when no extra gather(forced from web-ui)
+					utils.WaitAlignForNextCicle(d.cfg.Freq, d.log)
+					t.Stop()
+					t = time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
+					//force one iteration now..after device has been connected  dont wait for next
+					//ticker (1 complete cicle)
+				}
+				goto FORCEINIT
+			}
+		} else {
+			//device active and connected
+			d.Infof("Init gather cicle mode Concurrent [ %t ]", d.cfg.ConcurrentGather)
+			/*************************
+			 *
+			 * SNMP Gather data process
+			 *
+			 ***************************/
+			d.invalidateMetrics()
+			d.stats.ResetCounters()
+			d.Gather()
+
+			/*******************************************
+			 *
+			 * Reload Indexes/Filters process(if needed)
+			 *
+			 *******************************************/
+			//Check if reload needed with d.ReloadLoopsPending if a posivive value on negative this will disabled
+
+			d.decReloadLoopsPending()
+
+			if d.getReloadLoopsPending() == 0 {
+				startIdxUpdateStats := time.Now()
+				for _, m := range d.Measurements {
+					if m.GetMode() == "value" {
+						continue
+					}
+					changed, err := m.UpdateFilter()
+					if err != nil {
+						d.Errorf("Error on update Indexes/filter : ERR: %s", err)
+						continue
+					}
+					if changed {
+						m.InitBuildRuntime()
+					}
+				}
+
+				d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
+				elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
+				d.stats.SetFltUpdateStats(startIdxUpdateStats, elapsedIdxUpdateStats)
+			}
+
+			d.CheckDeviceConnectivity()
+
+			d.stats.Send()
+		}
+	} else {
+		d.Infof("Gather process is disabled")
+	}
+	//get Ready a copy of the stats to
+
+	d.statsData.Lock()
+	d.Stats = d.getBasicStats()
+	d.statsData.Unlock()
+	d.rtData.Unlock()
+	return t
+}
+
 // StartGather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) StartGather(wg *sync.WaitGroup) {
 	wg.Add(1)
@@ -550,81 +656,9 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 
 	t := time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
 	for {
-		d.rtData.Lock()
-		//if active
-		if d.DeviceActive {
-		FORCEINIT:
-			//check if device is online
-			if d.DeviceConnected == false {
-				_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug, 0)
-				if err == nil {
-					startSnmp := time.Now()
-					d.InitDevMeasurements()
-					elapsedSnmp := time.Since(startSnmp)
-					d.stats.SetFltUpdateStats(startSnmp, elapsedSnmp)
-					d.Infof("snmp INIT runtime measurements/filters took [%s] ", elapsedSnmp)
-					// Round collection to nearest interval by sleeping
-					utils.WaitAlignForNextCicle(d.cfg.Freq, d.log)
-					//reprogram the ticker to aligned starts
-					t.Stop()
-					t = time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
-					goto FORCEINIT //force one iteration now..after device has been connected  dont wait for next ticker (1 complete cicle)
-				}
-			} else {
-				//device active and connected
-				d.Infof("Init gather cicle mode Concurrent [ %t ]", d.cfg.ConcurrentGather)
-				/*************************
-				 *
-				 * SNMP Gather data process
-				 *
-				 ***************************/
-				d.invalidateMetrics()
-				d.stats.ResetCounters()
-				d.Gather()
 
-				/*******************************************
-				 *
-				 * Reload Indexes/Filters process(if needed)
-				 *
-				 *******************************************/
-				//Check if reload needed with d.ReloadLoopsPending if a posivive value on negative this will disabled
+		t = d.gatherAndProcessData(t, false)
 
-				d.decReloadLoopsPending()
-
-				if d.getReloadLoopsPending() == 0 {
-					startIdxUpdateStats := time.Now()
-					for _, m := range d.Measurements {
-						if m.GetMode() == "value" {
-							continue
-						}
-						changed, err := m.UpdateFilter()
-						if err != nil {
-							d.Errorf("Error on update Indexes/filter : ERR: %s", err)
-							continue
-						}
-						if changed {
-							m.InitBuildRuntime()
-						}
-					}
-
-					d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
-					elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
-					d.stats.SetFltUpdateStats(startIdxUpdateStats, elapsedIdxUpdateStats)
-				}
-
-				d.CheckDeviceConnectivity()
-
-				d.stats.Send()
-			}
-		} else {
-			d.Infof("Gather process is disabled")
-		}
-		//get Ready a copy of the stats to
-
-		d.statsData.Lock()
-		d.Stats = d.getBasicStats()
-		d.statsData.Unlock()
-		d.rtData.Unlock()
 	LOOP:
 		for {
 			select {
@@ -633,12 +667,22 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 			case val := <-d.Node.Read:
 				d.Infof("Received Message...%s: %+v", val.Type, val.Data)
 				switch val.Type {
+				case "forcegather":
+					d.Infof("invoked Force Data Gather And Process")
+					d.gatherAndProcessData(t, true)
 				case "exit":
 					d.Infof("invoked EXIT from SNMP Gather process ")
 					return
 				case "filterupdate":
 					d.rtData.Lock()
 					d.setReloadLoopsPending(1)
+					d.rtData.Unlock()
+				case "snmpresethard":
+					d.rtData.Lock()
+					//when no connection availables on the first initialization
+					//measurmentes should be initialized again
+					d.snmpRelease()
+					d.InitDevMeasurements()
 					d.rtData.Unlock()
 				case "snmpreset":
 					d.rtData.Lock()

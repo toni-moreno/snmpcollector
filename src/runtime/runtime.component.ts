@@ -240,7 +240,7 @@ export class RuntimeComponent implements OnDestroy {
       this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
       break;
       case 'SnmpReset' :
-      this.forceSnmpReset(data.row.ID);
+      this.forceSnmpReset(data.row.ID,'soft');
       break;
       default:
       break;
@@ -470,12 +470,24 @@ export class RuntimeComponent implements OnDestroy {
       );
   }
 
-  forceSnmpReset(id) {
+  forceSnmpReset(id,mode) {
     console.log("ID,event", id, event);
-    this.runtimeService.forceSnmpReset(id)
+    this.runtimeService.forceSnmpReset(id,mode)
       .subscribe(
       data => {
         console.log("reset done")
+      },
+      err => console.error(err),
+      () => console.log('DONE')
+      );
+  }
+
+  forceGatherData(id) {
+    console.log("force gather data", id,event);
+    this.runtimeService.forceGatherData(id)
+      .subscribe(
+      data => {
+        console.log("forced gather done")
       },
       err => console.error(err),
       () => console.log('DONE')
