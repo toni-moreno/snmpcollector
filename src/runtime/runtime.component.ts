@@ -554,7 +554,7 @@ export class RuntimeComponent implements OnDestroy {
       this.noConnectedFilter = true;
       this.activeFilter = false;
       this.deactiveFilter = false;
-      this.data = this.runtime_devs.filter((item) => { if(item.DeviceConnected === false) return true })
+      this.data = this.runtime_devs.filter((item) => { if(item.DeviceConnected === false && item.DeviceActive === true) return true })
     } else {
       this.data = this.runtime_devs;
       this.noConnectedFilter = false;

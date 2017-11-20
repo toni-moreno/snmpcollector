@@ -1,7 +1,7 @@
 <h2>OID Conditions</h2>
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <hr>
-<p [ngSwitch]="editmode">
+<ng-container [ngSwitch]="editmode">
   <template ngSwitchCase="list">
     <test-modal #viewModal titleName='OID Conditions'></test-modal>
     <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this OID Condition will affect the following components','Deleting this OID Condition will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
@@ -33,13 +33,13 @@
     <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
   </template>
 
-  <template ngSwitchCase="create">
-    <form [formGroup]="oidconditionForm" class="form-horizontal" (ngSubmit)="saveOidCondition()">
+  <template ngSwitchDefault>
+    <form [formGroup]="oidconditionForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveOidCondition() : updateOidCondition()">
       <div class="form-group">
         <label class="control-label col-sm-2" for="ID">ID</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique metric identifier"></i>
         <div class="col-sm-9">
-          <input formControlName="ID" id="ID" />
+          <input formControlName="ID" id="ID" [ngModel]="oidconditionForm.value.ID"/>
           <control-messages [control]="oidconditionForm.controls.ID"></control-messages>
         </div>
       </div>
@@ -48,7 +48,7 @@
         <label class="control-label col-sm-2" for="IsMultiple">Is Multiple</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of Condition query"></i>
         <div class="col-sm-9">
-          <select formControlName="IsMultiple" id="IsMutiple" (click)="setDynamicFields(oidconditionForm.value.IsMultiple, true)">
+          <select formControlName="IsMultiple" id="IsMutiple" (click)="setDynamicFields(oidconditionForm.value.IsMultiple, true)" [ngModel]="oidconditionForm.value.IsMultiple">
             <option value="true">(true) This Condition is defined as boolean expresion from other OID conditions</option>
             <option value="false">(false) This condition is defined from an OID --default-- </option>
           </select>
@@ -60,92 +60,12 @@
         <label class="control-label col-sm-2" for="OIDCond">{{(oidconditionForm.value.IsMultiple === "true" || oidconditionForm.value.IsMultiple === true) ? 'OID Condition' : 'OID'}}</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of Condition query"></i>
         <div class="col-sm-9">
-          <input formControlName="OIDCond" id="OIDCond" />
+          <input formControlName="OIDCond" id="OIDCond" [ngModel]="oidconditionForm.value.OIDCond" />
           <control-messages [control]="oidconditionForm.controls.OIDCond"></control-messages>
         </div>
       </div>
       <div *ngIf="oidconditionForm.controls.CondType">
         <div class="form-group">
-          <label class="control-label col-sm-2" for="CondType">CondType</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
-          <div class="col-sm-9">
-            <select formControlName="CondType" id="CondType">
-              <option value="match">(match) string regexp match</option>
-              <option value="notmatch">(notmatch) string regex match inverse</option>
-              <option value="neq">(neq) numeric equal</option>
-              <option value="ndif">(ndif) numeric different (not equal)</option>
-              <option value="nlt">(nlt) numeric less than</option>
-              <option value="ngt">(ngt) numeric Greater than</option>
-              <option value="nge">(nge) numeric Greater or Equal</option>
-              <option value="nle">(nle) numeric less or equal </option>
-            </select>
-            <control-messages [control]="oidconditionForm.controls.CondType"></control-messages>
-          </div>
-        </div>
-
-
-        <div class="form-group" *ngIf="oidconditionForm.controls.CondValue">
-          <label class="control-label col-sm-2" for="CondValue">CondValue</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
-          <div class="col-sm-9">
-            <input formControlName="CondValue" id="CondValue" />
-            <control-messages [control]="oidconditionForm.controls.CondValue"></control-messages>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="Description">Description</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the OID Condition"></i>
-        <div class="col-sm-9">
-          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
-          <control-messages [control]="oidconditionForm.controls.Description"></control-messages>
-        </div>
-      </div>
-
-      <div class="col-sm-offset-4 col-sm-6">
-        <button type="submit" [disabled]="!oidconditionForm.valid">Submit</button>
-        <button type="reset" [disabled]="!oidconditionForm.dirty">Reset</button>
-        <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
-      </div>
-    </form>
-
-  </template>
-
-  <template ngSwitchCase="modify">
-    <form [formGroup]="oidconditionForm" class="form-horizontal" (ngSubmit)="updateOidCondition()">
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="ID">ID</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique metric identifier"></i>
-        <div class="col-sm-9">
-          <input formControlName="ID" id="ID" [ngModel]="oidconditionForm.value.ID" />
-          <control-messages [control]="oidconditionForm.controls.ID"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="IsMultiple">Is Multiple</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of Condition query"></i>
-        <div class="col-sm-9">
-          <select formControlName="IsMultiple" id="IsMutiple" [ngModel]="oidconditionForm.value.IsMultiple" (click)="setDynamicFields(oidconditionForm.value.IsMultiple, true)">
-            <option value="true">(true) This Condition is defined as boolean expresion from other OID conditions</option>
-            <option value="false">(false) This condition is defined from an OID --default-- </option>
-          </select>
-          <control-messages [control]="oidconditionForm.controls.IsMultiple"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="OIDCond">{{(oidconditionForm.value.IsMultiple === "true" || oidconditionForm.value.IsMultiple === true) ? 'OID Condition' : 'OID'}} </label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Full OID or base OID (if indexed) of SNMP query"></i>
-        <div class="col-sm-9">
-          <input formControlName="OIDCond" id="OIDCond" [ngModel]="oidconditionForm.value.OIDCond" />
-          <control-messages [control]="oidconditionForm.controls.OIDCond"></control-messages>
-        </div>
-      </div>
-
-        <div class="form-group" *ngIf="oidconditionForm.controls.CondType">
           <label class="control-label col-sm-2" for="CondType">CondType</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
           <div class="col-sm-9">
@@ -163,20 +83,23 @@
           </div>
         </div>
 
+
         <div class="form-group" *ngIf="oidconditionForm.controls.CondValue">
           <label class="control-label col-sm-2" for="CondValue">CondValue</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
           <div class="col-sm-9">
-            <input formControlName="CondValue" id="CondValue" [ngModel]='oidconditionForm.value.CondValue'/>
+            <input formControlName="CondValue" id="CondValue" [ngModel]="oidconditionForm.value.CondValue"/>
             <control-messages [control]="oidconditionForm.controls.CondValue"></control-messages>
           </div>
         </div>
+
+      </div>
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the OID Condition"></i>
         <div class="col-sm-9">
-          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='oidconditionForm.value.Description'> </textarea>
+          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]="oidconditionForm.value.Description"> </textarea>
           <control-messages [control]="oidconditionForm.controls.Description"></control-messages>
         </div>
       </div>
@@ -187,5 +110,6 @@
         <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
       </div>
     </form>
+
   </template>
-</p>
+</ng-container>
