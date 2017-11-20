@@ -1,7 +1,7 @@
 <h2>SNMP Devices</h2>
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <hr>
-<p [ngSwitch]="editmode">
+<ng-container [ngSwitch]="editmode">
   <template ngSwitchCase="list">
     <test-modal #viewModal titleName='Device'></test-modal>
     <export-file-modal #exportFileModal [showValidation]="true" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
@@ -33,350 +33,8 @@
     <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
   </template>
 
-  <template ngSwitchCase="create">
-    <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="saveSnmpDev()">
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="ID">ID</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of SNMP Device"></i>
-        <div class="col-sm-9">
-          <input formControlName="ID" id="ID" />
-          <control-messages [control]="snmpdevForm.controls.ID"></control-messages>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="host">Host</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Host (IP or FQDN) of SNMP device to connnect by SNMP protocol"></i>
-        <div class="col-sm-9">
-          <input formControlName="Host" id="Host" />
-          <control-messages [control]="snmpdevForm.controls.Host"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="Port">Port</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to the device using SNMP protocol"></i>
-        <div class="col-sm-9">
-          <input formControlName="Port" id="Port" />
-          <control-messages [control]="snmpdevForm.controls.Port"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="Timeout">Timeout</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Timeout for the SNMP Query"></i>
-        <div class="col-sm-9">
-          <input formControlName="Timeout" id="Timeout" />
-          <control-messages [control]="snmpdevForm.controls.Timeout"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="Retries">Retries</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the number of retries to attempt within timeout"></i>
-        <div class="col-sm-9">
-          <input formControlName="Retries" id="Retries" />
-          <control-messages [control]="snmpdevForm.controls.Retries"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="SystemOIDs">Alternate System OID's</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set OID to get like MIB-2::System Info (NEEDED TO CHECK connectivity to the device!!! for non MIB-2 based devices)"></i>
-        <div class="col-sm-9">
-          <input formControlName="SystemOIDs" id="SystemOIDs" />
-          <control-messages [control]="snmpdevForm.controls.SystemOIDs"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="SnmpDebug">Active</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Active on Collector reboot"></i>
-        <div class="col-sm-9">
-          <select formControlName="Active" id="Active">
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
-          <control-messages [control]="snmpdevForm.controls.Active"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="SnmpVersion">SnmpVersion</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMP Version (1,2c,3)"></i>
-        <div class="col-sm-9">
-          <select formControlName="SnmpVersion" id="SnmpVersion" (click)="setDynamicFields(snmpdevForm.value.SnmpVersion)">
-            <option value="1">1</option>
-            <option value="2c" selected="selected">2c</option>
-            <option value="3">3</option>
-          </select>
-          <control-messages [control]="snmpdevForm.controls.SnmpVersion"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '1' ">
-        <label class="control-label col-sm-2" for="DisableBulk">DisableBulk</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Active on Collector reboot"></i>
-        <div class="col-sm-9">
-          <select formControlName="DisableBulk" id="DisableBulk">
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
-          <control-messages [control]="snmpdevForm.controls.DisableBulk"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '1' ">
-        <label class="control-label col-sm-2" for="MaxRepetitions">MaxRepetitions</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the MaxRepetitions value for BULKWALK SNMP Queries (valid ranges is 1-255) default 50"></i>
-        <div class="col-sm-9">
-          <input formControlName="MaxRepetitions" id="MaxRepetitions" />
-          <control-messages [control]="snmpdevForm.controls.MaxRepetitions"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '3'">
-        <label class="control-label col-sm-2" for="Community">Community</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Community for authentication"></i>
-        <div class="col-sm-9">
-          <input #Community formControlName="Community" id="Community" type="password" />
-          <i style="margin-left:-25px; margin-right:6px" [ngClass]="Community.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="Community"> </i>
-          <control-messages [control]="snmpdevForm.controls.Community"></control-messages>
-        </div>
-      </div>
-
-      <div *ngIf="snmpdevForm.value.SnmpVersion == 3">
-        <div class="form-group" *ngIf="snmpdevForm.controls.V3SecLevel">
-          <label class="control-label col-sm-2" for="V3SecLevel">V3SecLevel</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentification security request mode"></i>
-          <div class="col-sm-9">
-            <select formControlName="V3SecLevel" id="V3SecLevel" (click)="setDynamicFields(snmpdevForm.value.V3SecLevel)">
-              <option value="NoAuthNoPriv">NoAuthNoPriv</option>
-              <option value="AuthNoPriv">AuthNoPriv</option>
-              <option value="AuthPriv">AuthPriv</option>
-            </select>
-            <control-messages [control]="snmpdevForm.controls.V3SecLevel"></control-messages>
-          </div>
-        </div>
-
-        <div class="form-group" *ngIf="snmpdevForm.controls.V3AuthUser">
-          <label class="control-label col-sm-2" for="V3AuthUser">V3AuthUser</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication user"></i>
-          <div class="col-sm-9">
-            <input formControlName="V3AuthUser" id="V3AuthUser" />
-            <control-messages [control]="snmpdevForm.controls.V3AuthUser"></control-messages>
-          </div>
-        </div>
-
-        <div class="form-group" *ngIf="snmpdevForm.controls.V3AuthPass">
-          <label class="control-label col-sm-2" for="V3AuthPass">V3AuthPass</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication password"></i>
-          <div class="col-sm-9">
-            <input #inputV3AuthPass formControlName="V3AuthPass" id="V3AuthPass" type="password" />
-            <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputV3AuthPass.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputV3AuthPass"> </i>
-            <control-messages [control]="snmpdevForm.controls.V3AuthPass"></control-messages>
-          </div>
-        </div>
-
-        <div class="form-group" *ngIf="snmpdevForm.controls.V3AuthProt">
-          <label class="control-label col-sm-2" for="V3AuthProt">V3AuthProt</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication protocol"></i>
-          <div class="col-sm-9">
-            <select formControlName="V3AuthProt" id="V3AuthProt">
-              <option value="MD5">MD5</option>
-              <option value="SHA">SHA</option>
-            </select>
-            <control-messages [control]="snmpdevForm.controls.V3AuthProt"></control-messages>
-          </div>
-        </div>
-
-        <div class="form-group" *ngIf="snmpdevForm.controls.V3PrivPass">
-          <label class="control-label col-sm-2" for="V3PrivPass">V3PrivPass</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Privacy password"></i>
-          <div class="col-sm-9">
-            <input #inputV3PrivPass formControlName="V3PrivPass" id="V3PrivPass" type="password" />
-            <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputV3PrivPass.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputV3PrivPass"> </i>
-            <control-messages [control]="snmpdevForm.controls.V3PrivPass"></control-messages>
-          </div>
-        </div>
-
-        <div class="form-group" *ngIf="snmpdevForm.controls.V3PrivProt">
-          <label class="control-label col-sm-2" for="V3PrivProt">V3PrivProt</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Privacy Protocol"></i>
-          <div class="col-sm-9">
-            <select formControlName="V3PrivProt" id="V3PrivProt">
-              <option value="AES">AES</option>
-              <option value="DES">DES</option>
-            </select>
-            <control-messages [control]="snmpdevForm.controls.V3PrivProt"></control-messages>
-          </div>
-        </div>
-
-        <div class="form-group" *ngIf="snmpdevForm.controls.V3ContextEngineID">
-          <label class="control-label col-sm-2" for="V3ContextEngineID">V3ContextEngineID</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMPV3 ContextEngineID in ScopedPDU (equivalent to the net-snmp -E paramenter)"></i>
-          <div class="col-sm-9">
-            <input formControlName="V3ContextEngineID" id="V3ContextEngineID"   />
-            <control-messages [control]="snmpdevForm.controls.V3ContextEngineID"></control-messages>
-          </div>
-        </div>
-
-        <div class="form-group" *ngIf="snmpdevForm.controls.V3ContextName">
-          <label class="control-label col-sm-2" for="V3ContextName">V3ContextName</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMPV3 ContextName in ScopedPDU ( equivalent to the net-snmp -n parameter)"></i>
-          <div class="col-sm-9">
-            <input formControlName="V3ContextName" id="V3ContextName" />
-            <control-messages [control]="snmpdevForm.controls.V3ContextName"></control-messages>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="Freq">Freq</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Frequency of snmp data polling (in seconds)"></i>
-        <div class="col-sm-9">
-          <input formControlName="Freq" id="Freq" />
-          <control-messages [control]="snmpdevForm.controls.Freq"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="UpdateFltFreq">UpdateFltFreq</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Number of snmp data gather cicles the collector will take to update  indexes and filters on (indexed/snmptable) measurements of snmp data polling (time will be this number*freq seconds) <br> Set this valie to -1 to disable indexes and filters updates "></i>
-        <div class="col-sm-9">
-          <input formControlName="UpdateFltFreq" id="UpdateFltFreq" />
-          <control-messages [control]="snmpdevForm.controls.UpdateFltFreq"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="ConcurrentGather">ConcurrentGather</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Open a new snmp connection for each measurement and send concurrent queries over the device "></i>
-        <div class="col-sm-9">
-          <select formControlName="ConcurrentGather" id="ConcurrentGather" >
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
-          <control-messages [control]="snmpdevForm.controls.ConcurrentGather"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="OutDB">InfluxDB Server</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="InfluxDB server"></i>
-        <div class="col-sm-9">
-          <ss-multiselect-dropdown [options]="selectinfluxservers" formControlName="OutDB" [texts]="myTexts" [settings]="mySettingsInflux"></ss-multiselect-dropdown>
-          <control-messages [control]="snmpdevForm.controls.OutDB"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="LogLevel">Log level</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Severity log level"></i>
-        <div class="col-sm-9">
-          <select formControlName="LogLevel" id="LogLevel">
-            <option value="panic">Panic</option>
-            <option value="fatal">Fatal</option>
-            <option value="error">Error</option>
-            <option value="warn">Warning</option>
-            <option selected="selected" value="info">Info</option>
-            <option value="debug">Debug</option>
-          </select>
-          <control-messages [control]="snmpdevForm.controls.LogLevel"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="SnmpDebug">SnmpDebug</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Show SNMP debug"></i>
-        <div class="col-sm-9">
-          <select formControlName="SnmpDebug" id="SnmpDebug">
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
-          <control-messages [control]="snmpdevForm.controls.SnmpDebug"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="DeviceTagName">Device Tag Name</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag's value to identify type of device in InfluxDB"></i>
-        <div class="col-sm-9">
-          <input formControlName="DeviceTagName" id="DeviceTagName" placeholder="device, host, switch..." />
-          <control-messages [control]="snmpdevForm.controls.DeviceTagName"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="DeviceTagValue">Device Tag Value</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag's value to identify the device in InfluxDB"></i>
-        <div class="col-sm-9">
-          <select formControlName="DeviceTagValue" id="DeviceTagValue">
-            <option selected="selected" value="id">Id - {{snmpdevForm.controls.ID.value}}</option>
-            <option value="host">Host - {{snmpdevForm.controls.Host.value}}</option>
-          </select>
-          <control-messages [control]="snmpdevForm.controls.DeviceTagValue"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="ExtraTags">ExtraTags</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag's value to identify the device in InfluxDB"></i>
-        <div class="col-sm-9">
-          <input formControlName="ExtraTags" id="ExtraTags" />
-          <control-messages [control]="snmpdevForm.controls.ExtraTags"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="MeasurementGroups">Measurement Groups</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Selection of Measurent Groups associated with the device {{snmpdevForm.value.id}}"></i>
-        <div class="col-sm-9">
-          <ss-multiselect-dropdown [options]="selectgroups" formControlName="MeasurementGroups" [texts]="myTexts" [settings]="mySettings"></ss-multiselect-dropdown>
-          <control-messages [control]="snmpdevForm.controls.MeasurementGroups"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="MeasFilters">Measurement Filters</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Selection of filters to use with the device {{snmpdevForm.value.id}}"></i>
-        <div class="col-sm-9">
-          <ss-multiselect-dropdown [options]="selectfilters" formControlName="MeasFilters" [texts]="myTexts" [settings]="mySettings" ></ss-multiselect-dropdown>
-          <control-messages [control]="snmpdevForm.controls.MeasFilters"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="Description">Description</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Device"></i>
-        <div class="col-sm-9">
-          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description"> </textarea>
-          <control-messages [control]="snmpdevForm.controls.Description"></control-messages>
-        </div>
-      </div>
-
-      <div class="col-sm-2 col-md-offset-1">
-        <button type="button" [disabled]="!snmpdevForm.valid" (click)="showTestConnectionModal()">Test Connection</button>
-      </div>
-      <test-connection-modal #viewTestConnectionModal titleName='Test connection for:'>
-      </test-connection-modal>
-      <test-filter-modal #viewTestFilterModal titleName='Filter connection:' [formValues]="snmpdevForm.value">
-      </test-filter-modal>
-      <div class="col-sm-2">
-        <button type="button" [disabled]="!snmpdevForm.valid" (click)="showFilterModal()">Filter Connection</button>
-      </div>
-
-
-      <div class="col-sm-offset-2 col-sm-3">
-        <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
-        <button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
-        <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
-      </div>
-    </form>
-  </template>
-
-  <template ngSwitchCase="modify">
-    <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="updateSnmpDev()">
+  <template ngSwitchDefault>
+    <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveSnmpDev() : updateSnmpDev()">
       <div class="form-group">
         <label class="control-label col-sm-2" for="ID">ID</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of SNMP Device"></i>
@@ -385,10 +43,9 @@
           <control-messages [control]="snmpdevForm.controls.ID"></control-messages>
         </div>
       </div>
-
       <div class="form-group">
         <label class="control-label col-sm-2" for="host">Host</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Host (IP or FQDN) of SNMP device to connnect using SNMP protocol"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Host (IP or FQDN) of SNMP device to connnect by SNMP protocol"></i>
         <div class="col-sm-9">
           <input formControlName="Host" id="Host" [ngModel]="snmpdevForm.value.Host" />
           <control-messages [control]="snmpdevForm.controls.Host"></control-messages>
@@ -426,7 +83,7 @@
         <label class="control-label col-sm-2" for="SystemOIDs">Alternate System OID's</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set OID to get like MIB-2::System Info (NEEDED TO CHECK connectivity to the device!!! for non MIB-2 based devices)"></i>
         <div class="col-sm-9">
-          <input formControlName="SystemOIDs" id="SystemOIDs" [ngModel]="snmpdevForm.value.SystemOIDs"  />
+          <input formControlName="SystemOIDs" id="SystemOIDs" [ngModel]="snmpdevForm.value.SystemOIDs" />
           <control-messages [control]="snmpdevForm.controls.SystemOIDs"></control-messages>
         </div>
       </div>
@@ -447,7 +104,7 @@
         <label class="control-label col-sm-2" for="SnmpVersion">SnmpVersion</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMP Version (1,2c,3)"></i>
         <div class="col-sm-9">
-          <select formControlName="SnmpVersion" id="SnmpVersion" [ngModel]="snmpdevForm.value.SnmpVersion" (click)="setDynamicFields(snmpdevForm.value.SnmpVersion)" >
+          <select formControlName="SnmpVersion" id="SnmpVersion" (click)="setDynamicFields(snmpdevForm.value.SnmpVersion)" [ngModel]="snmpdevForm.value.SnmpVersion">
             <option value="1">1</option>
             <option value="2c" selected="selected">2c</option>
             <option value="3">3</option>
@@ -458,7 +115,7 @@
 
       <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '1' ">
         <label class="control-label col-sm-2" for="DisableBulk">DisableBulk</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Disable Snmp Bulk request on devices with problems"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Active on Collector reboot"></i>
         <div class="col-sm-9">
           <select formControlName="DisableBulk" id="DisableBulk" [ngModel]="snmpdevForm.value.DisableBulk">
             <option value="true">True</option>
@@ -469,19 +126,19 @@
       </div>
 
       <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '1' ">
-        <label class="control-label col-sm-2" for="MaxRepetitions">MaxRepetitions</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the MaxRepetitions value for BULKWALK SNMP Queries"></i>
+        <label class="control-label col-sm-2" for="MaxRepetitions" >MaxRepetitions</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the MaxRepetitions value for BULKWALK SNMP Queries (valid ranges is 1-255) default 50"></i>
         <div class="col-sm-9">
-          <input formControlName="MaxRepetitions" id="MaxRepetitions"  [ngModel]="snmpdevForm.value.MaxRepetitions" />
+          <input formControlName="MaxRepetitions" id="MaxRepetitions" [ngModel]="snmpdevForm.value.MaxRepetitions"/>
           <control-messages [control]="snmpdevForm.controls.MaxRepetitions"></control-messages>
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '3'">
+      <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '3' && snmpdevForm.controls.Community">
         <label class="control-label col-sm-2" for="Community">Community</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Community for authentication"></i>
         <div class="col-sm-9">
-          <input #Community formControlName="Community" id="Community" [ngModel]="snmpdevForm.value.Community" type="password" />
+          <input #Community formControlName="Community" id="Community" type="password" [ngModel]="snmpdevForm.value.Community"/>
           <i style="margin-left:-25px; margin-right:6px" [ngClass]="Community.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="Community"> </i>
           <control-messages [control]="snmpdevForm.controls.Community"></control-messages>
         </div>
@@ -492,9 +149,9 @@
           <label class="control-label col-sm-2" for="V3SecLevel">V3SecLevel</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentification security request mode"></i>
           <div class="col-sm-9">
-            <select formControlName="V3SecLevel" id="V3SecLevel" [ngModel]="snmpdevForm.value.V3SecLevel" (click)="setDynamicFields(snmpdevForm.value.V3SecLevel)">
+            <select formControlName="V3SecLevel" id="V3SecLevel" (click)="setDynamicFields(snmpdevForm.value.V3SecLevel)" [ngModel]="snmpdevForm.value.V3SecLevel">
               <option value="NoAuthNoPriv">NoAuthNoPriv</option>
-              <option value="AuthNoPriv" >AuthNoPriv</option>
+              <option value="AuthNoPriv">AuthNoPriv</option>
               <option value="AuthPriv">AuthPriv</option>
             </select>
             <control-messages [control]="snmpdevForm.controls.V3SecLevel"></control-messages>
@@ -505,7 +162,7 @@
           <label class="control-label col-sm-2" for="V3AuthUser">V3AuthUser</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication user"></i>
           <div class="col-sm-9">
-            <input formControlName="V3AuthUser" id="V3AuthUser" [ngModel]="snmpdevForm.value.V3AuthUser" />
+            <input formControlName="V3AuthUser" id="V3AuthUser" [ngModel]="snmpdevForm.value.V3AuthUser"/>
             <control-messages [control]="snmpdevForm.controls.V3AuthUser"></control-messages>
           </div>
         </div>
@@ -514,7 +171,7 @@
           <label class="control-label col-sm-2" for="V3AuthPass">V3AuthPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentication password"></i>
           <div class="col-sm-9">
-            <input #inputV3AuthPass formControlName="V3AuthPass" id="V3AuthPass" type="password" [ngModel]="snmpdevForm.value.V3AuthPass" />
+            <input #inputV3AuthPass formControlName="V3AuthPass" id="V3AuthPass" type="password" [ngModel]="snmpdevForm.value.V3AuthPass"/>
             <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputV3AuthPass.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputV3AuthPass"> </i>
             <control-messages [control]="snmpdevForm.controls.V3AuthPass"></control-messages>
           </div>
@@ -536,7 +193,7 @@
           <label class="control-label col-sm-2" for="V3PrivPass">V3PrivPass</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Privacy password"></i>
           <div class="col-sm-9">
-            <input #inputV3PrivPass formControlName="V3PrivPass" id="V3PrivPass" type="password" [ngModel]="snmpdevForm.value.V3PrivPass" />
+            <input #inputV3PrivPass formControlName="V3PrivPass" id="V3PrivPass" type="password" [ngModel]="snmpdevForm.value.V3PrivPass"/>
             <i style="margin-left:-25px; margin-right:6px" [ngClass]="inputV3PrivPass.type === 'password' ? ['glyphicon glyphicon-eye-open text-primary'] : ['glyphicon glyphicon-eye-close text-primary']" passwordToggle [input]="inputV3PrivPass"> </i>
             <control-messages [control]="snmpdevForm.controls.V3PrivPass"></control-messages>
           </div>
@@ -552,33 +209,31 @@
             </select>
             <control-messages [control]="snmpdevForm.controls.V3PrivProt"></control-messages>
           </div>
-
         </div>
 
         <div class="form-group" *ngIf="snmpdevForm.controls.V3ContextEngineID">
           <label class="control-label col-sm-2" for="V3ContextEngineID">V3ContextEngineID</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMPV3 ContextEngineID in ScopedPDU (equivalent to the net-snmp -E paramenter)"></i>
           <div class="col-sm-9">
-            <input formControlName="V3ContextEngineID" id="V3ContextEngineID"  [ngModel]="snmpdevForm.value.V3ContextEngineID" />
+            <input formControlName="V3ContextEngineID" id="V3ContextEngineID" [ngModel]="snmpdevForm.value.V3ContextEngineID"  />
             <control-messages [control]="snmpdevForm.controls.V3ContextEngineID"></control-messages>
           </div>
         </div>
 
         <div class="form-group" *ngIf="snmpdevForm.controls.V3ContextName">
-
           <label class="control-label col-sm-2" for="V3ContextName">V3ContextName</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMPV3 ContextName in ScopedPDU ( equivalent to the net-snmp -n parameter)"></i>
           <div class="col-sm-9">
-            <input formControlName="V3ContextName" id="V3ContextName"  [ngModel]="snmpdevForm.value.V3ContextName" />
+            <input formControlName="V3ContextName" id="V3ContextName" [ngModel]="snmpdevForm.value.V3ContextName" />
             <control-messages [control]="snmpdevForm.controls.V3ContextName"></control-messages>
           </div>
         </div>
-      </div>
 
+      </div>
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Freq">Freq</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Frequency of polling (in seconds)"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Frequency of snmp data polling (in seconds)"></i>
         <div class="col-sm-9">
           <input formControlName="Freq" id="Freq" [ngModel]="snmpdevForm.value.Freq" />
           <control-messages [control]="snmpdevForm.controls.Freq"></control-messages>
@@ -616,7 +271,7 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label col-sm-2" for="LogLevel">LogLevel</label>
+        <label class="control-label col-sm-2" for="LogLevel">Log level</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Severity log level"></i>
         <div class="col-sm-9">
           <select formControlName="LogLevel" id="LogLevel" [ngModel]="snmpdevForm.value.LogLevel">
@@ -624,7 +279,7 @@
             <option value="fatal">Fatal</option>
             <option value="error">Error</option>
             <option value="warn">Warning</option>
-            <option value="info">Info</option>
+            <option selected="selected" value="info">Info</option>
             <option value="debug">Debug</option>
           </select>
           <control-messages [control]="snmpdevForm.controls.LogLevel"></control-messages>
@@ -644,16 +299,16 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label col-sm-2" for="DeviceTagName">DeviceTagName</label>
+        <label class="control-label col-sm-2" for="DeviceTagName">Device Tag Name</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag's value to identify type of device in InfluxDB"></i>
         <div class="col-sm-9">
-          <input formControlName="DeviceTagName" id="DeviceTagName" [ngModel]="snmpdevForm.value.DeviceTagName" />
+          <input formControlName="DeviceTagName" id="DeviceTagName" placeholder="device, host, switch..."  [ngModel]="snmpdevForm.value.DeviceTagName"/>
           <control-messages [control]="snmpdevForm.controls.DeviceTagName"></control-messages>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="control-label col-sm-2" for="DeviceTagValue">DeviceTagValue</label>
+        <label class="control-label col-sm-2" for="DeviceTagValue">Device Tag Value</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag's value to identify the device in InfluxDB"></i>
         <div class="col-sm-9">
           <select formControlName="DeviceTagValue" id="DeviceTagValue" [ngModel]="snmpdevForm.value.DeviceTagValue">
@@ -663,11 +318,12 @@
           <control-messages [control]="snmpdevForm.controls.DeviceTagValue"></control-messages>
         </div>
       </div>
+
       <div class="form-group">
         <label class="control-label col-sm-2" for="ExtraTags">ExtraTags</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Tag's value to identify the device in InfluxDB"></i>
         <div class="col-sm-9">
-          <input formControlName="ExtraTags" id="ExtraTags" [ngModel]='snmpdevForm.value.ExtraTags'>
+          <input formControlName="ExtraTags" id="ExtraTags" [ngModel]="snmpdevForm.value.ExtraTags" />
           <control-messages [control]="snmpdevForm.controls.ExtraTags"></control-messages>
         </div>
       </div>
@@ -689,11 +345,12 @@
           <control-messages [control]="snmpdevForm.controls.MeasFilters"></control-messages>
         </div>
       </div>
+
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Device"></i>
         <div class="col-sm-9">
-          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]='snmpdevForm.value.Description'> </textarea>
+          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]="snmpdevForm.value.Description"> </textarea>
           <control-messages [control]="snmpdevForm.controls.Description"></control-messages>
         </div>
       </div>
@@ -709,6 +366,7 @@
         <button type="button" [disabled]="!snmpdevForm.valid" (click)="showFilterModal()">Filter Connection</button>
       </div>
 
+
       <div class="col-sm-offset-2 col-sm-3">
         <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
         <button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
@@ -716,4 +374,4 @@
       </div>
     </form>
   </template>
-</p>
+</ng-container>

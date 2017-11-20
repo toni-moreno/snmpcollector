@@ -137,7 +137,6 @@ export class SnmpDeviceCfgComponent {
       Active: [this.snmpdevForm ? this.snmpdevForm.value.Active : 'true', Validators.required],
       SnmpVersion: [this.snmpdevForm ? this.snmpdevForm.value.SnmpVersion : '2c', Validators.required],
       DisableBulk: [this.snmpdevForm ? this.snmpdevForm.value.DisableBulk : 'false'],
-      Community: [this.snmpdevForm ? this.snmpdevForm.value.Community : 'public'],
       MaxRepetitions: [this.snmpdevForm ? this.snmpdevForm.value.MaxRepetitions : 50, Validators.compose([Validators.required,ValidationService.uinteger8NotZeroValidator])],
       Freq: [this.snmpdevForm ? this.snmpdevForm.value.Freq : 60, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       UpdateFltFreq: [this.snmpdevForm ? this.snmpdevForm.value.UpdateFltFreq : 60, Validators.compose([Validators.required, ValidationService.uintegerAndLessOneValidator])],
@@ -244,8 +243,6 @@ export class SnmpDeviceCfgComponent {
   }
 
   applyAction(test : any) : void {
-    //test.devices = [];
-    //test.devices = this.selectedArray.map((item) => {return item.ID});
     switch(test.action) {
        case "RemoveAllSelected": {
           this.removeAllSelectedItems(this.selectedArray);
@@ -412,11 +409,10 @@ export class SnmpDeviceCfgComponent {
     } else {
       this.setDynamicFields(null);
     }
-
-    this.editmode = "create";
     this.getInfluxServersforDevices();
     this.getMeasGroupsforDevices();
     this.getMeasFiltersforDevices();
+    this.editmode = "create";
   }
 
   editDevice(row) {
