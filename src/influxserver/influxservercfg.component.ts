@@ -314,7 +314,7 @@ export class InfluxServerCfgComponent {
       () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
       );
     } else {
-      return this.influxServerService.deleteInfluxServer(id)
+      return this.influxServerService.deleteInfluxServer(id, true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -374,7 +374,7 @@ export class InfluxServerCfgComponent {
           r = confirm("Changing Influx Server ID from " + this.oldID + " to " + this.influxserverForm.value.ID + ". Proceed?");
         }
         if (r == true) {
-          this.influxServerService.editInfluxServer(this.influxserverForm.value, this.oldID)
+          this.influxServerService.editInfluxServer(this.influxserverForm.value, this.oldID, true)
             .subscribe(data => { console.log(data) },
             err => console.error(err),
             () => { this.editmode = "list"; this.reloadData() }

@@ -1,4 +1,4 @@
-import { HttpAPI } from '../common/httpAPI'
+import { HttpService } from '../core/http.service';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
@@ -7,7 +7,7 @@ declare var _:any;
 @Injectable()
 export class OidConditionService {
 
-    constructor(public httpAPI: HttpAPI) {
+    constructor(public httpAPI: HttpService) {
         console.log('Task Service created.', httpAPI);
     }
 
@@ -20,13 +20,13 @@ export class OidConditionService {
         .map( (responseData) => responseData.json());
     }
 
-    editCondition(dev, id) {
+    editCondition(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
         return this.httpAPI.put('/api/cfg/oidcondition/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'IsMultiple' ) return ( value === "true" || value === true);
             return value;
 
-        }))
+        }),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
@@ -83,11 +83,11 @@ export class OidConditionService {
       });
     };
 
-    deleteCondition(id : string) {
+    deleteCondition(id : string, hideAlert?) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/api/cfg/oidcondition/'+id)
+        return this.httpAPI.delete('/api/cfg/oidcondition/'+id, null, hideAlert)
         .map( (responseData) =>
          responseData.json()
         );

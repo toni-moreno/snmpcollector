@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpAPI } from '../common/httpAPI'
+import { HttpService } from '../core/http.service';
 import { Observable } from 'rxjs/Observable';
 
 declare var _:any;
@@ -7,7 +7,7 @@ declare var _:any;
 @Injectable()
 export class InfluxServerService {
 
-    constructor(public httpAPI: HttpAPI) {
+    constructor(public httpAPI: HttpService) {
     }
 
     addInfluxServer(dev) {
@@ -22,7 +22,7 @@ export class InfluxServerService {
 
     }
 
-    editInfluxServer(dev, id) {
+    editInfluxServer(dev, id, hideAlert?) {
         return this.httpAPI.put('/api/cfg/influxservers/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'Port'  ||
             key == 'Timeout' ) {
@@ -30,7 +30,7 @@ export class InfluxServerService {
             }
             return value;
 
-        }))
+        }),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
@@ -87,7 +87,7 @@ export class InfluxServerService {
       });
     };
 
-    testInfluxServer(influxserver) {
+    testInfluxServer(influxserver,hideAlert?) {
       // return an observable
       return this.httpAPI.post('/api/cfg/influxservers/ping/',JSON.stringify(influxserver,function (key,value) {
           if ( key == 'Port'  ||
@@ -95,17 +95,17 @@ export class InfluxServerService {
             return parseInt(value);
           }
           return value;
-      }))
+      }), null, hideAlert)
       .map(
         (responseData) => responseData.json()
       );
     };
 
-    deleteInfluxServer(id : string) {
+    deleteInfluxServer(id : string, hideAlert?) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/api/cfg/influxservers/'+id)
+        return this.httpAPI.delete('/api/cfg/influxservers/'+id, null, hideAlert)
         .map( (responseData) =>
          responseData.json()
         );

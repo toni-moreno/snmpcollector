@@ -336,7 +336,7 @@ export class OidConditionCfgComponent {
       () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
       );
     } else {
-      return this.oidConditionService.deleteCondition(id)
+      return this.oidConditionService.deleteCondition(id, true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -401,7 +401,7 @@ export class OidConditionCfgComponent {
         }
       }
     } else {
-      return this.oidConditionService.editCondition(component, component.ID)
+      return this.oidConditionService.editCondition(component, component.ID, true)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}

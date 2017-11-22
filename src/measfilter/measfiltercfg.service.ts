@@ -1,4 +1,4 @@
-import { HttpAPI } from '../common/httpAPI'
+import { HttpService } from '../core/http.service';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
@@ -7,7 +7,7 @@ declare var _:any;
 @Injectable()
 export class MeasFilterService {
 
-    constructor(public httpAPI: HttpAPI) {
+    constructor(public httpAPI: HttpService) {
         console.log('Task Service created.', httpAPI);
     }
 
@@ -22,7 +22,7 @@ export class MeasFilterService {
         .map( (responseData) => responseData.json());
     }
 
-    editMeasFilter(dev, id) {
+    editMeasFilter(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
         return this.httpAPI.put('/api/cfg/measfilters/'+id,JSON.stringify(dev,function (key,value) {
             if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
@@ -31,7 +31,7 @@ export class MeasFilterService {
             }
             return value;
 
-        }))
+        }),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
@@ -88,11 +88,11 @@ export class MeasFilterService {
       });
     };
 
-    deleteMeasFilter(id : string) {
+    deleteMeasFilter(id : string, hideAlert?) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/api/cfg/measfilters/'+id)
+        return this.httpAPI.delete('/api/cfg/measfilters/'+id, null, hideAlert)
         .map( (responseData) =>
          responseData.json()
         );

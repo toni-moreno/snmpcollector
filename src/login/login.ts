@@ -1,7 +1,7 @@
 
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpAPI} from '../common/httpAPI'
+import { HttpService } from '../core/http.service'
 
 @Component({
   selector: 'login',
@@ -10,14 +10,17 @@ import { HttpAPI} from '../common/httpAPI'
 })
 
 export class Login {
-  constructor(public router: Router, public httpAPI: HttpAPI) {
+  constructor(public router: Router, public httpAPI: HttpService) {
+    this.getFooterInfo();
   }
-  ifErrors: any;
+    public ifErrors: any;
+    public version : any;
+    public userIn : boolean = false;
 
   login(event, username, password) {
     event.preventDefault();
     let body = JSON.stringify({ username, password });
-    this.httpAPI.post('/login', body)
+    this.httpAPI.post('/login', body, null, true)
       .subscribe(
         response => {
           this.router.navigate(['home']);
@@ -28,4 +31,21 @@ export class Login {
         }
       );
   }
+
+    getInfo() {
+        // return an observable
+        return this.httpAPI.get('/api/rt/agent/info/version/')
+        .map( (responseData) => responseData.json())
+    }
+
+    getFooterInfo() {
+      this.getInfo()
+      .subscribe(data => {
+        this.version = data;
+        this.userIn = true;
+      },
+      err => console.error(err),
+      () =>  {}
+      );
+    }
 }

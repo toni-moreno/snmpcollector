@@ -1,4 +1,4 @@
-import { HttpAPI } from '../../common/httpAPI'
+import { HttpService } from '../../core/http.service'
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
@@ -7,7 +7,7 @@ declare var _:any;
 @Injectable()
 export class ExportServiceCfg {
 
-    constructor(public httpAPI: HttpAPI) {
+    constructor(public httpAPI: HttpService) {
         console.log('Task Service created.', httpAPI);
     }
 
@@ -21,7 +21,7 @@ export class ExportServiceCfg {
     }
 
     bulkExport(values) {
-      return this.httpAPI.post('/api/cfg/bulkexport',values)
+      return this.httpAPI.post('/api/cfg/bulkexport',values, null, true)
       .map((res) => {
           console.log(res);
           return [new Blob([res['_body']],{type: "application/json"}),res.json()];
@@ -31,7 +31,7 @@ export class ExportServiceCfg {
     exportRecursive(type : string, id : string, values) {
         console.log(values);
         // return an observable
-        return this.httpAPI.post('/api/cfg/export/'+type+'/'+id, values)
+        return this.httpAPI.post('/api/cfg/export/'+type+'/'+id, values, true)
         .map((res) => {
             return [new Blob([res['_body']],{type: "application/json"}),res.json()];
         })

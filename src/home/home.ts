@@ -1,7 +1,7 @@
 import { Component, ViewChild,ViewContainerRef } from '@angular/core';
 import { NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { Router } from '@angular/router';
-import { HttpAPI} from '../common/httpAPI';
+import { HttpService } from '../core/http.service';
 import { Observable } from 'rxjs/Observable';
 import { BlockUIService } from '../common/blockui/blockui-service';
 import { BlockUIComponent } from '../common/blockui/blockui-component'; // error
@@ -52,7 +52,7 @@ export class Home {
   elapsedReload: string = '';
   lastReload: Date;
 
-  constructor(private winRef: WindowRef,public router: Router, public httpAPI: HttpAPI, private _blocker: BlockUIService, public homeService: HomeService) {
+  constructor(private winRef: WindowRef,public router: Router, public httpAPI: HttpService, private _blocker: BlockUIService, public homeService: HomeService) {
     this.nativeWindow = winRef.nativeWindow;
     this.getFooterInfo();
     this.item_type= "runtime";

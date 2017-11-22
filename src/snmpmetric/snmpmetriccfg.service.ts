@@ -1,4 +1,4 @@
-import { HttpAPI } from '../common/httpAPI'
+import { HttpService } from '../core/http.service';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
@@ -7,7 +7,7 @@ declare var _:any;
 @Injectable()
 export class SnmpMetricService {
 
-    constructor(public httpAPI: HttpAPI) {
+    constructor(public httpAPI: HttpService) {
         console.log('Task Service created.', httpAPI);
     }
 
@@ -25,7 +25,7 @@ export class SnmpMetricService {
         .map( (responseData) => responseData.json());
     }
 
-    editMetric(dev, id) {
+    editMetric(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
         return this.httpAPI.put('/api/cfg/metric/'+id,JSON.stringify(dev,function (key,value) {
             if (key == 'Scale' ||
@@ -36,7 +36,7 @@ export class SnmpMetricService {
             key == 'IsTag' ) return ( value === "true" || value === true);
             return value;
 
-        }))
+        }),null, hideAlert)
         .map( (responseData) => responseData.json());
     }
 
@@ -93,11 +93,11 @@ export class SnmpMetricService {
       });
     };
 
-    deleteMetric(id : string) {
+    deleteMetric(id : string, hideAlert?) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/api/cfg/metric/'+id)
+        return this.httpAPI.delete('/api/cfg/metric/'+id, null, hideAlert)
         .map( (responseData) =>
          responseData.json()
         );

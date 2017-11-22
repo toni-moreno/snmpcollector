@@ -311,7 +311,7 @@ export class TestConnectionModal implements OnInit  {
     this.filter = null;
     this.histArray.push(this.testForm.value.OID);
     if (this.histArray.length > 5 ) this.histArray.shift();
-    this.snmpDeviceService.sendQuery(this.formValues,this.testForm.value.Mode, this.testForm.value.OID)
+    this.snmpDeviceService.sendQuery(this.formValues,this.testForm.value.Mode, this.testForm.value.OID, true)
     .subscribe(data => {
       this.queryResult = data;
       this.dataArray = this.queryResult.QueryResult;
@@ -328,7 +328,7 @@ export class TestConnectionModal implements OnInit  {
 
   //WAIT
    pingDevice(formValues){
-    this.myObservable = this.snmpDeviceService.pingDevice(formValues)
+    this.myObservable = this.snmpDeviceService.pingDevice(formValues, true)
     .subscribe(data => {
       this.alertHandler = {msg: 'Test succesfull '+data['SysDescr'], type: 'success', closable: true};
       this.isConnected = true;
