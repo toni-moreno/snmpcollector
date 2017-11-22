@@ -1,4 +1,4 @@
-import { HttpAPI } from '../common/httpAPI'
+import { HttpService } from '../core/http.service';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
@@ -7,7 +7,7 @@ declare var _:any;
 @Injectable()
 export class SnmpDeviceService {
 
-    constructor(public httpAPI: HttpAPI) {
+    constructor(public httpAPI: HttpService) {
         console.log('Task Service created.', httpAPI);
     }
 
@@ -155,7 +155,7 @@ export class SnmpDeviceService {
                 else return value;
             }
             return value;
-        }))
+        }),null,true)
         .map( (responseData) => responseData.json());
     }
 
@@ -182,7 +182,7 @@ export class SnmpDeviceService {
                 else return value;
             }
             return value;
-        }))
+        }),null,true)
         .map( (responseData) => responseData.json());
     }
 }

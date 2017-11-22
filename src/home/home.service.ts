@@ -1,4 +1,4 @@
-import { HttpAPI } from '../common/httpAPI'
+import { HttpService } from '../core/http.service';
 import { Injectable } from '@angular/core';
 
 import { Observable } from 'rxjs/Observable';
@@ -8,12 +8,12 @@ declare var _:any;
 @Injectable()
 export class HomeService {
 
-    constructor(public httpAPI: HttpAPI) {
+    constructor(public httpAPI: HttpService) {
         console.log('Task Service created.', httpAPI);
     }
 
     userLogout() {
-        return this.httpAPI.post('/logout','')
+        return this.httpAPI.post('/logout','',null,true)
         .map( (responseData) => true);
     }
 

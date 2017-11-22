@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { HttpModule } from '@angular/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DropdownModule } from 'ng2-bootstrap';
+import { CoreModule } from './core/core.module';
 
 // external libs
 
@@ -13,7 +14,6 @@ import { Ng2TableModule } from './common/ng-table/ng2-table';
 import { Home } from './home/home';
 import { Login } from './login/login';
 import { App } from './app/app';
-import { HttpAPI } from './common/httpAPI';
 
 import { AppRoutes } from './app/app.routes';
 //common
@@ -95,6 +95,7 @@ import { SpinnerComponent } from './common/spinner';
     App,
   ],
   imports: [
+    CoreModule,
     CustomPipesModule,
     HttpModule,
     BrowserModule,
@@ -113,7 +114,6 @@ import { SpinnerComponent } from './common/spinner';
   ],
   providers: [
     WindowRef,
-    HttpAPI,
     ExportServiceCfg,
     ValidationService,
     BlockUIService

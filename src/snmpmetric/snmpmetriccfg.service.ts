@@ -1,4 +1,4 @@
-import { HttpAPI } from '../common/httpAPI'
+import { HttpService } from '../core/http.service';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
@@ -7,7 +7,7 @@ declare var _:any;
 @Injectable()
 export class SnmpMetricService {
 
-    constructor(public httpAPI: HttpAPI) {
+    constructor(public httpAPI: HttpService) {
         console.log('Task Service created.', httpAPI);
     }
 
