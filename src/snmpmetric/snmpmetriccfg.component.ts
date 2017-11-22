@@ -393,7 +393,7 @@ export class SnmpMetricCfgComponent {
         () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
         );
     } else {
-      return this.snmpMetricService.deleteMetric(id)
+      return this.snmpMetricService.deleteMetric(id, true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -459,7 +459,7 @@ export class SnmpMetricCfgComponent {
         }
       }
     } else {
-      return this.snmpMetricService.editMetric(component, component.ID)
+      return this.snmpMetricService.editMetric(component, component.ID, true)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}

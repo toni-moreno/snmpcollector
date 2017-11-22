@@ -395,7 +395,7 @@ export class InfluxMeasCfgComponent {
         () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
         );
     } else {
-      return this.influxMeasService.deleteMeas(id)
+      return this.influxMeasService.deleteMeas(id,true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -463,7 +463,7 @@ export class InfluxMeasCfgComponent {
         }
       }
     } else {
-      return this.influxMeasService.editMeas(component, component.ID)
+      return this.influxMeasService.editMeas(component, component.ID, true)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}

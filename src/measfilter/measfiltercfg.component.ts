@@ -358,7 +358,7 @@ export class MeasFilterCfgComponent {
         () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
         );
     } else {
-      return this.measFilterService.deleteMeasFilter(id)
+      return this.measFilterService.deleteMeasFilter(id, true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -422,7 +422,7 @@ export class MeasFilterCfgComponent {
         }
       }
     } else {
-      return this.measFilterService.editMeasFilter(component, component.ID)
+      return this.measFilterService.editMeasFilter(component, component.ID, true)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}

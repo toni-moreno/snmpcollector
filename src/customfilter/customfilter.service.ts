@@ -19,11 +19,11 @@ export class CustomFilterService {
       .map((responseData) => responseData.json());
   }
 
-  editCustomFilter(dev, id) {
+  editCustomFilter(dev, id, hideAlert?) {
     console.log("DEV: ", dev);
     return this.httpAPI.put('/api/cfg/customfilter/' + id, JSON.stringify(dev, function(key, value) {
       return value;
-    }))
+    }),null,hideAlert)
       .map((responseData) => responseData.json());
   }
 
@@ -82,11 +82,11 @@ export class CustomFilterService {
       });
   };
 
-  deleteCustomFilter(id: string) {
+  deleteCustomFilter(id: string, hideAlert?) {
     // return an observable
     console.log("ID: ", id);
     console.log("DELETING");
-    return this.httpAPI.delete('/api/cfg/customfilter/' + id)
+    return this.httpAPI.delete('/api/cfg/customfilter/' + id, null, hideAlert)
       .map((responseData) =>
         responseData.json()
       );

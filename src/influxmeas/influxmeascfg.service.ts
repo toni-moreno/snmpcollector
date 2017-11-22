@@ -21,14 +21,14 @@ export class InfluxMeasService {
         .map( (responseData) => responseData.json());
     }
 
-    editMeas(dev, id) {
+    editMeas(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
         return this.httpAPI.put('/api/cfg/measurement/'+id,JSON.stringify(dev,function (key,value) {
 
           if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
           return value;
 
-      }))
+      }),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
@@ -93,11 +93,11 @@ export class InfluxMeasService {
       });
     };
 
-    deleteMeas(id : string) {
+    deleteMeas(id : string, hideAlert?) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/api/cfg/measurement/'+id)
+        return this.httpAPI.delete('/api/cfg/measurement/'+id,null,hideAlert)
         .map( (responseData) =>
          responseData.json()
         );

@@ -4,6 +4,11 @@
 * For details, see http://www.apache.org/licenses/LICENSE-2.0.
 */
 
+bs-tooltip-container .tooltip-inner{
+  width: auto;
+  max-width: none;
+  padding: 10px;
+}
 
 /* Toggle Styles */
 #wrapper {

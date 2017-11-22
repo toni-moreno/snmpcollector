@@ -325,7 +325,7 @@ export class TestFilterModal implements OnInit {
   sendQuery() {
     this.filter = null;
     this.isRequesting = true;
-    this.snmpDeviceService.sendQuery(this.formValues, 'walk', this.selectedOID)
+    this.snmpDeviceService.sendQuery(this.formValues, 'walk', this.selectedOID, true)
       .subscribe(data => {
         this.queryResult = data;
         for (let res of this.queryResult.QueryResult) {

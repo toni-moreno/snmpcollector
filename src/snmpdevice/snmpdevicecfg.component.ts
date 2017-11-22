@@ -442,7 +442,7 @@ export class SnmpDeviceCfgComponent {
         () => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
         );
     } else {
-      return this.snmpDeviceService.deleteDevice(id)
+      return this.snmpDeviceService.deleteDevice(id, true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -509,7 +509,7 @@ updateAllSelectedItems(mySelectedArray,field,value, append?) {
       }
     }
     else {
-      return this.snmpDeviceService.editDevice(component, component.ID)
+      return this.snmpDeviceService.editDevice(component, component.ID, true)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err})}

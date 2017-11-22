@@ -18,12 +18,12 @@ export class MeasGroupService {
         .map( (responseData) => responseData.json());
     }
 
-    editMeasGroup(dev, id) {
+    editMeasGroup(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.httpAPI.put('/api/cfg/measgroup/'+id,JSON.stringify(dev,function (key,value) {
             return value;
-        }))
+        }),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
@@ -80,11 +80,11 @@ export class MeasGroupService {
       });
     };
 
-    deleteMeasGroup(id : string) {
+    deleteMeasGroup(id : string, hideAlert?) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/api/cfg/measgroup/'+id)
+        return this.httpAPI.delete('/api/cfg/measgroup/'+id, null, hideAlert)
         .map( (responseData) =>
          responseData.json()
         );

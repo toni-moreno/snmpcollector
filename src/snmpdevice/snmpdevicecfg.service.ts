@@ -39,7 +39,7 @@ export class SnmpDeviceService {
         .map( (responseData) => responseData.json());
     }
 
-    editDevice(dev, id) {
+    editDevice(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.httpAPI.put('/api/cfg/snmpdevice/'+id,JSON.stringify(dev,function (key,value) {
@@ -64,7 +64,7 @@ export class SnmpDeviceService {
                 else return value;
             }
             return value;
-        }))
+        }),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
@@ -121,17 +121,17 @@ export class SnmpDeviceService {
     });
   };
 
-    deleteDevice(id : string) {
+    deleteDevice(id : string, hideAlert?) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
-        return this.httpAPI.delete('/api/cfg/snmpdevice/'+id)
+        return this.httpAPI.delete('/api/cfg/snmpdevice/'+id, null, hideAlert)
         .map( (responseData) =>
          responseData.json()
         );
     };
 
-    pingDevice(dev) {
+    pingDevice(dev, hideAlert?) {
         console.log(dev);
         return this.httpAPI.post('/api/rt/agent/snmpconsole/ping/',JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ||
@@ -155,11 +155,11 @@ export class SnmpDeviceService {
                 else return value;
             }
             return value;
-        }),null,true)
+        }),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
-    sendQuery(dev,getMode,oid) {
+    sendQuery(dev,getMode,oid, hideAlert?) {
         return this.httpAPI.post('/api/rt/agent/snmpconsole/query/'+getMode+'/oid/'+oid,JSON.stringify(dev,function (key,value) {
             if ( key == 'Port' ||
             key == 'Retries' ||
@@ -182,7 +182,7 @@ export class SnmpDeviceService {
                 else return value;
             }
             return value;
-        }),null,true)
+        }),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 }

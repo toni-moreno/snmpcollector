@@ -300,7 +300,7 @@ export class MeasGroupCfgComponent {
       () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
       );
     } else {
-      return this.measGroupService.deleteMeasGroup(id)
+      return this.measGroupService.deleteMeasGroup(id, true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -364,7 +364,7 @@ export class MeasGroupCfgComponent {
         }
       }
     } else {
-      return this.measGroupService.editMeasGroup(component, component.ID)
+      return this.measGroupService.editMeasGroup(component, component.ID, true)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}

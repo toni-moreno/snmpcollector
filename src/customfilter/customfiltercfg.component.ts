@@ -284,7 +284,7 @@ export class CustomFilterCfgComponent {
         () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
         );
     } else {
-      return this.customFilterService.deleteCustomFilter(id)
+      return this.customFilterService.deleteCustomFilter(id, true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
