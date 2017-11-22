@@ -12,7 +12,7 @@ z-index: 999999;!important">
                   font-size: 40px !important;
                   padding-right: 10px;">
         <h1 style="display:inline">
-                    <i class="glyphicon glyphicon-warning-sign"></i>
+                    <i [ngClass]="alert.type !== 'success' ? 'glyphicon glyphicon-warning-sign' : 'glyphicon glyphicon-ok'"></i>
                 </h1>
       </div>
       <ng-container *ngIf="alert.type !== 'success'">
