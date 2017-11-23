@@ -1,4 +1,4 @@
-# SnmpCollector
+# SnmpCollector [![Go Report Card](https://goreportcard.com/badge/github.com/toni-moreno/snmpcollector)](https://goreportcard.com/report/github.com/toni-moreno/snmpcollector)
 
 SnmpCollector is a full featured Generic SNMP data collector with Web Administration Interface Open Source tool which has as main goal simplify  the configuration for getting data from any  device witch snmp protocol support and send resulting data to an influxdb backend.
 
