@@ -2,6 +2,7 @@
 ### New Features
 * Added Hard snmp reset option to remap all measurements again when some problem happens when trying to do snmp connection  init on first attemps. (fix #271)
 * Added a new Runtime option to Force Gather data even if device is not active ( useful for configuration testing )(implements #275)If active the current gathering period won't be changed, and this will be an extra point.
+* Added Version Info to the Login Page
 
 
 ### fixes
@@ -9,6 +10,9 @@
 * fix for #268, #271, #272, #275
 
 ### breaking changes
+
+* Fixed table  name field snmp_device_cfg.system_o_i_ds  to snmp_device_cfg.systemoids , to migrate data you should only execute
+update snmp_device_cfg set systemoids = system_o_i_ds ;
 
 # v 0.7.4 (2017-09-23)
 ### New Features
