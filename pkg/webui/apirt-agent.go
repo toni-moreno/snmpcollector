@@ -19,7 +19,7 @@ func NewAPIRtAgent(m *macaron.Macaron) error {
 		m.Get("/reload/", reqSignedIn, AgentReloadConf)
 		m.Post("/snmpconsole/ping/", reqSignedIn, bind(config.SnmpDeviceCfg{}), PingSNMPDevice)
 		m.Post("/snmpconsole/query/:getmode/:obtype/:data", reqSignedIn, bind(config.SnmpDeviceCfg{}), QuerySNMPDevice)
-		m.Get("/info/version/", reqSignedIn, RTGetVersion)
+		m.Get("/info/version/", RTGetVersion)
 	})
 
 	return nil
