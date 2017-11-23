@@ -26,6 +26,7 @@ type MeasurementCfg struct {
 	Description   string           `xorm:"description"`
 }
 
+//CheckComputedMetric check for computed metrics
 func (mc *MeasurementCfg) CheckComputedMetric() error {
 	parameters := make(map[string]interface{})
 	log.Debugf("Building check parrameters array for index measurement %s", mc.ID)
@@ -83,22 +84,22 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg) error {
 	log.Infof("processing measurement key: %s ", mc.ID)
 	log.Debugf("%+v", mc)
 
-	for _, f_val := range mc.Fields {
-		log.Debugf("looking for measurement %s : fields: %s : Report %d", mc.Name, f_val.ID, f_val.Report)
-		if val, ok := (*MetricCfg)[f_val.ID]; ok {
+	for _, fVal := range mc.Fields {
+		log.Debugf("looking for measurement %s : fields: %s : Report %d", mc.Name, fVal.ID, fVal.Report)
+		if val, ok := (*MetricCfg)[fVal.ID]; ok {
 			switch val.DataSrcType {
 			case "STRINGEVAL":
 				mc.EvalMetric = append(mc.EvalMetric, val)
-				log.Debugf("STRING EVAL metric found measurement %s : fields: %s ", mc.Name, f_val.ID)
+				log.Debugf("STRING EVAL metric found measurement %s : fields: %s ", mc.Name, fVal.ID)
 			case "CONDITIONEVAL":
 				mc.OidCondMetric = append(mc.OidCondMetric, val)
-				log.Debugf("OID CONDITION EVAL metric found measurement %s : fields: %s ", mc.Name, f_val.ID)
+				log.Debugf("OID CONDITION EVAL metric found measurement %s : fields: %s ", mc.Name, fVal.ID)
 			default:
-				log.Debugf("found Metric configuration: %s/ %s", f_val.ID, val.BaseOID)
+				log.Debugf("found Metric configuration: %s/ %s", fVal.ID, val.BaseOID)
 				mc.FieldMetric = append(mc.FieldMetric, val)
 			}
 		} else {
-			log.Warnf("measurement field  %s NOT FOUND in Metrics Database !", f_val.ID)
+			log.Warnf("measurement field  %s NOT FOUND in Metrics Database !", fVal.ID)
 		}
 	}
 	//check for valid fields ( should be at least one!! Field in indexed measurements and at least one field or ) in

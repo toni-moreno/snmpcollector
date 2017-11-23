@@ -6,7 +6,7 @@ type SnmpDeviceCfg struct {
 	//snmp connection config
 	Host       string   `xorm:"host" binding:"Required"`
 	Port       int      `xorm:"port" binding:"Required"`
-	SystemOIDs []string `xorm:systemoids` //for non MIB-2 based devices
+	SystemOIDs []string `xorm:"systemoids"` //for non MIB-2 based devices
 	Retries    int      `xorm:"retries"`
 	Timeout    int      `xorm:"timeout"`
 	Repeat     int      `xorm:"repeat"`
@@ -144,7 +144,7 @@ type SQLConfig struct {
 }
 
 /*
-initMetricsCfg this function does 2 things
+InitMetricsCfg this function does 2 things
 1.- Initialice id from key of maps for all SnmpMetricCfg and InfluxMeasurementCfg objects
 2.- Initialice references between InfluxMeasurementCfg and SnmpMetricGfg objects
 */

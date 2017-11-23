@@ -7,7 +7,8 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func NewApiCfgMeasGroup(m *macaron.Macaron) error {
+// NewAPICfgMeasGroup MeasGroup API REST creator
+func NewAPICfgMeasGroup(m *macaron.Macaron) error {
 
 	bind := binding.Bind
 

@@ -21,30 +21,30 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 		k := m.MetricTable.Row["0"]
 		var t time.Time
 		Fields := make(map[string]interface{})
-		for _, v_mtr := range k.Data {
-			if v_mtr.CookedValue == nil {
-				m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, hostTags, v_mtr)
+		for _, vMtr := range k.Data {
+			if vMtr.CookedValue == nil {
+				m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", vMtr.ID, m.cfg.ID, hostTags, vMtr)
 				metError++
 				continue
 			}
-			if v_mtr.Valid == false {
-				m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, hostTags, v_mtr)
+			if vMtr.Valid == false {
+				m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", vMtr.ID, m.cfg.ID, hostTags, vMtr)
 				continue
 			}
-			if v_mtr.Report == metric.NeverReport {
-				m.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
+			if vMtr.Report == metric.NeverReport {
+				m.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", vMtr.ID, m.cfg.ID)
 				continue
 			}
-			if v_mtr.Report == metric.OnNonZeroReport {
-				if v_mtr.CookedValue == 0.0 {
-					m.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
+			if vMtr.Report == metric.OnNonZeroReport {
+				if vMtr.CookedValue == 0.0 {
+					m.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", vMtr.ID, m.cfg.ID)
 					continue
 				}
 			}
-			m.Debugf("generating field for %s value %f ", v_mtr.GetFieldName(), v_mtr.CookedValue)
-			m.Debugf("DEBUG METRIC %+v", v_mtr)
-			Fields[v_mtr.GetFieldName()] = v_mtr.CookedValue
-			t = v_mtr.CurTime
+			m.Debugf("generating field for %s value %f ", vMtr.GetFieldName(), vMtr.CookedValue)
+			m.Debugf("DEBUG METRIC %+v", vMtr)
+			Fields[vMtr.GetFieldName()] = vMtr.CookedValue
+			t = vMtr.CurTime
 			metSent++
 		}
 		m.Debugf("FIELDS:%+v", Fields)
@@ -67,35 +67,35 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 
 	case "indexed", "indexed_it":
 		var t time.Time
-		for k_idx, v_idx := range m.MetricTable.Row {
-			m.Debugf("generating influx point for indexed %s", k_idx)
+		for idx, vIdx := range m.MetricTable.Row {
+			m.Debugf("generating influx point for indexed %s", idx)
 			//copy tags and add index tag
 			Tags := make(map[string]string)
-			for k_t, v_t := range hostTags {
-				Tags[k_t] = v_t
+			for kT, vT := range hostTags {
+				Tags[kT] = vT
 			}
-			Tags[m.cfg.IndexTag] = k_idx
-			m.Debugf("IDX :%+v", v_idx)
+			Tags[m.cfg.IndexTag] = idx
+			m.Debugf("IDX :%+v", vIdx)
 			Fields := make(map[string]interface{})
-			for _, v_mtr := range v_idx.Data {
-				v_mtr.PrintDebugCfg()
-				if v_mtr.IsTag() == true {
-					if v_mtr.CookedValue == nil {
-						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, Tags, v_mtr)
+			for _, vMtr := range vIdx.Data {
+				vMtr.PrintDebugCfg()
+				if vMtr.IsTag() == true {
+					if vMtr.CookedValue == nil {
+						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", vMtr.ID, m.cfg.ID, Tags, vMtr)
 						metError++ //not sure if an tag error should be count as metric
 						continue
 					}
-					if v_mtr.Valid == false {
-						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, hostTags, v_mtr)
+					if vMtr.Valid == false {
+						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", vMtr.ID, m.cfg.ID, hostTags, vMtr)
 						continue
 					}
-					if v_mtr.Report == metric.NeverReport {
-						m.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
+					if vMtr.Report == metric.NeverReport {
+						m.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", vMtr.ID, m.cfg.ID)
 						continue
 					}
 
 					var tag string
-					switch v := v_mtr.CookedValue.(type) {
+					switch v := vMtr.CookedValue.(type) {
 					case float64:
 						//most of times these will be integers
 						tag = strconv.FormatInt(int64(v), 10)
@@ -103,41 +103,41 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 						//assume string
 						tag = v.(string)
 					}
-					if v_mtr.Report == metric.OnNonZeroReport {
+					if vMtr.Report == metric.OnNonZeroReport {
 						if tag == "0" {
-							m.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
+							m.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", vMtr.ID, m.cfg.ID)
 							continue
 						}
 					}
-					m.Debugf("generating Tag for Metric: %s : tagname: %s", v_mtr.GetFieldName(), tag)
-					Tags[v_mtr.GetFieldName()] = tag
+					m.Debugf("generating Tag for Metric: %s : tagname: %s", vMtr.GetFieldName(), tag)
+					Tags[vMtr.GetFieldName()] = tag
 				} else {
-					if v_mtr.CookedValue == nil {
-						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, Tags, v_mtr)
+					if vMtr.CookedValue == nil {
+						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", vMtr.ID, m.cfg.ID, Tags, vMtr)
 						metError++
 						continue
 					}
-					if v_mtr.Valid == false {
-						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", v_mtr.ID, m.cfg.ID, hostTags, v_mtr)
+					if vMtr.Valid == false {
+						m.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", vMtr.ID, m.cfg.ID, hostTags, vMtr)
 						continue
 					}
-					if v_mtr.Report == metric.NeverReport {
-						m.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
+					if vMtr.Report == metric.NeverReport {
+						m.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", vMtr.ID, m.cfg.ID)
 						continue
 					}
-					if v_mtr.Report == metric.OnNonZeroReport {
-						if v_mtr.CookedValue == 0.0 {
-							m.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v_mtr.ID, m.cfg.ID)
+					if vMtr.Report == metric.OnNonZeroReport {
+						if vMtr.CookedValue == 0.0 {
+							m.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", vMtr.ID, m.cfg.ID)
 							continue
 						}
 					}
-					m.Debugf("generating field for Metric: %s : value %#v", v_mtr.GetFieldName(), v_mtr.CookedValue)
-					m.Debugf("DEBUG METRIC %+v", v_mtr)
-					Fields[v_mtr.GetFieldName()] = v_mtr.CookedValue
+					m.Debugf("generating field for Metric: %s : value %#v", vMtr.GetFieldName(), vMtr.CookedValue)
+					m.Debugf("DEBUG METRIC %+v", vMtr)
+					Fields[vMtr.GetFieldName()] = vMtr.CookedValue
 				}
 				metSent++
 				//reported gathered time for the measurment is choosed as the last field time
-				t = v_mtr.CurTime
+				t = vMtr.CurTime
 			}
 			//here we can chek Fields names prior to send data
 			m.Debugf("FIELDS:%+v TAGS:%+v", Fields, Tags)
@@ -151,10 +151,10 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 				m.Warnf("error in influx point creation :%s", err)
 				measError++
 			} else {
-				m.Debugf("GENERATED INFLUX POINT[%s] index [%s]: %+v", m.cfg.Name, k_idx, pt)
+				m.Debugf("GENERATED INFLUX POINT[%s] index [%s]: %+v", m.cfg.Name, idx, pt)
 				ptarray = append(ptarray, pt)
 				measSent++
-				v_idx.Valid = true
+				vIdx.Valid = true
 			}
 		}
 

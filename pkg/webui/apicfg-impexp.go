@@ -3,21 +3,24 @@ package webui
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/go-macaron/binding"
-	"github.com/toni-moreno/snmpcollector/pkg/data/impexp"
-	"gopkg.in/macaron.v1"
 	"io/ioutil"
 	"mime/multipart"
 	"os"
+
+	"github.com/go-macaron/binding"
+	"github.com/toni-moreno/snmpcollector/pkg/data/impexp"
+	"gopkg.in/macaron.v1"
 )
 
+// UploadForm form struct
 type UploadForm struct {
 	AutoRename bool
 	OverWrite  bool
 	ExportFile *multipart.FileHeader
 }
 
-func NewApiCfgImportExport(m *macaron.Macaron) error {
+// NewAPICfgImportExport Import/Export REST API creator
+func NewAPICfgImportExport(m *macaron.Macaron) error {
 
 	bind := binding.Bind
 
@@ -40,12 +43,14 @@ func NewApiCfgImportExport(m *macaron.Macaron) error {
 /*IMPORT*/
 /*****************/
 
+// ImportCheck import check struct
 type ImportCheck struct {
 	IsOk    bool
 	Message string
 	Data    *impexp.ExportData
 }
 
+// ImportDataFile import data from uploaded file
 func ImportDataFile(ctx *Context, uf UploadForm) {
 	if (UploadForm{}) == uf {
 		log.Error("Error no data in expected struct")
@@ -95,6 +100,7 @@ func ImportDataFile(ctx *Context, uf UploadForm) {
 /*EXPORT*/
 /****************/
 
+// ExportObject export object
 func ExportObject(ctx *Context) {
 	id := ctx.Params(":id")
 	objtype := ctx.Params(":objtype")
@@ -136,6 +142,7 @@ func generateFile(ctx *Context, exp *impexp.ExportData) {
 	ctx.ServeFile(tmpfile.Name())
 }
 
+// ExportObjectToFile export Object to file
 func ExportObjectToFile(ctx *Context, info impexp.ExportInfo) {
 
 	id := ctx.Params(":id")
@@ -150,6 +157,7 @@ func ExportObjectToFile(ctx *Context, info impexp.ExportInfo) {
 	generateFile(ctx, exp)
 }
 
+// BulkExportObjectToFile export object recursively to file
 func BulkExportObjectToFile(ctx *Context, data impexp.ExportData) {
 	log.Debugf("DATA %#+v", data)
 	exp := impexp.NewExport(data.Info)

@@ -2,14 +2,15 @@ package output
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"github.com/influxdata/influxdb/client/v2"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"math/rand"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/influxdata/influxdb/client/v2"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
 )
 
 var (
@@ -37,6 +38,7 @@ type InfluxDB struct {
 	client client.Client
 }
 
+// DummyDB a BD struct needed if no database configured
 var DummyDB = &InfluxDB{
 	cfg:         nil,
 	initialized: false,
@@ -211,6 +213,7 @@ func (db *InfluxDB) Init() {
 	log.Infof("Connected to: %s", db.cfg.Host)
 }
 
+// End release DB connection
 func (db *InfluxDB) End() {
 	if db.dummy == true {
 		return
@@ -222,7 +225,7 @@ func (db *InfluxDB) End() {
 	}
 }
 
-// End finalize sender goroutines
+// StopSender finalize sender goroutines
 func (db *InfluxDB) StopSender() {
 	if db.dummy == true {
 		return

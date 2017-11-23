@@ -2,17 +2,19 @@ package metric
 
 import (
 	"fmt"
+
+	"math"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/Knetic/govaluate"
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
-	"math"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -31,9 +33,13 @@ func SetDB(db *config.DatabaseCfg) {
 }
 
 const (
-	NeverReport     = 0
-	AlwaysReport    = 1
+	// NeverReport  default value for metric resport flag
+	NeverReport = 0
+	// AlwaysReport  metric will send data allways
+	AlwaysReport = 1
+	// OnNonZeroReport metric will send data only if computed value different than 0
 	OnNonZeroReport = 2
+	// OnChangedReport metric will send data only if data has a change from last changed value ( not implemente yet)
 	OnChangedReport = 3
 )
 
@@ -90,16 +96,19 @@ func New(c *config.SnmpMetricCfg) (*SnmpMetric, error) {
 	return metric, err
 }
 
+// NewWithLog create a new snmpmetric with a specific logger
 func NewWithLog(c *config.SnmpMetricCfg, l *logrus.Logger) (*SnmpMetric, error) {
 	metric := &SnmpMetric{log: l}
 	err := metric.Init(c)
 	return metric, err
 }
 
+// SetLogger attach logger to the current snmpmetric object
 func (s *SnmpMetric) SetLogger(l *logrus.Logger) {
 	s.log = l
 }
 
+// Init Initialice a new snmpmetric object with the specific configuration
 func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	if c == nil {
 		return fmt.Errorf("Error on initialice device, configuration struct is nil")

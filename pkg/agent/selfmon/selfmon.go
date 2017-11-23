@@ -2,14 +2,15 @@ package selfmon
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"github.com/influxdata/influxdb/client/v2"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/influxdata/influxdb/client/v2"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
 )
 
 var (
@@ -172,6 +173,7 @@ func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface
 	(*sm.bps).AddPoint(pt)
 }
 
+// End Release the SelMon Object
 func (sm *SelfMon) End() {
 	if sm.CheckAndUnSetInitialized() {
 		close(sm.chExit)
@@ -208,8 +210,8 @@ func (sm *SelfMon) reportRuntimeStats(wg *sync.WaitGroup) {
 
 	memStats := &runtime.MemStats{}
 	lastSampleTime := time.Now()
-	var lastPauseNs uint64 = 0
-	var lastNumGc uint32 = 0
+	var lastPauseNs uint64
+	var lastNumGc uint32
 
 	nsInMs := float64(time.Millisecond)
 	s := time.Tick(time.Duration(sm.cfg.Freq) * time.Second)
@@ -247,7 +249,7 @@ func (sm *SelfMon) reportRuntimeStats(wg *sync.WaitGroup) {
 				log.Warn("We're missing some gc pause times")
 				countGc = 256
 			}
-			var totalPause float64 = 0
+			var totalPause float64
 			for i := 0; i < countGc; i++ {
 				idx := int((memStats.NumGC-uint32(i))+255) % 256
 				pause := float64(memStats.PauseNs[idx])

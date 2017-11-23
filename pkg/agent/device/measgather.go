@@ -1,9 +1,10 @@
 package device
 
 import (
-	"github.com/toni-moreno/snmpcollector/pkg/data/measurement"
 	"sync"
 	"time"
+
+	"github.com/toni-moreno/snmpcollector/pkg/data/measurement"
 )
 
 func (d *SnmpDevice) measConcurrentGatherAndSend() {

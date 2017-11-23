@@ -1,15 +1,17 @@
 package webui
 
 import (
+	"time"
+
 	"github.com/go-macaron/binding"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"gopkg.in/macaron.v1"
-	"time"
 )
 
-func NewApiRtAgent(m *macaron.Macaron) error {
+// NewAPIRtAgent Runtime Agent REST API creator
+func NewAPIRtAgent(m *macaron.Macaron) error {
 
 	bind := binding.Bind
 

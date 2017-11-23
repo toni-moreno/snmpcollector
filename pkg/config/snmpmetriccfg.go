@@ -3,10 +3,11 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/Knetic/govaluate"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/Knetic/govaluate"
 )
 
 //SnmpMetricCfg Metric config
@@ -25,6 +26,7 @@ type SnmpMetricCfg struct {
 }
 
 /*
+Init Initializes Metric
 3.- Check minimal data is set  (pending)
 name, BaseOID BaseOID beginning with "."
 fieldname != null
@@ -97,6 +99,7 @@ func (m *SnmpMetricCfg) Init() error {
 	return nil
 }
 
+//CheckEvalCfg : check evaluated expresion based in govaluate
 func (m SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
 	if m.DataSrcType != "STRINGEVAL" {
 		return nil

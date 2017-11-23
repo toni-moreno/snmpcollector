@@ -2,8 +2,9 @@ package bus
 
 import (
 	"errors"
-	"github.com/Sirupsen/logrus"
 	"sync"
+
+	"github.com/Sirupsen/logrus"
 )
 
 var (
@@ -142,12 +143,14 @@ func (b *Bus) Start() {
 	}
 }
 
+// Send send message to one receiver to the Bus
 func (b *Bus) Send(id string, m *Message) {
 	b.in <- MsgCtrl{sender: nil, payload: m, receiver: id}
 	log.Debug("Send After Send")
 	<-b.waitsync
 }
 
+// Broadcast send message to all nodes attached to the bus
 func (b *Bus) Broadcast(m *Message) {
 	b.in <- MsgCtrl{sender: nil, payload: m, receiver: "all"}
 	log.Debug("After Send")

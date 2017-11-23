@@ -26,7 +26,7 @@ func (m *Measurement) Errorf(expr string, vars ...interface{}) {
 	m.log.Errorf(expr2, vars...)
 }
 
-// Debugf info
+// Warnf log warn data
 func (m *Measurement) Warnf(expr string, vars ...interface{}) {
 	expr2 := "MEASUREMENT [" + m.cfg.ID + "] " + expr
 	m.log.Warnf(expr2, vars...)
@@ -58,7 +58,7 @@ func (mt *MetricTable) Errorf(expr string, vars ...interface{}) {
 	mt.log.Errorf(expr2, vars...)
 }
 
-// Debugf info
+// Warnf log warn info
 func (mt *MetricTable) Warnf(expr string, vars ...interface{}) {
 	expr2 := "MEASUREMENT [" + mt.cfg.ID + "] METRICTABLE " + expr
 	mt.log.Warnf(expr2, vars...)

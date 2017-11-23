@@ -61,6 +61,7 @@ func New(c *config.MeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool
 	return m, err
 }
 
+// InvalidateMetrics Invalidate all MetricTable metrics
 func (m *Measurement) InvalidateMetrics() {
 	//invalidate normal metrics
 	m.MetricTable.InvalidateTable()
@@ -113,6 +114,7 @@ func (m *Measurement) Init() error {
 	return nil
 }
 
+// SetSnmpClient set a GoSNMP client to the Measurement
 func (m *Measurement) SetSnmpClient(cli *gosnmp.GoSNMP) {
 
 	m.snmpClient = cli
@@ -202,6 +204,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 	return err
 }
 
+// UpdateFilter reload indexed with filters
 func (m *Measurement) UpdateFilter() (bool, error) {
 	var err error
 	//var newfilterlabels map[string]string
@@ -286,6 +289,7 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 SnmpBulkData GetSNMP Data
 */
 
+// SnmpWalkData get data with snmpwalk
 func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 
 	now := time.Now()
@@ -321,7 +325,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 	return gathered, processed, errors, nil
 }
 
-// ComputeEvaluatedMetrics take evaluated metrics and computes them from the other values
+// ComputeOidConditionalMetrics take OID contitional metrics and computes true value
 func (m *Measurement) ComputeOidConditionalMetrics() {
 	if m.cfg.OidCondMetric == nil {
 		m.Infof("Not Oid CONDITIONEVAL metrics exist on this measurement")
@@ -423,6 +427,7 @@ func (m *Measurement) ComputeEvaluatedMetrics() {
 GetSnmpData GetSNMP Data
 */
 
+// SnmpGetData get Snmp data with snmpget
 func (m *Measurement) SnmpGetData() (int64, int64, int64, error) {
 
 	now := time.Now()

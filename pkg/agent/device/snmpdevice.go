@@ -25,7 +25,7 @@ var (
 	logDir string
 )
 
-// SetDBConfg set agent config
+// SetDBConfig set agent config
 func SetDBConfig(c *config.SQLConfig) {
 	cfg = c
 }
@@ -85,6 +85,7 @@ func (d *SnmpDevice) GetLogFilePath() string {
 	return d.cfg.LogFile
 }
 
+// ToJSON return a JSON version of the device data
 func (d *SnmpDevice) ToJSON() ([]byte, error) {
 
 	d.rtData.RLock()
@@ -159,7 +160,7 @@ func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*output.InfluxDB) (
 	return d.Influx, nil
 }
 
-// ForceFltUpdate send info to update the filter counter to the next execution
+// ForceGather send message to force a data gather execution
 func (d *SnmpDevice) ForceGather() {
 	d.Node.SendMsg(&bus.Message{Type: "forcegather"})
 }
@@ -169,7 +170,7 @@ func (d *SnmpDevice) ForceFltUpdate() {
 	d.Node.SendMsg(&bus.Message{Type: "filterupdate"})
 }
 
-// ForceFltUpdate send info to update the filter counter to the next execution
+// SnmpReset send message to init an  SNMP connection reset could be soft/hard
 func (d *SnmpDevice) SnmpReset(mode string) {
 	switch mode {
 	case "hard":
@@ -408,6 +409,7 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	return nil
 }
 
+// AttachToBus add this device to a communition bus
 func (d *SnmpDevice) AttachToBus(b *bus.Bus) {
 	d.Node = bus.NewNode(d.cfg.ID)
 	b.Join(d.Node)
@@ -479,6 +481,7 @@ func (d *SnmpDevice) initSnmpConnectSequential(mkey string, debug bool, maxrep u
 	return client, nil
 }
 
+// CheckDeviceConnectivity check if device snmp connection is ok by checking SnmpOIDGetProcessed stats
 func (d *SnmpDevice) CheckDeviceConnectivity() {
 
 	ProcessedStat := d.stats.GetCounter(SnmpOIDGetProcessed)

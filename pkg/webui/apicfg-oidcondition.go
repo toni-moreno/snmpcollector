@@ -7,7 +7,8 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func NewApiCfgOidCondition(m *macaron.Macaron) error {
+// NewAPICfgOidCondition OID Condition API REST creator
+func NewAPICfgOidCondition(m *macaron.Macaron) error {
 
 	bind := binding.Bind
 
@@ -47,7 +48,7 @@ func AddOidCondition(ctx *Context, dev config.OidConditionCfg) {
 	}
 }
 
-// UpdateMetric --pending--
+// UpdateOidCondition Update OID contition
 func UpdateOidCondition(ctx *Context, dev config.OidConditionCfg) {
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)

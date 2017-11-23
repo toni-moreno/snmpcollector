@@ -2,11 +2,13 @@ package impexp
 
 import (
 	"fmt"
+
+	"time"
+
 	"github.com/Knetic/govaluate"
 	"github.com/Sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"time"
 )
 
 var (
@@ -30,6 +32,7 @@ func SetLogger(l *logrus.Logger) {
 	log = l
 }
 
+// ExportInfo Main export Data type
 type ExportInfo struct {
 	FileName      string
 	Description   string
@@ -40,12 +43,14 @@ type ExportInfo struct {
 	CreationDate  time.Time
 }
 
+// EIOptions export/import options
 type EIOptions struct {
 	Recursive   bool   //Export Option
 	AutoRename  bool   //Import Option
 	AlternateID string //Import Option
 }
 
+// ExportObject Base type for any object to export
 type ExportObject struct {
 	ObjectTypeID string
 	ObjectID     string
@@ -61,6 +66,7 @@ type ExportData struct {
 	tmpObjects []*ExportObject //only for temporal use
 }
 
+// NewExport ExportData type creator
 func NewExport(info *ExportInfo) *ExportData {
 	if len(agent.Version) > 0 {
 		info.AgentVersion = agent.Version
@@ -84,6 +90,7 @@ func checkIfExistOnArray(list []*ExportObject, ObjType string, id string) bool {
 	return false
 }
 
+// PrependObject prepend a new object to the ExportData type
 func (e *ExportData) PrependObject(obj *ExportObject) {
 	if checkIfExistOnArray(e.Objects, obj.ObjectTypeID, obj.ObjectID) == true {
 		return
@@ -91,6 +98,7 @@ func (e *ExportData) PrependObject(obj *ExportObject) {
 	e.tmpObjects = append([]*ExportObject{obj}, e.tmpObjects...)
 }
 
+// UpdateTmpObject update temporaty object
 func (e *ExportData) UpdateTmpObject() {
 	//we need remove duplicated objects on the auxiliar array
 	objectList := []*ExportObject{}

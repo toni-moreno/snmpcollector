@@ -2,17 +2,18 @@ package agent
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-
-	"sync"
-	"time"
 )
 
+// Version X.Y.Z based versioning
 var (
 	Version    string
 	Commit     string
@@ -29,6 +30,7 @@ type RInfo struct {
 	BuildStamp string
 }
 
+// GetRInfo return Release Agent Information
 func GetRInfo() *RInfo {
 	info := &RInfo{
 		InstanceID: MainConfig.General.InstanceID,
@@ -41,6 +43,7 @@ func GetRInfo() *RInfo {
 }
 
 var (
+	// Bus the bus messaging system to send messages over the devices
 	Bus = bus.NewBus()
 
 	// MainConfig has all configuration
@@ -73,14 +76,14 @@ func SetLogger(l *logrus.Logger) {
 
 //Reload Mutex Related Methods.
 
-// CheckAndSetStarted check if this thread is already working and set if not
+// CheckReloadProcess check if the agent is doing a reloading just now
 func CheckReloadProcess() bool {
 	reloadMutex.Lock()
 	defer reloadMutex.Unlock()
 	return reloadProcess
 }
 
-// CheckAndSetStarted check if this thread is already working and set if not
+// CheckAndSetReloadProcess set the reloadProcess flat to true and  return the last stat before true set
 func CheckAndSetReloadProcess() bool {
 	reloadMutex.Lock()
 	defer reloadMutex.Unlock()
@@ -89,7 +92,7 @@ func CheckAndSetReloadProcess() bool {
 	return retval
 }
 
-// CheckAndUnSetStarted check if this thread is already working and set if not
+// CheckAndUnSetReloadProcess set the reloadProcess flat to false and  return the last stat before true set
 func CheckAndUnSetReloadProcess() bool {
 	reloadMutex.Lock()
 	defer reloadMutex.Unlock()
@@ -135,7 +138,7 @@ func GetDevice(id string) (*device.SnmpDevice, error) {
 	return dev, nil
 }
 
-//GetDevice is a safe method to get a Device Object
+//GetDeviceJSONInfo get device data in JSON format just if not doing a reloading process
 func GetDeviceJSONInfo(id string) ([]byte, error) {
 	var dev *device.SnmpDevice
 	var ok bool

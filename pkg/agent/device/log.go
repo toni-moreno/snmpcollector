@@ -18,7 +18,7 @@ func (d *SnmpDevice) Errorf(expr string, vars ...interface{}) {
 	d.log.Errorf(expr2, vars...)
 }
 
-// Debugf info
+// Warnf log warn data
 func (d *SnmpDevice) Warnf(expr string, vars ...interface{}) {
 	expr2 := "SNMPDEVICE [" + d.cfg.ID + "] " + expr
 	d.log.Warnf(expr2, vars...)

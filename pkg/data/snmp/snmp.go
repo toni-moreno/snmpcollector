@@ -3,13 +3,14 @@ package snmp
 import (
 	ers "errors"
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"github.com/soniah/gosnmp"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/soniah/gosnmp"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
 )
 
 var (
@@ -27,7 +28,7 @@ func SetLogDir(dir string) {
 	logDir = dir
 }
 
-// Sytem Info basic information for any SNMP based MIB-2 System
+// SysInfo Info basic information for any SNMP based MIB-2 System
 type SysInfo struct {
 	SysDescr    string
 	SysUptime   time.Duration
@@ -36,6 +37,7 @@ type SysInfo struct {
 	SysLocation string
 }
 
+// PduVal2BoolArray get boolean value from PDU
 func PduVal2BoolArray(pdu gosnmp.SnmpPDU) []bool {
 	data := pdu.Value.([]byte)
 	//mainlog.Errorf("PduVal2BoolArray: %+v\n", data)
@@ -196,8 +198,8 @@ func Query(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error) {
 	return result, nil
 }
 
-// SnmpGetSysInfo got system basic info from a snmp client
-func SnmpGetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, SystemOIDs []string) (SysInfo, error) {
+// GetAlternateSysInfo got system basic info from a snmp client when sysinfo should be take from specified OID's
+func GetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, SystemOIDs []string) (SysInfo, error) {
 	//Get System Info from Alternate SystemOIDs
 	sysOids := []string{}
 	sysOidsiMap := make(map[string]string) //inverse map to get Key name from OID
@@ -256,8 +258,8 @@ func SnmpGetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger,
 	return info, nil
 }
 
-// SnmpGetSysInfo got system basic info from a snmp client
-func SnmpGetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, error) {
+// GetSysInfo got system basic info from a snmp client
+func GetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, error) {
 	//Get Basic System Info
 	// SysDescr     .1.3.6.1.2.1.1.1.0
 	// sysUpTime    .1.3.6.1.2.1.1.3.0
@@ -334,7 +336,7 @@ func PduVal2str(pdu gosnmp.SnmpPDU) string {
 	return ""
 }
 
-// PduVal2str transform PDU data to string
+// PduVal2OID transform PDU data to string
 func PduVal2OID(pdu gosnmp.SnmpPDU) string {
 	value := pdu.Value
 	if pdu.Type == gosnmp.ObjectIdentifier {
@@ -453,13 +455,15 @@ func PduVal2IPaddr(pdu gosnmp.SnmpPDU) (string, error) {
 	default:
 		return "", fmt.Errorf("invalid type (%T) for ipaddr conversion", value)
 	}
-	return "", nil
+
 }
 
+// MaxOids const
 const (
-	MaxOids = 60 // const in gosnmp
+	MaxOids = 60
 )
 
+// Release release the GoSNMP object
 func Release(client *gosnmp.GoSNMP) {
 	if client != nil {
 		client.Conn.Close()
@@ -629,30 +633,29 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 	if err != nil {
 		l.Errorf("error on first connect %s", err)
 		return nil, nil, err
-	} else {
-		l.Infof("First SNMP connection to host  %s stablished with MaxRepetitions set to %d", s.Host, maxrep)
 	}
+	l.Infof("First SNMP connection to host  %s stablished with MaxRepetitions set to %d", s.Host, maxrep)
+
 	//first snmp query
 
 	if len(s.SystemOIDs) > 0 && len(s.SystemOIDs[0]) > 0 && s.SystemOIDs[0] != "null" {
 		l.Infof("Detected alternate %d SystemOID's ", len(s.SystemOIDs))
 		// this device has an alternate System Description (Non MIB-2 based systems)
-		si, err := SnmpGetAlternateSysInfo(s.ID, client, l, s.SystemOIDs)
+		si, err := GetAlternateSysInfo(s.ID, client, l, s.SystemOIDs)
 		if err != nil {
 			l.Errorf("error on get Alternate System Info ERROR [%s] for OID's [%s] ", err, strings.Join(s.SystemOIDs[:], ","))
 			return nil, nil, err
-		} else {
-			l.Infof("Got basic system info %#v ", si)
 		}
+		l.Infof("Got basic system info %#v ", si)
 		return client, &si, err
 	}
 	//For most devices System Description could be got with MIB-2::System base OID's
-	si, err := SnmpGetSysInfo(s.ID, client, l)
+	si, err := GetSysInfo(s.ID, client, l)
 	if err != nil {
 		l.Errorf("error on get System Info %s", err)
 		return nil, nil, err
-	} else {
-		l.Infof("Got basic system info %#v ", si)
 	}
+	l.Infof("Got basic system info %#v ", si)
+
 	return client, &si, err
 }

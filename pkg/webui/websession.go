@@ -1,15 +1,17 @@
 package webui
 
 import (
-	"github.com/go-macaron/session"
-	"gopkg.in/macaron.v1"
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/go-macaron/session"
+	"gopkg.in/macaron.v1"
 )
 
+// SessKeyUserID type of session key
 const (
-	SESS_KEY_USERID = "uid"
+	SessKeyUserID = "uid"
 )
 
 var sessionManager *session.Manager
@@ -54,6 +56,7 @@ func prepareOptions(opt *session.Options) *session.Options {
 	return opt
 }
 
+// Sessioner return a Macaron handler
 func Sessioner(options session.Options) macaron.Handler {
 	var err error
 	sessionOptions = prepareOptions(&options)
@@ -77,10 +80,12 @@ func Sessioner(options session.Options) macaron.Handler {
 	}
 }
 
+// GetSession get session store
 func GetSession() SessionStore {
 	return &SessionWrapper{manager: sessionManager}
 }
 
+// SessionStore Session Interface
 type SessionStore interface {
 	// Set sets value to given key in session.
 	Set(interface{}, interface{}) error
@@ -96,17 +101,20 @@ type SessionStore interface {
 	Start(*Context) error
 }
 
+// SessionWrapper session wrapper
 type SessionWrapper struct {
 	session session.RawStore
 	manager *session.Manager
 }
 
+// Start start session context
 func (s *SessionWrapper) Start(c *Context) error {
 	var err error
 	s.session, err = s.manager.Start(c.Context)
 	return err
 }
 
+// Set session key/value setter
 func (s *SessionWrapper) Set(k interface{}, v interface{}) error {
 	if s.session != nil {
 		return s.session.Set(k, v)
@@ -114,6 +122,7 @@ func (s *SessionWrapper) Set(k interface{}, v interface{}) error {
 	return nil
 }
 
+// Get session Key/Value getter
 func (s *SessionWrapper) Get(k interface{}) interface{} {
 	if s.session != nil {
 		return s.session.Get(k)
@@ -121,6 +130,7 @@ func (s *SessionWrapper) Get(k interface{}) interface{} {
 	return nil
 }
 
+// ID get session identificator
 func (s *SessionWrapper) ID() string {
 	if s.session != nil {
 		return s.session.ID()
@@ -128,6 +138,7 @@ func (s *SessionWrapper) ID() string {
 	return ""
 }
 
+// Release session release
 func (s *SessionWrapper) Release() error {
 	if s.session != nil {
 		return s.session.Release()
@@ -135,6 +146,7 @@ func (s *SessionWrapper) Release() error {
 	return nil
 }
 
+// Destory destory session
 func (s *SessionWrapper) Destory(c *Context) error {
 	if s.session != nil {
 		if err := s.manager.Destory(c.Context); err != nil {

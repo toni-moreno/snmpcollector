@@ -1,5 +1,6 @@
 package bus
 
+// Message a basic message type
 type Message struct {
 	Type string
 	Data interface{}
@@ -39,7 +40,7 @@ func (n *Node) SendMsg(m *Message) {
 	n.Read <- m
 }
 
-// Send  a message to all other nodes of the bus.
+// Broadcast  a message to all other nodes of the bus.
 func (n *Node) Broadcast(m *Message) {
 	n.bus.in <- MsgCtrl{sender: n, payload: m, receiver: "all"}
 }

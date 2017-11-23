@@ -2,9 +2,11 @@ package webui
 
 import (
 	"fmt"
+
 	"gopkg.in/macaron.v1"
 )
 
+// Context custom context for http session handler
 type Context struct {
 	*macaron.Context
 	SignedInUser string
@@ -32,10 +34,10 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 		log.Error("Failed to start session", "error", err)
 		return false
 	}
-	userId := ctx.Session.Get(SESS_KEY_USERID)
+	userID := ctx.Session.Get(SessKeyUserID)
 
-	if userId != nil {
-		ctx.SignedInUser = ctx.Session.Get(SESS_KEY_USERID).(string)
+	if userID != nil {
+		ctx.SignedInUser = ctx.Session.Get(SessKeyUserID).(string)
 		ctx.IsSignedIn = true
 		return true
 	}
@@ -44,6 +46,7 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 
 }
 
+// GetContextHandler get context handler
 func GetContextHandler() macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &Context{
@@ -67,6 +70,7 @@ func GetContextHandler() macaron.Handler {
 	}
 }
 
+// RawAsJSON raw to json conversion
 func (ctx *Context) RawAsJSON(status int, json []byte) {
 
 	// json rendered fine, write out the result

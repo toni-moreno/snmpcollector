@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-macaron/binding"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"strconv"
 	"time"
+
+	"github.com/go-macaron/binding"
+	"github.com/toni-moreno/snmpcollector/pkg/config"
 )
 
+// ImportCheck  returns and ExportData type with error summary
 func (e *ExportData) ImportCheck() (*ExportData, error) {
 
 	var duplicated []*ExportObject
@@ -159,6 +161,7 @@ func (e *ExportData) ImportCheck() (*ExportData, error) {
 	return &ExportData{Info: e.Info, Objects: duplicated}, nil
 }
 
+// Import import into the config database data contained in the ExportData struct
 func (e *ExportData) Import(overwrite bool, autorename bool) error {
 
 	var suffix string

@@ -43,6 +43,7 @@ type HTTPConfig struct {
 	CookieID      string `toml:"cookieid"`
 }
 
+//Config Main Configuration struct
 type Config struct {
 	General  GeneralConfig
 	Database DatabaseCfg

@@ -1,15 +1,17 @@
 package webui
 
 import (
+	"time"
+
 	"github.com/go-macaron/binding"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"gopkg.in/macaron.v1"
-	"time"
 )
 
-func NewApiCfgInfluxServer(m *macaron.Macaron) error {
+// NewAPICfgInfluxServer InfluxServer API REST creator
+func NewAPICfgInfluxServer(m *macaron.Macaron) error {
 
 	bind := binding.Bind
 

@@ -1,10 +1,12 @@
 package utils
 
 import (
-	"github.com/Sirupsen/logrus"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 )
 
+// WaitAlignForNextCicle waiths untile a next cicle begins aligned with second 00 of each minute
 func WaitAlignForNextCicle(SecPeriod int, l *logrus.Logger) {
 	i := int64(time.Duration(SecPeriod) * time.Second)
 	remain := i - (time.Now().UnixNano() % i)
@@ -12,6 +14,7 @@ func WaitAlignForNextCicle(SecPeriod int, l *logrus.Logger) {
 	time.Sleep(time.Duration(remain))
 }
 
+// RemoveDuplicatesUnordered removes duplicated elements in the array string
 func RemoveDuplicatesUnordered(elements []string) []string {
 	encountered := map[string]bool{}
 
@@ -59,6 +62,7 @@ func diffKeysInMap(X, Y map[string]string) map[string]string {
 	return diff
 }
 
+// DiffKeyValuesInMap does a diff key and values from 2 strings maps
 func DiffKeyValuesInMap(X, Y map[string]string) map[string]string {
 
 	diff := map[string]string{}

@@ -7,7 +7,8 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func NewApiCfgCustomFilter(m *macaron.Macaron) error {
+// NewAPICfgCustomFilter CustomFilter REST API creator
+func NewAPICfgCustomFilter(m *macaron.Macaron) error {
 
 	bind := binding.Bind
 

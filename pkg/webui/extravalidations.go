@@ -1,8 +1,9 @@
 package webui
 
 import (
-	"github.com/go-macaron/binding"
 	"strings"
+
+	"github.com/go-macaron/binding"
 )
 
 func init() {

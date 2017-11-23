@@ -21,11 +21,10 @@ func (w writer) Write(b []byte) (n int, err error) {
 // GetDebugLogger returns a logger handler for snmp debug data
 func GetDebugLogger(filename string) *log.Logger {
 	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(filename, ".", "-", -1)+".log")
-	if l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644); err == nil {
+	l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+	if err == nil {
 		return log.New(&writer{l, "2006-01-02 15:04:05.00000"}, " [SNMP-DEBUG] ", 0)
-		//return log.New(l, "", log.Ldate|log.Ltime|log.Lmicroseconds)
-	} else {
-		mainlog.Warnf("Error on create debug file : %s ", err)
-		return nil
 	}
+	mainlog.Warnf("Error on create debug file : %s ", err)
+	return nil
 }

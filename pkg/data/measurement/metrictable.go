@@ -2,16 +2,19 @@ package measurement
 
 import (
 	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
 )
 
+// MetricRow Measurment row type
 type MetricRow struct {
 	Valid bool
 	Data  map[string]*metric.SnmpMetric
 }
 
+// Invalidate set invalid all metrics on the row
 func (mr *MetricRow) Invalidate() {
 	mr.Valid = false
 	for _, m := range mr.Data {
@@ -19,16 +22,19 @@ func (mr *MetricRow) Invalidate() {
 	}
 }
 
+// NewMetricRow create a new metric Row
 func NewMetricRow() *MetricRow {
 	mr := MetricRow{Valid: true}
 	mr.Data = make(map[string]*metric.SnmpMetric)
 	return &mr
 }
 
+// Add Add a new metric in the row
 func (mr *MetricRow) Add(id string, m *metric.SnmpMetric) {
 	mr.Data[id] = m
 }
 
+// SetVisible set visible only the selected metrics
 func (mr *MetricRow) SetVisible(ar map[string]int) {
 	for k1, v := range mr.Data {
 		for k2, vis := range ar {
@@ -40,6 +46,7 @@ func (mr *MetricRow) SetVisible(ar map[string]int) {
 	}
 }
 
+// MetricTable Sequence of metric rows with headers
 type MetricTable struct {
 	Header  map[string]int
 	visible map[string]int
@@ -48,25 +55,29 @@ type MetricTable struct {
 	Row     map[string]*MetricRow
 }
 
+// AddRow add a new row to the metricTable
 func (mt *MetricTable) AddRow(id string, mr *MetricRow) {
 	mt.Row[id] = mr
 }
 
+// Len get number of rows for the MetricTable
 func (mt *MetricTable) Len() int {
 	return len(mt.Row)
 }
 
+// InvalidateTable set invalid each row in the table
 func (mt *MetricTable) InvalidateTable() {
 	for _, r := range mt.Row {
 		r.Invalidate()
 	}
 }
 
+// GetSnmpMaps get an  OID array  and a metric Object OID mapped
 func (mt *MetricTable) GetSnmpMaps() ([]string, map[string]*metric.SnmpMetric) {
 	snmpOids := []string{}
 	OidSnmpMap := make(map[string]*metric.SnmpMetric)
-	for kIdx, row := range mt.Row {
-		mt.Debugf("KEY iDX %s", kIdx)
+	for idx, row := range mt.Row {
+		mt.Debugf("KEY iDX %s", idx)
 		//index level
 		for kM, vM := range row.Data {
 			mt.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
@@ -85,11 +96,12 @@ func (mt *MetricTable) GetSnmpMaps() ([]string, map[string]*metric.SnmpMetric) {
 	return snmpOids, OidSnmpMap
 }
 
+// GetSnmpMap get and snmpmetric OID map
 func (mt *MetricTable) GetSnmpMap() map[string]*metric.SnmpMetric {
 
 	OidSnmpMap := make(map[string]*metric.SnmpMetric)
-	for kIdx, row := range mt.Row {
-		mt.Debugf("KEY iDX %s", kIdx)
+	for idx, row := range mt.Row {
+		mt.Debugf("KEY iDX %s", idx)
 		//index level
 		for kM, vM := range row.Data {
 			mt.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
@@ -99,12 +111,14 @@ func (mt *MetricTable) GetSnmpMap() map[string]*metric.SnmpMetric {
 	return OidSnmpMap
 }
 
+// NewMetricTable create a new MetricTable
 func NewMetricTable(c *config.MeasurementCfg, l *logrus.Logger, CurIndexedLabels map[string]string) *MetricTable {
 	mt := MetricTable{}
 	mt.Init(c, l, CurIndexedLabels)
 	return &mt
 }
 
+// Init Initialize the MetricTable Object
 func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndexedLabels map[string]string) {
 	mt.cfg = c
 	mt.log = l
@@ -209,7 +223,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 	}
 }
 
-// PopMetricTable add
+// Pop remove MetricRows from the MetricTable
 func (mt *MetricTable) Pop(p map[string]string) error {
 	if mt.cfg.GetMode == "value" {
 		return fmt.Errorf("Can not pop values in a measurement type value : %s", mt.cfg.ID)
@@ -221,7 +235,7 @@ func (mt *MetricTable) Pop(p map[string]string) error {
 	return nil
 }
 
-// PushMetricTable add map
+// Push add New MetricRows to the MetricTable
 func (mt *MetricTable) Push(p map[string]string) error {
 	if mt.cfg.GetMode == "value" {
 		return fmt.Errorf("Can not push new values in a measurement type value : %s", mt.cfg.ID)

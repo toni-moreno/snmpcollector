@@ -2,12 +2,14 @@ package webui
 
 import (
 	//"github.com/go-macaron/binding"
+	"strconv"
+
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"gopkg.in/macaron.v1"
-	"strconv"
 )
 
-func NewApiRtDevice(m *macaron.Macaron) error {
+// NewAPIRtDevice Runtime Device REST API creator
+func NewAPIRtDevice(m *macaron.Macaron) error {
 
 	//bind := binding.Bind
 
@@ -32,6 +34,8 @@ func NewApiRtDevice(m *macaron.Macaron) error {
 /****************/
 /*Runtime Info
 /****************/
+
+// RTSnmpSetMaxRep runtime set max repeticions
 func RTSnmpSetMaxRep(ctx *Context) {
 	id := ctx.Params(":id")
 	maxrep := ctx.Params(":maxrep")
@@ -85,7 +89,7 @@ func RTSetLogLevelDev(ctx *Context) {
 
 }
 
-//RTSnmpReset
+// RTSnmpReset runtime send reset
 func RTSnmpReset(ctx *Context) {
 	id := ctx.Params(":id")
 	mode := ctx.Params(":mode")
@@ -100,7 +104,7 @@ func RTSnmpReset(ctx *Context) {
 	ctx.JSON(200, "OK")
 }
 
-//RTSnmpReset
+// RTForceGather force gather
 func RTForceGather(ctx *Context) {
 	id := ctx.Params(":id")
 	log.Infof("activating runtime on device %s", id)

@@ -7,7 +7,8 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func NewApiCfgSnmpDevice(m *macaron.Macaron) error {
+// NewAPICfgSnmpDevice SnmpDevice REST API creator
+func NewAPICfgSnmpDevice(m *macaron.Macaron) error {
 
 	bind := binding.Bind
 

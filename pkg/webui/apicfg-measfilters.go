@@ -2,6 +2,7 @@ package webui
 
 import (
 	"fmt"
+
 	"github.com/go-macaron/binding"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
@@ -9,7 +10,8 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func NewApiCfgMeasFilters(m *macaron.Macaron) error {
+// NewAPICfgMeasFilters MeasFilter API REST creator
+func NewAPICfgMeasFilters(m *macaron.Macaron) error {
 
 	bind := binding.Bind
 

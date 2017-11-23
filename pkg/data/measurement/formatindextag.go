@@ -2,10 +2,11 @@ package measurement
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/Sirupsen/logrus"
 )
 
 // two byte-oriented functions identical except for operator comparing c to 127.
@@ -78,7 +79,7 @@ func sectionDotSlice(input string, first int, last int) (string, error) {
 		return input, fmt.Errorf("First index (%d) should be lower than total num of doted strings (%d)", first, n)
 	}
 
-	var err error = nil
+	var err error
 
 	if last >= n {
 		err = fmt.Errorf("Last index (%d), shoud be lower than total number of doted separated strings (%d)", last, n)

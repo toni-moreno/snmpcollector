@@ -1,16 +1,18 @@
 package device
 
 import (
-	"github.com/Sirupsen/logrus"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"sync"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 )
 
+// DevStatType a device stat type
 type DevStatType uint
 
 const (
-	SnmpGetQueries        = 0 //Query stats
+	SnmpGetQueries        = 0 //SnmpGetQueries Query stats
 	SnmpWalkQueries       = 1
 	SnmpGetErrors         = 2
 	SnmpWalkErrors        = 3
@@ -103,6 +105,7 @@ func (s *DevStat) reset() {
 	}
 }
 
+// GetCounter get Counter for stats
 func (s *DevStat) GetCounter(stat DevStatType) interface{} {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -181,6 +184,7 @@ func (s *DevStat) CounterInc(id DevStatType, n int64) {
 	s.Counters[id] = s.Counters[id].(int) + int(n)
 }
 
+// AddMeasStats add measurement stats to the device stats object
 func (s *DevStat) AddMeasStats(mets int64, mete int64, meass int64, mease int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -190,6 +194,7 @@ func (s *DevStat) AddMeasStats(mets int64, mete int64, meass int64, mease int64)
 	s.Counters[MeasurementSentErrors] = s.Counters[MeasurementSentErrors].(int) + int(mease)
 }
 
+// UpdateSnmpGetStats update snmp statistics
 func (s *DevStat) UpdateSnmpGetStats(g int64, p int64, e int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -198,7 +203,7 @@ func (s *DevStat) UpdateSnmpGetStats(g int64, p int64, e int64) {
 	s.Counters[SnmpOIDGetErrors] = s.Counters[SnmpOIDGetErrors].(int) + int(e)
 }
 
-// Update Gather Duration stats
+// SetGatherDuration Update Gather Duration stats
 func (s *DevStat) SetGatherDuration(start time.Time, duration time.Duration) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -206,7 +211,7 @@ func (s *DevStat) SetGatherDuration(start time.Time, duration time.Duration) {
 	s.Counters[CicleGatherDuration] = duration.Seconds()
 }
 
-// Update Gather Duration stats
+// AddSentDuration Update Sent Duration stats
 func (s *DevStat) AddSentDuration(start time.Time, duration time.Duration) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -217,6 +222,7 @@ func (s *DevStat) AddSentDuration(start time.Time, duration time.Duration) {
 	s.Counters[BackEndSentDuration] = s.Counters[BackEndSentDuration].(float64) + duration.Seconds()
 }
 
+// SetFltUpdateStats Set Filter Stats
 func (s *DevStat) SetFltUpdateStats(start time.Time, duration time.Duration) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
