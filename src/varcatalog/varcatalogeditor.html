@@ -1,0 +1,86 @@
+<h2>Variable Catalog</h2>
+<h4 class="info-mode">{{ editmode | uppercase}} </h4>
+<hr>
+<ng-container [ngSwitch]="editmode">
+    <template ngSwitchCase="list">
+    <test-modal #viewModal titleName='Variable Catalog'></test-modal>
+    <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this VarCatalogiables will affect the following components','Deleting this InfluxDB Server will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
+        [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteVarCatalog($event)">
+    </test-modal>
+    <export-file-modal #exportFileModal [showValidation]="true" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
+    <div class="row">
+      <div class="col-md-8 text-left">
+        <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()" style="margin-top: 10px"><i class="glyphicon glyphicon-trash text-primary"></i></label>
+        <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
+        <span [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']" style="font-size : 100%">{{length}} Results</span>
+        <button style ="margin-top: -5px;" type="button" (click)="newVarCatalog()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
+        <button style ="margin-top: -5px;" type="button" (click)="enableEdit()" class="btn btn-primary"><i class="glyphicon glyphicon-edit"></i> {{editEnabled === false ? 'Enable Edit' : 'Disable Edit' }}</button>
+    </div>
+    <div class="col-md-4 text-right">
+        <span style="margin-left: 20px"> Items per page: </span>
+        <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage || 'All'" (ngModelChange)="changeItemsPerPage($event)">
+					<option *ngFor="let option of itemsPerPageOptions" style="padding-left:2px" [value]="option.value">{{option.title}}</option>
+        </select>
+      </div>
+    </div>
+    <br>
+    <table-actions [editEnabled]="editEnabled" [counterErrors]="counterErrors" [counterItems]="counterItems || 0" [itemsSelected]="selectedArray.length" [tableAvailableActions]="tableAvailableActions" (actionApply)="applyAction($event)"></table-actions>
+    <my-spinner [isRunning]="isRequesting"></my-spinner>
+    <ng-table *ngIf="isRequesting === false" [exportType]="'varcatalogcfg'" [config]="config" [(checkedItems)]="selectedArray" [editMode]="editEnabled" (tableChanged)="onChangeTable(config)" (exportedItem)="exportItem($event)" (viewedItem)="viewItem($event)" (editedItem)="editVarCatalog($event)" (removedItem)="removeItem($event)" [showCustom]="true" [rows]="rows" [columns]="columns">
+    </ng-table>
+    <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
+    </pagination>
+    <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+  </template>
+    <template ngSwitchDefault>
+    <form [formGroup]="varcatalogForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveVarCatalog() : updateVarCatalog()">
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="ID">ID</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier for Global Variable"></i>
+        <div class="col-sm-9">
+          <input formControlName="ID" id="ID" [ngModel]="varcatalogForm.value.ID"/>
+          <control-messages [control]="varcatalogForm.controls.ID"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Type">Type</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Address of VarCatalog"></i>
+        <div class="col-sm-9">
+          <select formControlName="Type" id="Type" [ngModel]="varcatalogForm.value.Type">
+            <option value="string">string </option>
+            <option value="integer"> Integer</option>
+            <option value="boolean">boolean</option>
+            <option value="float">floating point</option>
+          </select>
+          <control-messages [control]="varcatalogForm.controls.Type"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Value">Value</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to InfluxDB server {{varcatalogForm.value.Host}}"></i>
+        <div class="col-sm-9">
+          <input formControlName="Value" id="Value" [ngModel]="varcatalogForm.value.Value"/>
+          <control-messages [control]="varcatalogForm.controls.Value"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Description">Description</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the InfluxDB Server"></i>
+        <div class="col-sm-9">
+          <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]="varcatalogForm.value.Description"> </textarea>
+          <control-messages [control]="varcatalogForm.controls.Description"></control-messages>
+        </div>
+      </div>
+
+      <div class="col-sm-offset-4 col-sm-5">
+        <button type="submit" [disabled]="!varcatalogForm.valid">Submit</button>
+        <button type="reset" [disabled]="!varcatalogForm.dirty">Reset</button>
+        <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
+      </div>
+
+    </form>
+  </template>
+</ng-container>
