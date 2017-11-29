@@ -349,14 +349,21 @@ func (m *Measurement) ComputeOidConditionalMetrics() {
 }
 
 // ComputeEvaluatedMetrics take evaluated metrics and computes them from the other values
-func (m *Measurement) ComputeEvaluatedMetrics(parameters map[string]interface{}) {
+func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 	if m.cfg.EvalMetric == nil {
 		m.Infof("Not EVAL metrics exist on  this measurement")
 		return
 	}
+
+	parameters := make(map[string]interface{})
+	//copy of the catalog map
+	for k, v := range catalog {
+		parameters[k] = v
+	}
+
+	//copy the input
 	switch m.cfg.GetMode {
 	case "value":
-		//parameters := make(map[string]interface{})
 		m.Debugf("Building parrameters array for index measurement %s", m.cfg.ID)
 		parameters["NR"] = len(m.CurIndexedLabels) //Number of rows (like awk)
 		parameters["NF"] = len(m.cfg.FieldMetric)  //Number of fields ( like awk)
@@ -388,7 +395,6 @@ func (m *Measurement) ComputeEvaluatedMetrics(parameters map[string]interface{})
 	case "indexed", "indexed_it":
 		for key, val := range m.CurIndexedLabels {
 			//building parameters array
-			parameters := make(map[string]interface{})
 			m.Debugf("Building parrameters array for index %s/%s", key, val)
 			parameters["NR"] = len(m.CurIndexedLabels) //Number of rows (like awk)
 			parameters["NF"] = len(m.cfg.FieldMetric)  //Number of fields ( like awk)
