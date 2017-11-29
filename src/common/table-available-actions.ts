@@ -26,6 +26,8 @@ export class AvailableTableActions {
           return this.getCustomFiltersAvailableActions();
       case 'measurement':
           return this.getMeasurementsAvailableActions();
+      case 'varcatalog':
+          return this.getVarCatalogAvailableActions();
       default:
         return null;
       }
@@ -250,6 +252,16 @@ export class AvailableTableActions {
             ]
           }
         ]},
+      }
+    ];
+    return tableAvailableActions;
+  }
+
+  getVarCatalogAvailableActions (data ? : any) : any {
+    let tableAvailableActions = [
+    //Remove Action
+      {'title': 'Remove', 'content' :
+        {'type' : 'button','action' : 'RemoveAllSelected'}
       }
     ];
     return tableAvailableActions;
