@@ -445,13 +445,14 @@ func PduVal2IPaddr(pdu gosnmp.SnmpPDU) (string, error) {
 		return string(ipbs), nil
 	case []byte:
 		ipbs = vt
+		var ipvalue string
 		switch len(ipbs) {
 		case 4, 16:
-			value = net.IP(ipbs).String()
+			ipvalue = net.IP(ipbs).String()
 		default:
 			return "", fmt.Errorf("invalid length (%d) for ipaddr conversion", len(ipbs))
 		}
-		return string(value.([]byte)), nil
+		return ipvalue, nil
 	default:
 		return "", fmt.Errorf("invalid type (%T) for ipaddr conversion", value)
 	}
