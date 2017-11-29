@@ -75,20 +75,22 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
           </td>
           <ng-container *ngIf="checkRows">
           <td style="width: 80px; text-align: center; padding-top: 15px;" [ngClass]="row.valid === true? ['bg-success'] : ['bg-warning']">
-            <i [ngClass]="row.valid === true ? ['glyphicon glyphicon-ok-sign label label-success'] : ['glyphicon glyphicon-warning-sign label label-warning']"> </i>
+            <i [ngClass]="row.valid === true ? ['glyphicon glyphicon-ok-sign label label-success'] : ['glyphicon glyphicon-warning-sign label label-warning']" container=body [tooltip]="row.valid === true ? 'Valid measurement' : 'Invalid Measurement'"> </i>
           </td>
           </ng-container>
           <td [ngClass]="row.tooltipInfo ? (row.tooltipInfo[column.name] ? (row.tooltipInfo[column.name]['Valid'] === true ? ['bg-success'] : ['bg-danger']) : '') : ''" (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(row[column.name],column.transform)" style="text-align:right">
 
           <template #tooltipValues>
             <h6>Index:{{row.Index }}</h6>
-            <h6>Metric:{{column[name]}}</h6>
-            <hr>
+            <ng-container *ngIf="column.name !== 'Index'">
+              <h6> Metric:{{column.name}}</h6>
+              <hr/>
+            </ng-container>
             <div *ngFor="let test of (row.tooltipInfo[column.name] | keyParser)" style="text-align:left !important">
-            <span class="text-left" style="paddint-left: 10px"><b>{{test.key}}</b></span>
+            <span class="text-left" style="padding-left: 10px" *ngIf="test.value !== null || test.key === 'CookedValue'"><b>{{test.key}}</b></span>
             <span class="text-right" *ngIf="test.key === 'CurTime'"> {{test.value | date:'d/M/y H:m:s'}}</span>
             <span class="text-right" *ngIf="test.key === 'LastTime'"> {{test.value | date:'d/M/y H:m:s'}}</span>
-            <span class="text-right" *ngIf="test.key !== 'CurTime' && test.key !== 'LastTime'">{{test.value}} </span>
+            <span class="text-right" *ngIf="test.key !== 'CurTime' && test.key !== 'LastTime' && test.value !== null">{{test.value}} </span>
             </div>
           </template>
 
