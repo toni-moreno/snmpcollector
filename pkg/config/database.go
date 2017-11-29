@@ -2,15 +2,18 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
+	"sync/atomic"
+
 	// _ needed to mysql
 	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	// _ needed to sqlite3
 	_ "github.com/mattn/go-sqlite3"
-	"os"
-	"sync/atomic"
 )
 
 func (dbc *DatabaseCfg) resetChanges() {
@@ -76,6 +79,9 @@ func (dbc *DatabaseCfg) InitDB() {
 	}
 
 	// Sync tables
+	if err = dbc.x.Sync(new(VarCatalogCfg)); err != nil {
+		log.Fatalf("Fail to sync database VarCatalogCfg: %v\n", err)
+	}
 	if err = dbc.x.Sync(new(InfluxCfg)); err != nil {
 		log.Fatalf("Fail to sync database InfluxCfg: %v\n", err)
 	}
@@ -117,9 +123,43 @@ func (dbc *DatabaseCfg) InitDB() {
 	}
 }
 
+// CatalogVar2Map return interface map from variable table
+func CatalogVar2Map(cv map[string]*VarCatalogCfg) map[string]interface{} {
+	m := make(map[string]interface{})
+	var err error
+	for k, v := range cv {
+		log.Infof("KEY %s Type %s %value ", v.ID, v.Type, v.Value)
+		switch v.Type {
+		case "string":
+			m[k] = v.Value
+		case "integer":
+			m[k], err = strconv.ParseInt(v.Value, 10, 64)
+			if err != nil {
+				log.Errorf("Error in Integer convesrion %s value %s: %s", v.Type, v.Value, err)
+			}
+		case "float":
+			m[k], err = strconv.ParseFloat(v.Value, 64)
+			if err != nil {
+				log.Errorf("Error in Float convesrion %s value %s: %s", v.Type, v.Value, err)
+			}
+		default:
+			log.Warnf("unknown type %s", v.Type)
+		}
+	}
+	return m
+}
+
 //LoadDbConfig get data from database
 func (dbc *DatabaseCfg) LoadDbConfig(cfg *SQLConfig) {
 	var err error
+	//Load Global Variables
+	VarCatalog := make(map[string]*VarCatalogCfg)
+	VarCatalog, err = dbc.GetVarCatalogCfgMap("")
+	if err != nil {
+		log.Warningf("Some errors on get Global variables :%v", err)
+	}
+	cfg.VarCatalog = make(map[string]interface{}, len(VarCatalog))
+	cfg.VarCatalog = CatalogVar2Map(VarCatalog)
 
 	//Load Influxdb databases
 	cfg.Influxdb, err = dbc.GetInfluxCfgMap("")
@@ -419,7 +459,9 @@ func (dbc *DatabaseCfg) AddMeasurementCfg(dev MeasurementCfg) (int64, error) {
 	// create SnmpMetricCfg to check if any configuration issue found before persist to database
 	// We need to get data from database
 	cfg, _ := dbc.GetSnmpMetricCfgMap("")
-	err = dev.Init(&cfg)
+	gv, _ := dbc.GetVarCatalogCfgMap("")
+
+	err = dev.Init(&cfg, CatalogVar2Map(gv))
 	if err != nil {
 		return 0, err
 	}
@@ -512,7 +554,9 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 	// config should be got from database
 	// TODO: filter only metrics in Measurement to test if measurement was well defined
 	cfg, _ := dbc.GetSnmpMetricCfgMap("")
-	err = dev.Init(&cfg)
+	gv, _ := dbc.GetVarCatalogCfgMap("")
+
+	err = dev.Init(&cfg, CatalogVar2Map(gv))
 	if err != nil {
 		return 0, err
 	}

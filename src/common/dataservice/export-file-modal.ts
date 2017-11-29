@@ -14,6 +14,7 @@ import { SnmpMetricService } from '../../snmpmetric/snmpmetriccfg.service';
 import { MeasGroupService } from '../../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../../measfilter/measfiltercfg.service';
 import { CustomFilterService } from '../../customfilter/customfilter.service';
+import { VarCatalogService } from '../../varcatalog/varcatalogcfg.service';
 
 @Component({
   selector: 'export-file-modal',
@@ -147,7 +148,7 @@ import { CustomFilterService } from '../../customfilter/customfilter.service';
           </div>
         </div>`,
         styleUrls: ['./import-modal-styles.css'],
-        providers: [ExportServiceCfg, InfluxServerService, SnmpDeviceService, SnmpMetricService, InfluxMeasService, OidConditionService,MeasGroupService, MeasFilterService, CustomFilterService, TreeView]
+        providers: [ExportServiceCfg, InfluxServerService, SnmpDeviceService, SnmpMetricService, InfluxMeasService, OidConditionService,MeasGroupService, MeasFilterService, CustomFilterService, VarCatalogService, TreeView]
 })
 
 export class ExportFileModal {
@@ -172,7 +173,8 @@ export class ExportFileModal {
     public influxServerService: InfluxServerService, public metricMeasService: SnmpMetricService,
     public influxMeasService: InfluxMeasService, public oidConditionService : OidConditionService,
     public snmpDeviceService: SnmpDeviceService, public measGroupService: MeasGroupService,
-    public measFilterService: MeasFilterService, public customFilterService: CustomFilterService) {
+    public measFilterService: MeasFilterService, public customFilterService: CustomFilterService,
+    public varCatalogService: VarCatalogService) {
 
     this.builder = builder;
   }
@@ -201,7 +203,8 @@ export class ExportFileModal {
    "customfiltercfg" : 'default',
    "measurementcfg" : 'primary',
    "snmpmetriccfg" : 'warning',
-   "measgroupcfg" : 'success'
+   "measgroupcfg" : 'success',
+   "varcatalogcfg" : 'default'
    };
 
   //Control to load exported result
@@ -228,14 +231,15 @@ export class ExportFileModal {
   filter : any = "";
   //Bulk Objects
   public objectTypes : any = [
-   {'Type': "snmpdevicecfg", 'Class' : 'danger', 'Visible': false},
+   {'Type':"snmpdevicecfg", 'Class' : 'danger', 'Visible': false},
    {'Type':"influxcfg" ,'Class' : 'info', 'Visible': false},
    {'Type':"measfiltercfg", 'Class' : 'warning','Visible': false},
    {'Type':"oidconditioncfg", 'Class' : 'success', 'Visible': false},
    {'Type':"customfiltercfg", 'Class' : 'default', 'Visible': false},
    {'Type':"measurementcfg", 'Class' : 'primary', 'Visible': false},
    {'Type':"snmpmetriccfg", 'Class' : 'warning', 'Visible': false},
-   {'Type':"measgroupcfg", 'Class' : 'success', 'Visible': false}
+   {'Type':"measgroupcfg", 'Class' : 'success', 'Visible': false},
+   {'Type':"varcatalogcfg", 'Class' : 'default', 'Visible': false}
    ]
 
    //Reset Vars on Init
@@ -274,10 +278,20 @@ export class ExportFileModal {
     this.exportObject = exportObject;
     this.exportType = null;
   }
-    let date : any = new Date();
-    this.nowDate = date.getFullYear().toString()+date.getMonth().toString()+date.getDate().toString();
+   
+    this.nowDate = this.getCustomTimeString()
     this.createStaticForm();
     this.childModal.show();
+  }
+
+  getCustomTimeString(){
+    let date  = new Date();
+    let day = ('0' + date.getDate()).slice(-2);
+    let year  = date.getFullYear().toString();
+    let month  = ('0' + (date.getMonth()+1)).slice(-2);
+    let ymd =year+month+day;
+    let hm  =  date.getHours().toString()+date.getMinutes().toString();
+    return ymd + '_' + hm;
   }
 
   onChange(event){
@@ -517,6 +531,20 @@ export class ExportFileModal {
        () => {console.log("DONE")}
        );
       break;
+      case 'varcatalogcfg':
+      this.varCatalogService.getVarCatalog(filter)
+      .subscribe(
+      data => {
+        this.dataArray=data;
+        this.resultArray = this.dataArray;
+        for (let i in this.dataArray[0]) {
+          this.listFilterProp.push({ 'id': i, 'name': i });
+        }
+      },
+      err => {console.log(err)},
+      () => {console.log("DONE")}
+      );
+     break;
       default:
       break;
     }

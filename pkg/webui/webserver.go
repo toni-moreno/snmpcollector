@@ -171,6 +171,8 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 	m.Post("/login", bind(UserLogin{}), myLoginHandler)
 	m.Post("/logout", myLogoutHandler)
 
+	NewAPICfgVarCatalog(m)
+
 	NewAPICfgOidCondition(m)
 
 	NewAPICfgSnmpMetric(m)

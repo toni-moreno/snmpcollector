@@ -39,6 +39,7 @@ type SnmpDeviceCfg struct {
 	DeviceTagName  string   `xorm:"devicetagname" binding:"Default(hostname)"`
 	DeviceTagValue string   `xorm:"devicetagvalue" binding:"Default(id)"`
 	ExtraTags      []string `xorm:"extra-tags"`
+	DeviceVars     []string `xorm:"devicevars"`
 	Description    string   `xorm:"description"`
 	//Filters for measurements
 	MeasurementGroups []string `xorm:"-"`
@@ -141,6 +142,8 @@ type SQLConfig struct {
 	GetGroups    map[string]*MGroupsCfg
 	SnmpDevice   map[string]*SnmpDeviceCfg
 	Influxdb     map[string]*InfluxCfg
+	//VarCatalog   map[string]*VarCatalogCfg
+	VarCatalog map[string]interface{}
 }
 
 /*
@@ -165,7 +168,7 @@ func InitMetricsCfg(cfg *SQLConfig) error {
 	}
 	log.Debug("Initializing MEASSUREMENTSconfig...")
 	for mKey, mVal := range cfg.Measurements {
-		err := mVal.Init(&cfg.Metrics)
+		err := mVal.Init(&cfg.Metrics, cfg.VarCatalog)
 		if err != nil {
 			log.Warnln("Error in Measurement config:", err)
 			//if some error int the format the metric is deleted from the config

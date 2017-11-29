@@ -349,14 +349,14 @@ func (m *Measurement) ComputeOidConditionalMetrics() {
 }
 
 // ComputeEvaluatedMetrics take evaluated metrics and computes them from the other values
-func (m *Measurement) ComputeEvaluatedMetrics() {
+func (m *Measurement) ComputeEvaluatedMetrics(parameters map[string]interface{}) {
 	if m.cfg.EvalMetric == nil {
 		m.Infof("Not EVAL metrics exist on  this measurement")
 		return
 	}
 	switch m.cfg.GetMode {
 	case "value":
-		parameters := make(map[string]interface{})
+		//parameters := make(map[string]interface{})
 		m.Debugf("Building parrameters array for index measurement %s", m.cfg.ID)
 		parameters["NR"] = len(m.CurIndexedLabels) //Number of rows (like awk)
 		parameters["NF"] = len(m.cfg.FieldMetric)  //Number of fields ( like awk)

@@ -31,7 +31,8 @@ func RemoveDuplicatesUnordered(elements []string) []string {
 	return result
 }
 
-func diffSlice(X, Y []string) []string {
+// DiffSlice return de Difference between two Slices
+func DiffSlice(X, Y []string) []string {
 
 	diff := []string{}
 	vals := map[string]struct{}{}

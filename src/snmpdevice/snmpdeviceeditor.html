@@ -2,7 +2,7 @@
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <hr>
 <ng-container [ngSwitch]="editmode">
-  <template ngSwitchCase="list">
+    <template ngSwitchCase="list">
     <test-modal #viewModal titleName='Device'></test-modal>
     <export-file-modal #exportFileModal [showValidation]="true" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
     <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this SNMP Device will affect the following components','Deleting this SNMP Device will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
@@ -33,7 +33,7 @@
     <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
   </template>
 
-  <template ngSwitchDefault>
+    <template ngSwitchDefault>
     <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveSnmpDev() : updateSnmpDev()">
       <div class="form-group">
         <label class="control-label col-sm-2" for="ID">ID</label>
@@ -325,6 +325,15 @@
         <div class="col-sm-9">
           <input formControlName="ExtraTags" id="ExtraTags" [ngModel]="snmpdevForm.value.ExtraTags" />
           <control-messages [control]="snmpdevForm.controls.ExtraTags"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="DeviceVars">Device Variables</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Custom Variables for each device needed to compute STRINGEVAL based Metrics"></i>
+        <div class="col-sm-9">
+          <input formControlName="DeviceVars" id="DeviceVars" [ngModel]="snmpdevForm.value.DeviceVars" />
+          <control-messages [control]="snmpdevForm.controls.DeviceVars"></control-messages>
         </div>
       </div>
 

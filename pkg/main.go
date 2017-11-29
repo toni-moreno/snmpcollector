@@ -3,8 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
+
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
@@ -16,11 +23,6 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/data/measurement"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"github.com/toni-moreno/snmpcollector/pkg/webui"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strconv"
-	"time"
 )
 
 var (
@@ -58,7 +60,7 @@ func writePIDFile() {
 
 func flags() *flag.FlagSet {
 	var f flag.FlagSet
-	f.BoolVar(&getversion, "version", getversion, "display de version")
+	f.BoolVar(&getversion, "version", getversion, "display the version")
 	f.StringVar(&configFile, "config", configFile, "config file")
 	f.IntVar(&httpPort, "http", httpPort, "http port")
 	f.StringVar(&logDir, "logs", logDir, "log directory")

@@ -20,7 +20,7 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 			nGets, nProcs, nErrs, _ := m.GetData()
 			d.stats.UpdateSnmpGetStats(nGets, nProcs, nErrs)
 
-			m.ComputeEvaluatedMetrics()
+			m.ComputeEvaluatedMetrics(d.VarMap)
 			m.ComputeOidConditionalMetrics()
 
 			//prepare batchpoint
@@ -59,7 +59,7 @@ func (d *SnmpDevice) measSeqGatherAndSend() {
 		tnProc += nProc
 		tnErrors += nErrors
 
-		m.ComputeEvaluatedMetrics()
+		m.ComputeEvaluatedMetrics(d.VarMap)
 		m.ComputeOidConditionalMetrics()
 
 		//prepare batchpoint

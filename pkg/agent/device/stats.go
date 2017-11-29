@@ -12,28 +12,50 @@ import (
 type DevStatType uint
 
 const (
-	SnmpGetQueries        = 0 //SnmpGetQueries Query stats
-	SnmpWalkQueries       = 1
-	SnmpGetErrors         = 2
-	SnmpWalkErrors        = 3
-	SnmpQueryTimeouts     = 4
-	SnmpOIDGetAll         = 5 //Snmp metrics gathered stats
-	SnmpOIDGetProcessed   = 6
-	SnmpOIDGetErrors      = 7
-	EvalMetricsAll        = 8 // Eval metrics
-	EvalMetricsOk         = 9
-	EvalMetricsErrors     = 10
-	MetricSent            = 11 // Sent metrics stats
-	MetricSentErrors      = 12
-	MeasurementSent       = 13
+	//SnmpGetQueries num Get Queries on last gather cicle
+	SnmpGetQueries = 0
+	//SnmpWalkQueries num Walk Queries on last gather cicle
+	SnmpWalkQueries = 1
+	// SnmpGetErrors num Get Errors on last gather cicle
+	SnmpGetErrors = 2
+	// SnmpWalkErrors num Walk Errors on last gather cicle
+	SnmpWalkErrors = 3
+	// SnmpQueryTimeouts timeous happened while doing snmp queries
+	SnmpQueryTimeouts = 4
+	// SnmpOIDGetAll Snmp  all OID based gathered metrics
+	SnmpOIDGetAll = 5
+	// SnmpOIDGetProcessed only those which match filters
+	SnmpOIDGetProcessed = 6
+	// SnmpOIDGetErrors OIDs wich has errors
+	SnmpOIDGetErrors = 7
+	// EvalMetricsAll all Evaluated Metrics
+	EvalMetricsAll = 8
+	// EvalMetricsOk evaluated OK
+	EvalMetricsOk = 9
+	// EvalMetricsErrors those evalutaed metrics with some errors
+	EvalMetricsErrors = 10
+	// MetricSent all values had been sent (measurment fields -- could be from OID's or from computed, evaluated, sources)
+	MetricSent = 11
+	// MetricSentErrors values that has errors when trying to add to a measurement
+	MetricSentErrors = 12
+	// MeasurementSent all measurements sent to the influx backend
+	MeasurementSent = 13
+	// MeasurementSentErrors all measurements with errors
 	MeasurementSentErrors = 14
-	CicleGatherStartTime  = 15 //Process Elapsed Time stats
-	CicleGatherDuration   = 16
-	FilterStartTime       = 17
-	FilterDuration        = 18
-	BackEndSentStartTime  = 19 // this counter en concurrent sent mode can be confused
-	BackEndSentDuration   = 20
-	DevStatTypeSize       = 21
+	// CicleGatherStartTime Time which begins the last Gather Cicle
+	CicleGatherStartTime = 15
+	// CicleGatherDuration Time taken in complete the last gather and sent cicle
+	CicleGatherDuration = 16
+	// FilterStartTime Time which begins the last filter update
+	FilterStartTime = 17
+	// FilterDuration Time taken in complete the filtering process
+	FilterDuration = 18
+	// BackEndSentStartTime Time witch begins the last sent process
+	BackEndSentStartTime = 19
+	// BackEndSentDuration Time taken in complete the data sent process
+	BackEndSentDuration = 20
+	// DevStatTypeSize special value to set the last stat position
+	DevStatTypeSize = 21
 )
 
 // DevStat minimal info to show users

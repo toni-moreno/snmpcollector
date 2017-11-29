@@ -62,7 +62,9 @@ export class TreeView {
    "customfiltercfg" : 'default',
    "measurementcfg" : 'primary',
    "snmpmetriccfg" : 'warning',
-   "measgroupcfg" : 'success'
+   "measgroupcfg" : 'success',
+   "varcatalogcfg" : 'default'
+   
  };
  recursive : boolean;
 

@@ -257,6 +257,7 @@ func LoadConf() {
 		//Inticialize each SNMP device and put pointer to the global map devices
 		dev := device.New(c)
 		dev.AttachToBus(Bus)
+		dev.InitCatalogVar(DBConfig.VarCatalog)
 		dev.SetSelfMonitoring(selfmonProc)
 		//send db's map to initialize each one its own db if needed and not yet initialized
 

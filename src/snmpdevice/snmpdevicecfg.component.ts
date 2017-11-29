@@ -88,6 +88,7 @@ export class SnmpDeviceCfgComponent {
     { title: 'Tag Name', name: 'DeviceTagName' },
     { title: 'Tag Value', name: 'DeviceTagValue' },
     { title: 'Extra Tags', name: 'ExtraTags' },
+    { title: 'Device Variables', name: 'DeviceVars' },
     { title: 'Measurement Groups', name: 'MeasurementGroups' },
     { title: 'Measurement Filters', name: 'MeasFilters' }
   ];
@@ -147,6 +148,7 @@ export class SnmpDeviceCfgComponent {
       DeviceTagName: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagName : '', Validators.required],
       DeviceTagValue: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagValue : 'id'],
       ExtraTags: [this.snmpdevForm ? (this.snmpdevForm.value.ExtraTags ? this.snmpdevForm.value.ExtraTags : "" ) : "" , Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
+      DeviceVars: [this.snmpdevForm ? (this.snmpdevForm.value.DeviceVars ? this.snmpdevForm.value.DeviceVars : "" ) : "" , Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
       SystemOIDs: [this.snmpdevForm ? (this.snmpdevForm.value.SystemOIDs ? this.snmpdevForm.value.SystemOIDs : "" ) : "" , Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
       MeasurementGroups: [this.snmpdevForm ? this.snmpdevForm.value.MeasurementGroups : null],
       MeasFilters: [this.snmpdevForm ? this.snmpdevForm.value.MeasFilters : null],

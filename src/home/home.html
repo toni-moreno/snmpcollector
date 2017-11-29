@@ -1,121 +1,123 @@
 <div #blocker></div>
 <ng-container *ngIf="userIn === true">
-<about-modal #aboutModal [showValidation]="true" titleName='About'></about-modal>
-<nav class="navbar navbar-inverse navbar-fixed-top" style="z-index:1000">
+    <about-modal #aboutModal [showValidation]="true" titleName='About'></about-modal>
+    <nav class="navbar navbar-inverse navbar-fixed-top" style="z-index:1000">
 
-  <div class="container-fluid" style="padding-left: 0px">
-    <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="container-fluid" style="padding-left: 0px">
+            <!-- Brand and toggle get grouped for better mobile display -->
 
-    <ul class="nav navbar-nav navbar-left">
-    <li class="active">
-      <a role="text" class="glyphicon glyphicon-menu-hamburger" (click)="changeModeMenu()"></a>
-    </li>
-    <li class="active">
-       <p role="text" class="navbar-text" style="color: #fff">SNMP Collector <span *ngIf="version"> - {{version.InstanceID}} </span></p>
-     </li>
-   </ul>
-   <ul class="nav navbar-nav navbar-right">
-     <li class="active">
-       <a role="button" class="glyphicon glyphicon-info-sign" (click)="showAboutModal()"></a>
-     </li>
-     <li class="active">
-       <a href="javascript:void(0);" role="button" (click)="link('https://github.com/toni-moreno/snmpcollector/wiki')" class="glyphicon glyphicon-question-sign"></a>
-     </li>
-     <li class="active">
-       <a role="button" class="glyphicon glyphicon-off" (click)="logout()"></a>
-     </li>
-   </ul>
-  </div>
-  <!-- /.container-fluid -->
-</nav>
+            <ul class="nav navbar-nav navbar-left">
+                <li class="active">
+                    <a role="text" class="glyphicon glyphicon-menu-hamburger" (click)="changeModeMenu()"></a>
+                </li>
+                <li class="active">
+                    <p role="text" class="navbar-text" style="color: #fff">SNMP Collector <span *ngIf="version"> - {{version.InstanceID}} </span></p>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li class="active">
+                    <a role="button" class="glyphicon glyphicon-info-sign" (click)="showAboutModal()"></a>
+                </li>
+                <li class="active">
+                    <a href="javascript:void(0);" role="button" (click)="link('https://github.com/toni-moreno/snmpcollector/wiki')" class="glyphicon glyphicon-question-sign"></a>
+                </li>
+                <li class="active">
+                    <a role="button" class="glyphicon glyphicon-off" (click)="logout()"></a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
 
-<div id="wrapper">
-  <!-- Sidebar -->
-  <div id="sidebar-wrapper" [ngStyle]="mode === true ? {'width.px': '0'} : {'width.px': '215'}">
-    <ul class="sidebar-nav">
-      <li>
-      <span class="title-menu"><i class="glyphicon glyphicon-play" style="padding-right: 8px"></i>Runtime</span>
-    </li>
-    <li *ngFor="let menuItem of runtimeItems; let last=last" [ngClass]="last ? 'last-li' : ''">
-      <a (click)="clickMenu(menuItem.selector)" role="button" [ngClass]="item_type === menuItem.selector ? 'active-menu' : ''">{{menuItem.title}}</a>
-    </li>
-        <li>
-          <span class="title-menu"><i class="glyphicon glyphicon-cog" style="padding-right: 8px"></i>Configuration</span>
-        </li>
-        <li *ngFor="let menuItem of configurationItems; let last=last" [ngClass]="last ? 'last-li' : ''">
-            <a (click)="clickMenu(menuItem.selector)" role="button" [ngClass]="item_type === menuItem.selector ? 'active-menu' : ''">{{menuItem.title}}</a>
-        </li>
+    <div id="wrapper">
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper" [ngStyle]="mode === true ? {'width.px': '0'} : {'width.px': '215'}">
+            <ul class="sidebar-nav">
+                <li>
+                    <span class="title-menu"><i class="glyphicon glyphicon-play" style="padding-right: 8px"></i>Runtime</span>
+                </li>
+                <li *ngFor="let menuItem of runtimeItems; let last=last" [ngClass]="last ? 'last-li' : ''">
+                    <a (click)="clickMenu(menuItem.selector)" role="button" [ngClass]="item_type === menuItem.selector ? 'active-menu' : ''">{{menuItem.title}}</a>
+                </li>
+                <li>
+                    <span class="title-menu"><i class="glyphicon glyphicon-cog" style="padding-right: 8px"></i>Configuration</span>
+                </li>
+                <li *ngFor="let menuItem of configurationItems; let last=last" [ngClass]="last ? 'last-li' : ''">
+                    <a (click)="clickMenu(menuItem.selector)" role="button" [ngClass]="item_type === menuItem.selector ? 'active-menu' : ''">{{menuItem.title}}</a>
+                </li>
 
-      <li class="last-li">
-        <span class="title-menu"><i class="glyphicon glyphicon-indent-right" style="padding-right: 8px"></i> Data Management</span>
-        <a (click)="showImportModal()" role="button">Import Data</a>
-        <a (click)="showExportBulkModal()" role="button">Export Data</a>
-        <a (click)="reloadConfig()" role="button"> <i class="glyphicon glyphicon-refresh" style="display: inline; padding-left: 0px"> </i>Reload Config
-          <i *ngIf="elapsedReload" class="glyphicon glyphicon-ok-circle" container="body" [tooltip]="elapsed"></i>
-          <template #elapsed>
+                <li class="last-li">
+                    <span class="title-menu"><i class="glyphicon glyphicon-indent-right" style="padding-right: 8px"></i> Data Management</span>
+                    <a (click)="showImportModal()" role="button">Import Data</a>
+                    <a (click)="showExportBulkModal()" role="button">Export Data</a>
+                    <a (click)="reloadConfig()" role="button"> <i class="glyphicon glyphicon-refresh" style="display: inline; padding-left: 0px"> </i>Reload Config
+                        <i *ngIf="elapsedReload" class="glyphicon glyphicon-ok-circle" container="body" [tooltip]="elapsed"></i>
+                        <template #elapsed>
             <p>Elapsed: {{ (elapsedReload / 1000000000) | elapsedseconds:3 }} </p>
             <p>Last Reload: {{lastReload}}</p>
           </template>
-        </a>
-      </li>
-      <li>
-      <span class="title-menu"><i class="glyphicon glyphicon-question-sign" style="padding-right: 8px"></i>Others</span>
-    </li>
-    <li>
-      <a href="https://github.com/toni-moreno/snmpcollector/wiki" role="button">Wiki</a>
-    </li>
-    <li>
-      <a role="button" (click)="showAboutModal()">About</a>
-    </li>
-    </ul>
-  </div>
-  <!-- /#sidebar-wrapper -->
-
-  <!-- Page Content -->
-  <div id="page-content-wrapper" style="margin-bottom:50px" [ngStyle] = "mode === true ? {'padding-left': '0px'} : {'padding-left' : '215px'}">
-    <div class="container-fluid">
-      <div class="row">
-        <import-file-modal #importFileModal [showValidation]="true" [textValidation]="'Import'" titleName='Importing:'></import-file-modal>
-        <export-file-modal #exportBulkFileModal [showValidation]="true" [bulkExport]="true" [prepareExport]="false" [textValidation]="'Export'" titleName='Exporting Data:'></export-file-modal>
-
-        <div class="col-lg-12">
-          <p [ngSwitch]="item_type">
-            <template ngSwitchCase="influxserver">
-              <influxservers></influxservers>
-            </template>
-            <template ngSwitchCase="snmpmetric">
-              <snmpmetrics></snmpmetrics>
-            </template>
-            <template ngSwitchCase="influxmeas">
-              <influxmeas></influxmeas>
-            </template>
-            <template ngSwitchCase="measgroup">
-              <measgroups></measgroups>
-            </template>
-            <template ngSwitchCase="measfilter">
-              <measfilters></measfilters>
-            </template>
-            <template ngSwitchCase="oidcondition">
-              <oidconditions></oidconditions>
-            </template>
-            <template ngSwitchCase="customfilter">
-              <customfilters></customfilters>
-            </template>
-            <template ngSwitchCase="snmpdevice">
-              <snmpdevs></snmpdevs>
-            </template>
-            <template ngSwitchCase="runtime">
-              <runtime #RuntimeComponent></runtime>
-            </template>
-
-            <template ngSwitchDefault>DEFAULT</template>
-          </p>
+                    </a>
+                </li>
+                <li>
+                    <span class="title-menu"><i class="glyphicon glyphicon-question-sign" style="padding-right: 8px"></i>Others</span>
+                </li>
+                <li>
+                    <a href="https://github.com/toni-moreno/snmpcollector/wiki" role="button">Wiki</a>
+                </li>
+                <li>
+                    <a role="button" (click)="showAboutModal()">About</a>
+                </li>
+            </ul>
         </div>
-      </div>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper" style="margin-bottom:50px" [ngStyle]="mode === true ? {'padding-left': '0px'} : {'padding-left' : '215px'}">
+            <div class="container-fluid">
+                <div class="row">
+                    <import-file-modal #importFileModal [showValidation]="true" [textValidation]="'Import'" titleName='Importing:'></import-file-modal>
+                    <export-file-modal #exportBulkFileModal [showValidation]="true" [bulkExport]="true" [prepareExport]="false" [textValidation]="'Export'" titleName='Exporting Data:'></export-file-modal>
+
+                    <div class="col-lg-12">
+                        <p [ngSwitch]="item_type">
+                            <template ngSwitchCase="influxserver">
+                              <influxservers></influxservers>
+                           </template>
+                            <template ngSwitchCase="snmpmetric">
+                               <snmpmetrics></snmpmetrics>
+                            </template>
+                            <template ngSwitchCase="influxmeas">
+                             <influxmeas></influxmeas>
+                           </template>
+                            <template ngSwitchCase="measgroup">
+                               <measgroups></measgroups>
+                            </template>
+                            <template ngSwitchCase="measfilter">
+                              <measfilters></measfilters>
+                            </template>
+                            <template ngSwitchCase="oidcondition">
+                              <oidconditions></oidconditions>
+                            </template>
+                            <template ngSwitchCase="customfilter">
+                              <customfilters></customfilters>
+                            </template>
+                            <template ngSwitchCase="snmpdevice">
+                             <snmpdevs></snmpdevs>
+                           </template>
+                            <template ngSwitchCase="runtime">
+                              <runtime #RuntimeComponent></runtime>
+                            </template>
+                            <template ngSwitchCase="varcatalog">
+                              <varcatalog></varcatalog>
+                            </template>
+                            <template ngSwitchDefault>DEFAULT</template>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
     </div>
-  </div>
-  <!-- /#page-content-wrapper -->
-</div>
-<!-- /#wrapper -->
+    <!-- /#wrapper -->
 
 </ng-container>

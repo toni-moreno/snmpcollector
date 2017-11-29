@@ -28,7 +28,8 @@ export class SnmpDeviceService {
             key == 'DisableBulk' ||
             key == 'ConcurrentGather') return ( value === "true" || value === true);
             if ( key == 'ExtraTags' ||
-                 key == 'SystemOIDs' ) return  String(value).split(',');
+                 key == 'SystemOIDs' ||
+                 key == 'DeviceVars' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
                 if (value == "") return null;
@@ -57,7 +58,8 @@ export class SnmpDeviceService {
             key == 'DisableBulk' ||
             key == 'ConcurrentGather') return ( value === "true" || value === true);
             if ( key == 'ExtraTags' ||
-                 key == 'SystemOIDs' ) return  String(value).split(',');
+                 key == 'SystemOIDs' ||
+                 key == 'DeviceVars' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
                 if (value == "") return null;
@@ -148,7 +150,8 @@ export class SnmpDeviceService {
             key == 'DisableBulk' ||
             key == 'ConcurrentGather') return ( value === "true" || value === true);
             if ( key == 'ExtraTags' ||
-                 key == 'SystemOIDs' ) return  String(value).split(',');
+                 key == 'SystemOIDs' ||
+                 key == 'DeviceVars' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
                 if (value == "") return null;
@@ -175,7 +178,8 @@ export class SnmpDeviceService {
             key == 'DisableBulk' ||
             key == 'ConcurrentGather') return ( value === "true" || value === true);
             if ( key == 'ExtraTags' ||
-                 key == 'SystemOIDs' ) return  String(value).split(',');
+                 key == 'SystemOIDs' ||
+                 key == 'DeviceVars' ) return  String(value).split(',');
             if ( key == 'MeasFilters' ||
             key == 'MeasurementGroups') {
                 if (value == "") return null;

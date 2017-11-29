@@ -99,8 +99,8 @@ func (m *SnmpMetricCfg) Init() error {
 	return nil
 }
 
-//CheckEvalCfg : check evaluated expresion based in govaluate
-func (m SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
+/*/CheckEvalCfg : check evaluated expresion based in govaluate
+func (m *SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
 	if m.DataSrcType != "STRINGEVAL" {
 		return nil
 	}
@@ -115,4 +115,17 @@ func (m SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
 		return err
 	}
 	return nil
+}*/
+
+// GetUsedVarNames Get Needed External Variables on this Metric ( only vaid in STRINGEVAL)
+func (m *SnmpMetricCfg) GetUsedVarNames() ([]string, error) {
+	if m.DataSrcType != "STRINGEVAL" {
+		return nil, nil
+	}
+	expression, err := govaluate.NewEvaluableExpression(m.ExtraData)
+	if err != nil {
+
+		return nil, err
+	}
+	return expression.Vars(), nil
 }

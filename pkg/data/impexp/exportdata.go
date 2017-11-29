@@ -196,8 +196,45 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool, level int
 		if !recursive {
 			break
 		}
+		//--------------------
+		// metric objects
+		//--------------------
+
 		for _, val := range v.Fields {
 			e.Export("snmpmetriccfg", val.ID, recursive, level+1)
+		}
+
+		//--------------------
+		// Var Catalog Objects
+		//--------------------
+		// we need to initialice the measurment first to get Variables.
+
+		cfg, _ := dbc.GetSnmpMetricCfgMap("")
+		gv, _ := dbc.GetVarCatalogCfgMap("")
+
+		err = v.Init(&cfg, config.CatalogVar2Map(gv))
+		if err != nil {
+			return err
+		}
+		//now we can get Used Vars
+		vara, err := v.GetExternalVars()
+		if err != nil {
+			log.Warnf("There is some problem while trying to get variables used in this measurement: %s", err)
+		}
+		log.Debugf("GET EXTERNAL VARS in  measurment %s: VARS :%+v", v.ID, vara)
+		// var array to object array
+		var varca []config.VarCatalogCfg
+		for _, val := range vara {
+			log.Debugf("Workign with variables: %s", val)
+			v, err := dbc.GetVarCatalogCfgByID(val)
+			if err != nil {
+				return err
+			}
+			varca = append(varca, v)
+		}
+		// var catalong objects
+		for _, val := range varca {
+			e.Export("varcatalogcfg", val.ID, recursive, level+1)
 		}
 	case "snmpmetriccfg":
 		v, err := dbc.GetSnmpMetricCfgByID(id)
@@ -220,9 +257,14 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool, level int
 		for _, val := range v.Measurements {
 			e.Export("measurementcfg", val, recursive, level+1)
 		}
-
+	case "varcatalogcfg":
+		v, err := dbc.GetVarCatalogCfgByID(id)
+		if err != nil {
+			return err
+		}
+		e.PrependObject(&ExportObject{ObjectTypeID: "varcatalogcfg", ObjectID: id, ObjectCfg: v})
 	default:
-		return fmt.Errorf("Unknown type obje$$$ type %s ", ObjType)
+		return fmt.Errorf("Unknown type object type %s ", ObjType)
 	}
 	if level == 0 {
 		e.UpdateTmpObject()

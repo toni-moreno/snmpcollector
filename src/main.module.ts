@@ -23,7 +23,7 @@ import { PasswordToggleDirective } from './common/custom-directives'
 import { TableActions } from './common/table-actions';
 
 //snmpcollector components
-
+import { VarCatalogCfgComponent } from './varcatalog/varcatalogcfg.component';
 import { SnmpDeviceCfgComponent } from './snmpdevice/snmpdevicecfg.component';
 import { OidConditionCfgComponent } from './oidcondition/oidconditioncfg.component';
 import { SnmpMetricCfgComponent } from './snmpmetric/snmpmetriccfg.component';
@@ -80,6 +80,7 @@ import { SpinnerComponent } from './common/spinner';
     MeasFilterCfgComponent,
     InfluxServerCfgComponent,
     CustomFilterCfgComponent,
+    VarCatalogCfgComponent,
     RuntimeComponent,
     GenericModal,
     AboutModal,

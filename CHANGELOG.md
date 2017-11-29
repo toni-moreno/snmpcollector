@@ -3,6 +3,7 @@
 * Added Hard snmp reset option to remap all measurements again when some problem happens when trying to do snmp connection  init on first attemps. (fix #271)
 * Added a new Runtime option to Force Gather data even if device is not active ( useful for configuration testing )(implements #275)If active the current gathering period won't be changed, and this will be an extra point.
 * Added Version Info to the Login Page
+* Added New Variable Catalog let us to define variable names ( and its default values if not redefined before) to use on STRINGEVAL metric types, These variables could be redefined on each device maintaining the metric formula definition across devices.
 
 
 ### fixes

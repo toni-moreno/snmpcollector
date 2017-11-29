@@ -32,6 +32,7 @@ export class Home {
   item_type: string;
   version: RInfo;
   configurationItems : Array<any> = [
+  {'title': 'Variable Catalog', 'selector' : 'varcatalog'},
   {'title': 'Influx Servers', 'selector' : 'influxserver'},
   {'title': 'OID Conditions', 'selector' : 'oidcondition'},
   {'title': 'SNMP Metrics', 'selector' : 'snmpmetric'},

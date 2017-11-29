@@ -3,6 +3,7 @@ package device
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"encoding/json"
 	"strings"
@@ -47,6 +48,8 @@ type SnmpDevice struct {
 	Freq int
 	//Measurements array
 	Measurements []*measurement.Measurement
+	//Variable map
+	VarMap map[string]interface{}
 
 	//SNMP and Influx Clients config
 	//snmpClient *gosnmp.GoSNMP
@@ -407,6 +410,47 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	d.Stats = d.getBasicStats()
 	d.statsData.Unlock()
 	return nil
+}
+
+// InitVars Initialize Global Variables on the device
+func (d *SnmpDevice) InitCatalogVar(globalmap map[string]interface{}) {
+	// Init Device Custom Variables
+	d.VarMap = make(map[string]interface{}, len(globalmap))
+	//copy global map to device map
+	for k, v := range globalmap {
+		d.VarMap[k] = v
+	}
+
+	if len(d.cfg.DeviceVars) > 0 {
+		for _, tag := range d.cfg.DeviceVars {
+			s := strings.Split(tag, "=")
+			if len(s) == 2 {
+				key, value := s[0], s[1]
+				//check if exist
+				if v, ok := d.VarMap[key]; ok {
+					var err error
+					switch v.(type) {
+
+					case int64:
+						d.VarMap[key], err = strconv.ParseInt(value, 10, 64)
+					case string:
+						d.VarMap[key] = value
+					case float64:
+						d.VarMap[key], err = strconv.ParseFloat(value, 64)
+					}
+					if err != nil {
+						d.Errorf("There is an Error on the Type Conversion: %s ", err)
+					}
+				} else {
+					d.Warnf("The Variable with KEY %s doens't exist in the  variable catalog ", key)
+				}
+			} else {
+				d.Errorf("Error on Custom Variable definition VAR_NAME=VALUE [ %s ]", tag)
+			}
+		}
+	} else {
+		d.Warnf("No Custom Variables detected in device")
+	}
 }
 
 // AttachToBus add this device to a communition bus
