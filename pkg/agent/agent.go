@@ -50,7 +50,7 @@ var (
 	MainConfig config.Config
 
 	// DBConfig db config
-	DBConfig config.SQLConfig
+	DBConfig config.DBConfig
 
 	log *logrus.Logger
 	//mutex for devices map

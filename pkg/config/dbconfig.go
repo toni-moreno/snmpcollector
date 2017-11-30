@@ -135,15 +135,14 @@ type SnmpDevMGroups struct {
 }
 
 // SQLConfig read from DB
-type SQLConfig struct {
+type DBConfig struct {
 	Metrics      map[string]*SnmpMetricCfg
 	Measurements map[string]*MeasurementCfg
 	MFilters     map[string]*MeasFilterCfg
 	GetGroups    map[string]*MGroupsCfg
 	SnmpDevice   map[string]*SnmpDeviceCfg
 	Influxdb     map[string]*InfluxCfg
-	//VarCatalog   map[string]*VarCatalogCfg
-	VarCatalog map[string]interface{}
+	VarCatalog   map[string]interface{}
 }
 
 /*
@@ -152,7 +151,7 @@ InitMetricsCfg this function does 2 things
 2.- Initialice references between InfluxMeasurementCfg and SnmpMetricGfg objects
 */
 // InitMetricsCfg xx
-func InitMetricsCfg(cfg *SQLConfig) error {
+func InitMetricsCfg(cfg *DBConfig) error {
 	//TODO:
 	// - check duplicates OID's => warning messages
 	//Initialize references to SnmpMetricGfg into InfluxMeasurementCfg

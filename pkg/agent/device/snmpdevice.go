@@ -22,12 +22,12 @@ import (
 )
 
 var (
-	cfg    *config.SQLConfig
+	cfg    *config.DBConfig
 	logDir string
 )
 
 // SetDBConfig set agent config
-func SetDBConfig(c *config.SQLConfig) {
+func SetDBConfig(c *config.DBConfig) {
 	cfg = c
 }
 

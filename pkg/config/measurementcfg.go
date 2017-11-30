@@ -270,3 +270,302 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 
 	return nil
 }
+
+/***************************
+	MEASUREMENTS
+	-GetMeasurementCfgByID(struct)
+	-GetMeasurementCfgMap (map - for interna config use
+	-GetMeasurementCfgArray(Array - for web ui use )
+	-AddMeasurementCfg
+	-DelMeasurementCfg
+	-UpdateMeasurementCfg
+  -GetMeasurementCfgAffectOnDel
+***********************************/
+
+/*GetMeasurementCfgByID get metric data by id*/
+func (dbc *DatabaseCfg) GetMeasurementCfgByID(id string) (MeasurementCfg, error) {
+	cfgarray, err := dbc.GetMeasurementCfgArray("id='" + id + "'")
+	if err != nil {
+		return MeasurementCfg{}, err
+	}
+	if len(cfgarray) > 1 {
+		return MeasurementCfg{}, fmt.Errorf("Error %d results on get MeasurementCfg by id %s", len(cfgarray), id)
+	}
+	if len(cfgarray) == 0 {
+		return MeasurementCfg{}, fmt.Errorf("Error no values have been returned with this id %s in the measurement config table", id)
+	}
+	return *cfgarray[0], nil
+}
+
+/*GetMeasurementCfgMap  return data in map format*/
+func (dbc *DatabaseCfg) GetMeasurementCfgMap(filter string) (map[string]*MeasurementCfg, error) {
+	cfgarray, err := dbc.GetMeasurementCfgArray(filter)
+	cfgmap := make(map[string]*MeasurementCfg)
+	for _, val := range cfgarray {
+		cfgmap[val.ID] = val
+		log.Debugf("%+v", *val)
+	}
+	return cfgmap, err
+}
+
+/*GetMeasurementCfgArray generate an array of measurements with all its information */
+func (dbc *DatabaseCfg) GetMeasurementCfgArray(filter string) ([]*MeasurementCfg, error) {
+	var err error
+	var devices []*MeasurementCfg
+	//Get Only data for selected measurements
+	if len(filter) > 0 {
+		if err = dbc.x.Where(filter).Find(&devices); err != nil {
+			log.Warnf("Fail to get MeasurementCfg  data filteter with %s : %v\n", filter, err)
+			return nil, err
+		}
+	} else {
+		if err = dbc.x.Find(&devices); err != nil {
+			log.Warnf("Fail to get MeasurementCfg   data: %v\n", err)
+			return nil, err
+		}
+	}
+
+	var MeasureMetric []*MeasurementFieldCfg
+	if err = dbc.x.Find(&MeasureMetric); err != nil {
+		log.Warnf("Fail to get Measurements Metric relationship data: %v\n", err)
+	}
+
+	//Load Measurements and metrics relationship
+	//We assign field metric ID to each measurement
+	for _, mVal := range devices {
+		for _, mm := range MeasureMetric {
+			if mm.IDMeasurementCfg == mVal.ID {
+				data := struct {
+					ID     string
+					Report int
+				}{
+					mm.IDMetricCfg,
+					mm.Report,
+				}
+				mVal.Fields = append(mVal.Fields, data)
+			}
+		}
+	}
+	return devices, nil
+}
+
+/*AddMeasurementCfg for adding new Metric*/
+func (dbc *DatabaseCfg) AddMeasurementCfg(dev MeasurementCfg) (int64, error) {
+	var err error
+	var affected, newmf int64
+
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database
+	// We need to get data from database
+	cfg, _ := dbc.GetSnmpMetricCfgMap("")
+	gv, _ := dbc.GetVarCatalogCfgMap("")
+
+	err = dev.Init(&cfg, CatalogVar2Map(gv))
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
+	session := dbc.x.NewSession()
+	defer session.Close()
+
+	affected, err = session.Insert(dev)
+	if err != nil {
+		session.Rollback()
+		return 0, err
+	}
+	//Measurement Fields
+	for _, metric := range dev.Fields {
+
+		mstruct := MeasurementFieldCfg{
+			IDMeasurementCfg: dev.ID,
+			IDMetricCfg:      metric.ID,
+			Report:           metric.Report,
+		}
+		newmf, err = session.Insert(&mstruct)
+		if err != nil {
+			session.Rollback()
+			return 0, err
+		}
+	}
+	//no other relation
+	err = session.Commit()
+	if err != nil {
+		return 0, err
+	}
+	log.Infof("Added new Measurement Successfully with id %s and [%d Fields] ", dev.ID, newmf)
+	dbc.addChanges(affected + newmf)
+	return affected, nil
+}
+
+/*DelMeasurementCfg for deleting influx databases from ID*/
+func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
+	var affectedfl, affectedmg, affectedft, affectedcf, affected int64
+	var err error
+
+	session := dbc.x.NewSession()
+	defer session.Close()
+	// deleting references in MeasurementFieldCfg
+	affectedfl, err = session.Where("id_measurement_cfg='" + id + "'").Delete(&MeasurementFieldCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Delete Measurement on MeasurementFieldCfg with id: %s, error: %s", id, err)
+	}
+
+	affectedmg, err = session.Where("id_measurement_cfg='" + id + "'").Delete(&MGroupsMeasurements{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Delete Measurement on MGroupsMeasurements with id: %s, error: %s", id, err)
+	}
+
+	affectedft, err = session.Where("id_measurement_cfg='" + id + "'").Cols("id_measurement_cfg").Update(&MeasFilterCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Update FilterMeasurement on with id: %s, error: %s", id, err)
+	}
+
+	//CustomFilter Related Dev
+	affectedcf, err = session.Where("related_meas='" + id + "'").Cols("related_meas").Update(&CustomFilterCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Delete Measurement with id on delete CustomFilter with id: %s, error: %s", id, err)
+	}
+
+	affected, err = session.Where("id='" + id + "'").Delete(&MeasurementCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, err
+	}
+
+	err = session.Commit()
+	if err != nil {
+		return 0, err
+	}
+	log.Infof("Deleted Successfully Measurement with ID %s [ %d Measurements Groups Affected / %d Fields Affected / %d Filters Afected / %d Custom Filters Afected ]", id, affectedmg, affectedfl, affectedft, affectedcf)
+	dbc.addChanges(affected + affectedmg + affectedfl + affectedft + affectedcf)
+	return affected, nil
+}
+
+/*UpdateMeasurementCfg for adding new influxdb*/
+func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int64, error) {
+	var affecteddev, newmf, affected int64
+	var err error
+	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
+	// config should be got from database
+	// TODO: filter only metrics in Measurement to test if measurement was well defined
+	cfg, _ := dbc.GetSnmpMetricCfgMap("")
+	gv, _ := dbc.GetVarCatalogCfgMap("")
+
+	err = dev.Init(&cfg, CatalogVar2Map(gv))
+	if err != nil {
+		return 0, err
+	}
+	// initialize data persistence
+	session := dbc.x.NewSession()
+	defer session.Close()
+
+	if id != dev.ID { //ID has been changed
+		log.Infof("Updated Measurement Config to %s devices ", affecteddev)
+
+		affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").Cols("id_measurement_cfg").Update(&MGroupsMeasurements{IDMeasurementCfg: dev.ID})
+		if err != nil {
+			session.Rollback()
+			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
+		}
+		affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").Cols("id_measurement_cfg").Update(&MeasFilterCfg{IDMeasurementCfg: dev.ID})
+		if err != nil {
+			session.Rollback()
+			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
+		}
+		affecteddev, err = session.Where("related_meas='" + id + "'").Cols("related_meas").Update(&CustomFilterCfg{RelatedMeas: dev.ID})
+		if err != nil {
+			session.Rollback()
+			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
+		}
+
+		log.Infof("Updated Measurement config to %s devices ", affecteddev)
+	}
+	//delete all previous values
+	affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").Delete(&MeasurementFieldCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Delete Measurement on MGroupsMeasurements with id: %s, error: %s", id, err)
+	}
+
+	//Creating nuew Measurement Fields
+	for _, metric := range dev.Fields {
+
+		mstruct := MeasurementFieldCfg{
+			IDMeasurementCfg: dev.ID,
+			IDMetricCfg:      metric.ID,
+			Report:           metric.Report,
+		}
+		newmf, err = session.Insert(&mstruct)
+		if err != nil {
+			session.Rollback()
+			return 0, err
+		}
+	}
+	//update data
+	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
+	if err != nil {
+		session.Rollback()
+		return 0, err
+	}
+	err = session.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	log.Infof("Updated Influx Measurement Config Successfully with id %s and  (%d previous / %d new Fields), affected", id, affecteddev, newmf)
+	dbc.addChanges(affecteddev + newmf)
+	return affected, nil
+}
+
+/*GetMeasurementCfgAffectOnDel for deleting devices from ID*/
+func (dbc *DatabaseCfg) GetMeasurementCfgAffectOnDel(id string) ([]*DbObjAction, error) {
+	var mf []*MeasurementFieldCfg
+	var mg []*MGroupsMeasurements
+	var cf []*CustomFilterCfg
+	var obj []*DbObjAction
+	var err error
+	err = dbc.x.Where("id_measurement_cfg='" + id + "'").Find(&mf)
+	if err != nil {
+		return nil, fmt.Errorf("Error on Delete Measurement on MeasurementFieldCfg with id: %s, error: %s", id, err)
+	}
+	for _, val := range mf {
+		obj = append(obj, &DbObjAction{
+			Type:     "snmpmetriccfg",
+			TypeDesc: "Metrics",
+			ObID:     val.IDMetricCfg,
+			Action:   "Delete SNMPMetric field from Measurement relation",
+		})
+	}
+
+	err = dbc.x.Where("id_measurement_cfg='" + id + "'").Find(&mg)
+	if err != nil {
+		return nil, fmt.Errorf("Error on Delete Measurement on MGroupsMeasurements with id: %s, error: %s", id, err)
+	}
+
+	for _, val := range mg {
+		obj = append(obj, &DbObjAction{
+			Type:     "measgroupcfg",
+			TypeDesc: "Meas. Groups",
+			ObID:     val.IDMGroupCfg,
+			Action:   "Delete Measurement from Measurement Group relation",
+		})
+	}
+
+	err = dbc.x.Where("related_meas='" + id + "'").Find(&cf)
+	if err != nil {
+		return nil, fmt.Errorf("Error on Delete Measurement on MeasurementFieldCfg with id: %s, error: %s", id, err)
+	}
+	for _, val := range cf {
+		obj = append(obj, &DbObjAction{
+			Type:     "customfiltercfg",
+			TypeDesc: "Custom Filter",
+			ObID:     val.ID,
+			Action:   "Delete related Measurement from CustomFilter",
+		})
+	}
+
+	return obj, nil
+}
