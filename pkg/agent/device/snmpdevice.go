@@ -412,7 +412,7 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	return nil
 }
 
-// InitVars Initialize Global Variables on the device
+// InitCatalogVar Initialize Global Variables on the device
 func (d *SnmpDevice) InitCatalogVar(globalmap map[string]interface{}) {
 	// Init Device Custom Variables
 	d.VarMap = make(map[string]interface{}, len(globalmap))
@@ -479,7 +479,7 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 func (d *SnmpDevice) initSnmpConnectConcurrent(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
 	if val, ok := d.snmpClientMap[mkey]; ok {
 		if val != nil {
-			d.Infof("Releaseing SNMP connection for measurement %s", mkey)
+			d.Infof("Releasing SNMP connection for measurement %s", mkey)
 			snmp.Release(val)
 		}
 	}
