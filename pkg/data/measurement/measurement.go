@@ -74,8 +74,6 @@ func (m *Measurement) InvalidateMetrics() {
  *init MetricTable
  */
 func (m *Measurement) Init() error {
-
-	var err error
 	//Init snmp methods
 	switch m.cfg.GetMode {
 	case "value":
@@ -99,11 +97,13 @@ func (m *Measurement) Init() error {
 			m.idx2PosInOID = len(m.cfg.TagOID)
 		}
 		m.Infof("Loading Indexed values")
-		m.AllIndexedLabels, err = m.loadIndexedLabels()
+		il, err := m.loadIndexedLabels()
+
 		if err != nil {
 			m.Errorf("Error while trying to load Indexed Labels on for measurement : for baseOid %s : ERROR: %s", m.cfg.IndexOID, err)
 			return err
 		}
+		m.AllIndexedLabels = il
 		//Final Selected Indexes are All Indexed
 		m.CurIndexedLabels = m.AllIndexedLabels
 	}
@@ -217,11 +217,13 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 
 	//fist update  all indexed--------
 	m.Infof("Re Loading Indexed values")
-	m.AllIndexedLabels, err = m.loadIndexedLabels()
-	if err != nil {
+	il, err2 := m.loadIndexedLabels()
+
+	if err2 != nil {
 		m.Errorf("Error while trying to reload Indexed Labels for baseOid %s : ERROR: %s", m.cfg.IndexOID, err)
 		return false, err
 	}
+	m.AllIndexedLabels = il
 	if m.Filter == nil {
 		m.Debugf("There is no filter configured in this measurement %s", m.cfg.ID)
 		//check if curindexed different of AllIndexed
@@ -251,7 +253,8 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 
 	err = m.Filter.Update()
 	if err != nil {
-		m.Errorf("Error while trying to apply file Filter : ERROR: %s", err)
+		m.Errorf("Error while trying to apply Filter : ERROR: %s", err)
+		return false, err
 	}
 	//check if all values have been filtered to send a warnign message.
 	if m.Filter.Count() == 0 {
@@ -523,7 +526,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 	m.curIdxPos = m.idxPosInOID
 	err := m.Walk(m.cfg.IndexOID, setRawData)
 	if err != nil {
-		m.Errorf("SNMP WALK error: %s", err)
+		m.Errorf("LOADINDEXEDLABELS - SNMP WALK error: %s", err)
 		return allindex, err
 	}
 	if m.cfg.GetMode != "indexed_it" {
