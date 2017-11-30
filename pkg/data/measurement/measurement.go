@@ -37,6 +37,7 @@ type Measurement struct {
 	cfg              *config.MeasurementCfg
 	ID               string
 	MName            string
+	TagName          string
 	MetricTable      *MetricTable
 	snmpOids         []string
 	OidSnmpMap       map[string]*metric.SnmpMetric `json:"-"` //snmpMetric mapped with real OID's
@@ -49,7 +50,7 @@ type Measurement struct {
 	Filter           filter.Filter
 	log              *logrus.Logger
 	snmpClient       *gosnmp.GoSNMP
-	DisableBulk      bool
+	DisableBulk      bool                                `json:"-"`
 	GetData          func() (int64, int64, int64, error) `json:"-"`
 	Walk             func(string, gosnmp.WalkFunc) error `json:"-"`
 }
@@ -93,6 +94,7 @@ func (m *Measurement) Init() error {
 	//loading all posible values in 	m.AllIndexedLabels
 	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" {
 		m.idxPosInOID = len(m.cfg.IndexOID)
+		m.TagName = m.cfg.IndexTag
 		if (m.cfg.GetMode) == "indexed_it" {
 			m.idx2PosInOID = len(m.cfg.TagOID)
 		}
