@@ -134,7 +134,7 @@ type SnmpDevMGroups struct {
 	IDMGroupCfg string `xorm:"id_mgroup_cfg"`
 }
 
-// SQLConfig read from DB
+// DBConfig read from DB
 type DBConfig struct {
 	Metrics      map[string]*SnmpMetricCfg
 	Measurements map[string]*MeasurementCfg
