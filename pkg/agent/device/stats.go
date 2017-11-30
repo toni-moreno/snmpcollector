@@ -26,7 +26,7 @@ const (
 	SnmpOIDGetAll = 5
 	// SnmpOIDGetProcessed only those which match filters
 	SnmpOIDGetProcessed = 6
-	// SnmpOIDGetErrors OIDs wich has errors
+	// SnmpOIDGetErrors OIDs which has errors
 	SnmpOIDGetErrors = 7
 	// EvalMetricsAll all Evaluated Metrics
 	EvalMetricsAll = 8
