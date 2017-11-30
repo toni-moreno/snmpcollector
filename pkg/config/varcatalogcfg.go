@@ -1,6 +1,9 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // VarCatalogCfg is the main configuration for any InfluxDB TSDB
 type VarCatalogCfg struct {
@@ -123,15 +126,21 @@ func (dbc *DatabaseCfg) UpdateVarCatalogCfg(id string, dev VarCatalogCfg) (int64
 
 	session := dbc.x.NewSession()
 	defer session.Close()
-	/* hay que revisar todas las metricas de tipo stringEval para evitar que se actualice sin actualizar métricas
+
 	if id != dev.ID { //ID has been changed
-		affecteddev, err = session.Where("id_metric_cfg='" + id + "'").Cols("id_metric_cfg").Update(&MeasurementFieldCfg{IDMetricCfg: dev.ID})
-		if err != nil {
-			session.Rollback()
-			return 0, fmt.Errorf("Error Update Metric id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
+		var metrics []*SnmpMetricCfg
+		session.Where("datasrctype = 'STRINGEVAL' and extradata like '%" + id + "%'").Find(&metrics)
+		for _, v := range metrics {
+			v.ExtraData = strings.Replace(v.ExtraData, id, dev.ID, -1)
+			_, err = session.Where("id='" + v.ID + "'").UseBool().AllCols().Update(v)
+			if err != nil {
+				session.Rollback()
+				return 0, err
+			}
+			log.Infof("Updated STRING EVAL Metric %s devices old variable name %s new %s", v.ID, dev.ID, id)
 		}
 		log.Infof("Updated VarCatalogiableConfig to %s devices ", affecteddev)
-	}*/
+	}
 
 	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
