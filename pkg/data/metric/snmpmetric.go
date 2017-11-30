@@ -74,11 +74,6 @@ func (s *SnmpMetric) GetDataSrcType() string {
 	return s.cfg.DataSrcType
 }
 
-// PrintDebugCfg helps users get data about metric configuration
-func (s *SnmpMetric) PrintDebugCfg() {
-	s.log.Debugf("DEBUG METRIC  CONFIG %+v", s.cfg)
-}
-
 // IsTag needed to generate Influx measurements
 func (s *SnmpMetric) IsTag() bool {
 	return s.cfg.IsTag
@@ -412,4 +407,74 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		}
 	}
 	return nil
+}
+
+func (s *SnmpMetric) addSingleField(mid string, fields map[string]interface{}) int64 {
+
+	if s.Report == OnNonZeroReport {
+		if s.CookedValue == 0.0 {
+			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.ID, mid)
+			return 0
+		}
+	}
+	//assuming float Cooked Values
+	s.log.Debugf("generating field for %s value %f ", s.FieldName, s.CookedValue)
+	s.log.Debugf("DEBUG METRIC %+v", s)
+	fields[s.FieldName] = s.CookedValue
+	return 0
+}
+
+func (s *SnmpMetric) addSingleTag(mid string, tags map[string]string) int64 {
+
+	var tag string
+	switch v := s.CookedValue.(type) {
+	case float64:
+		//most of times these will be integers
+		tag = strconv.FormatInt(int64(v), 10)
+	case string:
+		//case string:
+		tag = v
+	default:
+		s.log.Debugf("ERROR wrong type %T for ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v, s.ID, mid)
+		return 1
+	}
+	//I don't know if a OnNonZeroReport could have sense in any configuration.
+	if s.Report == OnNonZeroReport {
+		if tag == "0" {
+			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.ID, mid)
+			return 0
+		}
+	}
+	s.log.Debugf("generating Tag for Metric: %s : tagname: %s", s.FieldName, tag)
+	tags[s.FieldName] = tag
+	return 0
+}
+
+// ImportFieldsAndTags Add Fields and tags from the metric and returns number of metric sent and metric errors found
+func (s *SnmpMetric) ImportFieldsAndTags(mid string, fields map[string]interface{}, tags map[string]string) (int64, int64) {
+	var metError int64
+	var metSent int64
+	s.log.Debugf("DEBUG METRIC  CONFIG %+v", s.cfg)
+	if s.CookedValue == nil {
+		s.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", s.ID, mid, tags, s)
+		metError++ //not sure if an tag error should be count as metric
+		return metError, metSent
+	}
+	if s.Valid == false {
+		s.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", s.ID, mid, tags, s)
+		return 0, 0
+	}
+	if s.Report == NeverReport {
+		s.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.ID, mid)
+		return 0, 0
+	}
+
+	if s.cfg.IsTag == true {
+		er := s.addSingleTag(mid, tags)
+		metError += er
+	} else {
+		er := s.addSingleField(mid, fields)
+		metError += er
+	}
+	return metSent, metError
 }
