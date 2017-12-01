@@ -88,9 +88,6 @@ export class RuntimeComponent implements OnDestroy {
   /*20*/    { "show":true, "id": "BackEndSentDuration","label": "BackEnd (influxdb) Sent Duration","type":"duration", "tooltip": "elapsed time taken to send data to the db backend"},
   ];
 
-  isObject(val) { return typeof val === 'object'; }
-  isArray(val) { return typeof val === 'array' }
-
   //TABLE
   // CHECK DATA, our data is array of arrays?!
   private data: Array<any> = [];

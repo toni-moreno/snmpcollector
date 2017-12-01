@@ -5,7 +5,6 @@ import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 import { InfluxServerService } from '../influxserver/influxservercfg.service';
 import { MeasGroupService } from '../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
-import { AlertModule } from 'ng2-bootstrap/ng2-bootstrap';
 import { ValidationService } from '../common/validation.service'
 import { Observable } from 'rxjs/Rx';
 import { FormArray, FormGroup, FormControl} from '@angular/forms';

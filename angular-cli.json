@@ -26,8 +26,8 @@
         "../node_modules/lodash/lodash.js",
         "../node_modules/file-saver/FileSaver.js"
       ],
+      "environmentSource": "environments/environment.ts",
       "environments": {
-        "source": "environments/environment.ts",
         "dev": "environments/environment.ts",
         "prod": "environments/environment.prod.ts"
       }

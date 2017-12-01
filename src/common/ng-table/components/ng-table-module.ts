@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TooltipModule } from 'ng2-bootstrap';
+import { TooltipModule } from 'ngx-bootstrap';
 import { NgTableComponent } from './table/ng-table.component';
 import { NgTableFilteringDirective } from './table/ng-table-filtering.directive';
 import { NgTablePagingDirective } from './table/ng-table-paging.directive';

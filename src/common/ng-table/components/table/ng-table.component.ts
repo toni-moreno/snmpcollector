@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { TooltipModule } from 'ng2-bootstrap';
+import { TooltipModule } from 'ngx-bootstrap';
 import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
 
 

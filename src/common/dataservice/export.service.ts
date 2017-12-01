@@ -31,7 +31,7 @@ export class ExportServiceCfg {
     exportRecursive(type : string, id : string, values) {
         console.log(values);
         // return an observable
-        return this.httpAPI.post('/api/cfg/export/'+type+'/'+id, values, true)
+        return this.httpAPI.post('/api/cfg/export/'+type+'/'+id, values, null, true)
         .map((res) => {
             return [new Blob([res['_body']],{type: "application/json"}),res.json()];
         })
