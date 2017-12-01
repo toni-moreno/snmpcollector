@@ -80,7 +80,7 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
           </ng-container>
           <td [ngClass]="row.tooltipInfo ? (row.tooltipInfo[column.name] ? (row.tooltipInfo[column.name]['Valid'] === true ? ['bg-success'] : ['bg-danger']) : '') : ''" (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(row[column.name],column.transform)" style="text-align:right">
 
-          <template #tooltipValues>
+          <ng-template #tooltipValues>
             <h6>Index:{{row.Index }}</h6>
             <ng-container *ngIf="column.name !== 'Index'">
               <h6> Metric:{{column.name}}</h6>
@@ -92,7 +92,7 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
             <span class="text-right" *ngIf="test.key === 'LastTime'"> {{test.value | date:'d/M/y H:m:s'}}</span>
             <span class="text-right" *ngIf="test.key !== 'CurTime' && test.key !== 'LastTime' && test.value !== null">{{test.value}} </span>
             </div>
-          </template>
+          </ng-template>
 
           </td>
           <ng-container *ngIf="extraActions">

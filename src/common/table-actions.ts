@@ -56,9 +56,9 @@ import { FormsModule, NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/f
       <progressbar *ngIf="actionApplied" class="progress-striped active" [value]="itemsApplied === counterErrors.length ? itemsApplied : counterItems" [max]="itemsApplied" [type]="counterItems === itemsApplied ? 'success' : 'danger'" style="width : auto">
         {{counterItems}} <i *ngIf="counterItems !== itemsApplied && counterErrors.length > 0" class="glyphicon glyphicon-exclamation-sign" [tooltip]="errorTooltip"></i> / {{itemsApplied}}
       </progressbar>
-      <template #errorTooltip>
+      <ng-template #errorTooltip>
         <p *ngFor="let error of counterErrors">{{error.ID}} - {{error.error}}</p>
-      </template>
+      </ng-template>
       </div>
     </div>
   `,
