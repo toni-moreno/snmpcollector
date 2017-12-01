@@ -309,7 +309,7 @@ export class RuntimeComponent implements OnDestroy {
             //Save it as array of arrays on finalColumns
             if (Object.keys(measKey['MetricTable']['Header']).length !== 0) {
               this.tmpcolumns = [];
-              this.tmpcolumns.push({ title: 'Index', name: 'Index' });
+              if (measKey['TagName'] !== "") this.tmpcolumns.push({ title: measKey['TagName'], name: 'Index' });
               for (let fieldName in measKey['MetricTable']['Header']) {
                 let mode = measKey['MetricTable']['Header'][fieldName]
                 let micon = ''
@@ -342,7 +342,7 @@ export class RuntimeComponent implements OnDestroy {
               let row = measKey['MetricTable']['Row'][rowid]
               let tmpTable: any = { tooltipInfo: {} };
               tmpTable['valid']=row['Valid'];
-              tmpTable.Index = rowid;
+              if (measKey['TagName'] !== "") tmpTable.Index = rowid;
               for (let metricid in row['Data'] ) {
                 let metric = row['Data'][metricid]
                 let fieldName = metric.FieldName

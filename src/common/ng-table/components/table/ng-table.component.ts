@@ -81,7 +81,7 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
           <td [ngClass]="row.tooltipInfo ? (row.tooltipInfo[column.name] ? (row.tooltipInfo[column.name]['Valid'] === true ? ['bg-success'] : ['bg-danger']) : '') : ''" (click)="cellClick(row, column.name)" *ngFor="let column of columns; let i = index" container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name === 'ID' ? row.Description : '')" [innerHtml]="sanitize(row[column.name],column.transform)" style="text-align:right">
 
           <ng-template #tooltipValues>
-            <h6>Index:{{row.Index }}</h6>
+            <h6 *ngIf="row.Index">Indexed : {{row.Index }}</h6>
             <ng-container *ngIf="column.name !== 'Index'">
               <h6> Metric:{{column.name}}</h6>
               <hr/>
@@ -103,7 +103,6 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
               <button *ngIf="action.type == 'button'" class="btn btn-primary" (click)="extraActionClick(row,action.title)">
                 <span>{{action.content['enabled']}}</span>
               </button>
-
             </td>
           </ng-container>
         </tr>
