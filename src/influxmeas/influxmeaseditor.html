@@ -2,7 +2,7 @@
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <hr>
 <ng-container [ngSwitch]="editmode">
-  <template ngSwitchCase="list">
+  <ng-template ngSwitchCase="list">
     <test-modal #viewModal titleName='Measurements'></test-modal>
     <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this Measurement will affect the following components','Deleting this Measurement will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
         [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteInfluxMeas($event)">
@@ -32,9 +32,9 @@
     <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
     </pagination>
     <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
-  </template>
+  </ng-template>
 
-  <template ngSwitchDefault>
+  <ng-template ngSwitchDefault>
     <form [formGroup]="influxmeasForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveInfluxMeas() : updateInfluxMeas()">
 
       <div class="form-group">
@@ -166,5 +166,5 @@
         <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
       </div>
     </form>
-  </template>
+  </ng-template>
 </ng-container>

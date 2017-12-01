@@ -4,7 +4,7 @@
 <test-connection-modal #viewTestConnectionModal titleName='Test connection for:'>
 </test-connection-modal>
 <p [ngSwitch]="editmode">
-  <template ngSwitchCase="list">
+  <ng-template ngSwitchCase="list">
   <div class="row">
     <div class="col-md-9 text-left">
       <label [tooltip]="'Refresh'" container="body" style="margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="glyphicon glyphicon-refresh" (click)="reloadData()"></i></label>
@@ -32,8 +32,8 @@
   <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
   </pagination>
   <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
-</template>
-<template ngSwitchCase="view">
+</ng-template>
+<ng-template ngSwitchCase="view">
   <div class="well">
     <label [tooltip]="'Back to list'" container="body" style="font-size:130%; margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="text-primary glyphicon glyphicon-tasks" (click)="reloadData()"></i></label>
     <ng-container *ngIf="runtime_dev">
@@ -69,7 +69,7 @@
               <span style="padding-right:10px"> Reload Loop Pending</span>
               <td style="padding-left:10px">{{ runtime_dev['Stats'].ReloadLoopsPending }}</td>
               </tr>
-              <template ngFor let-item [ngForOf]="counterDef" let-i="index" >
+              <ng-template ngFor let-item [ngForOf]="counterDef" let-i="index" >
                 <tr *ngIf="item.show">
                   <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
                   <span style="padding-right:10px"> {{item.label}} </span>
@@ -77,7 +77,7 @@
                   <td *ngIf="item.type=='time'" style="padding-left:10px">{{ runtime_dev['Stats']['Counters'][i]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
                   <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i] | elapsedseconds:3 }}</td>
                 </tr>
-              </template>
+              </ng-template>
             </table>
           </div>
         </div>
@@ -223,12 +223,12 @@
             <span class="input-group-btn" style="white-space: normal;">
               <button type="button" class="btn btn-default" *ngFor="let measurement of runtime_dev['Measurements']; let i = index" (click)="showTable(i)" [ngClass]="i === measActive ? 'btn-primary' : 'btn-default'" container=body [tooltip]="measInfo">
                 {{measurement.MName}}
-                <template #measInfo>
+                <ng-template #measInfo>
                     <dl class="text-left">
                       <p><dt class="margin-bottom:5px">Metrics <span class="badge">{{finalColumns[i].length > 0 ? finalColumns[i].length-1 : '0'}}</span></dt></p>
                       <dd *ngFor="let metrics of finalColumns[i]"><span *ngIf="metrics.title !== 'Index'">{{metrics.title}}</span></dd>
                     </dl>
-                </template>
+                </ng-template>
                 <span [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData [i].length}} index</span>
               </button>
             </span>
@@ -247,12 +247,12 @@
           </div>
           <div class="col-md-3 text-right">
             <span class="label label-danger" [tooltip]="filterInfo" style="margin-l>eft: 10px" *ngIf="runtime_dev['Measurements'][measActive].Filter"> Filter applied: {{runtime_dev['Measurements'][measActive].FilterCfg.ID}}</span>
-            <template #filterInfo>
+            <ng-template #filterInfo>
               <div *ngFor="let run of runtime_dev['Measurements'][measActive].Filter | objectParser" style="text-align:left !important">
                 <span class="text-left" style="paddint-left: 10px"><b>{{run.key}}</b></span>
                 <span class="text-right">{{run.value ? run.value : '--'}}</span>
               </div>
-            </template>
+            </ng-template>
           </div>
           <div style="overflow-x: scroll" class="col-md-12">
             <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns" [checkRows]="true">
@@ -268,4 +268,4 @@
     </div>
   </div>
 </div>
-</template>
+</ng-template>

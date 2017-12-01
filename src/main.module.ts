@@ -4,7 +4,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { HttpModule } from '@angular/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { DropdownModule } from 'ng2-bootstrap';
 import { CoreModule } from './core/core.module';
 
 // external libs
@@ -35,11 +34,12 @@ import { RuntimeComponent } from './runtime/runtime.component';
 import { CustomFilterCfgComponent } from './customfilter/customfiltercfg.component';
 import { BlockUIService } from './common/blockui/blockui-service';
 
-import { AccordionModule , PaginationModule ,TabsModule } from 'ng2-bootstrap';
-import { TooltipModule } from 'ng2-bootstrap';
-import { ModalModule } from 'ng2-bootstrap';
-import { ModalDirective } from 'ng2-bootstrap';
-import { ProgressbarModule } from 'ng2-bootstrap';
+import { AccordionModule , PaginationModule ,TabsModule } from 'ngx-bootstrap';
+import { TooltipModule } from 'ngx-bootstrap';
+import { ModalModule } from 'ngx-bootstrap';
+import { ModalDirective } from 'ngx-bootstrap';
+import { ProgressbarModule } from 'ngx-bootstrap';
+import { BsDropdownModule } from 'ngx-bootstrap';
 
 import { GenericModal } from './common/generic-modal';
 import { ExportFileModal } from './common/dataservice/export-file-modal';
@@ -109,7 +109,7 @@ import { SpinnerComponent } from './common/spinner';
     ModalModule.forRoot(),
     PaginationModule.forRoot(),
     TabsModule.forRoot(),
-    DropdownModule.forRoot(),
+    BsDropdownModule.forRoot(),
     Ng2TableModule,
     RouterModule.forRoot(AppRoutes)
   ],

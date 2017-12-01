@@ -1,6 +1,6 @@
 import { Component, Input, Output, Pipe, PipeTransform, ViewChild, EventEmitter } from '@angular/core';
 import { FormGroup,FormControl } from '@angular/forms';
-import { ModalDirective } from 'ng2-bootstrap';
+import { ModalDirective } from 'ngx-bootstrap';
 import { WindowRef } from '../common/windowref';
 
 @Component({

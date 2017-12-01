@@ -1,6 +1,6 @@
 import { Component, Input, Output, Pipe, PipeTransform, ViewChild, EventEmitter, OnInit  } from '@angular/core';
 import { Validators, FormGroup, FormArray, FormBuilder } from '@angular/forms';
-import { ModalDirective,ModalOptions} from 'ng2-bootstrap';
+import { ModalDirective,ModalOptions} from 'ngx-bootstrap';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
 import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';

@@ -2,7 +2,7 @@
 <h4 class="info-mode">{{ editmode | uppercase}} </h4>
 <hr>
 <ng-container [ngSwitch]="editmode">
-    <template ngSwitchCase="list">
+    <ng-template ngSwitchCase="list">
     <test-modal #viewModal titleName='Variable Catalog'></test-modal>
     <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this VarCatalogiables will affect the following components','Deleting this InfluxDB Server will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
         [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteVarCatalog($event)">
@@ -31,8 +31,8 @@
     <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
     </pagination>
     <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
-  </template>
-    <template ngSwitchDefault>
+  </ng-template>
+    <ng-template ngSwitchDefault>
     <form [formGroup]="varcatalogForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveVarCatalog() : updateVarCatalog()">
       <div class="form-group">
         <label class="control-label col-sm-2" for="ID">ID</label>
@@ -82,5 +82,5 @@
       </div>
 
     </form>
-  </template>
+  </ng-template>
 </ng-container>

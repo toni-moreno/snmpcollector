@@ -4,7 +4,7 @@ import { OidConditionService } from './oidconditioncfg.service';
 import { ControlMessagesComponent } from '../common/control-messages.component'
 import { ValidationService } from '../common/validation.service'
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
-import { TypeaheadModule } from 'ng2-bootstrap/typeahead';
+import { TypeaheadModule } from 'ngx-bootstrap/typeahead';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
 import { Observable } from 'rxjs/Rx';
 

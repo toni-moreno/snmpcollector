@@ -32,9 +32,6 @@ export class HttpService extends Http {
     ) {
         super(backend, defaultOptions);
         this.router = _router;
-        this.headersUpload = new Headers();
-        this.headersUpload.append('Content-Type', 'multipart/form-data');
-        this.headersUpload.append('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8');
     }
 
     get(url: string, options?: RequestOptionsArgs ): Observable<any> {
@@ -49,10 +46,10 @@ export class HttpService extends Http {
             });
     }
 
-    postFile(url:string, data:any, args?: RequestOptionsArgs) : Observable<any> {
-        if (args == null) args = {};
-        args.headers = this.headersUpload;
-        return super.post(this.getFullUrl(url), data, this.headersUpload)
+    postFile(url:string, data:any, options?: RequestOptionsArgs) : Observable<any> {
+        if (options == null) options = {};
+        options.headers = this.headersUpload;
+        return super.post(this.getFullUrl(url), data, options)
             .catch(this.onCatch.bind(this))
             .do((res: Response) => {
                 this.onSuccess(res);
@@ -103,16 +100,14 @@ export class HttpService extends Http {
             });
     }
 
-    private requestOptions(options?: RequestOptionsArgs): RequestOptionsArgs {
+    private requestOptions(options?: RequestOptionsArgs, file?): RequestOptionsArgs {
 
         if (options == null) {
             options = new DefaultRequestOptions();
         }
-
         if (options.headers == null) {
             options.headers = new Headers();
         }
-
         return options;
     }
 
