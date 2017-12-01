@@ -105,16 +105,9 @@ export class HttpService extends Http {
         if (options == null) {
             options = new DefaultRequestOptions();
         }
-        if (file) {
-            console.log("CREATING NEW HEADERS");
-            options.headers = new Headers();
-            options.headers.append('Content-Type', 'multipart/form-data');
-            options.headers.append('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8');
-        }
         if (options.headers == null) {
             options.headers = new Headers();
         }
-        console.log("OPTIONS",options);
         return options;
     }
 
