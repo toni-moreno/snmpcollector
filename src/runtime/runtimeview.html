@@ -15,8 +15,8 @@
             <div class="col-md-3 text-right">
                 <span style="margin-left: 20px"> Items per page: </span>
                 <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage || 'All'" (ngModelChange)="changeItemsPerPage($event)">
-        <option *ngFor="let option of itemsPerPageOptions" style="padding-left:2px" [value]="option.value">{{option.title}}</option>
-      </select>
+                    <option *ngFor="let option of itemsPerPageOptions" style="padding-left:2px" [value]="option.value">{{option.title}}</option>
+                </select>
             </div>
         </div>
         <div class="row well" *ngIf="isRequesting === false" style="margin-top: 10px; padding: 10px 0px 10px 15px;">
@@ -28,247 +28,248 @@
         <br>
         <my-spinner [isRunning]="isRequesting"></my-spinner>
         <ng-table *ngIf="isRequesting === false" [config]="config" (tableChanged)="onChangeTable(config)" (extraActionClicked)="onExtraActionClicked($event)" (viewedItem)="initRuntimeInfo($event.ID,null, true)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)"
-            (testedConnection)="showTestConnectionModal($event)" [showCustom]="false" [showStatus]="true" [rows]="rows" [columns]="columns" [extraActions]="extraActions">
-        </ng-table>
-        <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
-        </pagination>
-        <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
-    </ng-template>
-    <ng-template ngSwitchCase="view">
-        <div class="well">
-            <label [tooltip]="'Back to list'" container="body" style="font-size:130%; margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="text-primary glyphicon glyphicon-tasks" (click)="reloadData()"></i></label>
-            <ng-container *ngIf="runtime_dev">
-                <label [tooltip]="'Refresh'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></i></label>
-                <label *ngIf [tooltip]="'Test Connection'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i [ngClass]="runtime_dev['DeviceConnected'] === false ? ['text-danger glyphicon glyphicon-flash'] : ['text-warning glyphicon glyphicon-flash']" (click)="showTestConnectionModal(runtime_dev)"></i></label>
-                <h4 style="display:inline; border-right: 1px solid; padding-right: 5px" [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</h4>
-                <h4 *ngIf="runtime_dev['DeviceConnected'] == false" class="text-danger" style="display:inline; border-right: 1px solid; padding-right: 5px;"> Device is not connected</h4>
-                <label style="margin-left: 10px; font-size: 100%" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label>
-            </ng-container>
-        </div>
-        <my-spinner [isRunning]="isRequesting"></my-spinner>
+        (testedConnection)="showTestConnectionModal($event)" [showCustom]="false" [showStatus]="true" [rows]="rows" [columns]="columns" [extraActions]="extraActions">
+    </ng-table>
+    <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
+    </pagination>
+    <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+</ng-template>
+<ng-template ngSwitchCase="view">
+    <div class="well">
+        <label [tooltip]="'Back to list'" container="body" style="font-size:130%; margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="text-primary glyphicon glyphicon-tasks" (click)="reloadData()"></i></label>
+        <ng-container *ngIf="runtime_dev">
+            <label [tooltip]="'Refresh'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></i></label>
+            <label *ngIf [tooltip]="'Test Connection'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i [ngClass]="runtime_dev['DeviceConnected'] === false ? ['text-danger glyphicon glyphicon-flash'] : ['text-warning glyphicon glyphicon-flash']" (click)="showTestConnectionModal(runtime_dev)"></i></label>
+            <h4 style="display:inline; border-right: 1px solid; padding-right: 5px" [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</h4>
+            <h4 *ngIf="runtime_dev['DeviceConnected'] == false" class="text-danger" style="display:inline; border-right: 1px solid; padding-right: 5px;"> Device is not connected</h4>
+            <label style="margin-left: 10px; font-size: 100%" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label>
+        </ng-container>
+    </div>
+    <my-spinner [isRunning]="isRequesting"></my-spinner>
 
-        <div class="col-md-12" *ngIf="isRequesting == false">
-            <div class="col-md-12" *ngIf="runtime_dev">
-                <div class="row">
-                    <div class="col-md-6" *ngIf="runtime_dev['DeviceConnected'] !== false">
-                        <div class="panel panel-default">
-                            <div class="panel-heading"><span class="text-primary glyphicon glyphicon-info-sign" style="margin-top: 2px; margin-right: 10px"></span>SysInfo</div>
-                            <div class="panel-body" style="overflow-x: scroll !important">
-                                <table class="table-striped table-bordered">
-                                    <tr *ngFor="let info of runtime_dev['SysInfo'] | objectParser">
-                                        <span>{{info.key}}</span>
-                                        <td style="padding-left:10px">{{info.value }}</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="panel panel-default">
-                            <div class="panel-heading"><span class="text-primary glyphicon glyphicon-dashboard" style="margin-top: 2px; margin-right: 10px"></span>Statistics SNMP Device</div>
-                            <div class="panel-body">
-                                <table class="table-striped table-bordered">
-                                    <tr>
-                                        <span style="padding-right:10px"> Reload Loop Pending</span>
-                                        <td style="padding-left:10px">{{ runtime_dev['Stats'].ReloadLoopsPending }}</td>
-                                    </tr>
-                                    <ng-template ngFor let-item [ngForOf]="counterDef" let-i="index">
-                                        <tr *ngIf="item.show">
-                                            <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
-                                            <span style="padding-right:10px"> {{item.label}} </span>
-                                            <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i]}}</td>
-                                            <td *ngIf="item.type=='time'" style="padding-left:10px">{{ runtime_dev['Stats']['Counters'][i]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
-                                            <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i] | elapsedseconds:3 }}</td>
-                                        </tr>
-                                    </ng-template>
-                                </table>
-                            </div>
+    <div class="col-md-12" *ngIf="isRequesting == false">
+        <div class="col-md-12" *ngIf="runtime_dev">
+            <div class="row">
+                <div class="col-md-6" *ngIf="runtime_dev['DeviceConnected'] !== false">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><span class="text-primary glyphicon glyphicon-info-sign" style="margin-top: 2px; margin-right: 10px"></span>SysInfo</div>
+                        <div class="panel-body" style="overflow-x: scroll !important">
+                            <table class="table-striped table-bordered">
+                                <tr *ngFor="let info of runtime_dev['SysInfo'] | objectParser">
+                                    <span>{{info.key}}</span>
+                                    <td style="padding-left:10px">{{info.value }}</td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="panel panel-default" style="padding-bottom: 0px">
-                            <div class="panel-heading"><span class="text-primary glyphicon glyphicon-cog" style="margin-top: 2px; margin-right: 10px"></span>Runtime Operations</div>
-                            <div class="panel-body">
-                                <ul class="list-group">
-                                    <!--  Device Gather Process State -->
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-7 text-left">
-                                                <span> Device Gathering Process</span>
-                                                <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the Gathering Process(only online not saved in the configuration database)"></span>
-                                            </div>
-                                            <div class="col-md-5 text-right">
-                                                <button type="button" (click)="runtime_dev.DeviceActive ? changeActiveDevice(runtime_dev.ID,false) : changeActiveDevice(runtime_dev.ID,true)" [ngClass]="runtime_dev.DeviceActive ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.DeviceActive ? 'Disable' : 'Enable'}}</button>
-                                            </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><span class="text-primary glyphicon glyphicon-dashboard" style="margin-top: 2px; margin-right: 10px"></span>Statistics SNMP Device</div>
+                        <div class="panel-body">
+                            <table class="table-striped table-bordered">
+                                <tr>
+                                    <span style="padding-right:10px"> Reload Loop Pending</span>
+                                    <td style="padding-left:10px">{{ runtime_dev['Stats'].ReloadLoopsPending }}</td>
+                                </tr>
+                                <ng-template ngFor let-item [ngForOf]="counterDef" let-i="index">
+                                    <tr *ngIf="item.show">
+                                        <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
+                                        <span style="padding-right:10px"> {{item.label}} </span>
+                                        <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i]}}</td>
+                                        <td *ngIf="item.type=='time'" style="padding-left:10px">{{ runtime_dev['Stats']['Counters'][i]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                        <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i] | elapsedseconds:3 }}</td>
+                                    </tr>
+                                </ng-template>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="panel panel-default" style="padding-bottom: 0px">
+                        <div class="panel-heading"><span class="text-primary glyphicon glyphicon-cog" style="margin-top: 2px; margin-right: 10px"></span>Runtime Operations</div>
+                        <div class="panel-body">
+                            <ul class="list-group">
+                                <!--  Device Gather Process State -->
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-7 text-left">
+                                            <span> Device Gathering Process</span>
+                                            <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the Gathering Process(only online not saved in the configuration database)"></span>
                                         </div>
-                                    </li>
-                                    <!--  Device Force Gather  -->
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-7 text-left">
-                                                <span> Force Gather/Process Now (be careful)</span>
-                                                <span class="glyphicon glyphicon-question-sign" tooltip="Force the complete gathering of the data for this device (usefull when  testing on non active devices)"></span>
-                                            </div>
-                                            <div class="col-md-5 text-right">
-                                                <button type="button" (click)="forceGatherData(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Gather Now</button>
-                                            </div>
+                                        <div class="col-md-5 text-right">
+                                            <button type="button" (click)="runtime_dev.DeviceActive ? changeActiveDevice(runtime_dev.ID,false) : changeActiveDevice(runtime_dev.ID,true)" [ngClass]="runtime_dev.DeviceActive ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.DeviceActive ? 'Disable' : 'Enable'}}</button>
                                         </div>
-                                    </li>
-                                    <!--  Device Log Level -->
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-7 text-left">
-                                                <span>Device Log Level</span>
-                                                <span class="glyphicon glyphicon-question-sign" tooltip="Change log level of the device (only online not saved in the configuration database)"></span>
-                                                <select style="width:100px" [(ngModel)]="runtime_dev.CurLogLevel" (ngModelChange)="onChangeLogLevel($event)" [ngModelOptions]="{standalone: true}">
-                      <option style="padding-left:2px" *ngFor="let loglevel of loglLevelArray" [value]="loglevel">{{loglevel}}</option>
-                    </select>
-                                            </div>
-                                            <div class="col-md-5 text-right">
-                                                <button type="button" (click)="changeLogLevel(runtime_dev.ID)" [disabled]="!islogLevelChanged" [ngClass]="'btn btn-primary'">Change</button>
-                                            </div>
+                                    </div>
+                                </li>
+                                <!--  Device Force Gather  -->
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-7 text-left">
+                                            <span> Force Gather/Process Now (be careful)</span>
+                                            <span class="glyphicon glyphicon-question-sign" tooltip="Force the complete gathering of the data for this device (usefull when  testing on non active devices)"></span>
                                         </div>
-                                    </li>
-                                    <!--  Dowload Device Log File-->
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-7 text-left">
-                                                <span>Download Device Log file</span>
-                                                <span class="glyphicon glyphicon-question-sign" tooltip="Download the device related log file"></span>
-                                            </div>
-                                            <div class="col-md-5 text-right">
-                                                <button type="button" (click)="downloadLogFile(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Download</button>
-                                            </div>
+                                        <div class="col-md-5 text-right">
+                                            <button type="button" (click)="forceGatherData(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Gather Now</button>
                                         </div>
-                                    </li>
-                                    <!--  Force Flt Update -->
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-8 text-left">
-                                                <span>Force Filter/Indexes Update</span>
-                                                <span class="glyphicon glyphicon-question-sign" tooltip="Force Filter update on next gathering cicle "></span>
-                                                <span>Pending Cicles: {{ runtime_dev['Stats'].ReloadLoopsPending }} </span>
-                                            </div>
-                                            <div class="col-md-4 text-right">
-                                                <button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Force Now</button>
-                                            </div>
+                                    </div>
+                                </li>
+                                <!--  Device Log Level -->
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-7 text-left">
+                                            <span>Device Log Level</span>
+                                            <span class="glyphicon glyphicon-question-sign" tooltip="Change log level of the device (only online not saved in the configuration database)"></span>
+                                            <select style="width:100px" [(ngModel)]="runtime_dev.CurLogLevel" (ngModelChange)="onChangeLogLevel($event)" [ngModelOptions]="{standalone: true}">
+                                                <option style="padding-left:2px" *ngFor="let loglevel of loglLevelArray" [value]="loglevel">{{loglevel}}</option>
+                                            </select>
                                         </div>
-                                    </li>
-                                    <!--  SNMP Protocol Debug -->
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-7 text-left">
-                                                <span>SNMP Protocol Debug</span>
-                                                <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the SNMP Protocol Debug (only online not saved in the configuration database)"></span>
-                                            </div>
-                                            <div class="col-md-5 text-right">
-                                                <button type="button" (click)="runtime_dev.StateDebug ? changeStateDebug(runtime_dev.ID,false) : changeStateDebug(runtime_dev.ID,true)" [ngClass]="runtime_dev.StateDebug ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.StateDebug ? 'Disable' : 'Enable'}}</button>
-                                            </div>
+                                        <div class="col-md-5 text-right">
+                                            <button type="button" (click)="changeLogLevel(runtime_dev.ID)" [disabled]="!islogLevelChanged" [ngClass]="'btn btn-primary'">Change</button>
                                         </div>
-                                    </li>
-                                    <!--  Force Snmp Reset -->
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-8 text-left">
-                                                <span>Force SNMP Connection Reset </span>
-                                                <span class="glyphicon glyphicon-question-sign" tooltip="Force Snmp conection Reset: soft for only recconnet current opened snmp connections and HARD to remap measurements , snmp protocol reconnect and remap filters also "></span>
-                                            </div>
-                                            <div class="col-md-4 text-right">
-                                                <button type="button" (click)="forceSnmpReset(runtime_dev.ID,'soft')" [ngClass]="'btn btn-primary'">Soft Reset</button>
-                                                <button type="button" (click)="forceSnmpReset(runtime_dev.ID,'hard')" [ngClass]="'btn btn-primary'">Hard Reset</button>
-                                            </div>
+                                    </div>
+                                </li>
+                                <!--  Dowload Device Log File-->
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-7 text-left">
+                                            <span>Download Device Log file</span>
+                                            <span class="glyphicon glyphicon-question-sign" tooltip="Download the device related log file"></span>
                                         </div>
-                                    </li>
-                                    <!--  Set Snmp MaxRepetitions -->
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-8 text-left">
-                                                <span>Set SNMP MaxRepetitions(0-255) </span>
-                                                <span class="glyphicon glyphicon-question-sign" tooltip="Force Snmp conection Reset "></span>
-                                                <span>
-                      <input type=text [(ngModel)]="maxrep" placeholder="50" >
-                    </span>
-                                            </div>
-                                            <div class="col-md-4 text-right">
-                                                <button type="button" (click)="setSnmpMaxRepetitions(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Set</button>
-                                            </div>
+                                        <div class="col-md-5 text-right">
+                                            <button type="button" (click)="downloadLogFile(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Download</button>
                                         </div>
-                                    </li>
+                                    </div>
+                                </li>
+                                <!--  Force Flt Update -->
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-8 text-left">
+                                            <span>Force Filter/Indexes Update</span>
+                                            <span class="glyphicon glyphicon-question-sign" tooltip="Force Filter update on next gathering cicle "></span>
+                                            <span>Pending Cicles: {{ runtime_dev['Stats'].ReloadLoopsPending }} </span>
+                                        </div>
+                                        <div class="col-md-4 text-right">
+                                            <button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Force Now</button>
+                                        </div>
+                                    </div>
+                                </li>
+                                <!--  SNMP Protocol Debug -->
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-7 text-left">
+                                            <span>SNMP Protocol Debug</span>
+                                            <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the SNMP Protocol Debug (only online not saved in the configuration database)"></span>
+                                        </div>
+                                        <div class="col-md-5 text-right">
+                                            <button type="button" (click)="runtime_dev.StateDebug ? changeStateDebug(runtime_dev.ID,false) : changeStateDebug(runtime_dev.ID,true)" [ngClass]="runtime_dev.StateDebug ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.StateDebug ? 'Disable' : 'Enable'}}</button>
+                                        </div>
+                                    </div>
+                                </li>
+                                <!--  Force Snmp Reset -->
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-8 text-left">
+                                            <span>Force SNMP Connection Reset </span>
+                                            <span class="glyphicon glyphicon-question-sign" tooltip="Force Snmp conection Reset: soft for only recconnet current opened snmp connections and HARD to remap measurements , snmp protocol reconnect and remap filters also "></span>
+                                        </div>
+                                        <div class="col-md-4 text-right">
+                                            <button type="button" (click)="forceSnmpReset(runtime_dev.ID,'soft')" [ngClass]="'btn btn-primary'">Soft Reset</button>
+                                            <button type="button" (click)="forceSnmpReset(runtime_dev.ID,'hard')" [ngClass]="'btn btn-primary'">Hard Reset</button>
+                                        </div>
+                                    </div>
+                                </li>
+                                <!--  Set Snmp MaxRepetitions -->
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-8 text-left">
+                                            <span>Set SNMP MaxRepetitions(0-255) </span>
+                                            <span class="glyphicon glyphicon-question-sign" tooltip="Force Snmp conection Reset "></span>
+                                            <span>
+                                                <input type=text [(ngModel)]="maxrep" placeholder="50" >
+                                            </span>
+                                        </div>
+                                        <div class="col-md-4 text-right">
+                                            <button type="button" (click)="setSnmpMaxRepetitions(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Set</button>
+                                        </div>
+                                    </div>
+                                </li>
 
-                                </ul>
-                            </div>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row" *ngIf="runtime_dev">
-                <div *ngIf="runtime_dev['Measurements']" class="col-md-12" style="margin-left:10px">
-                    <br>
-                    <div class="col-md-2">
-                        <h4>
-                            Metrics Info
-                        </h4>
-                    </div>
-                    <div class="text-right col-md-10">
-                        <h4>
-                            <label style="display: inline; margin-right:2px; padding-top:5px" container=body [tooltip]="'Refreshing every ' +runtime_dev.Freq +' secs'" [ngClass]="isRefreshing ? 'label label-success refresh-transition' : 'label label-danger refresh-transition'">Last Refresh: {{refreshRuntime.LastUpdate | date : 'HH:mm:ss - Z'}}</label>
-                            <label style="display: inline; margin-right:2px" [tooltip]="!refreshRuntime.Running ? 'Set auto-refresh' : 'Stop auto-refresh'" [ngClass]="!refreshRuntime.Running ?  'glyphicon glyphicon-play label label-success' : 'glyphicon glyphicon-pause label label-danger'"
-                                (click)="updateRuntimeInfo(runtime_dev.ID,measActive,!refreshRuntime.Running)"></label>
-                            <label style="display: inline; margin-right:2px" [tooltip]="'Refresh now!'" container=body class="label label-primary glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></label>
-
-                            <span *ngIf="runtime_dev['Measurements'].length === 0" class="text-danger">- No measurements associated with the device. Couldn't retrieve metric runtime info</span>
-                        </h4>
-                    </div>
-                    <div class="col-md-12">
-                        <hr>
-                        <div *ngIf="runtime_dev['Measurements'].length !== 0">
-                            <div class="btn-group" role="group" aria-label="..." style="margin-bottom: 20px">
-                                <h5 class="pull-left" style="margin-right:20px">Measurements <span class="badge">{{runtime_dev['Measurements'].length}}</span></h5>
-                                <span class="input-group-btn" style="white-space: normal;">
-              <button type="button" class="btn btn-default" *ngFor="let measurement of runtime_dev['Measurements']; let i = index" (click)="showTable(i)" [ngClass]="i === measActive ? 'btn-primary' : 'btn-default'" container=body [tooltip]="measInfo">
-                {{measurement.MName}}
-                <ng-template #measInfo>
-                    <dl class="text-left">
-                      <p><dt class="margin-bottom:5px">Metrics <span class="badge">{{finalColumns[i].length > 0 ? finalColumns[i].length-1 : '0'}}</span></dt>
-</p>
-<dd *ngFor="let metrics of finalColumns[i]"><span *ngIf="metrics.title !== 'Index'">{{metrics.title}}</span></dd>
-</dl>
-</ng-template>
-<span [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData [i].length}} index</span>
-</button>
-</span>
-</div>
-<br>
-<div class="col-md-6 text-left" style="margin-bottom: 10px">
-    <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()"><i class="glyphicon glyphicon-trash"></i></label>
-    <input *ngIf="config.filtering" placeholder="Filter all columns" required="false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
-    <span class="label label-info"> {{length}} Results </span>
-</div>
-<div class="col-md-3 text-right">
-    <span style="margin-left: 20px"> Items per page: </span>
-    <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage || 'All'" (ngModelChange)="changeItemsPerPage($event)">
-    					<option *ngFor="let option of itemsPerPageOptions" style="padding-left:2px" [value]="option.value">{{option.title}}</option>
-            </select>
-</div>
-<div class="col-md-3 text-right">
-    <span class="label label-danger" [tooltip]="filterInfo" style="margin-left: 10px" *ngIf="runtime_dev['Measurements'][measActive].Filter"> Filter applied: {{runtime_dev['Measurements'][measActive].FilterCfg.ID}}</span>
-    <ng-template #filterInfo>
-        <div *ngFor="let run of runtime_dev['Measurements'][measActive].Filter | objectParser" style="text-align:left !important">
-            <span class="text-left" style="padding-left: 10px"><b>{{run.key}}</b></span>
-            <span class="text-right">{{run.value ? run.value : '--'}}</span>
         </div>
-    </ng-template>
-</div>
-<div style="overflow-x: scroll" class="col-md-12">
-    <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns" [checkRows]="true">
-    </ng-table>
-</div>
-<div class="col-md-12">
-    <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
-    </pagination>
-    <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
+        <div class="row" *ngIf="runtime_dev">
+            <div *ngIf="runtime_dev['Measurements']" class="col-md-12" style="margin-left:10px">
+                <br>
+                <div class="col-md-2">
+                    <h4>
+                        Metrics Info
+                    </h4>
+                </div>
+                <div class="text-right col-md-10">
+                    <h4>
+                        <label style="display: inline; margin-right:2px; padding-top:5px" container=body [tooltip]="'Refreshing every ' +runtime_dev.Freq +' secs'" [ngClass]="isRefreshing ? 'label label-success refresh-transition' : 'label label-danger refresh-transition'">Last Refresh: {{refreshRuntime.LastUpdate | date : 'HH:mm:ss - Z'}}</label>
+                        <label style="display: inline; margin-right:2px" [tooltip]="!refreshRuntime.Running ? 'Set auto-refresh' : 'Stop auto-refresh'" [ngClass]="!refreshRuntime.Running ?  'glyphicon glyphicon-play label label-success' : 'glyphicon glyphicon-pause label label-danger'"
+                        (click)="updateRuntimeInfo(runtime_dev.ID,measActive,!refreshRuntime.Running)"></label>
+                        <label style="display: inline; margin-right:2px" [tooltip]="'Refresh now!'" container=body class="label label-primary glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></label>
+
+                        <span *ngIf="runtime_dev['Measurements'].length === 0" class="text-danger">- No measurements associated with the device. Couldn't retrieve metric runtime info</span>
+                    </h4>
+                </div>
+                <div class="col-md-12">
+                    <hr>
+                    <div *ngIf="runtime_dev['Measurements'].length !== 0">
+                        <div class="btn-group" role="group" aria-label="..." style="margin-bottom: 20px">
+                            <h5 class="pull-left" style="margin-right:20px">Measurements <span class="badge">{{runtime_dev['Measurements'].length}}</span></h5>
+                            <span class="input-group-btn" style="white-space: normal;">
+                                <button type="button" class="btn btn-default" *ngFor="let measurement of runtime_dev['Measurements']; let i = index" (click)="showTable(i)" [ngClass]="i === measActive ? 'btn-primary' : 'btn-default'" container=body [tooltip]="measInfo">
+                                    {{measurement.MName}}
+                                    <ng-template #measInfo>
+                                        <dl class="text-left">
+                                            <p>
+                                                <dt class="margin-bottom:5px">Metrics <span class="badge">{{finalColumns[i].length > 0 ? finalColumns[i].length-1 : '0'}}</span></dt>
+                                            </p>
+                                            <dd *ngFor="let metrics of finalColumns[i]"><span *ngIf="metrics.title !== 'Index'">{{metrics.title}}</span></dd>
+                                        </dl>
+                                    </ng-template>
+                                    <span [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData [i].length}} index</span>
+                                </button>
+                            </span>
+                        </div>
+                        <br>
+                        <div class="col-md-6 text-left" style="margin-bottom: 10px">
+                            <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()"><i class="glyphicon glyphicon-trash"></i></label>
+                            <input *ngIf="config.filtering" placeholder="Filter all columns" required="false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
+                            <span class="label label-info"> {{length}} Results </span>
+                        </div>
+                        <div class="col-md-3 text-right">
+                            <span style="margin-left: 20px"> Items per page: </span>
+                            <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage || 'All'" (ngModelChange)="changeItemsPerPage($event)">
+                                <option *ngFor="let option of itemsPerPageOptions" style="padding-left:2px" [value]="option.value">{{option.title}}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 text-right">
+                            <span class="label label-danger" [tooltip]="filterInfo" style="margin-left: 10px" *ngIf="runtime_dev['Measurements'][measActive].Filter"> Filter applied: {{runtime_dev['Measurements'][measActive].FilterCfg.ID}}</span>
+                            <ng-template #filterInfo>
+                                <div *ngFor="let run of runtime_dev['Measurements'][measActive].Filter | objectParser" style="text-align:left !important">
+                                    <span class="text-left" style="padding-left: 10px"><b>{{run.key}}</b></span>
+                                    <span class="text-right">{{run.value ? run.value : '--'}}</span>
+                                </div>
+                            </ng-template>
+                        </div>
+                        <div style="overflow-x: scroll" class="col-md-12">
+                            <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns" [checkRows]="true">
+                            </ng-table>
+                        </div>
+                        <div class="col-md-12">
+                            <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
+                            </pagination>
+                            <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </ng-template>
