@@ -31,7 +31,7 @@
                 </ng-template>
                 {{column.title}}
                 <i *ngIf="column.icon" [ngClass]="'glyphicon glyphicon-'+column.icon"></i>
-                <span *ngIf="column.tooltip && column.tooltip.IsTag" class="badge">Tag</span>
+                <span *ngIf="column.tooltipInfo && column.tooltipInfo.IsTag" class="badge">Tag</span>
                 <i *ngIf="config && column.sort " class="pull-right glyphicon " [ngClass]="{ 'glyphicon-chevron-down': column.sort==='desc' , 'glyphicon-chevron-up': column.sort==='asc' } "></i>
             </th>
             <ng-container *ngIf="extraActions ">
