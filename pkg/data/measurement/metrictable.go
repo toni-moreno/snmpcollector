@@ -48,7 +48,7 @@ func (mr *MetricRow) SetVisible(ar map[string]int) {
 
 // MetricTable Sequence of metric rows with headers
 type MetricTable struct {
-	Header  map[string]int
+	Header  map[string]interface{}
 	visible map[string]int
 	log     *logrus.Logger
 	cfg     *config.MeasurementCfg
@@ -124,24 +124,88 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 	mt.log = l
 	mt.Row = make(map[string]*MetricRow)
 	mt.visible = make(map[string]int, len(mt.cfg.Fields))
-	mt.Header = make(map[string]int, len(mt.cfg.Fields))
+	mt.Header = make(map[string]interface{}, len(mt.cfg.Fields))
 	for _, r := range mt.cfg.Fields {
 		mt.visible[r.ID] = r.Report
 		for _, val := range mt.cfg.FieldMetric {
 			if r.ID == val.ID {
-				mt.Header[val.FieldName] = r.Report
+				switch val.DataSrcType {
+				case "STRINGPARSER", "BITS", "BITSCHK":
+					mt.Header[val.FieldName] = &struct {
+						FieldID     string
+						Type        string
+						BaseOID     string
+						ExtraData   string
+						IsTag       bool
+						Report      int
+						Description string
+					}{
+						FieldID:     val.ID,
+						Type:        val.DataSrcType,
+						BaseOID:     val.BaseOID,
+						ExtraData:   val.ExtraData,
+						IsTag:       val.IsTag,
+						Report:      r.Report,
+						Description: val.Description,
+					}
+				default:
+					mt.Header[val.FieldName] = &struct {
+						FieldID     string
+						Type        string
+						BaseOID     string
+						IsTag       bool
+						Report      int
+						Description string
+					}{
+						FieldID:     val.ID,
+						Type:        val.DataSrcType,
+						BaseOID:     val.BaseOID,
+						IsTag:       val.IsTag,
+						Report:      r.Report,
+						Description: val.Description,
+					}
+				}
+
 				continue
 			}
 		}
 		for _, val := range mt.cfg.EvalMetric {
 			if r.ID == val.ID {
-				mt.Header[val.FieldName] = r.Report
+				mt.Header[val.FieldName] = &struct {
+					FieldID     string
+					Type        string
+					ExtraData   string
+					IsTag       bool
+					Report      int
+					Description string
+				}{
+					FieldID:     val.ID,
+					Type:        val.DataSrcType,
+					ExtraData:   val.ExtraData,
+					IsTag:       val.IsTag,
+					Report:      r.Report,
+					Description: val.Description,
+				}
 				continue
 			}
 		}
 		for _, val := range mt.cfg.OidCondMetric {
 			if r.ID == val.ID {
-				mt.Header[val.FieldName] = r.Report
+				mt.Header[val.FieldName] = &struct {
+					FieldID     string
+					Type        string
+					ExtraData   string
+					IsTag       bool
+					Report      int
+					Description string
+				}{
+					FieldID:     val.ID,
+					Type:        val.DataSrcType,
+					ExtraData:   val.ExtraData,
+					IsTag:       val.IsTag,
+					Report:      r.Report,
+					Description: val.Description,
+				}
 				continue
 			}
 		}

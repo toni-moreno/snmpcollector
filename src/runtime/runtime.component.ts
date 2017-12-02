@@ -1,6 +1,6 @@
 
 import { ChangeDetectionStrategy, Component, ViewChild, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { FormBuilder, Validators} from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { RuntimeService } from './runtime.service';
 import { ItemsPerPageOptions } from '../common/global-constants';
 
@@ -9,10 +9,10 @@ import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 
 import { TestConnectionModal } from '../common/test-connection-modal';
 
-declare var _:any;
+declare var _: any;
 @Component({
   selector: 'runtime',
-  providers: [RuntimeService,SnmpDeviceService],
+  providers: [RuntimeService, SnmpDeviceService],
   templateUrl: './runtimeview.html',
   styleUrls: ['./runtimeeditor.css'],
 })
@@ -21,34 +21,34 @@ declare var _:any;
 export class RuntimeComponent implements OnDestroy {
   @ViewChild('viewTestConnectionModal') public viewTestConnectionModal: TestConnectionModal;
 
-  itemsPerPageOptions : any = ItemsPerPageOptions;
+  itemsPerPageOptions: any = ItemsPerPageOptions;
   public isRefreshing: boolean = true;
 
   public oneAtATime: boolean = true;
   editmode: string; //list , create, modify
-  dataArray : any = [];
-  dataArray2 : any = [];
-  isRequesting : boolean = false;
+  dataArray: any = [];
+  dataArray2: any = [];
+  isRequesting: boolean = false;
   runtime_devs: Array<any>;
   runtime_devs2: Array<any>;
 
-  public extraActions: Array<any> =  [
-    { 'title': 'SetActive', 'type' : 'boolean', 'content': {'enabled': '<i class="glyphicon glyphicon-pause"></i>', 'disabled' : '<i class="glyphicon glyphicon-play"></i>'}, 'property': 'DeviceActive'},
-    { 'title': 'SnmpReset', 'type' : 'button', 'content': {'enabled': 'Reset'}}
+  public extraActions: Array<any> = [
+    { 'title': 'SetActive', 'type': 'boolean', 'content': { 'enabled': '<i class="glyphicon glyphicon-pause"></i>', 'disabled': '<i class="glyphicon glyphicon-play"></i>' }, 'property': 'DeviceActive' },
+    { 'title': 'SnmpReset', 'type': 'button', 'content': { 'enabled': 'Reset' } }
   ]
 
   public rt_columns: Array<any> = [
-    { title: 'ID', name: 'ID'},
-    { title: 'TagMap', name: 'TagMap',tooltip: 'Num Measurements configured'},
-    { title: 'SysDesc', name: 'SysDescription'},
-    { title: '#Meas', name: 'NumMeasurements',tooltip: 'Num Measurements configured'},
-    { title: '#Metrics', name: 'NumMetrics'},
-    { title: 'Get.Errs' ,name:'Counter7',tooltip: 'SnmpOIDGetErrors:number of  oid with errors for all measurements '},
-    { title: 'M.Errs',name:'Counter14',tooltip: 'MeasurementSentErrors: number of measuremenets  formatted with errors '},
-    { title: 'G.Time',name:'Counter16',tooltip: 'CicleGatherDuration time: elapsed time taken to get all measurement info', transform : 'elapsedseconds'},
-    { title: 'F.Time',name:'Counter18',tooltip: 'CicleGatherDuration time: elapsed time taken to compute all applicable filters on the device', transform : 'elapsedseconds'}
+    { title: 'ID', name: 'ID' },
+    { title: 'TagMap', name: 'TagMap', tooltip: 'Num Measurements configured' },
+    { title: 'SysDesc', name: 'SysDescription' },
+    { title: '#Meas', name: 'NumMeasurements', tooltip: 'Num Measurements configured' },
+    { title: '#Metrics', name: 'NumMetrics' },
+    { title: 'Get.Errs', name: 'Counter7', tooltip: 'SnmpOIDGetErrors:number of  oid with errors for all measurements ' },
+    { title: 'M.Errs', name: 'Counter14', tooltip: 'MeasurementSentErrors: number of measuremenets  formatted with errors ' },
+    { title: 'G.Time', name: 'Counter16', tooltip: 'CicleGatherDuration time: elapsed time taken to get all measurement info', transform: 'elapsedseconds' },
+    { title: 'F.Time', name: 'Counter18', tooltip: 'CicleGatherDuration time: elapsed time taken to compute all applicable filters on the device', transform: 'elapsedseconds' }
   ];
-  mySubscription : any;
+  mySubscription: any;
   filter: string;
   measActive: number = 0;
   runtime_dev: any;
@@ -65,34 +65,34 @@ export class RuntimeComponent implements OnDestroy {
   ];
   maxrep: any = '';
   counterDef: CounterType[] = [
-  /*0*/    { "show":false, "id": "SnmpGetQueries","label": "SnmpGet Queries","type":"counter", "tooltip": "number of snmp queries"},
-  /*1*/    { "show":false, "id": "SnmpWalkQueries","label": "SnmpWalk Queries","type":"counter", "tooltip": "number of snmp walks"},
-  /*2*/    { "show":false, "id": "SnmpGetErrors","label": "SnmpGet Errors","type":"counter", "tooltip": "Get Error"},
-  /*3*/    { "show":false, "id": "SnmpWalkErrors","label": "SnmpWalk Errors","type":"counter", "tooltip": "Walk Error"},
-  /*4*/    { "show":false, "id": "SnmpQueryTimeouts","label": "Snmp Errors by Timeout","type":"counter", "tooltip": "number of registered errors by timeouts"},
-  /*5*/    { "show":true, "id": "SnmpOIDGetAll","label": "OID Gets ALL","type":"counter", "tooltip": "All Gathered snmp metrics ( sum of snmpget oid's and all received oid's in snmpwalk queries)"},
-  /*6*/    { "show":true, "id": "SnmpOIDGetProcessed","label": "OID Processed","type":"counter", "tooltip": "Gathered and processed snmp metrics after filters are applied ( not always sent to the backend it depens on the report flag)"},
-  /*7*/    { "show":true, "id": "SnmpOIDGetErrors","label": "OID With Errors","type":"counter", "tooltip": "number of  oid with errors for all measurements"},
-  /*8*/    { "show":false, "id": "EvalMetricsAll","label": "Evaluated Metrics","type":"counter", "tooltip": "number of evaluated metrics"},
-  /*9*/    { "show":false, "id": "EvalMetricsOk","label": "Evaluated Metrics","type":"counter", "tooltip": "number of evaluated metrics without errors."},
-  /*10*/    { "show":false, "id": "EvalMetricsErrors","label": "Evaluated Metrics","type":"counter", "tooltip": "number of evaluated metrics with some kind of error."},
-  /*11*/    { "show":true, "id": "MetricSent","label": "Metric Sent","type":"counter", "tooltip": "number of metrics sent (taken as fields) for all measurements"},
-  /*12*/    { "show":true, "id": "MetricSentErrors","label": "Metric Sent Errors","type":"counter", "tooltip": "number of metrics  (taken as fields) with errors forall measurements"},
-  /*13*/    { "show":true, "id": "MeasurementSent","label": "Measurement sent","type":"counter", "tooltip": "(number of  measurements build to send as a sigle request sent to the backend)"},
-  /*14*/    { "show":true, "id": "MeasurementSentErrors","label": "Measurement sent Errors","type":"counter", "tooltip": "(number of measuremenets  formatted with errors )"},
-  /*15*/    { "show":false, "id": "CicleGatherStartTime","label": "Cicle Gather Start Time","type":"time", "tooltip": "Last gather time "},
-  /*16*/    { "show":true, "id": "CicleGatherDuration","label": "Cicle Gather Duration","type":"duration", "tooltip": "elapsed time taken to get all measurement info"},
-  /*17*/    { "show":false, "id": "FilterStartTime","label": "Filter update Start Time","type":"time", "tooltip": "Last Filter time"},
-  /*18*/    { "show":true, "id": "FilterDuration","label": "Filter update Duration","type":"duration", "tooltip": "elapsed time taken to compute all applicable filters on the device"},
-  /*19*/    { "show":false, "id": "BackEndSentStartTime","label": "BackEnd (influxdb) Sent Start Time","type":"time", "tooltip": "Last sent time"},
-  /*20*/    { "show":true, "id": "BackEndSentDuration","label": "BackEnd (influxdb) Sent Duration","type":"duration", "tooltip": "elapsed time taken to send data to the db backend"},
+  /*0*/    { "show": false, "id": "SnmpGetQueries", "label": "SnmpGet Queries", "type": "counter", "tooltip": "number of snmp queries" },
+  /*1*/    { "show": false, "id": "SnmpWalkQueries", "label": "SnmpWalk Queries", "type": "counter", "tooltip": "number of snmp walks" },
+  /*2*/    { "show": false, "id": "SnmpGetErrors", "label": "SnmpGet Errors", "type": "counter", "tooltip": "Get Error" },
+  /*3*/    { "show": false, "id": "SnmpWalkErrors", "label": "SnmpWalk Errors", "type": "counter", "tooltip": "Walk Error" },
+  /*4*/    { "show": false, "id": "SnmpQueryTimeouts", "label": "Snmp Errors by Timeout", "type": "counter", "tooltip": "number of registered errors by timeouts" },
+  /*5*/    { "show": true, "id": "SnmpOIDGetAll", "label": "OID Gets ALL", "type": "counter", "tooltip": "All Gathered snmp metrics ( sum of snmpget oid's and all received oid's in snmpwalk queries)" },
+  /*6*/    { "show": true, "id": "SnmpOIDGetProcessed", "label": "OID Processed", "type": "counter", "tooltip": "Gathered and processed snmp metrics after filters are applied ( not always sent to the backend it depens on the report flag)" },
+  /*7*/    { "show": true, "id": "SnmpOIDGetErrors", "label": "OID With Errors", "type": "counter", "tooltip": "number of  oid with errors for all measurements" },
+  /*8*/    { "show": false, "id": "EvalMetricsAll", "label": "Evaluated Metrics", "type": "counter", "tooltip": "number of evaluated metrics" },
+  /*9*/    { "show": false, "id": "EvalMetricsOk", "label": "Evaluated Metrics", "type": "counter", "tooltip": "number of evaluated metrics without errors." },
+  /*10*/    { "show": false, "id": "EvalMetricsErrors", "label": "Evaluated Metrics", "type": "counter", "tooltip": "number of evaluated metrics with some kind of error." },
+  /*11*/    { "show": true, "id": "MetricSent", "label": "Metric Sent", "type": "counter", "tooltip": "number of metrics sent (taken as fields) for all measurements" },
+  /*12*/    { "show": true, "id": "MetricSentErrors", "label": "Metric Sent Errors", "type": "counter", "tooltip": "number of metrics  (taken as fields) with errors forall measurements" },
+  /*13*/    { "show": true, "id": "MeasurementSent", "label": "Measurement sent", "type": "counter", "tooltip": "(number of  measurements build to send as a sigle request sent to the backend)" },
+  /*14*/    { "show": true, "id": "MeasurementSentErrors", "label": "Measurement sent Errors", "type": "counter", "tooltip": "(number of measuremenets  formatted with errors )" },
+  /*15*/    { "show": false, "id": "CicleGatherStartTime", "label": "Cicle Gather Start Time", "type": "time", "tooltip": "Last gather time " },
+  /*16*/    { "show": true, "id": "CicleGatherDuration", "label": "Cicle Gather Duration", "type": "duration", "tooltip": "elapsed time taken to get all measurement info" },
+  /*17*/    { "show": false, "id": "FilterStartTime", "label": "Filter update Start Time", "type": "time", "tooltip": "Last Filter time" },
+  /*18*/    { "show": true, "id": "FilterDuration", "label": "Filter update Duration", "type": "duration", "tooltip": "elapsed time taken to compute all applicable filters on the device" },
+  /*19*/    { "show": false, "id": "BackEndSentStartTime", "label": "BackEnd (influxdb) Sent Start Time", "type": "time", "tooltip": "Last sent time" },
+  /*20*/    { "show": true, "id": "BackEndSentDuration", "label": "BackEnd (influxdb) Sent Duration", "type": "duration", "tooltip": "elapsed time taken to send data to the db backend" },
   ];
 
   //TABLE
   // CHECK DATA, our data is array of arrays?!
   private data: Array<any> = [];
-  public activeDevices : number;
-  public noConnectedDevices : number;
+  public activeDevices: number;
+  public noConnectedDevices: number;
   public dataTable: Array<any> = [];
   public finalData: Array<Array<any>> = [];
   public columns: Array<any> = [];
@@ -114,7 +114,7 @@ export class RuntimeComponent implements OnDestroy {
   public myFilterValue: any;
   public activeFilter: boolean = false;
   public deactiveFilter: boolean = false;
-  public noConnectedFilter  : boolean = false;
+  public noConnectedFilter: boolean = false;
 
   //Set config
   public config: any = {
@@ -132,7 +132,7 @@ export class RuntimeComponent implements OnDestroy {
 
   public changePage(page: any, data: Array<any> = this.data): Array<any> {
     //Check if we have to change the actual page
-    let maxPage =  Math.ceil(data.length/this.itemsPerPage);
+    let maxPage = Math.ceil(data.length / this.itemsPerPage);
     if (page.page > maxPage && page.page != 1) this.page = page.page = maxPage;
 
     let start = (page.page - 1) * page.itemsPerPage;
@@ -208,10 +208,10 @@ export class RuntimeComponent implements OnDestroy {
     return filteredData;
   }
 
-  changeItemsPerPage (items) {
+  changeItemsPerPage(items) {
     if (items) this.itemsPerPage = parseInt(items);
-    else this.itemsPerPage=this.length;
-    let maxPage =  Math.ceil(this.length/this.itemsPerPage);
+    else this.itemsPerPage = this.length;
+    let maxPage = Math.ceil(this.length / this.itemsPerPage);
     if (this.page > maxPage) this.page = maxPage;
     this.onChangeTable(this.config);
   }
@@ -227,28 +227,28 @@ export class RuntimeComponent implements OnDestroy {
     let sortedData = this.changeSort(filteredData, this.config);
     this.rows = page && this.config.paging ? this.changePage(page, sortedData) : sortedData;
     this.length = sortedData.length;
-    this.activeDevices = sortedData.filter((item) => {return item.DeviceActive}).length
-    this.noConnectedDevices = sortedData.filter((item) => { if(item.DeviceActive === true && item.DeviceConnected  === false) return true }).length
+    this.activeDevices = sortedData.filter((item) => { return item.DeviceActive }).length
+    this.noConnectedDevices = sortedData.filter((item) => { if (item.DeviceActive === true && item.DeviceConnected === false) return true }).length
   }
 
-  public onExtraActionClicked(data:any) {
+  public onExtraActionClicked(data: any) {
     switch (data.action) {
-      case 'SetActive' :
-      this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
-      break;
-      case 'SnmpReset' :
-      this.forceSnmpReset(data.row.ID,'soft');
-      break;
+      case 'SetActive':
+        this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
+        break;
+      case 'SnmpReset':
+        this.forceSnmpReset(data.row.ID, 'soft');
+        break;
       default:
-      break;
+        break;
     }
     console.log(data);
   }
 
-  onResetFilter() : void {
+  onResetFilter(): void {
     this.page = 1;
     this.myFilterValue = "";
-    this.config.filtering = {filtering: { filterString: '' }};
+    this.config.filtering = { filtering: { filterString: '' } };
     this.onChangeTable(this.config);
   }
 
@@ -284,7 +284,7 @@ export class RuntimeComponent implements OnDestroy {
         this.refreshRuntime.LastUpdate = new Date();
         this.loadRuntimeById(id, this.measActive);
         this.ref.markForCheck();
-      }, Math.max(5000,this.runtime_dev['Freq'] * 1000)); //lowest update rate set to 5 sec
+      }, Math.max(5000, this.runtime_dev['Freq'] * 1000)); //lowest update rate set to 5 sec
     } else {
       this.isRefreshing = false;
       clearInterval(this.intervalStatus);
@@ -304,35 +304,36 @@ export class RuntimeComponent implements OnDestroy {
         //Generate Columns
         if (data['Measurements'] && data['Measurements'].length > 0) {
           for (let measKey of data['Measurements']) {
-            console.log('measKey: ',measKey)
+            console.log('measKey: ', measKey)
             //Generate the Coluns array, go over it only once using break
             //Save it as array of arrays on finalColumns
             if (Object.keys(measKey['MetricTable']['Header']).length !== 0) {
               this.tmpcolumns = [];
               if (measKey['TagName'] !== "") this.tmpcolumns.push({ title: measKey['TagName'], name: 'Index' });
               for (let fieldName in measKey['MetricTable']['Header']) {
-                let mode = measKey['MetricTable']['Header'][fieldName]
+                //let mode = measKey['MetricTable']['Header'][fieldName]
+                let fdata = measKey['MetricTable']['Header'][fieldName]
                 let micon = ''
                 let tt = ''
-                 switch(mode) {
-                   case 0: //never send
+                switch (fdata.Report) {
+                  case 0: //never send
                     micon = 'remove-circle text-danger'
                     tt = 'this field won\'t be sent'
-                   break;
-                   case 1: //always send
+                    break;
+                  case 1: //always send
                     micon = 'ok-circle text-success'
                     tt = 'this always will send'
-                   break;
-                   case 2: //send i non zero
+                    break;
+                  case 2: //send i non zero
                     micon = 'ban-circle text-warning'
                     tt = 'this field only will be sent if non zero'
-                   break
+                    break
 
-                 }
-                let tmpColumn: any = { title: fieldName, name: fieldName , icon: micon, tooltip: tt }
+                }
+                let tmpColumn: any = { title: fieldName, name: fieldName, icon: micon, tooltipInfo: fdata }
                 this.tmpcolumns.push(tmpColumn);
               }
-            this.finalColumns.push(this.tmpcolumns);
+              this.finalColumns.push(this.tmpcolumns);
             } else {
               this.finalColumns.push([]);
             }
@@ -341,9 +342,9 @@ export class RuntimeComponent implements OnDestroy {
             for (let rowid in measKey['MetricTable']['Row']) {
               let row = measKey['MetricTable']['Row'][rowid]
               let tmpTable: any = { tooltipInfo: {} };
-              tmpTable['valid']=row['Valid'];
+              tmpTable['valid'] = row['Valid'];
               if (measKey['TagName'] !== "") tmpTable.Index = rowid;
-              for (let metricid in row['Data'] ) {
+              for (let metricid in row['Data']) {
                 let metric = row['Data'][metricid]
                 let fieldName = metric.FieldName
                 tmpTable[fieldName] = metric.CookedValue;
@@ -367,7 +368,7 @@ export class RuntimeComponent implements OnDestroy {
     this.columns = [];
     this.measActive = id;
     this.myFilterValue = "";
-    this.config.filtering = {filtering: { filterString: '' }};
+    this.config.filtering = { filtering: { filterString: '' } };
     //Reload data and column table
     this.data = this.finalData[id];
     this.columns = this.finalColumns[id];
@@ -382,8 +383,8 @@ export class RuntimeComponent implements OnDestroy {
     this.runtimeService.changeDeviceActive(id, event)
       .subscribe(
       data => {
-        _.forEach(this.runtime_devs,function(d,key){
-          console.log(d,key)
+        _.forEach(this.runtime_devs, function (d, key) {
+          console.log(d, key)
           if (d.ID == id) {
             d.DeviceActive = !d.DeviceActive;
             return false
@@ -446,7 +447,7 @@ export class RuntimeComponent implements OnDestroy {
       );
   }
 
-  showTestConnectionModal(row : any) {
+  showTestConnectionModal(row: any) {
     this.snmpDeviceService.getDevicesById(row.ID)
       .subscribe(data => {
         this.viewTestConnectionModal.show(data);
@@ -467,9 +468,9 @@ export class RuntimeComponent implements OnDestroy {
       );
   }
 
-  forceSnmpReset(id,mode) {
+  forceSnmpReset(id, mode) {
     console.log("ID,event", id, event);
-    this.runtimeService.forceSnmpReset(id,mode)
+    this.runtimeService.forceSnmpReset(id, mode)
       .subscribe(
       data => {
         console.log("reset done")
@@ -480,7 +481,7 @@ export class RuntimeComponent implements OnDestroy {
   }
 
   forceGatherData(id) {
-    console.log("force gather data", id,event);
+    console.log("force gather data", id, event);
     this.runtimeService.forceGatherData(id)
       .subscribe(
       data => {
@@ -494,23 +495,23 @@ export class RuntimeComponent implements OnDestroy {
 
   setSnmpMaxRepetitions(id) {
     if (this.maxrep.toString().match(/^([1-9]+\d*)$/) && this.maxrep < 256) {
-        console.log("Set Snmp Max Repeticions : "+ this.maxrep +" On device: "+id)
-        this.runtimeService.setSnmpMaxRepetitions(id,this.maxrep)
-          .subscribe(
-          data => {
-            console.log("set max repetitions done")
-          },
-          err => console.error(err),
-          () => console.log('DONE')
-          );
+      console.log("Set Snmp Max Repeticions : " + this.maxrep + " On device: " + id)
+      this.runtimeService.setSnmpMaxRepetitions(id, this.maxrep)
+        .subscribe(
+        data => {
+          console.log("set max repetitions done")
+        },
+        err => console.error(err),
+        () => console.log('DONE')
+        );
     } else {
-      alert(this.maxrep+' is not an unsigned 8 bits integer')
+      alert(this.maxrep + ' is not an unsigned 8 bits integer')
     }
     console.log("ID,event", id, event, this.maxrep);
   }
 
   reloadData() {
-    this.itemsPerPage=20;
+    this.itemsPerPage = 20;
     this.isRequesting = true;
     if (this.mySubscription) {
       this.mySubscription.unsubscribe();
@@ -526,8 +527,8 @@ export class RuntimeComponent implements OnDestroy {
         this.mySubscription = null;
         this.runtime_devs = data
         this.data = this.runtime_devs;
-        this.config.sorting.columns=this.columns,
-        this.isRequesting = false;
+        this.config.sorting.columns = this.columns,
+          this.isRequesting = false;
         this.activeFilter = this.deactiveFilter = this.noConnectedFilter = false;
         this.onChangeTable(this.config);
       },
@@ -536,22 +537,22 @@ export class RuntimeComponent implements OnDestroy {
       );
   }
 
-  toogleActiveFilter(option : string) {
+  toogleActiveFilter(option: string) {
     if (this.activeFilter === false && option === 'active') {
       this.noConnectedFilter = false;
       this.deactiveFilter = false;
       this.activeFilter = true;
-      this.data = this.runtime_devs.filter((item) => { if(item.DeviceActive === true) return true })
-    } else if (this.deactiveFilter === false && option === 'deactive' ) {
+      this.data = this.runtime_devs.filter((item) => { if (item.DeviceActive === true) return true })
+    } else if (this.deactiveFilter === false && option === 'deactive') {
       this.noConnectedFilter = false;
       this.activeFilter = false;
       this.deactiveFilter = true;
-      this.data = this.runtime_devs.filter((item) => { if(item.DeviceActive === false) return true })
-    } else if (this.noConnectedFilter === false && option === 'noconnected'){
+      this.data = this.runtime_devs.filter((item) => { if (item.DeviceActive === false) return true })
+    } else if (this.noConnectedFilter === false && option === 'noconnected') {
       this.noConnectedFilter = true;
       this.activeFilter = false;
       this.deactiveFilter = false;
-      this.data = this.runtime_devs.filter((item) => { if(item.DeviceConnected === false && item.DeviceActive === true) return true })
+      this.data = this.runtime_devs.filter((item) => { if (item.DeviceConnected === false && item.DeviceActive === true) return true })
     } else {
       this.data = this.runtime_devs;
       this.noConnectedFilter = false;

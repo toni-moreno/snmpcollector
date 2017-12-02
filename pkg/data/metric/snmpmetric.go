@@ -1,6 +1,7 @@
 package metric
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"math"
@@ -477,4 +478,46 @@ func (s *SnmpMetric) ImportFieldsAndTags(mid string, fields map[string]interface
 		metError += er
 	}
 	return metSent, metError
+}
+
+// MarshalJSON return JSON formatted data
+func (s *SnmpMetric) MarshalJSON() ([]byte, error) {
+	//type Alias SnmpMetric
+	switch s.cfg.DataSrcType {
+	case "COUNTER32", "COUNTER64", "COUNTERXX":
+		return json.Marshal(&struct {
+			FieldName   string
+			CookedValue interface{}
+			CurValue    interface{}
+			LastValue   interface{}
+			CurTime     time.Time
+			LastTime    time.Time
+			Valid       bool
+			//	*Alias
+		}{
+			FieldName:   s.FieldName,
+			CookedValue: s.CookedValue,
+			CurValue:    s.CurValue,
+			LastValue:   s.LastValue,
+			CurTime:     s.CurTime,
+			LastTime:    s.LastTime,
+			Valid:       s.Valid,
+			//	Alias:       (*Alias)(s),
+		})
+	default:
+		return json.Marshal(&struct {
+			FieldName   string
+			CookedValue interface{}
+			CurTime     time.Time
+			Valid       bool
+			//	*Alias
+		}{
+			FieldName:   s.FieldName,
+			CookedValue: s.CookedValue,
+			CurTime:     s.CurTime,
+			Valid:       s.Valid,
+			//	Alias:       (*Alias)(s),
+		})
+	}
+
 }
