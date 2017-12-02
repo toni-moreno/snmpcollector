@@ -233,7 +233,8 @@
                                             <dd *ngFor="let metrics of finalColumns[i]"><span *ngIf="metrics.title !== 'Index'">{{metrics.title}}</span></dd>
                                         </dl>
                                     </ng-template>
-                                    <span [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData [i].length}} index</span>
+                                    <span *ngIf="measurement.TagName.length !== 0 " [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData [i].length}} index</span>
+                                    <span *ngIf="measurement.TagName.length == 0 " [ngClass]="i === measActive ? 'badge' : 'label label-default'"> value </span>
                                 </button>
                             </span>
                         </div>
