@@ -6,7 +6,7 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
 
 @Component({
   selector: 'ng-table',
-  templateUrl: './ngtable.html',
+  templateUrl: './ng-table.html',
   styles: [`
     :host >>> .displayinline{
       display: inline !important;
