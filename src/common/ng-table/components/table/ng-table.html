@@ -16,7 +16,7 @@
                 </th>
             </ng-container>
             <!--HEADER -->
-            <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column" (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important;" container="body" [tooltip]="column.tooltipInfo ? tooltipValues : ( column.tooltip ? column.name : '')">
+            <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column" (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important;" container=body [tooltip]="column.tooltipInfo ? tooltipValues : ( column.tooltip ? column.name : '')">
                 <ng-template #tooltipValues>
                     <ng-container>
                         <h6> {{column.name}}</h6>
@@ -63,15 +63,15 @@
                 <i class="glyphicon glyphicon glyphicon-remove " [tooltip]=" 'Remove Item' " (click)="removeItem(row) "></i>
             </td>
             <td *ngIf="showStatus==true " style="min-width: 170px ">
-                <label style="display: inline; margin-right: 2px " container="body " [tooltip]=" 'View '+ row.ID " class="label label-primary glyphicon glyphicon-eye-open " (click)="viewItem(row) "></label>
+                <label style="display: inline; margin-right: 2px " container=body [tooltip]=" 'View '+ row.ID " class="label label-primary glyphicon glyphicon-eye-open " (click)="viewItem(row) "></label>
                 <span style="border-right: 1px solid #1B809E; padding-right: 6px ">
-          <label style="display: inline; margin-right: 2px " container="body " [tooltip]=" 'Test connection '+ row.ID " class="label label-primary glyphicon glyphicon glyphicon-flash " (click)="testConnection(row) "></label>
+          <label style="display: inline; margin-right: 2px " container=body [tooltip]=" 'Test connection '+ row.ID " class="label label-primary glyphicon glyphicon glyphicon-flash " (click)="testConnection(row) "></label>
         </span>
                 <span style="padding-left: 12px ">
-          <label style="display: inline; margin-right: 2px " container="body " [tooltip]="row.DeviceActive ? 'Active' : 'Not active' " [ngClass]="row.DeviceActive ? 'glyphicon glyphicon-play label label-success' :
+          <label style="display: inline; margin-right: 2px " container=body [tooltip]="row.DeviceActive ? 'Active' : 'Not active' " [ngClass]="row.DeviceActive ? 'glyphicon glyphicon-play label label-success' :
           'glyphicon glyphicon-pause label label-danger' "></label>
         </span>
-                <label style="display: inline; margin-right: 2px " container="body " [tooltip]="row.DeviceConnected ? 'Connected' : 'Not connected' " [ngClass]="row.DeviceConnected ? 'glyphicon glyphicon-globe label label-success' :
+                <label style="display: inline; margin-right: 2px " container=body [tooltip]="row.DeviceConnected ? 'Connected' : 'Not connected' " [ngClass]="row.DeviceConnected ? 'glyphicon glyphicon-globe label label-success' :
         'glyphicon glyphicon-warning-sign label label-danger' "></label>
             </td>
             <ng-container *ngIf="checkRows ">
