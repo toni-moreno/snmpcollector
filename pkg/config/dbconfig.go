@@ -99,16 +99,6 @@ type CustomFilterCfg struct {
 	} `xorm:"-"`
 }
 
-// OidConditionCfg condition config for filters and metrics
-type OidConditionCfg struct {
-	ID          string `xorm:"'id' unique" binding:"Required"`
-	IsMultiple  bool   `xorm:"is_multiple"`
-	OIDCond     string `xorm:"cond_oid" binding:"Required"`
-	CondType    string `xorm:"cond_type"`
-	CondValue   string `xorm:"cond_value"`
-	Description string `xorm:"description"`
-}
-
 //SnmpDevFilters filters to use with indexed measurement
 type SnmpDevFilters struct {
 	IDSnmpDev string `xorm:"id_snmpdev"`

@@ -1,6 +1,62 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+)
+
+// OidConditionCfg condition config for filters and metrics
+type OidConditionCfg struct {
+	ID          string `xorm:"'id' unique" binding:"Required"`
+	IsMultiple  bool   `xorm:"is_multiple"`
+	OIDCond     string `xorm:"cond_oid" binding:"Required"`
+	CondType    string `xorm:"cond_type"`
+	CondValue   string `xorm:"cond_value"`
+	Description string `xorm:"description"`
+}
+
+// Init Initialize a OIDConditionCfg
+func (oid *OidConditionCfg) Init() error {
+	if oid.IsMultiple {
+		//check if OIDCond expression  is good
+		return nil
+	}
+	switch {
+	case oid.CondType == "notmatch" || oid.CondType == "match":
+		//check for a well formed regular expression
+		_, err := regexp.Compile(oid.CondValue)
+		if err != nil {
+			er := fmt.Sprintf("ERROR OIDCOND [%s] with Condition %s regexp error : %s ", oid.ID, oid.CondValue, err)
+			return fmt.Errorf("%s", er)
+		}
+	case strings.Contains(oid.CondType, "n"):
+		//undesrstand valueCondition as numeric
+		_, err := strconv.Atoi(oid.CondValue)
+		if err != nil {
+			er := fmt.Sprintf("ERROR OIDCOND [%s] type %s on value  %s  on translation error: %s", oid.ID, oid.CondType, oid.CondValue, err)
+			return fmt.Errorf("%s", er)
+		}
+
+		switch oid.CondType {
+		case "neq":
+		case "nlt":
+		case "ngt":
+		case "nge":
+		case "nle":
+		case "ndif":
+		default:
+			erarray := fmt.Sprintf("OIDCONDFILTER [%s] Error Unknown Condition  %s", oid.ID, oid.CondType)
+			return fmt.Errorf("%s", erarray)
+		}
+	default:
+		er := fmt.Sprintf("OIDFILTER [%s] Error in Condition filter  Type: %s ValCond: %s ", oid.ID, oid.CondType, oid.CondValue)
+		log.Errorf("%s", er)
+		return fmt.Errorf("%s", er)
+	}
+	return nil
+}
 
 /***************************
 Oid Condition Cfg
@@ -62,6 +118,12 @@ func (dbc *DatabaseCfg) GetOidConditionCfgArray(filter string) ([]*OidConditionC
 func (dbc *DatabaseCfg) AddOidConditionCfg(dev OidConditionCfg) (int64, error) {
 	var err error
 	var affected int64
+
+	err = dev.Init()
+	if err != nil {
+		return 0, err
+	}
+
 	// create OidConditionCfg to check if any configuration issue found before persist to database.
 	// initialize data persistence
 	session := dbc.x.NewSession()
@@ -122,6 +184,10 @@ func (dbc *DatabaseCfg) DelOidConditionCfg(id string) (int64, error) {
 func (dbc *DatabaseCfg) UpdateOidConditionCfg(id string, dev OidConditionCfg) (int64, error) {
 	var err error
 	var affected, affecteddev int64
+	err = dev.Init()
+	if err != nil {
+		return 0, err
+	}
 	// create OidConditionCfg to check if any configuration issue found before persist to database.
 	// initialize data persistence
 	session := dbc.x.NewSession()
