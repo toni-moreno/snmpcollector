@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/Knetic/govaluate"
 )
 
 // OidConditionCfg condition config for filters and metrics
@@ -18,9 +20,29 @@ type OidConditionCfg struct {
 }
 
 // Init Initialize a OIDConditionCfg
-func (oid *OidConditionCfg) Init() error {
+func (oid *OidConditionCfg) Init(dbc *DatabaseCfg) error {
 	if oid.IsMultiple {
 		//check if OIDCond expression  is good
+		// First get all conditions ID's
+		oids, err := dbc.GetOidConditionCfgMap("")
+		if err != nil {
+			return err
+		}
+		OidsMap := make(map[string]interface{})
+		for k := range oids {
+			OidsMap[k] = bool(true)
+		}
+		//check
+		expression, err := govaluate.NewEvaluableExpression(oid.OIDCond)
+		if err != nil {
+			log.Errorf("Error on evaluate expression on OIDCOndition %s evaluation : %s : ERROR : %s", oid.ID, oid.OIDCond, err)
+			return err
+		}
+		_, err = expression.Evaluate(OidsMap)
+		if err != nil {
+			log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", oid.ID, oid.CondValue, err)
+			return err
+		}
 		return nil
 	}
 	switch {
@@ -119,7 +141,7 @@ func (dbc *DatabaseCfg) AddOidConditionCfg(dev OidConditionCfg) (int64, error) {
 	var err error
 	var affected int64
 
-	err = dev.Init()
+	err = dev.Init(dbc)
 	if err != nil {
 		return 0, err
 	}
@@ -184,7 +206,7 @@ func (dbc *DatabaseCfg) DelOidConditionCfg(id string) (int64, error) {
 func (dbc *DatabaseCfg) UpdateOidConditionCfg(id string, dev OidConditionCfg) (int64, error) {
 	var err error
 	var affected, affecteddev int64
-	err = dev.Init()
+	err = dev.Init(dbc)
 	if err != nil {
 		return 0, err
 	}
