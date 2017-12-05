@@ -123,10 +123,10 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
     protected onModelChange: Function = (_: any) => {};
     protected onModelTouched: Function = () => {};
     protected model: any[];
-    protected title: string;
+    public title: string;
     protected differ: any;
     protected numSelected: number = 0;
-    protected isVisible: boolean = false;
+    public isVisible: boolean = false;
     protected searchFilterText: string = '';
     protected defaultSettings: IMultiSelectSettings = {
         pullRight: false,
