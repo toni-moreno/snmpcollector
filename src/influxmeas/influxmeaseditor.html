@@ -135,7 +135,7 @@
               <div class="input-group" style="background: none">
                 <div dropdown class="input-group-addon">
                   <h5 role="button" [ngClass]="[reportMetricStatus[metric.Report].icon, reportMetricStatus[metric.Report].class]" tooltip="{{reportMetricStatus[metric.Report].name}}" class="dropdown-toggle-split" type="button" dropdownToggle></h5>
-                  <ul class="dropdown-menu" dropdownMenu role="menu" aria-labelledby="split-button">
+                  <ul class="dropdown-menu" *dropdownMenu role="menu" aria-labelledby="split-button">
                     <li role="menuitem" *ngFor="let reportArray of reportMetricStatus; let reportIndex = index" [ngClass]="">
                       <span role="button" (click)="onCheckMetric(i,reportIndex)" class="dropdown-item" [ngClass]="reportArray.class"><i style="padding-left: 5px; margin-right: 5px" [ngClass]="reportArray.icon"></i>{{reportArray.name}}</span>
                     </li>
