@@ -327,16 +327,32 @@
           <control-messages [control]="snmpdevForm.controls.ExtraTags"></control-messages>
         </div>
       </div>
-
       <div class="form-group">
-        <label class="control-label col-sm-2" for="DeviceVars">Device Variables</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Custom Variables for each device needed to compute STRINGEVAL based Metrics"></i>
+        <label class="control-label col-sm-2" for="DeviceVars">Override Device Vars</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="List of var catalog to override the default set value"></i>
         <div class="col-sm-9">
-          <input formControlName="DeviceVars" id="DeviceVars" [ngModel]="snmpdevForm.value.DeviceVars" />
-          <control-messages [control]="snmpdevForm.controls.DeviceVars"></control-messages>
+          <div>
+            <ss-multiselect-dropdown [options]="selectvarcatalogs" [texts]="myTexts" [settings]="mySettings" [(ngModel)]="selectedVars" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangevarsArray($event,test)"></ss-multiselect-dropdown>
+            <control-messages [control]="snmpdevForm.controls.DeviceVars"></control-messages>
+          </div>
         </div>
       </div>
-
+      <div class="form-group" *ngIf="varsArray.length > 0">
+        <label class="control-label col-sm-2" for="Report">Vars</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Set the value to override the default one"></i>
+        <div class="col-sm-9">
+          <div class="input-group list-group">
+            <div *ngFor="let varSingle of varsArray; let i = index">
+              <div class="input-group" style="background: none">
+                  <div class="input-group-addon">
+                    <span>{{varSingle.ID}}</span>
+                  </div>
+                  <input [(ngModel)]="varsArray[i].value" [ngModelOptions]="{standalone: true}"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="form-group">
         <label class="control-label col-sm-2" for="MeasurementGroups">Measurement Groups</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Selection of Measurent Groups associated with the device {{snmpdevForm.value.id}}"></i>

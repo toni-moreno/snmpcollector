@@ -5,7 +5,8 @@ import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 import { InfluxServerService } from '../influxserver/influxservercfg.service';
 import { MeasGroupService } from '../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
-import { ValidationService } from '../common/validation.service'
+import { VarCatalogService } from '../varcatalog/varcatalogcfg.service';
+import { ValidationService } from '../common/validation.service';
 import { Observable } from 'rxjs/Rx';
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
@@ -25,7 +26,7 @@ declare var _:any;
 
 @Component({
   selector: 'snmpdevs',
-  providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService],
+  providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService, VarCatalogService],
   templateUrl: './snmpdeviceeditor.html',
   styleUrls: ['../css/component-styles.css']
 })
@@ -53,10 +54,12 @@ export class SnmpDeviceCfgComponent {
   //influxservers: Array<any>;
   measfilters: Array<any>;
   measgroups: Array<any>;
+  varcatalogs: Array<any>;
   filteroptions: any;
   selectgroups: IMultiSelectOption[] = [];
   selectfilters: IMultiSelectOption[] = [];
   selectinfluxservers: IMultiSelectOption[] = [];
+  selectvarcatalogs: IMultiSelectOption[] = [];
   private mySettingsInflux: IMultiSelectSettings = {
       singleSelect: true,
   };
@@ -107,7 +110,10 @@ export class SnmpDeviceCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public snmpDeviceService: SnmpDeviceService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService,  public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
+  varsArray: Array<Object> = [];
+  selectedVars: Array<any> = [];
+
+  constructor(public snmpDeviceService: SnmpDeviceService, public varCatalogService: VarCatalogService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService,  public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -147,8 +153,8 @@ export class SnmpDeviceCfgComponent {
       DeviceTagName: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagName : '', Validators.required],
       DeviceTagValue: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagValue : 'id'],
       ExtraTags: [this.snmpdevForm ? (this.snmpdevForm.value.ExtraTags ? this.snmpdevForm.value.ExtraTags : "" ) : "" , Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
-      DeviceVars: [this.snmpdevForm ? (this.snmpdevForm.value.DeviceVars ? this.snmpdevForm.value.DeviceVars : "" ) : "" , Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
       SystemOIDs: [this.snmpdevForm ? (this.snmpdevForm.value.SystemOIDs ? this.snmpdevForm.value.SystemOIDs : "" ) : "" , Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
+      DeviceVars: [this.snmpdevForm ? (this.snmpdevForm.value.DeviceVars ? this.snmpdevForm.value.DeviceVars : "" ) : ""],
       MeasurementGroups: [this.snmpdevForm ? this.snmpdevForm.value.MeasurementGroups : null],
       MeasFilters: [this.snmpdevForm ? this.snmpdevForm.value.MeasFilters : null],
       Description: [this.snmpdevForm ? this.snmpdevForm.value.Description : ''],
@@ -403,6 +409,21 @@ export class SnmpDeviceCfgComponent {
       );
   }
 
+  onChangevarsArray(id) {
+    //Create the array with ID:
+    let varArrayID = this.varsArray.map( x => {return x['ID']})
+    let delEntries = _.differenceWith(varArrayID,id,_.isEqual);
+    let newEntries = _.differenceWith(id,varArrayID,_.isEqual);
+    //Remove detected delEntries
+    _.remove(this.varsArray, function(n) {
+      return delEntries.indexOf(n['ID']) != -1;
+    });
+    //Add new entries
+    for (let a of newEntries) {
+      this.varsArray.push ({'ID': a, 'value': ''});
+    }
+  }
+
   newDevice() {
     //Check for subhidden fields
     if (this.snmpdevForm) {
@@ -413,6 +434,7 @@ export class SnmpDeviceCfgComponent {
     this.getInfluxServersforDevices();
     this.getMeasGroupsforDevices();
     this.getMeasFiltersforDevices();
+    this.getVarCatalogsforDevices();
     this.editmode = "create";
   }
 
@@ -422,11 +444,21 @@ export class SnmpDeviceCfgComponent {
     this.getInfluxServersforDevices();
     this.getMeasGroupsforDevices();
     this.getMeasFiltersforDevices();
+    this.getVarCatalogsforDevices();
 
     this.snmpDeviceService.getDevicesById(id)
       .subscribe(data => {
+        this.varsArray = [];
+        this.selectedVars = [];
         this.snmpdevForm = {};
         this.snmpdevForm.value = data;
+        if (data.DeviceVars) {
+          for (var values of data.DeviceVars) {
+            let id = values.split('=');
+            this.varsArray.push({ 'ID': id[0], 'value': id[1] });
+            this.selectedVars.push(id[0]);
+          }
+        }
         this.oldID = data.ID
         this.setDynamicFields(row.SnmpVersion === '3' ? row.V3SecLevel : row.SnmpVersion);
         this.editmode = "modify"
@@ -456,8 +488,14 @@ export class SnmpDeviceCfgComponent {
     this.viewTestConnectionModal.hide();
     this.editmode = "list";
   }
+
   saveSnmpDev() {
     if (this.snmpdevForm.valid) {
+      let varCatalogsID : Array<any> = [];
+      for (let i of this.varsArray) {
+        varCatalogsID.push(i['ID']+(i['value'] ? '='+i['value'] : ''));
+      }
+      this.snmpdevForm.value['DeviceVars']=varCatalogsID;
       this.snmpDeviceService.addDevice(this.snmpdevForm.value)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
@@ -588,6 +626,19 @@ updateAllSelectedItems(mySelectedArray,field,value, append?) {
         this.measfilters = data
         this.selectfilters = [];
         this.selectfilters =  this.createMultiselectArray(data);
+      },
+      err => console.error(err),
+      () => console.log('DONE')
+      );
+  }
+
+  getVarCatalogsforDevices() {
+    return this.varCatalogService.getVarCatalog(null)
+      .subscribe(
+      data => {
+        this.varcatalogs = data
+        this.selectvarcatalogs = [];
+        this.selectvarcatalogs =  this.createMultiselectArray(data);
       },
       err => console.error(err),
       () => console.log('DONE')
