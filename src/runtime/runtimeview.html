@@ -51,7 +51,7 @@
         <div class="col-md-12" *ngIf="runtime_dev">
             <div class="row">
                 <div class="col-md-6" *ngIf="runtime_dev['DeviceConnected'] !== false">
-                    <div class="panel panel-default">
+                    <div class="panel panel-default col-md-12" style="padding-left: 0px; padding-right: 0px;">
                         <div class="panel-heading"><span class="text-primary glyphicon glyphicon-info-sign" style="margin-top: 2px; margin-right: 10px"></span>SysInfo</div>
                         <div class="panel-body" style="overflow-x: scroll !important">
                             <table class="table-striped table-bordered">
@@ -62,7 +62,7 @@
                             </table>
                         </div>
                     </div>
-                    <div class="panel panel-default">
+                    <div class="panel panel-default col-md-6" style="padding-left: 0px; padding-right: 0px;">
                         <div class="panel-heading"><span class="text-primary glyphicon glyphicon-dashboard" style="margin-top: 2px; margin-right: 10px"></span>Statistics SNMP Device</div>
                         <div class="panel-body">
                             <table class="table-striped table-bordered">
@@ -79,6 +79,19 @@
                                         <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i] | elapsedseconds:3 }}</td>
                                     </tr>
                                 </ng-template>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="panel panel-default col-md-5" style="padding-left: 0px; padding-right: 0px; margin-left:30px">
+                        <div class="panel-heading"><span class="text-primary glyphicon glyphicon-tag" style="margin-top: 2px; margin-right: 10px"></span>Override Catalog Vars</div>
+                        <div class="panel-body">
+                            <table class="table-striped table-bordered">
+                                <ng-container *ngFor="let varmap of runtime_dev['VarMap'] | objectParser" >
+                                    <tr>
+                                        <th style="padding-right:10px"> {{varmap.key}} </th>
+                                        <td style="padding-left:10px">{{varmap.value}}</td>
+                                    </tr>
+                                </ng-container>
                             </table>
                         </div>
                     </div>
