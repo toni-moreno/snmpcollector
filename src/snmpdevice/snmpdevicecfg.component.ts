@@ -539,6 +539,11 @@ updateAllSelectedItems(mySelectedArray,field,value, append?) {
           r = confirm("Changing Device ID from " + this.oldID + " to " + this.snmpdevForm.value.ID + ". Proceed?");
         }
         if (r == true) {
+          let varCatalogsID : Array<any> = [];
+          for (let i of this.varsArray) {
+            varCatalogsID.push(i['ID']+(i['value'] ? '='+i['value'] : ''));
+          }
+          this.snmpdevForm.value['DeviceVars']=varCatalogsID;
           this.snmpDeviceService.editDevice(this.snmpdevForm.value, this.oldID)
             .subscribe(data => { console.log(data) },
             err => console.error(err),
