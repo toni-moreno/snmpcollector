@@ -17,9 +17,10 @@ z-index: 999999;!important">
       </div>
       <ng-container *ngIf="alert.type !== 'success'">
         <div style="display:inline-block">
-          <p style="font-weight: 700;">{{alert.message.statusText}}</p>
+          <p style="font-weight: 700;">{{alert.message.statusText ? alert.message.statusText : 'ERROR'}}</p>
           <span *ngIf="alert.message.status !== 403">{{alert.message['_body']}}</span>
-          <span *ngIf="alert.message.status === 403">{{alert.message.url}}</span>
+          <span *ngIf="alert.message.status === 403">{{alert.message}}</span>
+          <span *ngIf="alert.message.status === 504 || !alert.message.status">{{alert.message}}</span>
         </div>
       </ng-container>
 
