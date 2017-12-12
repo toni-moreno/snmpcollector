@@ -10,27 +10,22 @@ export class InfluxServerService {
     constructor(public httpAPI: HttpService) {
     }
 
+    parseJSON(key,value) {
+        if ( key == 'Port'  ||
+        key == 'Timeout' ) {
+          return parseInt(value);
+        }
+        return value;
+    }
+
     addInfluxServer(dev) {
-        return this.httpAPI.post('/api/cfg/influxservers',JSON.stringify(dev,function (key,value) {
-                if ( key == 'Port'  ||
-                key == 'Timeout' ) {
-                  return parseInt(value);
-                }
-                return value;
-        }))
+        return this.httpAPI.post('/api/cfg/influxservers',JSON.stringify(dev,this.parseJSON))
         .map( (responseData) => responseData.json());
 
     }
 
     editInfluxServer(dev, id, hideAlert?) {
-        return this.httpAPI.put('/api/cfg/influxservers/'+id,JSON.stringify(dev,function (key,value) {
-            if ( key == 'Port'  ||
-            key == 'Timeout' ) {
-              return parseInt(value);
-            }
-            return value;
-
-        }),null,hideAlert)
+        return this.httpAPI.put('/api/cfg/influxservers/'+id,JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
@@ -89,16 +84,8 @@ export class InfluxServerService {
 
     testInfluxServer(influxserver,hideAlert?) {
       // return an observable
-      return this.httpAPI.post('/api/cfg/influxservers/ping/',JSON.stringify(influxserver,function (key,value) {
-          if ( key == 'Port'  ||
-          key == 'Timeout' ) {
-            return parseInt(value);
-          }
-          return value;
-      }), null, hideAlert)
-      .map(
-        (responseData) => responseData.json()
-      );
+      return this.httpAPI.post('/api/cfg/influxservers/ping/',JSON.stringify(influxserver,this.parseJSON), null, hideAlert)
+      .map((responseData) => responseData.json());
     };
 
     deleteInfluxServer(id : string, hideAlert?) {

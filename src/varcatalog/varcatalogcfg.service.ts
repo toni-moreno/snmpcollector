@@ -10,27 +10,22 @@ export class VarCatalogService {
     constructor(public httpAPI: HttpService) {
     }
 
+    parseJSON(key,value) {
+        if ( key == 'Port'  ||
+        key == 'Timeout' ) {
+          return parseInt(value);
+        }
+        return value; 
+    }
+
     addVarCatalog(dev) {
-        return this.httpAPI.post('/api/cfg/varcatalog',JSON.stringify(dev,function (key,value) {
-                if ( key == 'Port'  ||
-                key == 'Timeout' ) {
-                  return parseInt(value);
-                }
-                return value;
-        }))
+        return this.httpAPI.post('/api/cfg/varcatalog',JSON.stringify(dev,this.parseJSON))
         .map( (responseData) => responseData.json());
 
     }
 
     editVarCatalog(dev, id, hideAlert?) {
-        return this.httpAPI.put('/api/cfg/varcatalog/'+id,JSON.stringify(dev,function (key,value) {
-            if ( key == 'Port'  ||
-            key == 'Timeout' ) {
-              return parseInt(value);
-            }
-            return value;
-
-        }),null,hideAlert)
+        return this.httpAPI.put('/api/cfg/varcatalog/'+id,JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 

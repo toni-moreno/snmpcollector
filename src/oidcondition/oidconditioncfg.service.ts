@@ -11,22 +11,19 @@ export class OidConditionService {
         console.log('Task Service created.', httpAPI);
     }
 
-    addCondition(dev) {
-        return this.httpAPI.post('/api/cfg/oidcondition',JSON.stringify(dev,function (key,value) {
-            if ( key == 'IsMultiple' ) return ( value === "true" || value === true);
-            return value;
+    parseJSON(key,value) {
+        if ( key == 'IsMultiple' ) return ( value === "true" || value === true);
+        return value;     
+    }
 
-        }))
+    addCondition(dev) {
+        return this.httpAPI.post('/api/cfg/oidcondition',JSON.stringify(dev,this.parseJSON))
         .map( (responseData) => responseData.json());
     }
 
     editCondition(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
-        return this.httpAPI.put('/api/cfg/oidcondition/'+id,JSON.stringify(dev,function (key,value) {
-            if ( key == 'IsMultiple' ) return ( value === "true" || value === true);
-            return value;
-
-        }),null,hideAlert)
+        return this.httpAPI.put('/api/cfg/oidcondition/'+id,JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 

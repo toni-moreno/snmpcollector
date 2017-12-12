@@ -11,19 +11,19 @@ export class MeasGroupService {
         console.log('Task Service created.', httpAPI);
     }
 
+    parseJSON(key,value) {
+        return value
+    }
+
     addMeasGroup(dev) {
-        return this.httpAPI.post('/api/cfg/measgroup',JSON.stringify(dev,function (key,value) {
-            return value;
-        }))
+        return this.httpAPI.post('/api/cfg/measgroup',JSON.stringify(dev,this.parseJSON))
         .map( (responseData) => responseData.json());
     }
 
     editMeasGroup(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
-        return this.httpAPI.put('/api/cfg/measgroup/'+id,JSON.stringify(dev,function (key,value) {
-            return value;
-        }),null,hideAlert)
+        return this.httpAPI.put('/api/cfg/measgroup/'+id,JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 

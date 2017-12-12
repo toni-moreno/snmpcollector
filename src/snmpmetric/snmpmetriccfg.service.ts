@@ -11,32 +11,24 @@ export class SnmpMetricService {
         console.log('Task Service created.', httpAPI);
     }
 
-    addMetric(dev) {
-        return this.httpAPI.post('/api/cfg/metric',JSON.stringify(dev,function (key,value) {
-            if (key == 'Scale' ||
-            key == 'Shift') {
-                return parseFloat(value);
-            };
-            if (key == 'GetRate' ||
-            key == 'IsTag' ) return ( value === "true" || value === true);
-            return value;
+    parseJSON(key,value) {
+        if (key == 'Scale' ||
+        key == 'Shift') {
+            return parseFloat(value);
+        };
+        if (key == 'GetRate' ||
+        key == 'IsTag' ) return ( value === "true" || value === true);
+        return value; 
+    }
 
-        }))
+    addMetric(dev) {
+        return this.httpAPI.post('/api/cfg/metric',JSON.stringify(dev,this.parseJSON))
         .map( (responseData) => responseData.json());
     }
 
     editMetric(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
-        return this.httpAPI.put('/api/cfg/metric/'+id,JSON.stringify(dev,function (key,value) {
-            if (key == 'Scale' ||
-            key == 'Shift') {
-                return parseFloat(value);
-            };
-            if (key == 'GetRate' ||
-            key == 'IsTag' ) return ( value === "true" || value === true);
-            return value;
-
-        }),null, hideAlert)
+        return this.httpAPI.put('/api/cfg/metric/'+id,JSON.stringify(dev,this.parseJSON),null, hideAlert)
         .map( (responseData) => responseData.json());
     }
 

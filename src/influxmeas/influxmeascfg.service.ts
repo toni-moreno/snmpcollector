@@ -12,23 +12,19 @@ export class InfluxMeasService {
         console.log('Task Service created.', httpAPI);
     }
 
-    addMeas(dev) {
-        return this.httpAPI.post('/api/cfg/measurement',JSON.stringify(dev,function (key,value) {
+    parseJSON(key,value) {
+        if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
+        return value;
+    }
 
-            if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
-            return value;
-        }))
+    addMeas(dev) {
+        return this.httpAPI.post('/api/cfg/measurement',JSON.stringify(dev,this.parseJSON))
         .map( (responseData) => responseData.json());
     }
 
     editMeas(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
-        return this.httpAPI.put('/api/cfg/measurement/'+id,JSON.stringify(dev,function (key,value) {
-
-          if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
-          return value;
-
-      }),null,hideAlert)
+        return this.httpAPI.put('/api/cfg/measurement/'+id,JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 

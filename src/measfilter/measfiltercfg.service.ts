@@ -11,27 +11,22 @@ export class MeasFilterService {
         console.log('Task Service created.', httpAPI);
     }
 
+    parseJSON(key,value) {
+        if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
+        if ( key == 'IDMeasurementCfg') {
+            if ( value == "" ) return null
+        }
+        return value;    
+    }
+
     addMeasFilter(dev) {
-        return this.httpAPI.post('/api/cfg/measfilters',JSON.stringify(dev,function (key,value) {
-                if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
-                if ( key == 'IDMeasurementCfg') {
-                    if ( value == "" ) return null
-                }
-                return value;
-        }))
+        return this.httpAPI.post('/api/cfg/measfilters',JSON.stringify(dev,this.parseJSON))
         .map( (responseData) => responseData.json());
     }
 
     editMeasFilter(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
-        return this.httpAPI.put('/api/cfg/measfilters/'+id,JSON.stringify(dev,function (key,value) {
-            if ( key == 'EnableAlias' ) return ( value === "true" || value === true);
-            if ( key == 'IDMeasurementCfg') {
-                if ( value == "" ) return null
-            }
-            return value;
-
-        }),null,hideAlert)
+        return this.httpAPI.put('/api/cfg/measfilters/'+id,JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 

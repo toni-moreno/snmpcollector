@@ -11,62 +11,41 @@ export class SnmpDeviceService {
         console.log('Task Service created.', httpAPI);
     }
 
+    parseJSON(key,value) {
+        console.log("KEY: "+key+" Value: "+value);
+        if ( key == 'Port' ||
+        key == 'Retries' ||
+        key == 'Timeout' ||
+        key == 'Repeat' ||
+        key == 'Freq' ||
+        key == 'MaxRepetitions'  ||
+        key == 'UpdateFltFreq') {
+            return parseInt(value);
+        }
+        if ( key == 'Active' ||
+        key == 'SnmpDebug' ||
+        key == 'DisableBulk' ||
+        key == 'ConcurrentGather') return ( value === "true" || value === true);
+        if ( key == 'ExtraTags' ||
+             key == 'SystemOIDs' ||
+             key == 'DeviceVars' ) return  String(value).split(',');
+        if ( key == 'MeasFilters' ||
+        key == 'MeasurementGroups') {
+            if (value == "") return null;
+            else return value;
+        }
+        return value;
+    }
+
     addDevice(dev) {
-        return this.httpAPI.post('/api/cfg/snmpdevice',JSON.stringify(dev,function (key,value) {
-            console.log("KEY: "+key+" Value: "+value);
-            if ( key == 'Port' ||
-            key == 'Retries' ||
-            key == 'Timeout' ||
-            key == 'Repeat' ||
-            key == 'Freq' ||
-            key == 'MaxRepetitions'  ||
-            key == 'UpdateFltFreq') {
-                return parseInt(value);
-            }
-            if ( key == 'Active' ||
-            key == 'SnmpDebug' ||
-            key == 'DisableBulk' ||
-            key == 'ConcurrentGather') return ( value === "true" || value === true);
-            if ( key == 'ExtraTags' ||
-                 key == 'SystemOIDs' ||
-                 key == 'DeviceVars' ) return  String(value).split(',');
-            if ( key == 'MeasFilters' ||
-            key == 'MeasurementGroups') {
-                if (value == "") return null;
-                else return value;
-            }
-            return value;
-        }))
+        return this.httpAPI.post('/api/cfg/snmpdevice',JSON.stringify(dev,this.parseJSON))
         .map( (responseData) => responseData.json());
     }
 
     editDevice(dev, id, hideAlert?) {
         console.log("DEV: ",dev);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
-        return this.httpAPI.put('/api/cfg/snmpdevice/'+id,JSON.stringify(dev,function (key,value) {
-            if ( key == 'Port' ||
-            key == 'Retries' ||
-            key == 'Timeout' ||
-            key == 'Repeat' ||
-            key == 'Freq' ||
-            key == 'MaxRepetitions'  ||
-            key == 'UpdateFltFreq') {
-                return parseInt(value);
-            }
-            if ( key == 'Active' ||
-            key == 'SnmpDebug' ||
-            key == 'DisableBulk' ||
-            key == 'ConcurrentGather') return ( value === "true" || value === true);
-            if ( key == 'ExtraTags' ||
-                 key == 'SystemOIDs' ||
-                 key == 'DeviceVars' ) return  String(value).split(',');
-            if ( key == 'MeasFilters' ||
-            key == 'MeasurementGroups') {
-                if (value == "") return null;
-                else return value;
-            }
-            return value;
-        }),null,hideAlert)
+        return this.httpAPI.put('/api/cfg/snmpdevice/'+id,JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
@@ -135,58 +114,12 @@ export class SnmpDeviceService {
 
     pingDevice(dev, hideAlert?) {
         console.log(dev);
-        return this.httpAPI.post('/api/rt/agent/snmpconsole/ping/',JSON.stringify(dev,function (key,value) {
-            if ( key == 'Port' ||
-            key == 'Retries' ||
-            key == 'Timeout' ||
-            key == 'Repeat' ||
-            key == 'Freq' ||
-            key == 'MaxRepetitions'  ||
-            key == 'UpdateFltFreq') {
-                return parseInt(value);
-            }
-            if ( key == 'Active' ||
-            key == 'SnmpDebug' ||
-            key == 'DisableBulk' ||
-            key == 'ConcurrentGather') return ( value === "true" || value === true);
-            if ( key == 'ExtraTags' ||
-                 key == 'SystemOIDs' ||
-                 key == 'DeviceVars' ) return  String(value).split(',');
-            if ( key == 'MeasFilters' ||
-            key == 'MeasurementGroups') {
-                if (value == "") return null;
-                else return value;
-            }
-            return value;
-        }),null,hideAlert)
+        return this.httpAPI.post('/api/rt/agent/snmpconsole/ping/',JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
     sendQuery(dev,getMode,oid, hideAlert?) {
-        return this.httpAPI.post('/api/rt/agent/snmpconsole/query/'+getMode+'/oid/'+oid,JSON.stringify(dev,function (key,value) {
-            if ( key == 'Port' ||
-            key == 'Retries' ||
-            key == 'Timeout' ||
-            key == 'Repeat' ||
-            key == 'Freq' ||
-            key == 'MaxRepetitions'  ||
-            key == 'UpdateFltFreq') {
-                return parseInt(value);
-            }
-            if ( key == 'Active' ||
-            key == 'SnmpDebug' ||
-            key == 'DisableBulk' ||
-            key == 'ConcurrentGather') return ( value === "true" || value === true);
-            if ( key == 'ExtraTags' ||
-                 key == 'SystemOIDs' ||
-                 key == 'DeviceVars' ) return  String(value).split(',');
-            if ( key == 'MeasFilters' ||
-            key == 'MeasurementGroups') {
-                if (value == "") return null;
-                else return value;
-            }
-            return value;
-        }),null,hideAlert)
+        return this.httpAPI.post('/api/rt/agent/snmpconsole/query/'+getMode+'/oid/'+oid,JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 }

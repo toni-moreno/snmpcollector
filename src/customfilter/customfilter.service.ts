@@ -8,22 +8,22 @@ declare var _: any;
 @Injectable()
 export class CustomFilterService {
 
+  parseJSON (key,value) {
+    return value;
+  }
+
   constructor(public httpAPI: HttpService) {
     console.log('Task Service created.', httpAPI);
   }
 
   addCustomFilter(dev) {
-    return this.httpAPI.post('/api/cfg/customfilter', JSON.stringify(dev, function(key, value) {
-      return value;
-    }))
+    return this.httpAPI.post('/api/cfg/customfilter', JSON.stringify(dev, this.parseJSON))
       .map((responseData) => responseData.json());
   }
 
   editCustomFilter(dev, id, hideAlert?) {
     console.log("DEV: ", dev);
-    return this.httpAPI.put('/api/cfg/customfilter/' + id, JSON.stringify(dev, function(key, value) {
-      return value;
-    }),null,hideAlert)
+    return this.httpAPI.put('/api/cfg/customfilter/' + id, JSON.stringify(dev,this.parseJSON),null,hideAlert)
       .map((responseData) => responseData.json());
   }
 
