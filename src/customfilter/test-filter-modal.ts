@@ -507,7 +507,7 @@ export class TestFilterModal implements OnInit {
   pingDevice(formValues) {
     this.alertHandler = {};
     this.isRequesting = true;
-    this.myObservable = this.snmpDeviceService.pingDevice(formValues)
+    this.myObservable = this.snmpDeviceService.pingDevice(formValues,true)
       .subscribe(data => {
         this.alertHandler = { msg: 'Test succesfull ' + data['SysDescr'], type: 'success', closable: true };
         this.isConnected = true;

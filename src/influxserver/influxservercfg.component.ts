@@ -395,7 +395,7 @@ export class InfluxServerCfgComponent {
 
 
   testInfluxServerConnection() {
-    this.influxServerService.testInfluxServer(this.influxserverForm.value)
+    this.influxServerService.testInfluxServer(this.influxserverForm.value, true)
     .subscribe(
     data =>  this.alertHandler = {msg: 'Influx Version: '+data['Message'], result : data['Result'], elapsed: data['Elapsed'], type: 'success', closable: true},
     err => {
