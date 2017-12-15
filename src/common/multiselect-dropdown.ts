@@ -243,7 +243,9 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
             this.title = this.texts.defaultTitle;
         } else if (this.settings.dynamicTitleMaxItems >= this.numSelected) {
             if (this.settings.singleSelect === true) {
-                this.title = this.model.toString();
+                this.title = this.options
+                .filter((option) => this.model === option.id)
+                .map((fil) => fil.name).toString();
             } else {
                 this.title = this.options
                 .filter((option: IMultiSelectOption) => this.model && this.model.indexOf(option.id) > -1)

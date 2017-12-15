@@ -27,10 +27,11 @@ export class SnmpDeviceService {
         key == 'DisableBulk' ||
         key == 'ConcurrentGather') return ( value === "true" || value === true);
         if ( key == 'ExtraTags' ||
-             key == 'SystemOIDs' ||
-             key == 'DeviceVars' ) return  String(value).split(',');
+             key == 'SystemOIDs')
+             return  String(value).split(',');
         if ( key == 'MeasFilters' ||
-        key == 'MeasurementGroups') {
+        key == 'MeasurementGroups' ||
+        key == 'DeviceVars') {
             if (value == "") return null;
             else return value;
         }

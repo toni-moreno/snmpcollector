@@ -154,7 +154,7 @@ export class SnmpDeviceCfgComponent {
       DeviceTagValue: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagValue : 'id'],
       ExtraTags: [this.snmpdevForm ? (this.snmpdevForm.value.ExtraTags ? this.snmpdevForm.value.ExtraTags : "" ) : "" , Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
       SystemOIDs: [this.snmpdevForm ? (this.snmpdevForm.value.SystemOIDs ? this.snmpdevForm.value.SystemOIDs : "" ) : "" , Validators.compose([ValidationService.noWhiteSpaces, ValidationService.extraTags])],
-      DeviceVars: [this.snmpdevForm ? (this.snmpdevForm.value.DeviceVars ? this.snmpdevForm.value.DeviceVars : "" ) : ""],
+      DeviceVars: [this.snmpdevForm ? this.snmpdevForm.value.DeviceVars : null],
       MeasurementGroups: [this.snmpdevForm ? this.snmpdevForm.value.MeasurementGroups : null],
       MeasFilters: [this.snmpdevForm ? this.snmpdevForm.value.MeasFilters : null],
       Description: [this.snmpdevForm ? this.snmpdevForm.value.Description : ''],
