@@ -1,6 +1,4 @@
 <h2>Influx Servers</h2>
-<h4 class="info-mode">{{ editmode | uppercase}} </h4>
-<hr>
 <ng-container [ngSwitch]="editmode">
   <ng-template ngSwitchCase="list">
     <test-modal #viewModal titleName='InfluxDB Servers'></test-modal>
@@ -34,7 +32,25 @@
   </ng-template>
   <ng-template ngSwitchDefault>
     <form [formGroup]="influxserverForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveInfluxServer() : updateInfluxServer()">
-      <div class="form-group">
+      <ng-container>
+        <div class="row well well-sm">
+          <h4 style="display:inline">
+          <i class="glyphicon glyphicon-cog text-info"></i> {{ editmode | uppercase}}
+        </h4>
+        <div class="pull-right" style="margin-right: 20px">
+          <div style="display:inline" tooltip='Test Connection' container=body><button class="btn btn-info" type="button" (click)="testInfluxServerConnection()" [disabled]="!influxserverForm.valid"> <i class="glyphicon glyphicon-flash"></i></button></div>
+          <div style="display:inline" tooltip='Submit' container=body><button class="btn btn-success" type="submit" [disabled]="!influxserverForm.valid"> <i class="glyphicon glyphicon-ok-circle"></i></button></div>
+          <div style="display:inline" tooltip='Reset' container=body><button class="btn btn-warning" type="reset" [disabled]="!influxserverForm.dirty"><i class="glyphicon glyphicon-ban-circle"></i> </button></div>
+          <div style="display:inline" tooltip='Cancel' container=body><button class="btn btn-danger" type="button" (click)="cancelEdit()"><i class="glyphicon glyphicon-remove-circle"></i></button></div>
+        </div>
+      </div>
+    </ng-container>
+    <div class="form-fixed-height">
+    <div class="well well-sm">
+      <span class="editsection">
+        Server Settings
+      </span>
+      <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="ID">ID</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of InfluxDB server"></i>
         <div class="col-sm-9">
@@ -42,7 +58,6 @@
           <control-messages [control]="influxserverForm.controls.ID"></control-messages>
         </div>
       </div>
-
       <div class="form-group">
         <label class="control-label col-sm-2" for="Host">Host</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Address of InfluxServer"></i>
@@ -51,7 +66,6 @@
           <control-messages [control]="influxserverForm.controls.Host"></control-messages>
         </div>
       </div>
-
       <div class="form-group">
         <label class="control-label col-sm-2" for="Port">Port</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to InfluxDB server {{influxserverForm.value.Host}}"></i>
@@ -60,8 +74,26 @@
           <control-messages [control]="influxserverForm.controls.Port"></control-messages>
         </div>
       </div>
-
       <div class="form-group">
+        <label class="control-label col-sm-2" for="Timeout">Timeout</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Time in seconds that client will wait to a complete write transaction to be completed"></i>
+        <div class="col-sm-9">
+          <input formControlName="Timeout" id="Timeout" [ngModel]="influxserverForm.value.Timeout"/>
+          <control-messages [control]="influxserverForm.controls.Timeout"></control-messages>
+        </div>
+      </div>
+      <div class="form-group">
+      <div *ngIf="alertHandler" class="col-md-offset-2 col-sm-5" >
+        <div [ngClass]="['panel-body', 'bg-'+alertHandler.type,'text-'+alertHandler.type]">
+          <span>{{alertHandler.result}} - Ping elapsed: {{alertHandler.elapsed / 1000000 }} ms</span>
+          <p>{{alertHandler.msg}}</p>
+        </div>
+      </div>
+    </div>
+    </div>
+    <div class="well well-sm">
+      <span class="editsection">Database Settings</span>
+      <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="DB">DB</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="InfluxDB Database name"></i>
         <div class="col-sm-9">
@@ -69,7 +101,6 @@
           <control-messages [control]="influxserverForm.controls.DB"></control-messages>
         </div>
       </div>
-
       <div class="form-group">
         <label class="control-label col-sm-2" for="User">User</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentification user to the DB"></i>
@@ -78,7 +109,6 @@
           <control-messages [control]="influxserverForm.controls.User"></control-messages>
         </div>
       </div>
-
       <div class="form-group">
         <label class="control-label col-sm-2" for="Password">Password</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Authentification password to the DB of the user {{influxserverForm.value.User}}"></i>
@@ -88,8 +118,6 @@
           <control-messages [control]="influxserverForm.controls.Password"></control-messages>
         </div>
       </div>
-
-
       <div class="form-group">
         <label class="control-label col-sm-2" for="Retention">Retention Policy</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retention policy name to write on. RP must exist on the DB {{influxserverForm.value.DB}}"></i>
@@ -98,7 +126,6 @@
           <control-messages [control]="influxserverForm.controls.Retention"></control-messages>
         </div>
       </div>
-
       <div class="form-group">
         <label class="control-label col-sm-2" for="Precision">Timestamp Precision</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Sets the precision for the supplied Unix time values (valid values are [ns,u,ms,s,m,h] ). SNMP are a slow gather protocol so default snmpcollector precision are in seconds"></i>
@@ -114,17 +141,11 @@
           <control-messages [control]="influxserverForm.controls.Precision"></control-messages>
         </div>
       </div>
+  </div>
 
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="Timeout">Timeout</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Time in second that client will wait to a complete write transaction to be complete"></i>
-        <div class="col-sm-9">
-          <input formControlName="Timeout" id="Timeout" [ngModel]="influxserverForm.value.Timeout"/>
-          <control-messages [control]="influxserverForm.controls.Timeout"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
+  <div class="well well-sm">
+    <span class="editsection">Extra Settings</span>
+      <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="UserAgent">User Agent</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="UserAgent is the http User Agent, defaults to &quot;InfluxDBClient&quot; (useful for debugin data write in the server site)"></i>
         <div class="col-sm-9">
@@ -132,7 +153,6 @@
           <control-messages [control]="influxserverForm.controls.UserAgent"></control-messages>
         </div>
       </div>
-
       <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the InfluxDB Server"></i>
@@ -141,20 +161,8 @@
           <control-messages [control]="influxserverForm.controls.Description"></control-messages>
         </div>
       </div>
-      <div class="col-sm-2">
-        <button type="button"(click)="testInfluxServerConnection()">Test Connection</button>
-      </div>
-      <div class="col-sm-offset-4 col-sm-5">
-        <button type="submit" [disabled]="!influxserverForm.valid">Submit</button>
-        <button type="reset" [disabled]="!influxserverForm.dirty">Reset</button>
-        <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
-      </div>
-      <div *ngIf="alertHandler" class="col-md-4">
-        <div [ngClass]="['panel-body', 'bg-'+alertHandler.type,'text-'+alertHandler.type]">
-           <span>{{alertHandler.result}} - Ping elapsed: {{alertHandler.elapsed / 1000000 }} ms</span>
-           <p>{{alertHandler.msg}}</p>
-        </div>
-      </div>
-    </form>
+    </div>
+  </div>
+</form>
   </ng-template>
 </ng-container>

@@ -1,6 +1,4 @@
 <h2>SNMP Devices</h2>
-<h4 class="info-mode">{{ editmode | uppercase}} </h4>
-<hr>
 <ng-container [ngSwitch]="editmode">
     <ng-template ngSwitchCase="list">
     <test-modal #viewModal titleName='Device'></test-modal>
@@ -34,8 +32,31 @@
   </ng-template>
 
     <ng-template ngSwitchDefault>
+    <test-connection-modal #viewTestConnectionModal titleName='Test connection for:'>
+    </test-connection-modal>
+    <test-filter-modal #viewTestFilterModal titleName='Filter connection:' [formValues]="snmpdevForm.value">
+    </test-filter-modal>
     <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveSnmpDev() : updateSnmpDev()">
-      <div class="form-group">
+      <ng-container>
+        <div class="row well well-sm">
+          <h4 style="display:inline">
+          <i class="glyphicon glyphicon-cog text-info"></i> {{ editmode | uppercase}}
+        </h4>
+        <div class="pull-right" style="margin-right: 20px">
+          <div style="display:inline" tooltip='Create Custom Filter' container=body> <button class="btn btn-primary" type="button" (click)="showFilterModal()" [disabled]="!snmpdevForm.valid"> <i class="glyphicon glyphicon-random"></i></button></div>
+          <div style="display:inline" tooltip='Test Connection' container=body><button class="btn btn-info" type="button" (click)="showTestConnectionModal()" [disabled]="!snmpdevForm.valid"> <i class="glyphicon glyphicon-flash"></i></button></div>
+          <div style="display:inline" tooltip='Submit' container=body><button class="btn btn-success" type="submit" [disabled]="!snmpdevForm.valid"> <i class="glyphicon glyphicon-ok-circle"></i></button></div>
+          <div style="display:inline" tooltip='Reset' container=body><button class="btn btn-warning" type="reset" [disabled]="!snmpdevForm.dirty"><i class="glyphicon glyphicon-ban-circle"></i> </button></div>
+          <div style="display:inline" tooltip='Cancel' container=body><button class="btn btn-danger" type="button" (click)="cancelEdit()"><i class="glyphicon glyphicon-remove-circle"></i></button></div>
+        </div>
+      </div>
+    </ng-container>
+    <div class="form-fixed-height">
+        <div class="well well-sm">
+          <span class="editsection">
+            Core Settings
+          </span>
+          <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="ID">ID</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of SNMP Device"></i>
         <div class="col-sm-9">
@@ -44,6 +65,23 @@
         </div>
       </div>
       <div class="form-group">
+        <label class="control-label col-sm-2" for="Active">Active</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Active on Collector reboot"></i>
+        <div class="col-sm-9">
+          <select formControlName="Active" id="Active" [ngModel]="snmpdevForm.value.Active">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+          <control-messages [control]="snmpdevForm.controls.Active"></control-messages>
+        </div>
+      </div>
+    </div>
+
+    <div class="well well-sm">
+      <span class="editsection">
+        Device Settings
+      </span>
+      <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="host">Host</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Host (IP or FQDN) of SNMP device to connnect by SNMP protocol"></i>
         <div class="col-sm-9">
@@ -88,19 +126,44 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="SnmpDebug">Active</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Active on Collector reboot"></i>
+  </div>
+      <div class="well well-sm">
+        <span class="editsection">
+          Debug Settings
+        </span>
+        <div class="form-group" style="margin-top: 25px">
+        <label class="control-label col-sm-2" for="LogLevel">Log level</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Severity log level"></i>
         <div class="col-sm-9">
-          <select formControlName="Active" id="Active" [ngModel]="snmpdevForm.value.Active">
+          <select formControlName="LogLevel" id="LogLevel" [ngModel]="snmpdevForm.value.LogLevel">
+            <option value="panic">Panic</option>
+            <option value="fatal">Fatal</option>
+            <option value="error">Error</option>
+            <option value="warn">Warning</option>
+            <option selected="selected" value="info">Info</option>
+            <option value="debug">Debug</option>
+          </select>
+          <control-messages [control]="snmpdevForm.controls.LogLevel"></control-messages>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="SnmpDebug">SnmpDebug</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Show SNMP debug"></i>
+        <div class="col-sm-9">
+          <select formControlName="SnmpDebug" id="SnmpDebug" [ngModel]="snmpdevForm.value.SnmpDebug">
             <option value="true">True</option>
             <option value="false">False</option>
           </select>
-          <control-messages [control]="snmpdevForm.controls.Active"></control-messages>
+          <control-messages [control]="snmpdevForm.controls.SnmpDebug"></control-messages>
         </div>
       </div>
+  </div>
 
-      <div class="form-group">
+  <div class="well well-sm">
+    <span class="editsection">
+      Polling Settings
+    </span>
+    <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="SnmpVersion">SnmpVersion</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="SNMP Version (1,2c,3)"></i>
         <div class="col-sm-9">
@@ -228,7 +291,6 @@
             <control-messages [control]="snmpdevForm.controls.V3ContextName"></control-messages>
           </div>
         </div>
-
       </div>
 
       <div class="form-group">
@@ -260,41 +322,17 @@
           <control-messages [control]="snmpdevForm.controls.ConcurrentGather"></control-messages>
         </div>
       </div>
-
-      <div class="form-group">
+    </div>
+    <div class="well well-sm">
+      <span class="editsection">
+        Data Settings
+      </span>
+      <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="OutDB">InfluxDB Server</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="InfluxDB server"></i>
         <div class="col-sm-9">
           <ss-multiselect-dropdown [options]="selectinfluxservers" formControlName="OutDB" [texts]="myTexts" [settings]="mySettingsInflux" [ngModel]="snmpdevForm.value.OutDB"></ss-multiselect-dropdown>
           <control-messages [control]="snmpdevForm.controls.OutDB"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="LogLevel">Log level</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Severity log level"></i>
-        <div class="col-sm-9">
-          <select formControlName="LogLevel" id="LogLevel" [ngModel]="snmpdevForm.value.LogLevel">
-            <option value="panic">Panic</option>
-            <option value="fatal">Fatal</option>
-            <option value="error">Error</option>
-            <option value="warn">Warning</option>
-            <option selected="selected" value="info">Info</option>
-            <option value="debug">Debug</option>
-          </select>
-          <control-messages [control]="snmpdevForm.controls.LogLevel"></control-messages>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="control-label col-sm-2" for="SnmpDebug">SnmpDebug</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Show SNMP debug"></i>
-        <div class="col-sm-9">
-          <select formControlName="SnmpDebug" id="SnmpDebug" [ngModel]="snmpdevForm.value.SnmpDebug">
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
-          <control-messages [control]="snmpdevForm.controls.SnmpDebug"></control-messages>
         </div>
       </div>
 
@@ -347,7 +385,7 @@
                   <div class="input-group-addon">
                     <span>{{varSingle.ID}}</span>
                   </div>
-                  <input [(ngModel)]="varsArray[i].value" [ngModelOptions]="{standalone: true}"/>
+                  <input #mytem [(ngModel)]="varsArray[i].value" [ngModelOptions]="{standalone: true}"/>
               </div>
             </div>
           </div>
@@ -370,8 +408,12 @@
           <control-messages [control]="snmpdevForm.controls.MeasFilters"></control-messages>
         </div>
       </div>
-
-      <div class="form-group">
+    </div>
+      <div class="well well-sm">
+        <span class="editsection">
+          Extra Settings
+        </span>
+        <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Device"></i>
         <div class="col-sm-9">
@@ -379,24 +421,8 @@
           <control-messages [control]="snmpdevForm.controls.Description"></control-messages>
         </div>
       </div>
-
-      <div class="col-sm-2 col-md-offset-1">
-        <button type="button" [disabled]="!snmpdevForm.valid" (click)="showTestConnectionModal()">Test Connection</button>
-      </div>
-      <test-connection-modal #viewTestConnectionModal titleName='Test connection for:'>
-      </test-connection-modal>
-      <test-filter-modal #viewTestFilterModal titleName='Filter connection:' [formValues]="snmpdevForm.value">
-      </test-filter-modal>
-      <div class="col-sm-2">
-        <button type="button" [disabled]="!snmpdevForm.valid" (click)="showFilterModal()">Filter Connection</button>
-      </div>
-
-
-      <div class="col-sm-offset-2 col-sm-3">
-        <button type="submit" [disabled]="!snmpdevForm.valid">Submit</button>
-        <button type="reset" [disabled]="!snmpdevForm.dirty">Reset</button>
-        <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
-      </div>
+    </div>
+  </div>
     </form>
   </ng-template>
 </ng-container>
