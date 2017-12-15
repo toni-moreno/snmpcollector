@@ -1,6 +1,4 @@
 <h2>Influx Measurements</h2>
-<h4 class="info-mode">{{ editmode | uppercase}} </h4>
-<hr>
 <ng-container [ngSwitch]="editmode">
   <ng-template ngSwitchCase="list">
     <test-modal #viewModal titleName='Measurements'></test-modal>
@@ -36,8 +34,24 @@
 
   <ng-template ngSwitchDefault>
     <form [formGroup]="influxmeasForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveInfluxMeas() : updateInfluxMeas()">
-
-      <div class="form-group">
+    <ng-container>
+      <div class="row well well-sm">
+        <h4 style="display:inline">
+        <i class="glyphicon glyphicon-cog text-info"></i> {{ editmode | uppercase}}
+      </h4>
+      <div class="pull-right" style="margin-right: 20px">
+        <div style="display:inline" tooltip='Submit' container=body><button class="btn btn-success" type="submit" [disabled]="!influxmeasForm.valid"> <i class="glyphicon glyphicon-ok-circle"></i></button></div>
+        <div style="display:inline" tooltip='Reset' container=body><button class="btn btn-warning" type="reset" [disabled]="!influxmeasForm.dirty"><i class="glyphicon glyphicon-ban-circle"></i> </button></div>
+        <div style="display:inline" tooltip='Cancel' container=body><button class="btn btn-danger" type="button" (click)="cancelEdit()"><i class="glyphicon glyphicon-remove-circle"></i></button></div>
+      </div>
+    </div>
+  </ng-container>
+  <div class="form-fixed-height">
+      <div class="well well-sm">
+        <span class="editsection">
+          Core Settings
+        </span>
+        <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="ID">ID</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of measurement"></i>
         <div class="col-sm-9">
@@ -53,8 +67,13 @@
           <control-messages [control]="influxmeasForm.controls.Name"></control-messages>
         </div>
       </div>
+    </div>
 
-      <div class="form-group">
+      <div class="well well-sm">
+        <span class="editsection">
+          Measurement Settings
+        </span>
+        <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="GetMode">GetMode</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Different mode to get the values. On 'value' the measurement collects many values as fields have. On 'indexed' the measurement collects many values as many fields finds on the indexOID request"></i>
         <div class="col-sm-9">
@@ -150,8 +169,12 @@
           </div>
         </div>
       </div>
-
-      <div class="form-group">
+    </div>
+      <div class="well well-sm">
+        <span class="editsection">
+          Extra Settings
+        </span>
+        <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Measurement Group"></i>
         <div class="col-sm-9">
@@ -159,12 +182,8 @@
           <control-messages [control]="influxmeasForm.controls.Description"></control-messages>
         </div>
       </div>
-
-      <div class="col-sm-offset-4 col-sm-6">
-        <button type="submit" [disabled]="!influxmeasForm.valid">Submit</button>
-        <button type="reset" [disabled]="!influxmeasForm.dirty">Reset</button>
-        <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
       </div>
-    </form>
+  </div>
+</form>
   </ng-template>
 </ng-container>

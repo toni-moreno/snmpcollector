@@ -1,6 +1,4 @@
 <h2>Variable Catalog</h2>
-<h4 class="info-mode">{{ editmode | uppercase}} </h4>
-<hr>
 <ng-container [ngSwitch]="editmode">
     <ng-template ngSwitchCase="list">
         <test-modal #viewModal titleName='Variable Catalog'></test-modal>
@@ -35,7 +33,24 @@
 </ng-template>
 <ng-template ngSwitchDefault>
     <form [formGroup]="varcatalogForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveVarCatalog() : updateVarCatalog()">
-        <div class="form-group">
+      <ng-container>
+        <div class="row well well-sm">
+          <h4 style="display:inline">
+          <i class="glyphicon glyphicon-cog text-info"></i> {{ editmode | uppercase}}
+        </h4>
+        <div class="pull-right" style="margin-right: 20px">
+          <div style="display:inline" tooltip='Submit' container=body><button class="btn btn-success" type="submit" [disabled]="!varcatalogForm.valid"> <i class="glyphicon glyphicon-ok-circle"></i></button></div>
+          <div style="display:inline" tooltip='Reset' container=body><button class="btn btn-warning" type="reset" [disabled]="!varcatalogForm.dirty"><i class="glyphicon glyphicon-ban-circle"></i> </button></div>
+          <div style="display:inline" tooltip='Cancel' container=body><button class="btn btn-danger" type="button" (click)="cancelEdit()"><i class="glyphicon glyphicon-remove-circle"></i></button></div>
+        </div>
+      </div>
+    </ng-container>
+    <div class="form-fixed-height">
+        <div class="well well-sm">
+          <span class="editsection">
+            Variable Settings
+          </span>
+          <div class="form-group" style="margin-top: 25px">
             <label class="control-label col-sm-2" for="ID">ID</label>
             <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier for Global Variable"></i>
             <div class="col-sm-9">
@@ -66,22 +81,20 @@
                 <control-messages [control]="varcatalogForm.controls.Value"></control-messages>
             </div>
         </div>
-
-        <div class="form-group">
-            <label class="control-label col-sm-2" for="Description">Description</label>
+    </div>
+        <div class="well well-sm">
+          <span class="editsection">
+            Extra Settings
+          </span>
+          <div class="form-group" style="margin-top: 25px">            <label class="control-label col-sm-2" for="Description">Description</label>
             <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the InfluxDB Server"></i>
             <div class="col-sm-9">
                 <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]="varcatalogForm.value.Description"> </textarea>
                 <control-messages [control]="varcatalogForm.controls.Description"></control-messages>
             </div>
         </div>
-
-        <div class="col-sm-offset-4 col-sm-5">
-            <button type="submit" [disabled]="!varcatalogForm.valid">Submit</button>
-            <button type="reset" [disabled]="!varcatalogForm.dirty">Reset</button>
-            <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
-        </div>
-
+    </div>
+    </div>
     </form>
 </ng-template>
 </ng-container>

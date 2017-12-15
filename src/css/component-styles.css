@@ -17,6 +17,16 @@ label {
   display: block;
 }*/
 
+.editsection {
+  font-family: sans-serif;
+  font-size: 18px;
+  background-color: rgb(255, 255, 255);
+  margin-left: 19px;
+  border-radius: 0px 0px 20px 20px;
+  padding: 20px 20px 5px 20px;
+
+}
+
 .info {
   color: #337ab7;
   float: left;
@@ -42,7 +52,7 @@ select,input {
     border-radius: 4px;
 }
 
-button {
+/*button {
   margin-top: 4px;
   color: #fff;
   background-color: #337ab7;
@@ -51,7 +61,7 @@ button {
   padding: 4px 8px;
   font-size: 1em;
   font-weight: 300;
-}
+}*/
 
 input:focus.ng-invalid,select:focus.ng-invalid, textarea:focus.ng-invalid {
   box-shadow: 0 0 5px #a94442;
@@ -88,18 +98,23 @@ input:focus.ng-valid, select:focus.ng-valid{
   border-left: 5px solid #a94442; /* red */
 }
 
+.form-fixed-height {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  max-height: 70vh;
+}
 
 .ng-valid:not(pagination).ng-valid:not(form) {
   border-left: 5px solid #42A948; /* green */
 }
 
 
-button[disabled] {
+/*button[disabled] {
   background-color: #337ab7;
   border-color: #2e6da4;
   opacity: .65;
   cursor: not-allowed;
-}
+}*/
 
 control-messages {
   color: #E82C0C;

@@ -1,6 +1,4 @@
 <h2>SNMP Metrics</h2>
-<h4 class="info-mode">{{ editmode | uppercase}} </h4>
-<hr>
 <ng-container [ngSwitch]="editmode">
   <ng-template ngSwitchCase="list">
     <test-modal #viewModal titleName='SNMP Metrics'></test-modal>
@@ -35,7 +33,24 @@
 
   <ng-template ngSwitchDefault>
     <form [formGroup]="snmpmetForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveSnmpMet() : updateSnmpMet()">
-      <div class="form-group">
+      <ng-container>
+        <div class="row well well-sm">
+          <h4 style="display:inline">
+          <i class="glyphicon glyphicon-cog text-info"></i> {{ editmode | uppercase}}
+        </h4>
+        <div class="pull-right" style="margin-right: 20px">
+          <div style="display:inline" tooltip='Submit' container=body><button class="btn btn-success" type="submit" [disabled]="!snmpmetForm.valid"> <i class="glyphicon glyphicon-ok-circle"></i></button></div>
+          <div style="display:inline" tooltip='Reset' container=body><button class="btn btn-warning" type="reset" [disabled]="!snmpmetForm.dirty"><i class="glyphicon glyphicon-ban-circle"></i> </button></div>
+          <div style="display:inline" tooltip='Cancel' container=body><button class="btn btn-danger" type="button" (click)="cancelEdit()"><i class="glyphicon glyphicon-remove-circle"></i></button></div>
+        </div>
+      </div>
+    </ng-container>
+    <div class="form-fixed-height">
+        <div class="well well-sm">
+          <span class="editsection">
+            Core Settings
+          </span>
+          <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="ID">ID</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique metric identifier"></i>
         <div class="col-sm-9">
@@ -52,8 +67,12 @@
           <control-messages [control]="snmpmetForm.controls.FieldName"></control-messages>
         </div>
       </div>
-
-      <div class="form-group">
+    </div>
+      <div class="well well-sm">
+          <span class="editsection">
+            Metric Settings
+          </span>
+          <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="DataSrcType">DataSrcType</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
         <div class="col-sm-9">
@@ -105,18 +124,6 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.controls.GetRate">
-        <label class="control-label col-sm-2" for="GetRate">GetRate</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Normalize the returned value by time"></i>
-        <div class="col-sm-9">
-          <select formControlName="GetRate" id="GetRate" [ngModel]="snmpmetForm.value.GetRate">
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
-          <control-messages [control]="snmpmetForm.controls.GetRate"></control-messages>
-        </div>
-      </div>
-
       <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' || snmpmetForm.value.DataSrcType == 'BITS'|| snmpmetForm.value.DataSrcType == 'BITSCHK' ) ">
         <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
@@ -135,7 +142,23 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.controls.Scale">
+      <div class="form-group" *ngIf="snmpmetForm.controls.GetRate">
+        <label class="control-label col-sm-2" for="GetRate">GetRate</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Normalize the returned value by time"></i>
+        <div class="col-sm-9">
+          <select formControlName="GetRate" id="GetRate" [ngModel]="snmpmetForm.value.GetRate">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+          <control-messages [control]="snmpmetForm.controls.GetRate"></control-messages>
+        </div>
+      </div>
+    </div>
+      <div class="well well-sm" *ngIf="snmpmetForm.controls.Scale || snmpmetForm.controls.Shift">
+          <span class="editsection">
+            Metric Autoscale
+          </span>
+      <div class="form-group" style="margin-top: 25px" *ngIf="snmpmetForm.controls.Scale">
         <label class="control-label col-sm-2" for="Scale">Scale</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
         <div class="col-sm-9">
@@ -152,8 +175,12 @@
           <control-messages [control]="snmpmetForm.controls.Shift"></control-messages>
         </div>
       </div>
-
-      <div class="form-group">
+    </div>
+          <div class="well well-sm">
+            <span class="editsection">
+              Extra Settings
+            </span>
+      <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Metric"></i>
         <div class="col-sm-9">
@@ -161,12 +188,8 @@
           <control-messages [control]="snmpmetForm.controls.Description"></control-messages>
         </div>
       </div>
-
-      <div class="col-sm-offset-4 col-sm-6">
-        <button type="submit" [disabled]="!snmpmetForm.valid">Submit</button>
-        <button type="reset" [disabled]="!snmpmetForm.dirty">Reset</button>
-        <button type="button" class="ui button" (click)="cancelEdit()">Cancel</button>
-      </div>
+    </div>
+    </div>
     </form>
   </ng-template>
 <ng-container>
