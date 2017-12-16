@@ -1,14 +1,17 @@
-# v 0.7.5 (unreleased)
+# v 0.7.5 (2017-12-16)
 ### New Features
 * Added Hard snmp reset option to remap all measurements again when some problem happens when trying to do snmp connection  init on first attemps. (fix #271)
 * Added a new Runtime option to Force Gather data even if device is not active ( useful for configuration testing )(implements #275)If active the current gathering period won't be changed, and this will be an extra point.
-* Added Version Info to the Login Page
-* Added New Variable Catalog let us to define variable names ( and its default values if not redefined before) to use on STRINGEVAL metric types, These variables could be redefined on each device maintaining the metric formula definition across devices.(implements #99)
-
+* Added New Variable Catalog let us to define variable names ( and its default values if not redefined before) to use on STRINGEVAL metric types, These variables could be redefined on each device maintaining the metric formula definition across devices.(implements #99).
+* Added Version Info to the Login Page and new  SnmpCollectorLogo
+* Pretty Web User Interface forms.
+* UI migration to Angular4.
+* Improved Runtime table viewer , now shows metric information on the header tooltip and only important data in each metric tooltip.
+* marked as deprecated the IndexAsValue boolean configuration  parameter
 
 ### fixes
 
-* fix for #268, #271, #272, #275
+* fix for #268, #271, #272, #275, #278, #285, #292, #293
 
 ### breaking changes
 
