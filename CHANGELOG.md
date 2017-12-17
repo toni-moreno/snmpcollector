@@ -1,9 +1,35 @@
+# v 0.7.6 (unreleased)
+### New Features
+* Go 1.8.2 to 1.9.2 binaries (?)
+* Added new statistics measurement for each output db "selfmon_outdb_stats" , these statisctics are collected on each selfmon.freq period secods and  it will send with the following fields and tags (selfmon.extratags will be also added):
+
+field | description
+------|------------
+write_sent | number of HTTP writes sent to the DB (each write sends a batchPoint) on the last period
+write_error | number of HTTP write errors on the period
+points_sent | number of Points sent on each Write (on each BatchPoint) on the last period
+points_sent_max| max number of points sent on all writes on the last period
+points_sent_avg (only if write_sent > 0) averaged points sent for all writes on the last period
+write_time | sum of all HTTP response times on  all writes on the last period
+write_time_max | max HTTP response time in all writes on the last period
+write_time_avg | (only if write_sent > 0) average response time for all writes on the last period
+		
+tags | description
+-----|------------
+oudb| the ID for each Output DB
+
+### fixes
+
+
+### breaking changes
+
+
 # v 0.7.5 (2017-12-16)
 ### New Features
 * Added Hard snmp reset option to remap all measurements again when some problem happens when trying to do snmp connection  init on first attemps. (fix #271)
 * Added a new Runtime option to Force Gather data even if device is not active ( useful for configuration testing )(implements #275)If active the current gathering period won't be changed, and this will be an extra point.
 * Added New Variable Catalog let us to define variable names ( and its default values if not redefined before) to use on STRINGEVAL metric types, These variables could be redefined on each device maintaining the metric formula definition across devices.(implements #99).
-* Added Version Info to the Login Page and new  SnmpCollectorLogo
+* Added Version Info to the Login Page and new  SnmpCollector Logo
 * Pretty Web User Interface forms.
 * UI migration to Angular4.
 * Improved Runtime table viewer , now shows metric information on the header tooltip and only important data in each metric tooltip.

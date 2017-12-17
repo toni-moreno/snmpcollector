@@ -219,6 +219,7 @@ func initSelfMonitoring(idb map[string]*output.InfluxDB) {
 			val.StartSender(&senderWg)
 
 			selfmonProc.Init()
+			selfmonProc.SetOutDB(idb)
 			selfmonProc.SetOutput(val)
 
 			log.Printf("SELFMON enabled %+v", MainConfig.Selfmon)

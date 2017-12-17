@@ -26,14 +26,16 @@ func SetLogger(l *logrus.Logger) {
 type SelfMon struct {
 	cfg                 *config.SelfMonConfig
 	Influx              *output.InfluxDB
+	OutDBs              map[string]*output.InfluxDB //needed to get statistics
 	runtimeStatsRunning bool
 	TagMap              map[string]string
 	Fields              map[string]interface{}
 	bps                 *client.BatchPoints
 	chExit              chan bool
 	mutex               sync.Mutex
-	rt_meas_name        string
-	gvm_meas_name       string
+	RtMeasName          string //devices measurement name
+	GvmMeasName         string //Self agent GoVirtualMachine measurement name
+	OutMeasName         string //Output DB's measurement name
 	initialized         bool
 	imutex              sync.Mutex
 }
@@ -49,6 +51,7 @@ func (sm *SelfMon) Init() {
 		log.Info("Self monitoring thread  already Initialized (skipping Initialization)")
 		return
 	}
+	sm.OutDBs = make(map[string]*output.InfluxDB)
 
 	//Init extra tags
 	if len(sm.cfg.ExtraTags) > 0 {
@@ -67,12 +70,14 @@ func (sm *SelfMon) Init() {
 	log.Infof("Self monitoring TAGS inheritance set to : %t", sm.cfg.InheritDeviceTags)
 
 	// Measurement Names
-	sm.rt_meas_name = "selfmon_device_stats"
-	sm.gvm_meas_name = "selfmon_gvm"
+	sm.RtMeasName = "selfmon_device_stats"
+	sm.GvmMeasName = "selfmon_gvm"
+	sm.OutMeasName = "selfmon_outdb_stats"
 
 	if len(sm.cfg.Prefix) > 0 {
-		sm.rt_meas_name = fmt.Sprintf("%sselfmon_device_stats", sm.cfg.Prefix)
-		sm.gvm_meas_name = fmt.Sprintf("%sselfmon_gvm", sm.cfg.Prefix)
+		sm.RtMeasName = fmt.Sprintf("%sselfmon_device_stats", sm.cfg.Prefix)
+		sm.GvmMeasName = fmt.Sprintf("%sselfmon_gvm", sm.cfg.Prefix)
+		sm.OutMeasName = fmt.Sprintf("%sselfmon_outdb_stats", sm.cfg.Prefix)
 	}
 
 	//Init Measurment Fields.
@@ -92,6 +97,11 @@ func (sm *SelfMon) Init() {
 
 	sm.chExit = make(chan bool)
 
+}
+
+// SetOutDB set the output devices for query its statistics
+func (sm *SelfMon) SetOutDB(odb map[string]*output.InfluxDB) {
+	sm.OutDBs = odb
 }
 
 // CheckAndSetInitialized set
@@ -164,11 +174,15 @@ func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface
 
 	tagMap["device"] = deviceid
 	now := time.Now()
-	pt, _ := client.NewPoint(
-		sm.rt_meas_name,
+	pt, err := client.NewPoint(
+		sm.RtMeasName,
 		tagMap,
 		fields,
 		now)
+	if err != nil {
+		log.Warnf("Error on compute Stats data Point %+v for device %s: Error:%s", fields, deviceid, err)
+		return
+	}
 
 	(*sm.bps).AddPoint(pt)
 }
@@ -193,7 +207,7 @@ func (sm *SelfMon) StartGather(wg *sync.WaitGroup) {
 
 	sm.runtimeStatsRunning = true
 
-	go sm.reportRuntimeStats(wg)
+	go sm.reportStats(wg)
 }
 
 // StopGather for stopping selfmonitori goroutine
@@ -203,75 +217,129 @@ func (sm *SelfMon) StopGather() {
 	}
 }
 
-func (sm *SelfMon) reportRuntimeStats(wg *sync.WaitGroup) {
-	defer wg.Done()
-	wg.Add(1)
-	log.Info("SELFMON: Beginning  selfmonitor process for device")
+func (sm *SelfMon) getOutDBStats() {
 
-	memStats := &runtime.MemStats{}
+	now := time.Now()
+
+	for dbname, db := range sm.OutDBs {
+
+		stats := db.GetResetStats()
+
+		tm := make(map[string]string)
+		fields := make(map[string]interface{})
+
+		for k, v := range sm.TagMap {
+			tm[k] = v
+		}
+		tm["outdb"] = dbname
+
+		fields["points_sent"] = stats.PSent
+		fields["points_sent_max"] = stats.PSentMax
+
+		fields["write_sent"] = stats.WriteSent
+		fields["write_error"] = stats.WriteErrors
+		sec := stats.WriteTime.Seconds()
+		fields["write_time"] = sec
+		fields["write_time_max"] = stats.WriteTimeMax.Seconds()
+
+		if stats.WriteSent > 0 {
+			fields["points_sent_avg"] = float64(stats.PSent) / float64(stats.WriteSent)
+			fields["write_time_avg"] = sec / float64(stats.WriteSent)
+		}
+
+		pt, err := client.NewPoint(sm.OutMeasName, tm, fields, now)
+		if err != nil {
+			log.Warnf("Error on compute Stats data Point %+v for database %s: Error:%s", fields, dbname, err)
+			return
+		}
+
+		//add data to the batchpoint
+		sm.addDataPoint(pt)
+	}
+
+}
+
+func (sm *SelfMon) getRuntimeStats() {
+
 	lastSampleTime := time.Now()
 	var lastPauseNs uint64
 	var lastNumGc uint32
 
 	nsInMs := float64(time.Millisecond)
+	memStats := &runtime.MemStats{}
+	runtime.ReadMemStats(memStats)
+
+	now := time.Now()
+
+	sm.Fields["runtime_goroutines"] = float64(runtime.NumGoroutine())
+	sm.Fields["mem.alloc"] = float64(memStats.Alloc)
+	sm.Fields["mem.mallocs"] = float64(memStats.Mallocs)
+	sm.Fields["mem.frees"] = float64(memStats.Frees)
+	sm.Fields["gc.total_pause_ns"] = float64(memStats.PauseTotalNs) / nsInMs
+	sm.Fields["mem.heapAlloc"] = float64(memStats.HeapAlloc)
+	sm.Fields["mem.stackInuse"] = float64(memStats.StackInuse)
+
+	if lastPauseNs > 0 {
+		pauseSinceLastSample := memStats.PauseTotalNs - lastPauseNs
+		sm.Fields["gc.pause_per_second"] = float64(pauseSinceLastSample) / nsInMs / time.Duration(sm.cfg.Freq).Seconds()
+		sm.Fields["gc.pause_per_interval"] = float64(pauseSinceLastSample) / nsInMs
+	}
+	lastPauseNs = memStats.PauseTotalNs
+
+	countGc := int(memStats.NumGC - lastNumGc)
+	if lastNumGc > 0 {
+		diff := float64(countGc)
+		diffTime := now.Sub(lastSampleTime).Seconds()
+		sm.Fields["gc.gc_per_second"] = diff / diffTime
+		sm.Fields["gc.gc_per_interval"] = diff
+	}
+
+	if countGc > 0 {
+		if countGc > 256 {
+			log.Warn("We're missing some gc pause times")
+			countGc = 256
+		}
+		var totalPause float64
+		for i := 0; i < countGc; i++ {
+			idx := int((memStats.NumGC-uint32(i))+255) % 256
+			pause := float64(memStats.PauseNs[idx])
+			totalPause += pause
+			//	sm.Report(fmt.Sprintf("%s.memory.gc.pause", prefix), pause/nsInMs, now)
+		}
+		//sm.Report(fmt.Sprintf("%s.memory.gc.pause_per_interval", prefix), totalPause/nsInMs, now)
+		sm.Fields["gc.pause_per_interval"] = totalPause / nsInMs
+	}
+
+	lastNumGc = memStats.NumGC
+	lastSampleTime = now
+
+	pt, err := client.NewPoint(
+		sm.GvmMeasName,
+		sm.TagMap,
+		sm.Fields,
+		now,
+	)
+	if err != nil {
+		log.Warnf("Error on compute Stats data Point %+v for GVB : Error:%s", sm.Fields, err)
+		return
+	}
+
+	//add data to the batchpoint
+	sm.addDataPoint(pt)
+
+}
+
+func (sm *SelfMon) reportStats(wg *sync.WaitGroup) {
+	defer wg.Done()
+	wg.Add(1)
+	log.Info("SELFMON: Beginning  selfmonitor process for device")
+
 	s := time.Tick(time.Duration(sm.cfg.Freq) * time.Second)
 	for {
-
-		runtime.ReadMemStats(memStats)
-
-		now := time.Now()
-
-		sm.Fields["runtime_goroutines"] = float64(runtime.NumGoroutine())
-		sm.Fields["mem.alloc"] = float64(memStats.Alloc)
-		sm.Fields["mem.mallocs"] = float64(memStats.Mallocs)
-		sm.Fields["mem.frees"] = float64(memStats.Frees)
-		sm.Fields["gc.total_pause_ns"] = float64(memStats.PauseTotalNs) / nsInMs
-		sm.Fields["mem.heapAlloc"] = float64(memStats.HeapAlloc)
-		sm.Fields["mem.stackInuse"] = float64(memStats.StackInuse)
-
-		if lastPauseNs > 0 {
-			pauseSinceLastSample := memStats.PauseTotalNs - lastPauseNs
-			sm.Fields["gc.pause_per_second"] = float64(pauseSinceLastSample) / nsInMs / time.Duration(sm.cfg.Freq).Seconds()
-			sm.Fields["gc.pause_per_interval"] = float64(pauseSinceLastSample) / nsInMs
-		}
-		lastPauseNs = memStats.PauseTotalNs
-
-		countGc := int(memStats.NumGC - lastNumGc)
-		if lastNumGc > 0 {
-			diff := float64(countGc)
-			diffTime := now.Sub(lastSampleTime).Seconds()
-			sm.Fields["gc.gc_per_second"] = diff / diffTime
-			sm.Fields["gc.gc_per_interval"] = diff
-		}
-
-		if countGc > 0 {
-			if countGc > 256 {
-				log.Warn("We're missing some gc pause times")
-				countGc = 256
-			}
-			var totalPause float64
-			for i := 0; i < countGc; i++ {
-				idx := int((memStats.NumGC-uint32(i))+255) % 256
-				pause := float64(memStats.PauseNs[idx])
-				totalPause += pause
-				//	sm.Report(fmt.Sprintf("%s.memory.gc.pause", prefix), pause/nsInMs, now)
-			}
-			//sm.Report(fmt.Sprintf("%s.memory.gc.pause_per_interval", prefix), totalPause/nsInMs, now)
-			sm.Fields["gc.pause_per_interval"] = totalPause / nsInMs
-		}
-
-		lastNumGc = memStats.NumGC
-		lastSampleTime = now
-
-		pt, _ := client.NewPoint(
-			sm.gvm_meas_name,
-			sm.TagMap,
-			sm.Fields,
-			now,
-		)
-
-		//add data to the batchpoint
-		sm.addDataPoint(pt)
+		//Get BVM stats
+		sm.getRuntimeStats()
+		//
+		sm.getOutDBStats()
 		//BatchPoint Send
 		sm.sendData()
 

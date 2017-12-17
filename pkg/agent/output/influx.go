@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -24,9 +23,8 @@ func SetLogger(l *logrus.Logger) {
 
 /*InfluxDB database export */
 type InfluxDB struct {
-	Sent        int64
-	Errors      int64
 	cfg         *config.InfluxCfg
+	stats       InfluxStats
 	initialized bool
 	imutex      sync.Mutex
 	started     bool
@@ -47,24 +45,12 @@ var DummyDB = &InfluxDB{
 	iChan:       nil,
 	chExit:      nil,
 	client:      nil,
-	Sent:        0,
-	Errors:      0,
 }
 
-func (db *InfluxDB) incSent() {
-	atomic.AddInt64(&db.Sent, 1)
-}
-
-func (db *InfluxDB) addSent(n int64) {
-	atomic.AddInt64(&db.Sent, n)
-}
-
-func (db *InfluxDB) incErrors() {
-	atomic.AddInt64(&db.Errors, 1)
-}
-
-func (db *InfluxDB) addErrors(n int64) {
-	atomic.AddInt64(&db.Errors, n)
+// GetResetStats return outdb stats and reset its counters
+func (db *InfluxDB) GetResetStats() *InfluxStats {
+	log.Debugf("Reseting Influxstats for DB %s", db.cfg.ID)
+	return db.stats.GetResetStats()
 }
 
 //BP create a Batch point influx object
@@ -109,6 +95,7 @@ func Ping(cfg *config.InfluxCfg) (client.Client, time.Duration, string, error) {
 		return cli, 0, "", err
 	}
 	elapsed, message, err := cli.Ping(time.Duration(cfg.Timeout) * time.Second)
+	log.Infof("PING Influx Database %s : Elapsed ( %s ) : MSG : %s", cfg.ID, elapsed.String(), message)
 	return cli, elapsed, message, err
 }
 
@@ -178,8 +165,6 @@ func NewNotInitInfluxDB(c *config.InfluxCfg) *InfluxDB {
 		cfg:     c,
 		dummy:   false,
 		started: false,
-		Sent:    0,
-		Errors:  0,
 	}
 }
 
@@ -269,7 +254,7 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	time.Sleep(5)
-
+	//s := time.Tick(time.Duration(sm.cfg.Freq) * time.Second)
 	log.Infof("beginning Influx Sender thread: [%s]", db.cfg.ID)
 	for {
 		select {
@@ -282,20 +267,35 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 				log.Warn("null influx input")
 				continue
 			}
+			if db.client == nil {
+				log.Warn("db Client not initialized yet!!!!!")
+				continue
+			}
 
 			for {
+				np := len((*data).Points())
+
+				/*SUPER DEBUG
+				for _, p := range (*data).Points() {
+					log.Debugf("POINT: %#+v", p)
+				}*/
+
 				// keep trying until we get it (don't drop the data)
-				log.Debugf("sending data from Sender [ %s ] (%d)", db.cfg.ID, r)
-				if err := db.client.Write(*data); err != nil {
-					db.incErrors()
-					log.Errorln("influxdb write error: ", err)
+				startSend := time.Now()
+				err := db.client.Write(*data)
+				elapsedSend := time.Since(startSend)
+				if err != nil {
+
+					db.stats.WriteErrUpdate(elapsedSend)
+					log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
 					// try again in a bit
 					// TODO: this could be better
 					// Todo add InfluxResend on error.
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
-					db.incSent()
+					log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
+					db.stats.WriteOkUpdate(int64(np), elapsedSend)
 					break
 				}
 			}
