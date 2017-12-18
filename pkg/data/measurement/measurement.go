@@ -505,7 +505,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 			allindex[suffix] = suffix
 			return nil
 		}
-		var name string
+		name := "ErrorOnGetIdxValue"
 		switch pdu.Type {
 		case gosnmp.OctetString:
 			name = string(pdu.Value.([]byte))
@@ -516,8 +516,15 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		case gosnmp.Integer:
 			name = strconv.FormatInt(snmp.PduVal2Int64(pdu), 10)
 			m.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
+		case gosnmp.IPAddress:
+			var err error
+			name, err = snmp.PduVal2IPaddr(pdu)
+			m.Debugf("Got the following IPaddress index for [%s/%s]", suffix, name)
+			if err != nil {
+				m.Errorf("Error on  IndexedLabel  IPAddress  to string conversion: %s", err)
+			}
 		default:
-			m.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric Value", m.cfg.IndexOID)
+			m.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric or IPAddress Value", m.cfg.IndexOID)
 		}
 		allindex[suffix] = name
 		return nil
