@@ -1,6 +1,7 @@
 package webui
 
 import (
+	"strings"
 	"time"
 
 	"github.com/go-macaron/binding"
@@ -54,7 +55,7 @@ func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	getmode := ctx.Params(":getmode")
 	obtype := ctx.Params(":obtype")
-	data := ctx.Params(":data")
+	data := strings.TrimSpace(ctx.Params(":data"))
 
 	log.Infof("trying to query device %s : getmode: %s objectype: %s data %s", cfg.ID, getmode, obtype, data)
 
