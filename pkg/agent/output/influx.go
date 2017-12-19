@@ -168,6 +168,12 @@ func NewNotInitInfluxDB(c *config.InfluxCfg) *InfluxDB {
 	}
 }
 
+// MaxBatchPoints max queue points
+const MaxBatchPoints = 65535
+
+// TimeWriteRetry time wait
+const TimeWriteRetry = 10
+
 //Init initialies runtime info
 func (db *InfluxDB) Init() {
 	if db.dummy == true {
@@ -186,7 +192,7 @@ func (db *InfluxDB) Init() {
 	log.Infof("Initializing influxdb with id = [ %s ]", db.cfg.ID)
 
 	log.Infof("Connecting to: %s", db.cfg.Host)
-	db.iChan = make(chan *client.BatchPoints, 65535)
+	db.iChan = make(chan *client.BatchPoints, MaxBatchPoints)
 	db.chExit = make(chan bool)
 	if err := db.Connect(); err != nil {
 		log.Errorln("failed connecting to: ", db.cfg.Host)
@@ -271,33 +277,23 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 				log.Warn("db Client not initialized yet!!!!!")
 				continue
 			}
+			np := len((*data).Points())
 
-			for {
-				np := len((*data).Points())
-
-				/*SUPER DEBUG
-				for _, p := range (*data).Points() {
-					log.Debugf("POINT: %#+v", p)
-				}*/
-
-				// keep trying until we get it (don't drop the data)
-				startSend := time.Now()
-				err := db.client.Write(*data)
-				elapsedSend := time.Since(startSend)
-				if err != nil {
-
-					db.stats.WriteErrUpdate(elapsedSend)
-					log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
-					// try again in a bit
-					// TODO: this could be better
-					// Todo add InfluxResend on error.
-					time.Sleep(30 * time.Second)
-					continue
-				} else {
-					log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
-					db.stats.WriteOkUpdate(int64(np), elapsedSend)
-					break
+			// keep trying until we get it (don't drop the data)
+			startSend := time.Now()
+			err := db.client.Write(*data)
+			elapsedSend := time.Since(startSend)
+			if err != nil {
+				db.stats.WriteErrUpdate(elapsedSend)
+				log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
+				// If the queue is not full we will resend after a while
+				if len(db.iChan) < MaxBatchPoints {
+					db.iChan <- data
+					time.Sleep(TimeWriteRetry * time.Second)
 				}
+			} else {
+				log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
+				db.stats.WriteOkUpdate(int64(np), elapsedSend)
 			}
 		}
 	}
