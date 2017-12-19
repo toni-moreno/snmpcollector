@@ -49,6 +49,10 @@ var DummyDB = &InfluxDB{
 
 // GetResetStats return outdb stats and reset its counters
 func (db *InfluxDB) GetResetStats() *InfluxStats {
+	if db.dummy == true {
+		log.Debug("Reseting Influxstats for DUMMY DB ")
+		return &InfluxStats{}
+	}
 	log.Debugf("Reseting Influxstats for DB %s", db.cfg.ID)
 	return db.stats.GetResetStats()
 }
@@ -256,15 +260,48 @@ func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
 	go db.startSenderGo(rand.Int(), wg)
 }
 
+func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool) {
+	np := len((*data).Points())
+	// keep trying until we get it (don't drop the data)
+	startSend := time.Now()
+	err := db.client.Write(*data)
+	elapsedSend := time.Since(startSend)
+	if err != nil {
+		db.stats.WriteErrUpdate(elapsedSend)
+		log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
+		// If the queue is not full we will resend after a while
+		if enqueueonerror {
+			log.Debug("queing data again...")
+			if len(db.iChan) < MaxBatchPoints {
+				db.iChan <- data
+				time.Sleep(TimeWriteRetry * time.Second)
+			}
+		}
+	} else {
+		log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
+		db.stats.WriteOkUpdate(int64(np), elapsedSend)
+	}
+}
+
 func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	time.Sleep(5)
-	//s := time.Tick(time.Duration(sm.cfg.Freq) * time.Second)
 	log.Infof("beginning Influx Sender thread: [%s]", db.cfg.ID)
 	for {
 		select {
 		case <-db.chExit:
+			//need to flush all data
+
+			chanlen := len(db.iChan) // get number of entries in the batchpoint channel
+			log.Infof("Flushing %d batchpoints of data in OutDB %s ", chanlen, db.cfg.ID)
+			for i := 0; i < chanlen; i++ {
+				//flush them
+				data := <-db.iChan
+				//this process only will work if backend is  running ok elsewhere points will be lost
+				db.sendBatchPoint(data, false)
+			}
+
 			log.Infof("EXIT from Influx sender process for device [%s] ", db.cfg.ID)
 			db.SetStartedAs(false)
 			return
@@ -277,24 +314,9 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 				log.Warn("db Client not initialized yet!!!!!")
 				continue
 			}
-			np := len((*data).Points())
 
-			// keep trying until we get it (don't drop the data)
-			startSend := time.Now()
-			err := db.client.Write(*data)
-			elapsedSend := time.Since(startSend)
-			if err != nil {
-				db.stats.WriteErrUpdate(elapsedSend)
-				log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
-				// If the queue is not full we will resend after a while
-				if len(db.iChan) < MaxBatchPoints {
-					db.iChan <- data
-					time.Sleep(TimeWriteRetry * time.Second)
-				}
-			} else {
-				log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
-				db.stats.WriteOkUpdate(int64(np), elapsedSend)
-			}
+			db.sendBatchPoint(data, true)
+
 		}
 	}
 }
