@@ -29,7 +29,6 @@ type SelfMon struct {
 	OutDBs              map[string]*output.InfluxDB //needed to get statistics
 	runtimeStatsRunning bool
 	TagMap              map[string]string
-	Fields              map[string]interface{}
 	bps                 *client.BatchPoints
 	chExit              chan bool
 	mutex               sync.Mutex
@@ -38,6 +37,10 @@ type SelfMon struct {
 	OutMeasName         string //Output DB's measurement name
 	initialized         bool
 	imutex              sync.Mutex
+	//memory for GVM data colletion
+	lastSampleTime time.Time
+	lastPauseNs    uint64
+	lastNumGc      uint32
 }
 
 // NewNotInit create strut without initialization
@@ -78,21 +81,6 @@ func (sm *SelfMon) Init() {
 		sm.RtMeasName = fmt.Sprintf("%sselfmon_device_stats", sm.cfg.Prefix)
 		sm.GvmMeasName = fmt.Sprintf("%sselfmon_gvm", sm.cfg.Prefix)
 		sm.OutMeasName = fmt.Sprintf("%sselfmon_outdb_stats", sm.cfg.Prefix)
-	}
-
-	//Init Measurment Fields.
-	sm.Fields = map[string]interface{}{
-		"runtime_goroutines":    0.0,
-		"mem.alloc":             0.0,
-		"mem.mallocs":           0.0,
-		"mem.frees":             0.0,
-		"mem.heapAlloc":         0.0,
-		"mem.stackInuse":        0.0,
-		"gc.total_pause_ns":     0.0,
-		"gc.pause_per_second":   0.0,
-		"gc.pause_per_interval": 0.0,
-		"gc.gc_per_second":      0.0,
-		"gc.gc_per_interval":    0.0,
 	}
 
 	sm.chExit = make(chan bool)
@@ -222,7 +210,6 @@ func (sm *SelfMon) getOutDBStats() {
 	now := time.Now()
 
 	for dbname, db := range sm.OutDBs {
-
 		stats := db.GetResetStats()
 
 		tm := make(map[string]string)
@@ -261,66 +248,67 @@ func (sm *SelfMon) getOutDBStats() {
 
 func (sm *SelfMon) getRuntimeStats() {
 
-	lastSampleTime := time.Now()
-	var lastPauseNs uint64
-	var lastNumGc uint32
-
 	nsInMs := float64(time.Millisecond)
 	memStats := &runtime.MemStats{}
 	runtime.ReadMemStats(memStats)
 
+	fields := make(map[string]interface{})
+
 	now := time.Now()
+	diffTime := now.Sub(sm.lastSampleTime).Seconds()
 
-	sm.Fields["runtime_goroutines"] = float64(runtime.NumGoroutine())
-	sm.Fields["mem.alloc"] = float64(memStats.Alloc)
-	sm.Fields["mem.mallocs"] = float64(memStats.Mallocs)
-	sm.Fields["mem.frees"] = float64(memStats.Frees)
-	sm.Fields["gc.total_pause_ns"] = float64(memStats.PauseTotalNs) / nsInMs
-	sm.Fields["mem.heapAlloc"] = float64(memStats.HeapAlloc)
-	sm.Fields["mem.stackInuse"] = float64(memStats.StackInuse)
+	fields["runtime_goroutines"] = float64(runtime.NumGoroutine())
+	fields["mem.alloc"] = float64(memStats.Alloc)
+	fields["mem.mallocs"] = float64(memStats.Mallocs)
+	fields["mem.frees"] = float64(memStats.Frees)
+	fields["mem.sys"] = float64(memStats.Sys)
 
-	if lastPauseNs > 0 {
-		pauseSinceLastSample := memStats.PauseTotalNs - lastPauseNs
-		sm.Fields["gc.pause_per_second"] = float64(pauseSinceLastSample) / nsInMs / time.Duration(sm.cfg.Freq).Seconds()
-		sm.Fields["gc.pause_per_interval"] = float64(pauseSinceLastSample) / nsInMs
+	//HEAP
+
+	fields["mem.heapAlloc"] = float64(memStats.HeapAlloc)       //HeapAlloc is bytes of allocated heap objects.
+	fields["mem.heapSys"] = float64(memStats.HeapSys)           // HeapSys is bytes of heap memory obtained from the OS.
+	fields["mem.heapIdle"] = float64(memStats.HeapIdle)         // HeapIdle is bytes in idle (unused) spans.
+	fields["mem.heapInUse"] = float64(memStats.HeapInuse)       // HeapInuse is bytes in in-use spans.
+	fields["mem.heapReleased"] = float64(memStats.HeapReleased) // HeapReleased is bytes of physical memory returned to the OS.
+	fields["mem.heapObjects"] = float64(memStats.HeapReleased)  // HeapObjects is the number of allocated heap objects.
+
+	//STACK/MSPAN/MCACHE
+
+	fields["mem.stackInuse"] = float64(memStats.StackInuse)   // StackInuse is bytes in stack spans.
+	fields["mem.mSpanInuse"] = float64(memStats.MSpanInuse)   // MSpanInuse is bytes of allocated mspan structures.
+	fields["mem.mCacheInuse"] = float64(memStats.MCacheInuse) // MCacheInuse is bytes of allocated mcache structures.
+
+	//Pause Count
+	fields["gc.total_pause_ns"] = float64(memStats.PauseTotalNs) / nsInMs
+
+	if sm.lastPauseNs > 0 {
+		pauseSinceLastSample := memStats.PauseTotalNs - sm.lastPauseNs
+		pauseInterval := float64(pauseSinceLastSample) / nsInMs
+		fields["gc.pause_per_interval"] = pauseInterval
+		fields["gc.pause_per_second"] = pauseInterval / diffTime
+		//		log.Debugf("SELFMON:Diftime(%f) |PAUSE X INTERVAL: %f | PAUSE X SECOND %f", diffTime, pauseInterval, pauseInterval/diffTime)
 	}
-	lastPauseNs = memStats.PauseTotalNs
+	sm.lastPauseNs = memStats.PauseTotalNs
 
-	countGc := int(memStats.NumGC - lastNumGc)
-	if lastNumGc > 0 {
+	//GC Count
+	countGc := int(memStats.NumGC - sm.lastNumGc)
+	if sm.lastNumGc > 0 {
 		diff := float64(countGc)
-		diffTime := now.Sub(lastSampleTime).Seconds()
-		sm.Fields["gc.gc_per_second"] = diff / diffTime
-		sm.Fields["gc.gc_per_interval"] = diff
+		fields["gc.gc_per_second"] = diff / diffTime
+		fields["gc.gc_per_interval"] = diff
 	}
+	sm.lastNumGc = memStats.NumGC
 
-	if countGc > 0 {
-		if countGc > 256 {
-			log.Warn("We're missing some gc pause times")
-			countGc = 256
-		}
-		var totalPause float64
-		for i := 0; i < countGc; i++ {
-			idx := int((memStats.NumGC-uint32(i))+255) % 256
-			pause := float64(memStats.PauseNs[idx])
-			totalPause += pause
-			//	sm.Report(fmt.Sprintf("%s.memory.gc.pause", prefix), pause/nsInMs, now)
-		}
-		//sm.Report(fmt.Sprintf("%s.memory.gc.pause_per_interval", prefix), totalPause/nsInMs, now)
-		sm.Fields["gc.pause_per_interval"] = totalPause / nsInMs
-	}
-
-	lastNumGc = memStats.NumGC
-	lastSampleTime = now
+	sm.lastSampleTime = now
 
 	pt, err := client.NewPoint(
 		sm.GvmMeasName,
 		sm.TagMap,
-		sm.Fields,
+		fields,
 		now,
 	)
 	if err != nil {
-		log.Warnf("Error on compute Stats data Point %+v for GVB : Error:%s", sm.Fields, err)
+		log.Warnf("Error on compute Stats data Point %+v for GVB : Error:%s", fields, err)
 		return
 	}
 
@@ -335,6 +323,7 @@ func (sm *SelfMon) reportStats(wg *sync.WaitGroup) {
 	log.Info("SELFMON: Beginning  selfmonitor process for device")
 
 	s := time.Tick(time.Duration(sm.cfg.Freq) * time.Second)
+	sm.lastSampleTime = time.Now()
 	for {
 		//Get BVM stats
 		sm.getRuntimeStats()
