@@ -1,6 +1,6 @@
 # v 0.7.6 (unreleased)
 ### New Features
-* Go 1.8.2 to 1.9.2 binaries (?)
+* Go 1.8.2 to 1.9.2 binaries
 * Added new statistics measurement for each output db "selfmon_outdb_stats" , these statisctics are collected on each selfmon.freq period secods and  it will send with the following fields and tags (selfmon.extratags will be also added):
 
 field | description
@@ -9,7 +9,7 @@ write_sent | number of HTTP writes sent to the DB (each write sends a batchPoint
 write_error | number of HTTP write errors on the period
 points_sent | number of Points sent on each Write (on each BatchPoint) on the last period
 points_sent_max| max number of points sent on all writes on the last period
-points_sent_avg (only if write_sent > 0) averaged points sent for all writes on the last period
+points_sent_avg | (only if write_sent > 0) averaged points sent for all writes on the last period
 write_time | sum of all HTTP response times on  all writes on the last period
 write_time_max | max HTTP response time in all writes on the last period
 write_time_avg | (only if write_sent > 0) average response time for all writes on the last period
@@ -18,8 +18,24 @@ tags | description
 -----|------------
 oudb| the ID for each Output DB
 
+* Improved  selfmon_gvm statistcs added the following fields
+
+field | description
+------|------------
+mem.sys| Sys is the total bytes of memory obtained from the OS.
+mem.heapSys|  HeapSys is bytes of heap memory obtained from the OS.
+mem.heapIdle|  HeapIdle is bytes in idle (unused) spans.
+mem.heapInUse|  HeapInuse is bytes in in-use spans.
+mem.heapReleased| HeapReleased is bytes of physical memory returned to the OS.
+mem.heapObjects|HeapObjects is the number of allocated heap objects.
+mem.stackInuse| StackInuse is bytes in stack spans.
+mem.mSpanInuse| MSpanInuse is bytes of allocated mspan structures.
+mem.mCacheInuse| MCacheInuse is bytes of allocated mcache structures.
+
+
 ### fixes
 
+* fix for #303, #304
 
 ### breaking changes
 
