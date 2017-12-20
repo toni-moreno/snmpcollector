@@ -61,7 +61,7 @@ import { Subscription } from "rxjs";
                             <li class="list-group-item"  style="padding: 3px" *ngIf="histArray.length === 0"> Empty history</li>
                             <li class="list-group-item" style="padding: 3px" *ngFor="let hist of histArray">
                             <div>
-                            <span style="padding: 0px; margin-right: 10px" class="glyphicon glyphicon-plus" (click)="selectedOID = hist"></span>
+                            <span style="padding: 0px; margin-right: 10px" role=button class="glyphicon glyphicon-plus" (click)="selectedOID = hist"></span>
                             <span> {{hist}} </span>
                             </div>
                             </li>
@@ -94,6 +94,9 @@ import { Subscription } from "rxjs";
               </div>
               <div class="row">
               <div class="col-md-12">
+              <div *ngIf="!queryResult">
+                <my-spinner *ngIf="isRequesting && isConnected" [isRunning]="isRequesting"></my-spinner>
+              </div>
               <div *ngIf="queryResult" class="panel panel-default">
                 <div class="panel-heading">
                   <h4>
@@ -307,11 +310,13 @@ export class TestConnectionModal implements OnInit  {
   }
 
   sendQuery() {
+    //Clean other request
+    this.myObservable.unsubscribe();
     this.isRequesting = true;
     this.filter = null;
     this.histArray.push(this.testForm.value.OID);
     if (this.histArray.length > 5 ) this.histArray.shift();
-    this.snmpDeviceService.sendQuery(this.formValues,this.testForm.value.Mode, this.testForm.value.OID, true)
+    this.myObservable =  this.snmpDeviceService.sendQuery(this.formValues,this.testForm.value.Mode, this.testForm.value.OID, true)
     .subscribe(data => {
       this.queryResult = data;
       this.dataArray = this.queryResult.QueryResult;
