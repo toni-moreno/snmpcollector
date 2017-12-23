@@ -99,7 +99,6 @@ export class SnmpMetricCfgComponent {
       ID: [this.snmpmetForm ? this.snmpmetForm.value.ID : '', Validators.required],
       FieldName: [this.snmpmetForm ? this.snmpmetForm.value.FieldName : '', Validators.required],
       DataSrcType: [this.snmpmetForm ? this.snmpmetForm.value.DataSrcType : 'Gauge32', Validators.required],
-      IsTag: [this.snmpmetForm ? this.snmpmetForm.value.IsTag : 'false', Validators.required],
       Description: [this.snmpmetForm ? this.snmpmetForm.value.Description : '']
     });
   }
@@ -132,18 +131,23 @@ export class SnmpMetricCfgComponent {
       case 'BITS':
       case 'BITSCHK':
         controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
+        controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
       case 'OCTETSTRING':
       case 'HWADDR':
       case 'IpAddress':
         controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]) })
-      break;
+        controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
+        break;
       case 'CONDITIONEVAL':
         this.getOidCond();
         controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
+        controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
         break;
       case 'STRINGPARSER':
+      case 'MULTISTRINGPARSER':
         controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]) })
       case 'STRINGEVAL':
+        controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
         controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
         controlArray.push({'ID': 'Scale', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
         controlArray.push({'ID': 'Shift', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
@@ -152,10 +156,12 @@ export class SnmpMetricCfgComponent {
       case 'COUNTER64':
       case 'COUNTERXX':
         controlArray.push({'ID': 'GetRate', 'defVal' : 'false', 'Validators' : Validators.required});
+        controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
       default: //Gauge32
         controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' :Validators.compose([ValidationService.OIDValidator, Validators.required]) })
         controlArray.push({'ID': 'Scale', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
         controlArray.push({'ID': 'Shift', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
+        controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
         break;
     }
     //Reload the formGroup with new values saved on controlArray

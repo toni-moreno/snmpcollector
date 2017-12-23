@@ -291,6 +291,20 @@ export class RuntimeComponent implements OnDestroy {
     }
   }
 
+  tableCellParser (data: any, type: string) {
+    if (type === "MULTISTRINGPARSER") {
+      var test: any = '<ul class="list-unstyled">';
+      for (var i of data) {
+          test +="<li>"
+          test +="<span class=\"badge\">"+ ( i["IType"] === 'T' ? "Tag" : "Field" ) +"</span><b>"+ i["IName"] + " :</b>" +  i["Value"];
+          test += "</li>";
+      }
+      test += "</ul>"
+      return test
+    }
+    return ""
+  }
+
   loadRuntimeById(id: string, selectedMeas: number) {
     this.mySubscription = this.runtimeService.getRuntimeById(id)
       .subscribe(
@@ -311,8 +325,8 @@ export class RuntimeComponent implements OnDestroy {
               this.tmpcolumns = [];
               if (measKey['TagName'] !== "") this.tmpcolumns.push({ title: measKey['TagName'], name: 'Index' });
               for (let fieldName in measKey['MetricTable']['Header']) {
-                //let mode = measKey['MetricTable']['Header'][fieldName]
                 let fdata = measKey['MetricTable']['Header'][fieldName]
+                let mtype =  measKey['MetricTable']['Header'][fieldName]["Type"]
                 let micon = ''
                 let tt = ''
                 switch (fdata.Report) {
@@ -330,7 +344,7 @@ export class RuntimeComponent implements OnDestroy {
                     break
 
                 }
-                let tmpColumn: any = { title: fieldName, name: fieldName, icon: micon, tooltipInfo: fdata }
+                let tmpColumn: any = { title: fieldName, name: fieldName, icon: micon, tooltipInfo: fdata ,transform: mtype }
                 this.tmpcolumns.push(tmpColumn);
               }
               this.finalColumns.push(this.tmpcolumns);
@@ -341,14 +355,29 @@ export class RuntimeComponent implements OnDestroy {
             //indexKey contains the Index, must generate the same on multiples arrays
             for (let rowid in measKey['MetricTable']['Row']) {
               let row = measKey['MetricTable']['Row'][rowid]
-              let tmpTable: any = { tooltipInfo: {} };
+              let tmpTable: any = { tooltipInfo: {} , class: {}};
               tmpTable['valid'] = row['Valid'];
               if (measKey['TagName'] !== "") tmpTable.Index = rowid;
               for (let metricid in row['Data']) {
                 let metric = row['Data'][metricid]
                 let fieldName = metric.FieldName
-                tmpTable[fieldName] = metric.CookedValue;
-                tmpTable['tooltipInfo'][fieldName] = metric;
+                //Cell values 
+                switch (metric.Type) {
+                  case 'MULTISTRINGPARSER':
+                    tmpTable[fieldName] = metric.ValueMap; 
+                    tmpTable['tooltipInfo'][fieldName] = _.omit(metric,'ValueMap','Type','Valid');
+                  break;
+                  default:
+                    tmpTable[fieldName] = metric.CookedValue;
+                    tmpTable['tooltipInfo'][fieldName] = _.omit(metric,'Type','Valid');
+                  break;
+                }
+                if ( metric.Valid === true ) {
+                  tmpTable['class'][fieldName] = 'bg-success'
+                }else {
+                  tmpTable['class'][fieldName] = 'bg-danger'
+                }
+
               }
               this.dataTable.push(tmpTable);
             }

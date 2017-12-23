@@ -10,6 +10,14 @@ import (
 	"github.com/Knetic/govaluate"
 )
 
+// MetricMultiMap Value
+type MetricMultiMap struct {
+	IType string
+	IName string
+	IConv string
+	Value interface{}
+}
+
 //SnmpMetricCfg Metric config
 type SnmpMetricCfg struct {
 	ID          string         `xorm:"'id' unique" binding:"Required"` //name of the key in the config array
@@ -20,9 +28,9 @@ type SnmpMetricCfg struct {
 	GetRate     bool           `xorm:"getrate"` //ony Valid with COUNTERS
 	Scale       float64        `xorm:"scale"`
 	Shift       float64        `xorm:"shift"`
-	IsTag       bool           `xorm:"'istag' default 0"`
-	ExtraData   string         `xorm:"extradata"`  //Only Valid with STRINGPARSER, STRINGEVAL , BITS , BITSCHK
-	Names       map[int]string `xorm:"-" json:"-"` //BitString Name array
+	IsTag       bool           `xorm:"'istag' default 0"` //Not Valid on  MULTISTRINGPARSER
+	ExtraData   string         `xorm:"extradata"`         //Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK
+	Names       map[int]string `xorm:"-" json:"-"`        //BitString Name array
 }
 
 /*
@@ -57,6 +65,7 @@ func (m *SnmpMetricCfg) Init() error {
 	case "HWADDR":
 	case "IpAddress":
 	case "STRINGPARSER":
+	case "MULTISTRINGPARSER":
 	case "STRINGEVAL":
 	case "CONDITIONEVAL":
 	default:
@@ -90,6 +99,17 @@ func (m *SnmpMetricCfg) Init() error {
 	if m.DataSrcType == "STRINGPARSER" && len(m.ExtraData) == 0 {
 		return errors.New("STRINGPARSER type requires extradata to work " + m.ID)
 	}
+
+	if m.DataSrcType == "MULTISTRINGPARSER" {
+		if len(m.ExtraData) == 0 {
+			return errors.New("MULTISTRINGPARSER type requires extradata to work " + m.ID)
+		}
+		//Check Field Syntax.
+		_, err := m.GetMultiStringTagFieldMap()
+		if err != nil {
+			return fmt.Errorf("MULTISTRINGPARSER Format Error %s type  %s"+m.ID, err)
+		}
+	}
 	if m.DataSrcType == "STRINGEVAL" && len(m.ExtraData) == 0 {
 		return fmt.Errorf("ExtraData not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
 	}
@@ -101,21 +121,65 @@ func (m *SnmpMetricCfg) Init() error {
 
 /*/CheckEvalCfg : check evaluated expresion based in govaluate
 func (m *SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
-	if m.DataSrcType != "STRINGEVAL" {
-		return nil
-	}
-	expression, err := govaluate.NewEvaluableExpression(m.ExtraData)
-	if err != nil {
-		//log.Errorf("Error on initialice STRINGEVAL on metric %s evaluation : %s : ERROR : %s", m.ID, m.ExtraData, err)
-		return err
-	}
-	_, err = expression.Evaluate(parameters)
-	if err != nil {
-		//log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", m.ID, m.ExtraData, err)
-		return err
-	}
-	return nil
+       if m.DataSrcType != "STRINGEVAL" {
+               return nil
+       }
+       expression, err := govaluate.NewEvaluableExpression(m.ExtraData)
+       if err != nil {
+               //log.Errorf("Error on initialice STRINGEVAL on metric %s evaluation : %s : ERROR : %s", m.ID, m.ExtraData, err)
+               return err
+       }
+       _, err = expression.Evaluate(parameters)
+       if err != nil {
+               //log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", m.ID, m.ExtraData, err)
+               return err
+       return nil
 }*/
+
+// GetMultiStringTagFieldMap get tag/field description map
+func (m *SnmpMetricCfg) GetMultiStringTagFieldMap() ([]*MetricMultiMap, error) {
+
+	var retval []*MetricMultiMap
+
+	items := strings.Split(m.FieldName, ",")
+
+	for _, v := range items {
+		itcfg := strings.Split(v, "|")
+		//checklength
+		iType := itcfg[0] //T/F
+		if iType != "T" && iType != "F" {
+			str := fmt.Sprintf("MultiString Parse Config error on Metric %s  Type %s is not of type (T=Tag ) or (F=Field)", m.ID, itcfg)
+			log.Warnf(str)
+			return nil, errors.New(str)
+		}
+		// Name
+		iName := itcfg[1] //name
+		//Default Conversions
+		var iConv string
+		if iType == "T" {
+			iConv = "STR"
+		}
+		if iType == "F" {
+			iConv = "INT"
+		}
+		if len(itcfg) > 2 {
+			switch itcfg[2] {
+			case "STR":
+			case "BL":
+			case "INT":
+			case "FP":
+			default:
+				str := fmt.Sprintf("MultiString Parse Config error on Metric %s Conversion Type (%s) should be of type STR|INT|FP|BL", m.ID, itcfg[2])
+				log.Errorf(str)
+				return nil, errors.New(str)
+			}
+			iConv = itcfg[2]
+		}
+		retval = append(retval, &MetricMultiMap{IName: iName, IType: iType, IConv: iConv})
+		// Could be null on Tag type
+	}
+	return retval, nil
+}
 
 // GetUsedVarNames Get Needed External Variables on this Metric ( only vaid in STRINGEVAL)
 func (m *SnmpMetricCfg) GetUsedVarNames() ([]string, error) {
@@ -128,6 +192,22 @@ func (m *SnmpMetricCfg) GetUsedVarNames() ([]string, error) {
 		return nil, err
 	}
 	return expression.Vars(), nil
+}
+
+// GetEvaluableVarNames get a string array with all posible metric values to use in metric evaluatator
+func (m *SnmpMetricCfg) GetEvaluableVarNames() ([]string, error) {
+	if m.DataSrcType == "MULTISTRINGPARSER" {
+		mmap, err := m.GetMultiStringTagFieldMap()
+		if err != nil {
+			return nil, err
+		}
+		var retarray []string
+		for _, mm := range mmap {
+			retarray = append(retarray, mm.IName)
+		}
+		return retarray, nil
+	}
+	return []string{m.FieldName}, nil
 }
 
 /***************************

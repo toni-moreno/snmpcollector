@@ -148,6 +148,22 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 						Report:      r.Report,
 						Description: val.Description,
 					}
+				case "MULTISTRINGPARSER":
+					mt.Header[val.ID] = &struct {
+						FieldID     string
+						Type        string
+						BaseOID     string
+						ExtraData   string
+						Report      int
+						Description string
+					}{
+						FieldID:     val.FieldName,
+						Type:        val.DataSrcType,
+						BaseOID:     val.BaseOID,
+						ExtraData:   val.ExtraData,
+						Report:      r.Report,
+						Description: val.Description,
+					}
 				default:
 					mt.Header[val.FieldName] = &struct {
 						FieldID     string

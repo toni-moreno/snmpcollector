@@ -39,7 +39,7 @@ func (mc *MeasurementCfg) CheckComputedMetric2(parameters map[string]interface{}
 	}
 	allusablevars = append(allusablevars, extvars...)
 	//internall defined vars( FieldNames and FR/NR)
-	intvars, _ := mc.GetInternalVarNames()
+	intvars, _ := mc.GetEvaluableVarNames()
 	allusablevars = append(allusablevars, intvars...)
 
 	for _, val := range mc.EvalMetric {
@@ -99,12 +99,16 @@ func (mc *MeasurementCfg) CheckComputedMetric(parameters map[string]interface{})
 	return nil
 }*/
 
-// GetInternalVarNames returns an string array with all posible internal variable Names
-func (mc *MeasurementCfg) GetInternalVarNames() ([]string, error) {
+// GetEvaluableVarNames returns an string array with all posible internal variable Names
+func (mc *MeasurementCfg) GetEvaluableVarNames() ([]string, error) {
 	var intvars []string // internal ( from metric ID's)
 	//Get InternalVariables (those from field names and "NF" and "NR")
 	for _, val := range mc.FieldMetric {
-		intvars = append(intvars, val.FieldName)
+		vars, err := val.GetEvaluableVarNames()
+		if err != nil {
+			return intvars, err
+		}
+		intvars = append(intvars, vars...)
 	}
 	for _, val := range mc.EvalMetric {
 		intvars = append(intvars, val.FieldName)
@@ -138,7 +142,7 @@ func (mc *MeasurementCfg) GetAllUsedVarNamesInMetrics() ([]string, error) {
 // GetExternalVars Get Needed External Variables in this Measurement
 func (mc *MeasurementCfg) GetExternalVars() ([]string, error) {
 
-	intvars, err := mc.GetInternalVarNames()
+	intvars, err := mc.GetEvaluableVarNames()
 	if err != nil {
 		return nil, err
 	}

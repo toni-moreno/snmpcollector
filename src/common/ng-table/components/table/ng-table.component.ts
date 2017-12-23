@@ -24,7 +24,7 @@ export class NgTableComponent {
   @Input() public extraActions: Array<any>;
   @Input() checkedItems: Array<any>;
   @Input() checkRows: Array<any>;
-
+  @Input() sanitizeCell: Function;
   @Input()
   public set config(conf: any) {
     if (!conf.className) {
@@ -80,7 +80,17 @@ export class NgTableComponent {
   public constructor(private sanitizer: DomSanitizer) {
   }
 
+  
   public sanitize(html: string, transform?: any ): SafeHtml {
+
+      let output: string
+      if (typeof this.sanitizeCell === "function" ) {
+        output = this.sanitizeCell(html,transform)
+        if ( output.length > 0 ) {
+          return output
+        }
+      }
+
     if  (transform === "elapsedseconds") {
       let test = new ElapsedSecondsPipe().transform(html,'3');
       html = test.toString();

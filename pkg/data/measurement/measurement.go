@@ -375,10 +375,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 		//getting all values to the array
 		for _, v := range m.cfg.FieldMetric {
 			if metr, ok := m.OidSnmpMap[v.BaseOID]; ok {
-				m.Debugf("OK Field metric found %s with FieldName %s", metr.ID, metr.GetFieldName())
-				if metr.Valid == true { //only valid for compute if it has been updated last
-					parameters[v.FieldName] = metr.CookedValue
-				}
+				metr.GetEvaluableVariables(parameters)
 			} else {
 				m.Debugf("Evaluated metric not Found for Eval key %s", v.BaseOID)
 			}
@@ -390,9 +387,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 			if metr, ok := m.OidSnmpMap[evalkey]; ok {
 				m.Debugf("OK Evaluated metric found %s Eval KEY", evalkey)
 				metr.Compute(parameters)
-				if metr.Valid == true { // this computed metric could be used to compute others only if valid
-					parameters[v.FieldName] = metr.CookedValue
-				}
+				metr.GetEvaluableVariables(parameters)
 			} else {
 				m.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 			}
@@ -408,10 +403,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 			for _, v := range m.cfg.FieldMetric {
 				if metr, ok := m.OidSnmpMap[v.BaseOID+"."+key]; ok {
 					m.Debugf("OK Field metric found %s with FieldName %s", metr.ID, metr.GetFieldName())
-					//TODO: validate all posibles values of CookedValue
-					if metr.Valid == true {
-						parameters[v.FieldName] = metr.CookedValue
-					}
+					metr.GetEvaluableVariables(parameters)
 				} else {
 					m.Debugf("Evaluated metric not Found for Eval key %s")
 				}
@@ -423,9 +415,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 				if metr, ok := m.OidSnmpMap[evalkey]; ok {
 					m.Debugf("OK Evaluated metric found %s Eval KEY", evalkey)
 					metr.Compute(parameters)
-					if metr.Valid == true {
-						parameters[v.FieldName] = metr.CookedValue
-					}
+					metr.GetEvaluableVariables(parameters)
 				} else {
 					m.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 				}

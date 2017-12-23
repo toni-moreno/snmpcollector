@@ -246,7 +246,7 @@
                                             <dd *ngFor="let metrics of finalColumns[i]"><span *ngIf="metrics.title !== 'Index'">{{metrics.title}}</span></dd>
                                         </dl>
                                     </ng-template>
-                                    <span *ngIf="measurement.TagName.length !== 0 " [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData [i].length}} index</span>
+                                    <span *ngIf="measurement.TagName.length !== 0 " [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData[i].length}} index</span>
                                     <span *ngIf="measurement.TagName.length == 0 " [ngClass]="i === measActive ? 'badge' : 'label label-default'"> value </span>
                                 </button>
                             </span>
@@ -273,7 +273,7 @@
                             </ng-template>
                         </div>
                         <div style="overflow-x: scroll" class="col-md-12">
-                            <ng-table [config]="config" (tableChanged)="onChangeTable(config)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns" [checkRows]="true">
+                            <ng-table [config]="config" [sanitizeCell]="tableCellParser" (tableChanged)="onChangeTable(config)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns" [checkRows]="true">
                             </ng-table>
                         </div>
                         <div class="col-md-12">

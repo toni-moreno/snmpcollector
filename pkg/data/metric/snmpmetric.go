@@ -61,8 +61,9 @@ type SnmpMetric struct {
 	SetRawData  func(pdu gosnmp.SnmpPDU, now time.Time) `json:"-"`
 	RealOID     string
 	Report      int //if false this metric won't be sent to the output buffer (is just taken as a coomputed input for other metrics)
-	//for STRINGPARSER
+	//for STRINGPARSER/MULTISTRINGPARSER
 	re   *regexp.Regexp
+	mm   []*config.MetricMultiMap
 	expr *govaluate.EvaluableExpression
 	//for CONDITIONEVAL
 	condflt filter.Filter
@@ -375,6 +376,26 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Scale()
 			s.Valid = true
 		}
+	case "MULTISTRINGPARSER":
+		//get Regexp
+		re, err := regexp.Compile(s.cfg.ExtraData)
+		if err != nil {
+			return fmt.Errorf("Error on initialice MULTISTRINGPARSER, invalind Regular Expression : %s", s.cfg.ExtraData)
+		}
+		s.re = re
+
+		mm, err := s.cfg.GetMultiStringTagFieldMap()
+		if err != nil {
+			return fmt.Errorf("Error on initialice MULTISTRINGPARSER, invalind Field/Tag definition Format : %s", err)
+		}
+		s.mm = mm
+		//set Process Data
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			str := snmp.PduVal2str(pdu)
+			s.CookedValue = str
+			s.CurTime = now
+			s.Valid = true
+		}
 	case "STRINGEVAL":
 
 		expression, err := govaluate.NewEvaluableExpression(s.cfg.ExtraData)
@@ -387,6 +408,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		s.Compute = func(arg ...interface{}) {
 			//parameters := make(map[string]interface{})
 			parameters := arg[0].(map[string]interface{})
+			s.log.Debugf("Evaluating Metric %s with eval expresion [%s] with parameters %+v", s.cfg.ID, s.cfg.ExtraData, parameters)
 			result, err := s.expr.Evaluate(parameters)
 			if err != nil {
 				s.log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", s.cfg.ID, s.cfg.ExtraData, err)
@@ -408,6 +430,23 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		}
 	}
 	return nil
+}
+
+// GetEvaluableVariables get all posible values to add to the
+func (s *SnmpMetric) GetEvaluableVariables(params map[string]interface{}) {
+	s.log.Debugf("Get Evaluable parameters for Metric %s", s.ID)
+	switch s.cfg.DataSrcType {
+	case "MULTISTRINGPARSER":
+		tags := make(map[string]string)
+		_ = s.addMultiStringParserValues(tags, params)
+		for k, v := range tags {
+			params[k] = v
+		}
+	default:
+		if s.Valid == true { //only valid for compute if it has been updated last
+			params[s.FieldName] = s.CookedValue
+		}
+	}
 }
 
 func (s *SnmpMetric) addSingleField(mid string, fields map[string]interface{}) int64 {
@@ -451,6 +490,63 @@ func (s *SnmpMetric) addSingleTag(mid string, tags map[string]string) int64 {
 	return 0
 }
 
+func (s *SnmpMetric) computeMultiStringParserValues() {
+	ni := len(s.mm)
+	var str string
+	switch v := s.CookedValue.(type) {
+	case string:
+		str = s.CookedValue.(string)
+	default:
+		s.log.Warnf("Error for metric [%s] Type value is not string is %T", s.cfg.ID, v)
+		return
+	}
+
+	retarray := s.re.FindStringSubmatch(str)
+	if len(retarray) < ni {
+		s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] without capturing group", s.cfg.ID, s.cfg.ExtraData, str)
+		return
+	}
+	//retarray[0] contains full string
+	if len(retarray[1]) == 0 {
+		s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] cause  void capturing group", s.cfg.ID, s.cfg.ExtraData, str)
+		return
+	}
+	for k, i := range s.mm {
+		s.log.Debugf("Parsing Metric %s MULTISTRING %d value %s (part %s)", s.cfg.ID, k, retarray[0], retarray[k+1])
+
+		var err error
+		bitstr := retarray[k+1]
+		switch i.IConv {
+		case "STR":
+			i.Value = bitstr
+		case "INT":
+			i.Value, err = strconv.ParseInt(bitstr, 10, 64)
+		case "BL":
+			i.Value, err = strconv.ParseBool(bitstr)
+		case "FL":
+			i.Value, err = strconv.ParseFloat(bitstr, 64)
+		}
+		if err != nil {
+			s.log.Warnf("Error for Metric %s MULTISTRINGPARSER  Field [%s|%s|%s] Coversion  from  [%s] error: %s", s.cfg.ID, i.IType, i.IName, i.IConv, bitstr, err)
+		}
+	}
+}
+
+func (s *SnmpMetric) addMultiStringParserValues(tags map[string]string, fields map[string]interface{}) int64 {
+	var fErrors int64
+	s.computeMultiStringParserValues()
+	for _, i := range s.mm {
+		switch i.IType {
+		case "T":
+			tags[i.IName] = i.Value.(string)
+		case "F":
+			fields[i.IName] = i.Value
+
+		}
+	}
+	return fErrors
+}
+
 // ImportFieldsAndTags Add Fields and tags from the metric and returns number of metric sent and metric errors found
 func (s *SnmpMetric) ImportFieldsAndTags(mid string, fields map[string]interface{}, tags map[string]string) (int64, int64) {
 	var metError int64
@@ -470,13 +566,20 @@ func (s *SnmpMetric) ImportFieldsAndTags(mid string, fields map[string]interface
 		return 0, 0
 	}
 
-	if s.cfg.IsTag == true {
-		er := s.addSingleTag(mid, tags)
+	switch s.cfg.DataSrcType {
+	case "MULTISTRINGPARSER":
+		er := s.addMultiStringParserValues(tags, fields)
 		metError += er
-	} else {
-		er := s.addSingleField(mid, fields)
-		metError += er
+	default:
+		if s.cfg.IsTag == true {
+			er := s.addSingleTag(mid, tags)
+			metError += er
+		} else {
+			er := s.addSingleField(mid, fields)
+			metError += er
+		}
 	}
+
 	return metSent, metError
 }
 
@@ -492,8 +595,8 @@ func (s *SnmpMetric) MarshalJSON() ([]byte, error) {
 			LastValue   interface{}
 			CurTime     time.Time
 			LastTime    time.Time
+			Type        string
 			Valid       bool
-			//	*Alias
 		}{
 			FieldName:   s.FieldName,
 			CookedValue: s.CookedValue,
@@ -501,22 +604,38 @@ func (s *SnmpMetric) MarshalJSON() ([]byte, error) {
 			LastValue:   s.LastValue,
 			CurTime:     s.CurTime,
 			LastTime:    s.LastTime,
+			Type:        s.cfg.DataSrcType,
 			Valid:       s.Valid,
-			//	Alias:       (*Alias)(s),
+		})
+	case "MULTISTRINGPARSER":
+		return json.Marshal(&struct {
+			FieldName   string
+			CookedValue interface{}
+			ValueMap    []*config.MetricMultiMap
+			CurTime     time.Time
+			Type        string
+			Valid       bool
+		}{
+			FieldName:   s.ID,
+			CookedValue: s.CookedValue,
+			ValueMap:    s.mm,
+			CurTime:     s.CurTime,
+			Type:        s.cfg.DataSrcType,
+			Valid:       s.Valid,
 		})
 	default:
 		return json.Marshal(&struct {
 			FieldName   string
 			CookedValue interface{}
 			CurTime     time.Time
+			Type        string
 			Valid       bool
-			//	*Alias
 		}{
 			FieldName:   s.FieldName,
 			CookedValue: s.CookedValue,
 			CurTime:     s.CurTime,
+			Type:        s.cfg.DataSrcType,
 			Valid:       s.Valid,
-			//	Alias:       (*Alias)(s),
 		})
 	}
 
