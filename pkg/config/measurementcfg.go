@@ -28,8 +28,8 @@ type MeasurementCfg struct {
 	Description   string           `xorm:"description"`
 }
 
-//CheckComputedMetric2 check for computed metrics based on check if variable definition exist
-func (mc *MeasurementCfg) CheckComputedMetric2(parameters map[string]interface{}) error {
+//CheckComputedMetricVars check for computed metrics based on check if variable definition exist
+func (mc *MeasurementCfg) CheckComputedMetricVars(parameters map[string]interface{}) error {
 	var extvars []string
 	var allusablevars []string
 
@@ -69,8 +69,8 @@ func (mc *MeasurementCfg) CheckComputedMetric2(parameters map[string]interface{}
 	return nil
 }
 
-/*/CheckComputedMetric check for computed metrics based on  Evalutation Execution
-func (mc *MeasurementCfg) CheckComputedMetric(parameters map[string]interface{}) error {
+// CheckComputedMetricEval check for computed metrics based on  Evalutation Execution
+func (mc *MeasurementCfg) CheckComputedMetricEval(parameters map[string]interface{}) error {
 
 	log.Debugf("Building check parrameters array for index measurement %s", mc.ID)
 	parameters["NR"] = 1                   //Number of rows (like awk)
@@ -97,7 +97,7 @@ func (mc *MeasurementCfg) CheckComputedMetric(parameters map[string]interface{})
 		return fmt.Errorf("%s", strings.Join(errstr, "\n"))
 	}
 	return nil
-}*/
+}
 
 // GetEvaluableVarNames returns an string array with all posible internal variable Names
 func (mc *MeasurementCfg) GetEvaluableVarNames() ([]string, error) {
@@ -262,13 +262,24 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 		}
 		fieldnamecheckarray[v.FieldName] = v.ID
 	}
-	//Check if all evaluated metrics has well defined its parameters as FieldNames
+	//Check if all evaluated metrics has well defined its parameters as FieldNames and evaluation syntax
+	var err error
 	if varmap == nil {
 		varmap = make(map[string]interface{})
 	}
-	err := mc.CheckComputedMetric2(varmap)
+	varmapcopy := make(map[string]interface{})
+	for k, v := range varmap {
+		varmapcopy[k] = v
+	}
+	err = mc.CheckComputedMetricVars(varmapcopy)
 	if err != nil {
-		log.Warnf(" This computed Metric has some errors!! please review its definition", err)
+		log.Warnf(" This computed Metric has Variable errors!! please review its definition", err)
+		return err
+	}
+
+	err = mc.CheckComputedMetricEval(varmapcopy)
+	if err != nil {
+		log.Warnf(" This computed Metric has Evaluation errors!! please review its definition", err)
 		return err
 	}
 

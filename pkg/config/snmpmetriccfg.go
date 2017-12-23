@@ -105,36 +105,48 @@ func (m *SnmpMetricCfg) Init() error {
 			return errors.New("MULTISTRINGPARSER type requires extradata to work " + m.ID)
 		}
 		//Check Field Syntax.
-		_, err := m.GetMultiStringTagFieldMap()
+		ma, err := m.GetMultiStringTagFieldMap()
 		if err != nil {
-			return fmt.Errorf("MULTISTRINGPARSER Format Error %s type  %s"+m.ID, err)
+			return fmt.Errorf("MULTISTRINGPARSER ITEM definition Format Error %s type  %s", m.ID, err)
 		}
+		//Check regex syntax
+		re, err := regexp.Compile(m.ExtraData)
+		if err != nil {
+			return fmt.Errorf("MULTISTRINGPARSER Regexp Format Error %s type  %s", m.ID, err)
+		}
+		//Check number of capturing groups are the same as ITEM definitions
+		ncg := len(re.SubexpNames())
+		if ncg != len(ma)+1 {
+			return fmt.Errorf("MULTISTRINGPARSER  %s Format Error %d ITEMS defined different than %d Capturing groups", m.ID, len(ma), ncg-1)
+		}
+
 	}
 	if m.DataSrcType == "STRINGEVAL" && len(m.ExtraData) == 0 {
-		return fmt.Errorf("ExtraData not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
+		return fmt.Errorf("ExtraData not set in metric Config %s type  %s", m.ID, m.DataSrcType)
 	}
 	if m.DataSrcType == "CONDITIONEVAL" && len(m.ExtraData) == 0 {
-		return fmt.Errorf("ExtraData not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
+		return fmt.Errorf("ExtraData not set in metric Config %s type  %s", m.ID, m.DataSrcType)
 	}
 	return nil
 }
 
-/*/CheckEvalCfg : check evaluated expresion based in govaluate
+// CheckEvalCfg : check evaluated expresion based in govaluate
 func (m *SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
-       if m.DataSrcType != "STRINGEVAL" {
-               return nil
-       }
-       expression, err := govaluate.NewEvaluableExpression(m.ExtraData)
-       if err != nil {
-               //log.Errorf("Error on initialice STRINGEVAL on metric %s evaluation : %s : ERROR : %s", m.ID, m.ExtraData, err)
-               return err
-       }
-       _, err = expression.Evaluate(parameters)
-       if err != nil {
-               //log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", m.ID, m.ExtraData, err)
-               return err
-       return nil
-}*/
+	if m.DataSrcType != "STRINGEVAL" {
+		return nil
+	}
+	expression, err := govaluate.NewEvaluableExpression(m.ExtraData)
+	if err != nil {
+		//log.Errorf("Error on initialice STRINGEVAL on metric %s evaluation : %s : ERROR : %s", m.ID, m.ExtraData, err)
+		return err
+	}
+	_, err = expression.Evaluate(parameters)
+	if err != nil {
+		//log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", m.ID, m.ExtraData, err)
+		return err
+	}
+	return nil
+}
 
 // GetMultiStringTagFieldMap get tag/field description map
 func (m *SnmpMetricCfg) GetMultiStringTagFieldMap() ([]*MetricMultiMap, error) {
