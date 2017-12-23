@@ -237,7 +237,7 @@ export class RuntimeComponent implements OnDestroy {
         this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
         break;
       case 'SnmpReset':
-        this.forceSnmpReset(data.row.ID, 'soft');
+        this.forceSnmpReset(data.row.ID, 'hard');
         break;
       default:
         break;
@@ -361,10 +361,10 @@ export class RuntimeComponent implements OnDestroy {
               for (let metricid in row['Data']) {
                 let metric = row['Data'][metricid]
                 let fieldName = metric.FieldName
-                //Cell values 
+                //Cell values
                 switch (metric.Type) {
                   case 'MULTISTRINGPARSER':
-                    tmpTable[fieldName] = metric.ValueMap; 
+                    tmpTable[fieldName] = metric.ValueMap;
                     tmpTable['tooltipInfo'][fieldName] = _.omit(metric,'ValueMap','Type','Valid');
                   break;
                   default:
