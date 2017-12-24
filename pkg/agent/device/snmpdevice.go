@@ -611,17 +611,17 @@ func (d *SnmpDevice) gatherAndProcessData(t *time.Ticker, force bool) *time.Tick
 					// Round collection to nearest interval by sleeping
 					//and reprogram the ticker to aligned starts
 					// only when no extra gather(forced from web-ui)
-					utils.WaitAlignForNextCicle(d.cfg.Freq, d.log)
+					utils.WaitAlignForNextCycle(d.cfg.Freq, d.log)
 					t.Stop()
 					t = time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
 					//force one iteration now..after device has been connected  dont wait for next
-					//ticker (1 complete cicle)
+					//ticker (1 complete cycle)
 				}
 				goto FORCEINIT
 			}
 		} else {
 			//device active and connected
-			d.Infof("Init gather cicle mode Concurrent [ %t ]", d.cfg.ConcurrentGather)
+			d.Infof("Init gather cycle mode Concurrent [ %t ]", d.cfg.ConcurrentGather)
 			/*************************
 			 *
 			 * SNMP Gather data process

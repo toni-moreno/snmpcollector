@@ -45,8 +45,8 @@ export class RuntimeComponent implements OnDestroy {
     { title: '#Metrics', name: 'NumMetrics' },
     { title: 'Get.Errs', name: 'Counter7', tooltip: 'SnmpOIDGetErrors:number of  oid with errors for all measurements ' },
     { title: 'M.Errs', name: 'Counter14', tooltip: 'MeasurementSentErrors: number of measuremenets  formatted with errors ' },
-    { title: 'G.Time', name: 'Counter16', tooltip: 'CicleGatherDuration time: elapsed time taken to get all measurement info', transform: 'elapsedseconds' },
-    { title: 'F.Time', name: 'Counter18', tooltip: 'CicleGatherDuration time: elapsed time taken to compute all applicable filters on the device', transform: 'elapsedseconds' }
+    { title: 'G.Time', name: 'Counter16', tooltip: 'CycleGatherDuration time: elapsed time taken to get all measurement info', transform: 'elapsedseconds' },
+    { title: 'F.Time', name: 'Counter18', tooltip: 'CycleGatherDuration time: elapsed time taken to compute all applicable filters on the device', transform: 'elapsedseconds' }
   ];
   mySubscription: any;
   filter: string;
@@ -80,8 +80,8 @@ export class RuntimeComponent implements OnDestroy {
   /*12*/    { "show": true, "id": "MetricSentErrors", "label": "Metric Sent Errors", "type": "counter", "tooltip": "number of metrics  (taken as fields) with errors forall measurements" },
   /*13*/    { "show": true, "id": "MeasurementSent", "label": "Measurement sent", "type": "counter", "tooltip": "(number of  measurements build to send as a sigle request sent to the backend)" },
   /*14*/    { "show": true, "id": "MeasurementSentErrors", "label": "Measurement sent Errors", "type": "counter", "tooltip": "(number of measuremenets  formatted with errors )" },
-  /*15*/    { "show": false, "id": "CicleGatherStartTime", "label": "Cicle Gather Start Time", "type": "time", "tooltip": "Last gather time " },
-  /*16*/    { "show": true, "id": "CicleGatherDuration", "label": "Cicle Gather Duration", "type": "duration", "tooltip": "elapsed time taken to get all measurement info" },
+  /*15*/    { "show": false, "id": "CycleGatherStartTime", "label": "Cycle Gather Start Time", "type": "time", "tooltip": "Last gather time " },
+  /*16*/    { "show": true, "id": "CycleGatherDuration", "label": "Cycle Gather Duration", "type": "duration", "tooltip": "elapsed time taken to get all measurement info" },
   /*17*/    { "show": false, "id": "FilterStartTime", "label": "Filter update Start Time", "type": "time", "tooltip": "Last Filter time" },
   /*18*/    { "show": true, "id": "FilterDuration", "label": "Filter update Duration", "type": "duration", "tooltip": "elapsed time taken to compute all applicable filters on the device" },
   /*19*/    { "show": false, "id": "BackEndSentStartTime", "label": "BackEnd (influxdb) Sent Start Time", "type": "time", "tooltip": "Last sent time" },
