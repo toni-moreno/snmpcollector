@@ -2,12 +2,13 @@ package filter
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"github.com/soniah/gosnmp"
-	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/soniah/gosnmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 )
 
 // OidFilter a new Oid condition filter
@@ -76,14 +77,22 @@ func (of *OidFilter) Update() error {
 		case of.TypeCond == "notmatch":
 			//m.log.Debugf("PDU: %+v", pdu)
 			str := snmp.PduVal2str(pdu)
-			var re = regexp.MustCompile(of.ValueCond)
+			re, err := regexp.Compile(of.ValueCond)
+			if err != nil {
+				of.log.Warnf("OIDFILTER [%s] Evaluated notmatch condition  value: %s | filter: %s | ERROR : %s", of.OidCond, str, of.ValueCond, err)
+				break
+			}
 			matched := re.MatchString(str)
 			of.log.Debugf("OIDFILTER [%s] Evaluated notmatch condition  value: %s | filter: %s | result : %t", of.OidCond, str, of.ValueCond, !matched)
 			cond = !matched
 		case of.TypeCond == "match":
 			//m.log.Debugf("PDU: %+v", pdu)
 			str := snmp.PduVal2str(pdu)
-			var re = regexp.MustCompile(of.ValueCond)
+			re, err := regexp.Compile(of.ValueCond)
+			if err != nil {
+				of.log.Warnf("OIDFILTER [%s] Evaluated notmatch condition  value: %s | filter: %s | ERROR : %s", of.OidCond, str, of.ValueCond, err)
+				break
+			}
 			matched := re.MatchString(str)
 			of.log.Debugf("OIDFILTER [%s] Evaluated match condition  value: %s | filter: %s | result : %t", of.OidCond, str, of.ValueCond, matched)
 			cond = matched
