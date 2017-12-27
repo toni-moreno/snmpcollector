@@ -909,7 +909,7 @@
                 [
                   {
                     "params": [
-                      "cicle_gather_duration"
+                      "cycle_gather_duration"
                     ],
                     "type": "field"
                   },
@@ -938,7 +938,7 @@
           "thresholds": "",
           "timeFrom": "2h",
           "timeShift": null,
-          "title": "Max Cicle Gather",
+          "title": "Max Cycle Gather",
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -1484,7 +1484,7 @@
                 [
                   {
                     "params": [
-                      "cicle_gather_duration"
+                      "cycle_gather_duration"
                     ],
                     "type": "field"
                   },
@@ -1513,7 +1513,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Cicle Gather Duration",
+          "title": "Cycle Gather Duration",
           "tooltip": {
             "shared": true,
             "sort": 2,
@@ -1730,7 +1730,7 @@
               ],
               "measurement": "selfmon_device_stats",
               "policy": "default",
-              "query": "SELECT mean(\"cicle_gather_duration\") + mean(\"filter_duration\")  FROM \"selfmon_device_stats\" WHERE \"instance\" =~ /^$instance$/ AND \"device\" =~ /^$device$/ AND $timeFilter GROUP BY time($time_interval), \"device\" fill(null)",
+              "query": "SELECT mean(\"cycle_gather_duration\") + mean(\"filter_duration\")  FROM \"selfmon_device_stats\" WHERE \"instance\" =~ /^$instance$/ AND \"device\" =~ /^$device$/ AND $timeFilter GROUP BY time($time_interval), \"device\" fill(null)",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
@@ -1738,7 +1738,7 @@
                 [
                   {
                     "params": [
-                      "cicle_gather_duration"
+                      "cycle_gather_duration"
                     ],
                     "type": "field"
                   },
@@ -1767,7 +1767,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Complete Spent Time in one Cicle (gather + filter)",
+          "title": "Complete Spent Time in one Cycle (gather + filter)",
           "tooltip": {
             "shared": true,
             "sort": 2,
