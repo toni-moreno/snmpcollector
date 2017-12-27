@@ -79,7 +79,7 @@ export class SnmpDeviceCfgComponent {
     { title: 'Snmp Version', name: 'SnmpVersion' },
     { title: 'Snmp Debug', name: 'SnmpDebug' },
     { title: 'Polling Period (sec)', name: 'Freq' },
-    { title: 'Update Filter (Cicles)', name: 'UpdateFltFreq' },
+    { title: 'Update Filter (Cycles)', name: 'UpdateFltFreq' },
     { title: 'Concurrent Gather', name: 'ConcurrentGather' },
     { title: 'Influx DB', name: 'OutDB' },
     { title: 'Log Level', name: 'LogLevel' },

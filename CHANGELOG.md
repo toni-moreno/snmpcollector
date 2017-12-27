@@ -128,7 +128,7 @@ __fields__
 
 Old | New
 ----|----
-process_t | cicle_gather_duration
+process_t | cycle_gather_duration
 getsent | snmp_oid_get_processed
 geterror | snmp_oid_get_errors
 

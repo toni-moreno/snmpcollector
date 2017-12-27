@@ -12,13 +12,13 @@ import (
 type DevStatType uint
 
 const (
-	//SnmpGetQueries num Get Queries on last gather cicle
+	//SnmpGetQueries num Get Queries on last gather cycle
 	SnmpGetQueries = 0
-	//SnmpWalkQueries num Walk Queries on last gather cicle
+	//SnmpWalkQueries num Walk Queries on last gather cycle
 	SnmpWalkQueries = 1
-	// SnmpGetErrors num Get Errors on last gather cicle
+	// SnmpGetErrors num Get Errors on last gather cycle
 	SnmpGetErrors = 2
-	// SnmpWalkErrors num Walk Errors on last gather cicle
+	// SnmpWalkErrors num Walk Errors on last gather cycle
 	SnmpWalkErrors = 3
 	// SnmpQueryTimeouts timeous happened while doing snmp queries
 	SnmpQueryTimeouts = 4
@@ -42,10 +42,10 @@ const (
 	MeasurementSent = 13
 	// MeasurementSentErrors all measurements with errors
 	MeasurementSentErrors = 14
-	// CicleGatherStartTime Time which begins the last Gather Cicle
-	CicleGatherStartTime = 15
-	// CicleGatherDuration Time taken in complete the last gather and sent cicle
-	CicleGatherDuration = 16
+	// CycleGatherStartTime Time which begins the last Gather Cycle
+	CycleGatherStartTime = 15
+	// CycleGatherDuration Time taken in complete the last gather and sent cycle
+	CycleGatherDuration = 16
 	// FilterStartTime Time which begins the last filter update
 	FilterStartTime = 17
 	// FilterDuration Time taken in complete the filtering process
@@ -104,8 +104,8 @@ func (s *DevStat) Init(id string, tm map[string]string, l *logrus.Logger) {
 	s.Counters[MeasurementSent] = 0
 	s.Counters[MetricSentErrors] = 0
 	s.Counters[MeasurementSentErrors] = 0
-	s.Counters[CicleGatherStartTime] = 0
-	s.Counters[CicleGatherDuration] = 0.0
+	s.Counters[CycleGatherStartTime] = 0
+	s.Counters[CycleGatherDuration] = 0.0
 	s.Counters[FilterStartTime] = 0
 	s.Counters[FilterDuration] = 0.0
 	s.Counters[BackEndSentStartTime] = 0
@@ -151,8 +151,8 @@ func (s *DevStat) getMetricFields() map[string]interface{} {
 		/*12*/ "metric_sent_errors": s.Counters[MetricSentErrors],
 		/*13*/ "measurement_sent": s.Counters[MeasurementSent],
 		/*14*/ "measurement_sent_errors": s.Counters[MeasurementSentErrors],
-		/*15*/ "cicle_gather_start_time": s.Counters[CicleGatherStartTime],
-		/*16*/ "cicle_gather_duration": s.Counters[CicleGatherDuration],
+		/*15*/ "cycle_gather_start_time": s.Counters[CycleGatherStartTime],
+		/*16*/ "cycle_gather_duration": s.Counters[CycleGatherDuration],
 		/*17*/ "filter_start_time": s.Counters[FilterStartTime],
 		/*18*/ "filter_duration": s.Counters[FilterDuration],
 		/*19*/ "backend_sent_start_time": s.Counters[BackEndSentStartTime],
@@ -184,8 +184,8 @@ func (s *DevStat) ThSafeCopy() *DevStat {
 func (s *DevStat) Send() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.log.Infof("STATS SNMP GET: snmp pooling took [%f seconds] SNMP: Gets [%d] , Processed [%d], Errors [%d]", s.Counters[CicleGatherDuration], s.Counters[SnmpOIDGetAll], s.Counters[SnmpOIDGetProcessed], s.Counters[SnmpOIDGetErrors])
-	s.log.Infof("STATS SNMP FILTER: filter pooling took [%f seconds] ", s.Counters[FilterDuration])
+	s.log.Infof("STATS SNMP GET: snmp polling took [%f seconds] SNMP: Gets [%d] , Processed [%d], Errors [%d]", s.Counters[CycleGatherDuration], s.Counters[SnmpOIDGetAll], s.Counters[SnmpOIDGetProcessed], s.Counters[SnmpOIDGetErrors])
+	s.log.Infof("STATS SNMP FILTER: filter polling took [%f seconds] ", s.Counters[FilterDuration])
 	s.log.Infof("STATS INFLUX: influx send took [%f seconds]", s.Counters[BackEndSentDuration])
 	if s.selfmon != nil {
 		s.selfmon.AddDeviceMetrics(s.id, s.getMetricFields(), s.TagMap)
@@ -229,8 +229,8 @@ func (s *DevStat) UpdateSnmpGetStats(g int64, p int64, e int64) {
 func (s *DevStat) SetGatherDuration(start time.Time, duration time.Duration) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.Counters[CicleGatherStartTime] = start.Unix()
-	s.Counters[CicleGatherDuration] = duration.Seconds()
+	s.Counters[CycleGatherStartTime] = start.Unix()
+	s.Counters[CycleGatherDuration] = duration.Seconds()
 }
 
 // AddSentDuration Update Sent Duration stats
