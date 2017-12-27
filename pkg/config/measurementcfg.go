@@ -38,7 +38,7 @@ func (mc *MeasurementCfg) CheckComputedMetricVars(parameters map[string]interfac
 		extvars = append(extvars, k)
 	}
 	allusablevars = append(allusablevars, extvars...)
-	//internall defined vars( FieldNames and FR/NR)
+	//internall defined vars( FieldNames and NFR/FR/NR)
 	intvars, _ := mc.GetEvaluableVarNames()
 	allusablevars = append(allusablevars, intvars...)
 
@@ -73,6 +73,7 @@ func (mc *MeasurementCfg) CheckComputedMetricVars(parameters map[string]interfac
 func (mc *MeasurementCfg) CheckComputedMetricEval(parameters map[string]interface{}) error {
 
 	log.Debugf("Building check parrameters array for index measurement %s", mc.ID)
+	parameters["NFR"] = 1
 	parameters["NR"] = 1                   //Number of rows (like awk)
 	parameters["NF"] = len(mc.FieldMetric) //Number of fields ( like awk)
 	//getting all values to the array
@@ -116,6 +117,7 @@ func (mc *MeasurementCfg) GetEvaluableVarNames() ([]string, error) {
 	for _, val := range mc.OidCondMetric {
 		intvars = append(intvars, val.FieldName)
 	}
+	intvars = append(intvars, "NFR")
 	intvars = append(intvars, "NF")
 	intvars = append(intvars, "NR")
 	//log.Debugf("INTVARS %s : %#+v ", mc.ID, intvars)

@@ -370,8 +370,9 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 	switch m.cfg.GetMode {
 	case "value":
 		m.Debugf("Building parrameters array for index measurement %s", m.cfg.ID)
-		parameters["NR"] = len(m.CurIndexedLabels) //Number of rows (like awk)
-		parameters["NF"] = len(m.cfg.FieldMetric)  //Number of fields ( like awk)
+		parameters["NFR"] = len(m.AllIndexedLabels) //Number of non filtered rows
+		parameters["NR"] = len(m.CurIndexedLabels)  //Number of current rows (like awk) --after filtered applied  --
+		parameters["NF"] = len(m.cfg.FieldMetric)   //Number of fields ( like awk)
 		//getting all values to the array
 		for _, v := range m.cfg.FieldMetric {
 			if metr, ok := m.OidSnmpMap[v.BaseOID]; ok {
@@ -396,8 +397,9 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 		for key, val := range m.CurIndexedLabels {
 			//building parameters array
 			m.Debugf("Building parrameters array for index %s/%s", key, val)
-			parameters["NR"] = len(m.CurIndexedLabels) //Number of rows (like awk)
-			parameters["NF"] = len(m.cfg.FieldMetric)  //Number of fields ( like awk)
+			parameters["NFR"] = len(m.AllIndexedLabels) //Number of non filtered rows
+			parameters["NR"] = len(m.CurIndexedLabels)  //Number of rows (like awk)
+			parameters["NF"] = len(m.cfg.FieldMetric)   //Number of fields ( like awk)
 			//TODO: add other common variables => Elapsed , etc
 			//getting all values to the array
 			for _, v := range m.cfg.FieldMetric {
