@@ -34,7 +34,7 @@ godep restore                    # will pull down all golang lib dependencies in
 ```bash
 npm install
 PATH=$(npm bin):$PATH            # or export PATH=$(npm bin):$PATH depending on your shell
-npm run build:pro                # will build fronted and backend
+npm run build:prod               # will build fronted and backend
 ```
 ### Creating minimal package tar.gz
 
