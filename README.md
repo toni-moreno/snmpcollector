@@ -25,16 +25,16 @@ go get github.com/toni-moreno/snmpcollector
 
 ```bash
 cd $GOPATH/src/github.com/toni-moreno/snmpcollector
-go run build.go setup            (only needed once to install godep)
-godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
+go run build.go setup            # only needed once to install godep
+godep restore                    # will pull down all golang lib dependencies in your current GOPATH
 ```
 
 ### Building frontend and backend in production mode
 
 ```bash
 npm install
-PATH=$(npm bin):$PATH
-npm run build:pro #will build fronted and backend
+PATH=$(npm bin):$PATH            # or export PATH=$(npm bin):$PATH depending on your shell
+npm run build:pro                # will build fronted and backend
 ```
 ### Creating minimal package tar.gz
 

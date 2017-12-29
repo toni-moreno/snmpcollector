@@ -38,7 +38,6 @@
     "@angular/platform-browser": "4.3.6",
     "@angular/platform-browser-dynamic": "4.3.6",
     "@angular/router": "4.3.6",
-
     "bootstrap": "^3.3.7",
     "core-js": "2.5.1",
     "es6-promise": "^3.0.2",
