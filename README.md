@@ -17,7 +17,7 @@ If you want to build a package yourself, or contribute. Here is a guide for how 
 ### Get Code
 
 ```bash
-go get github.com/toni-moreno/snmpcollector
+go get -d github.com/toni-moreno/snmpcollector/...
 ```
 
 ### Building the backend
