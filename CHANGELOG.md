@@ -32,12 +32,20 @@ mem.stackInuse| StackInuse is bytes in stack spans.
 mem.mSpanInuse| MSpanInuse is bytes of allocated mspan structures.
 mem.mCacheInuse| MCacheInuse is bytes of allocated mcache structures.
 
+* Added New MULTISTRINGPARSER metric type
 
 ### fixes
 
 * fix for #303, #304
 
 ### breaking changes
+
+* fixed typos in field names on the selfmon_device_stats measurement (thanks to https://github.com/jensenja)
+
+ Old | New		  
+  ----|----
+  cicle_gather_duration| cycle_gather_duration
+  cicle_gather_start_time|cycle_gather_start_time
 
 
 # v 0.7.5 (2017-12-16)
@@ -128,7 +136,7 @@ __fields__
 
 Old | New
 ----|----
-process_t | cycle_gather_duration
+process_t | cicle_gather_duration
 getsent | snmp_oid_get_processed
 geterror | snmp_oid_get_errors
 
