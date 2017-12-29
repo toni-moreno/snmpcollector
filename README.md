@@ -50,6 +50,8 @@ cp conf/sample.config.toml conf/config.toml
 ./bin/snmpcollector
 ```
 
+This will create a default user with username *adm1* and password *adm1pass* (don't forget to change them!).
+
 ### Recompile backend on source change (only for developers)
 
 To rebuild on source change (requires that you executed godep restore)
