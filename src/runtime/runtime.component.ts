@@ -344,7 +344,17 @@ export class RuntimeComponent implements OnDestroy {
                     break
 
                 }
-                let tmpColumn: any = { title: fieldName, name: fieldName, icon: micon, tooltipInfo: fdata ,transform: mtype }
+                let tmpColumn: any
+                switch (mtype) {
+                  case 'MULTISTRINGPARSER':
+                    tmpColumn = { title: fdata['Title'], name: fieldName, icon: micon, tooltipInfo: fdata ,transform: mtype }
+                  break;
+                  default:
+                    tmpColumn = { title: fieldName, name: fieldName, icon: micon, tooltipInfo: fdata ,transform: mtype }
+                  break;
+                }
+                console.log("MTYPE:",mtype)
+                console.log(tmpColumn)
                 this.tmpcolumns.push(tmpColumn);
               }
               this.finalColumns.push(this.tmpcolumns);

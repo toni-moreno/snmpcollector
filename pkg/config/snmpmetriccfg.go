@@ -222,6 +222,66 @@ func (m *SnmpMetricCfg) GetEvaluableVarNames() ([]string, error) {
 	return []string{m.FieldName}, nil
 }
 
+// GetMetricHeader Get Info
+func (m *SnmpMetricCfg) GetMetricHeader(report int) interface{} {
+	var retval interface{}
+	switch m.DataSrcType {
+	case "STRINGPARSER", "BITS", "BITSCHK", "CONDITIONEVAL", "STRINGEVAL":
+		retval = &struct {
+			FieldID     string
+			Type        string
+			BaseOID     string
+			ExtraData   string
+			IsTag       bool
+			Report      int
+			Description string
+		}{
+			FieldID:     m.ID,
+			Type:        m.DataSrcType,
+			BaseOID:     m.BaseOID,
+			ExtraData:   m.ExtraData,
+			IsTag:       m.IsTag,
+			Report:      report,
+			Description: m.Description,
+		}
+	case "MULTISTRINGPARSER":
+		retval = &struct {
+			Title       string
+			FieldID     string
+			Type        string
+			BaseOID     string
+			ExtraData   string
+			Report      int
+			Description string
+		}{
+			Title:       m.ID,
+			FieldID:     m.FieldName,
+			Type:        m.DataSrcType,
+			BaseOID:     m.BaseOID,
+			ExtraData:   m.ExtraData,
+			Report:      report,
+			Description: m.Description,
+		}
+	default:
+		retval = &struct {
+			FieldID     string
+			Type        string
+			BaseOID     string
+			IsTag       bool
+			Report      int
+			Description string
+		}{
+			FieldID:     m.ID,
+			Type:        m.DataSrcType,
+			BaseOID:     m.BaseOID,
+			IsTag:       m.IsTag,
+			Report:      report,
+			Description: m.Description,
+		}
+	}
+	return retval
+}
+
 /***************************
 SNMP Metric
 	-GetSnmpMetricCfgCfgByID(struct)

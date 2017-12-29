@@ -616,7 +616,7 @@ func (s *SnmpMetric) MarshalJSON() ([]byte, error) {
 			Type        string
 			Valid       bool
 		}{
-			FieldName:   s.ID,
+			FieldName:   s.FieldName,
 			CookedValue: s.CookedValue,
 			ValueMap:    s.mm,
 			CurTime:     s.CurTime,
