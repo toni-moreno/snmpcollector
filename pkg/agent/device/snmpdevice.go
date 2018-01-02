@@ -477,6 +477,7 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 
 // initSnmpConnectConcurrent does the  SNMP client connection and retrieve system info
 func (d *SnmpDevice) initSnmpConnectConcurrent(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
+	//this will never happen if previously snmpClientMap has been released
 	if val, ok := d.snmpClientMap[mkey]; ok {
 		if val != nil {
 			d.Infof("Releasing SNMP connection for measurement %s", mkey)
@@ -549,9 +550,8 @@ func (d *SnmpDevice) snmpRelease() {
 	}
 }
 
-func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
-	//On sequential we need release connection first , concurrent has an automatic self release system
-	d.Infof("Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
+func (d *SnmpDevice) releaseClientMap() {
+
 	if !d.cfg.ConcurrentGather {
 		if val, ok := d.snmpClientMap["init"]; ok {
 			if val != nil {
@@ -559,9 +559,22 @@ func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 				snmp.Release(val)
 			}
 		}
+	} else {
+		for k, val := range d.snmpClientMap {
+			if val != nil {
+				d.Infof("Releasing snmp connection for %s", k)
+				snmp.Release(val)
+			}
+		}
 	}
 	//begin reset process
 	d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
+}
+
+func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
+	//On sequential we need release connection first , concurrent has an automatic self release system
+	d.Infof("Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
+	d.releaseClientMap()
 	initerrors := 0
 	if d.cfg.ConcurrentGather == false {
 		c, err := d.InitSnmpConnect("init", debug, maxrep)
@@ -600,6 +613,9 @@ func (d *SnmpDevice) gatherAndProcessData(t *time.Ticker, force bool) *time.Tick
 	FORCEINIT:
 		//check if device has active snmp connections and Initialize if not
 		if d.DeviceConnected == false {
+			//should release first previouos snmp connections
+			d.releaseClientMap()
+			//try reconnect only once with the "init" connection
 			_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug, 0)
 			if err == nil {
 				startSnmp := time.Now()
