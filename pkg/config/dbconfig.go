@@ -48,17 +48,22 @@ type SnmpDeviceCfg struct {
 
 // InfluxCfg is the main configuration for any InfluxDB TSDB
 type InfluxCfg struct {
-	ID          string `xorm:"'id' unique" binding:"Required"`
-	Host        string `xorm:"host" binding:"Required"`
-	Port        int    `xorm:"port" binding:"Required;IntegerNotZero"`
-	DB          string `xorm:"db" binding:"Required"`
-	User        string `xorm:"user" binding:"Required"`
-	Password    string `xorm:"password" binding:"Required"`
-	Retention   string `xorm:"'retention' default 'autogen'" binding:"Required"`
-	Precision   string `xorm:"'precision' default 's'" binding:"Default(s);OmitEmpty;In(h,m,s,ms,u,ns)"` //posible values [h,m,s,ms,u,ns] default seconds for the nature of data
-	Timeout     int    `xorm:"'timeout' default 30" binding:"Default(30);IntegerNotZero"`
-	UserAgent   string `xorm:"useragent" binding:"Default(snmpcollector)"`
-	Description string `xorm:"description"`
+	ID                 string `xorm:"'id' unique" binding:"Required"`
+	Host               string `xorm:"host" binding:"Required"`
+	Port               int    `xorm:"port" binding:"Required;IntegerNotZero"`
+	DB                 string `xorm:"db" binding:"Required"`
+	User               string `xorm:"user" binding:"Required"`
+	Password           string `xorm:"password" binding:"Required"`
+	Retention          string `xorm:"'retention' default 'autogen'" binding:"Required"`
+	Precision          string `xorm:"'precision' default 's'" binding:"Default(s);OmitEmpty;In(h,m,s,ms,u,ns)"` //posible values [h,m,s,ms,u,ns] default seconds for the nature of data
+	Timeout            int    `xorm:"'timeout' default 30" binding:"Default(30);IntegerNotZero"`
+	UserAgent          string `xorm:"useragent" binding:"Default(snmpcollector)"`
+	EnableSSL          bool   `xorm:"enable_ssl"`
+	SSLCA              string `xorm:"ssl_ca"`
+	SSLCert            string `xorm:"ssl_cert"`
+	SSLKey             string `xorm:"ssl_key"`
+	InsecureSkipVerify bool   `xorm:"insecure_skip_verify"`
+	Description        string `xorm:"description"`
 }
 
 //MeasFilterCfg the filter configuration

@@ -142,7 +142,55 @@
         </div>
       </div>
   </div>
-
+  <div class="well well-sm">
+    <span class="editsection">SSL Settings</span>
+    <div class="form-group" style="margin-top: 25px">
+      <label class="control-label col-sm-2" for="EnableSSL">Enable SSL</label>
+      <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Enable or disables SSL "></i>
+      <div class="col-sm-9">
+        <select formControlName="EnableSSL" id="EnableSSL" [ngModel]="influxserverForm.value.EnableSSL">
+          <option value="true">True</option>
+          <option value="false">False</option>
+          </select>
+        <control-messages [control]="influxserverForm.controls.EnableSSL"></control-messages>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 25px" *ngIf="influxserverForm.controls.EnableSSL">
+      <label class="control-label col-sm-2" for="SSLCA">SSL CA</label>
+      <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Complete Path (on the collector host side) for the CA.PEM file "></i>
+      <div class="col-sm-9">
+        <input formControlName="SSLCA" id="SSLCA" [ngModel]="influxserverForm.value.SSLCA"/>
+        <control-messages [control]="influxserverForm.controls.SSLCA"></control-messages>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 25px" *ngIf="influxserverForm.controls.EnableSSL">
+      <label class="control-label col-sm-2" for="SSLCert">SSL Cert</label>
+      <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Complete Path (on the collector host side) for the Cert.PEM file "></i>
+      <div class="col-sm-9">
+        <input formControlName="SSLCert" id="SSLCert" [ngModel]="influxserverForm.value.SSLCert"/>
+        <control-messages [control]="influxserverForm.controls.SSLCert"></control-messages>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 25px" *ngIf="influxserverForm.controls.EnableSSL">
+      <label class="control-label col-sm-2" for="SSLKey">SSL Key</label>
+      <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Complete Path (on the collector host side) for the Key.PEM file "></i>
+      <div class="col-sm-9">
+        <input formControlName="SSLKey" id="SSLKey" [ngModel]="influxserverForm.value.SSLKey"/>
+        <control-messages [control]="influxserverForm.controls.SSLKey"></control-messages>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 25px" *ngIf="influxserverForm.controls.EnableSSL">
+      <label class="control-label col-sm-2" for="InsecureSkipVerify">Insecure Skip Verify</label>
+      <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip=" If InsecureSkipVerify is true, TLS accepts any certificate presented by the server and any host name in that certificate. In this mode, TLS is susceptible to man-in-the-middle attacks. This should be used only for testing."></i>
+      <div class="col-sm-9">
+          <select formControlName="InsecureSkipVerify" id="InsecureSkipVerify" [ngModel]="influxserverForm.value.InsecureSkipVerify">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+        <control-messages [control]="influxserverForm.controls.InsecureSkipVerify"></control-messages>
+      </div>
+    </div>
+  </div>
   <div class="well well-sm">
     <span class="editsection">Extra Settings</span>
       <div class="form-group" style="margin-top: 25px">

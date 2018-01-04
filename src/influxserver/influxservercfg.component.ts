@@ -44,6 +44,7 @@ export class InfluxServerCfgComponent {
     { title: 'ID', name: 'ID' },
     { title: 'Host', name: 'Host' },
     { title: 'Port', name: 'Port' },
+    { title: 'Enable SSL',name:'EnableSSL'},
     { title: 'DB', name: 'DB' },
     { title: 'User', name: 'User' },
     { title: 'Retention', name: 'Retention' },
@@ -100,6 +101,11 @@ export class InfluxServerCfgComponent {
       Precision: [this.influxserverForm ? this.influxserverForm.value.Precision : 's', Validators.required],
       Timeout: [this.influxserverForm ? this.influxserverForm.value.Timeout : 30, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       UserAgent: [this.influxserverForm ? this.influxserverForm.value.UserAgent : ''],
+      EnableSSL: [this.influxserverForm ? this.influxserverForm.value.EnableSSL : 'false'],
+      SSLCA: [this.influxserverForm ? this.influxserverForm.value.SSLCA : ''],
+      SSLCert: [this.influxserverForm ? this.influxserverForm.value.SSLCert : ''],
+      SSLKey: [this.influxserverForm ? this.influxserverForm.value.SSLKey : ''],
+      InsecureSkipVerify: [this.influxserverForm ? this.influxserverForm.value.InsecureSkipVerify : 'true'],
       Description: [this.influxserverForm ? this.influxserverForm.value.Description : '']
     });
   }

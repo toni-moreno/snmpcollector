@@ -15,6 +15,8 @@ export class InfluxServerService {
         key == 'Timeout' ) {
           return parseInt(value);
         }
+        if ( key == 'EnableSSL' ||
+        key == 'InsecureSkipVerify') return ( value === "true" || value === true);
         return value;
     }
 

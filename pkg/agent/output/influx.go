@@ -10,6 +10,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 var (
@@ -86,12 +87,30 @@ func (db *InfluxDB) BP() (*client.BatchPoints, error) {
 // Ping InfluxDB Server
 func Ping(cfg *config.InfluxCfg) (client.Client, time.Duration, string, error) {
 
-	conf := client.HTTPConfig{
-		Addr:      fmt.Sprintf("http://%s:%d", cfg.Host, cfg.Port),
-		Username:  cfg.User,
-		Password:  cfg.Password,
-		UserAgent: cfg.UserAgent,
-		Timeout:   time.Duration(cfg.Timeout) * time.Second,
+	var conf client.HTTPConfig
+	if cfg.EnableSSL {
+		tls, err := utils.GetTLSConfig(cfg.SSLCert, cfg.SSLKey, cfg.SSLCA, cfg.InsecureSkipVerify)
+		if err != nil {
+			log.Errorf("Error on Create TLS config: %s", err)
+			return nil, 0, "", err
+		}
+		conf = client.HTTPConfig{
+			Addr:      fmt.Sprintf("https://%s:%d", cfg.Host, cfg.Port),
+			Username:  cfg.User,
+			Password:  cfg.Password,
+			UserAgent: cfg.UserAgent,
+			Timeout:   time.Duration(cfg.Timeout) * time.Second,
+			TLSConfig: tls,
+		}
+	} else {
+
+		conf = client.HTTPConfig{
+			Addr:      fmt.Sprintf("http://%s:%d", cfg.Host, cfg.Port),
+			Username:  cfg.User,
+			Password:  cfg.Password,
+			UserAgent: cfg.UserAgent,
+			Timeout:   time.Duration(cfg.Timeout) * time.Second,
+		}
 	}
 	cli, err := client.NewHTTPClient(conf)
 
