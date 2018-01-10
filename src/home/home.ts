@@ -68,7 +68,7 @@ export class Home {
     this.homeService.userLogout()
     .subscribe(
     response => {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/sign-in']);
     },
     error => {
       alert(error.text());
