@@ -1,29 +1,16 @@
-<div style="
-right: 12px;
-position: fixed;
-z-index: 999999;!important">
-
+<div style="right: 12px; position: fixed; z-index: 999999;!important">
   <div *ngFor="let alert of myAlerts">
-
     <alert *ngIf="alert" [type]="alert.type" dismissible="true" [dismissOnTimeout]="10000">
-      <div style="
-                  display: inline-block;
-                  border-right: solid;
-                  font-size: 40px !important;
-                  padding-right: 10px;">
-        <h1 style="display:inline">
-                    <i [ngClass]="alert.type !== 'success' ? 'glyphicon glyphicon-warning-sign' : 'glyphicon glyphicon-ok'"></i>
-                </h1>
+      <div style="display: inline-block; border-right: solid; font-size: 40px !important; padding-right: 10px;">
+        <h1 style="display:inline">  <i [ngClass]="alert.type !== 'success' ? 'glyphicon glyphicon-warning-sign' : 'glyphicon glyphicon-ok'"></i></h1>
       </div>
       <ng-container *ngIf="alert.type !== 'success'">
         <div style="display:inline-block">
           <p style="font-weight: 700;">{{alert.message.statusText ? alert.message.statusText : 'ERROR'}}</p>
           <span *ngIf="alert.message.status !== 403">{{alert.message['_body']}}</span>
-          <span *ngIf="alert.message.status === 403">{{alert.message}}</span>
           <span *ngIf="alert.message.status === 504 || !alert.message.status">{{alert.message}}</span>
         </div>
       </ng-container>
-
       <ng-container *ngIf="alert.type === 'success'">
         <div style="display:inline-block;">
           <p style="font-weight: 700;">{{alert.message.statusText}}</p>
@@ -31,8 +18,5 @@ z-index: 999999;!important">
         </div>
       </ng-container>
     </alert>
-    <!--alert type="success">
-                  <strong>Well done!</strong> You successfully read this important alert message.
-              </alert-->
   </div>
 </div>
