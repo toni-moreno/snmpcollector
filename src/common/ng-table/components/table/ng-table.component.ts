@@ -18,6 +18,7 @@ export class NgTableComponent {
   // Table values
   @Input() public rows: Array<any> = [];
   @Input() public showCustom: boolean = false;
+  @Input() public showConnection: boolean = false;
   @Input() public showStatus: boolean = false;
   @Input() public editMode: boolean = false;
   @Input() public exportType: string;
@@ -80,7 +81,7 @@ export class NgTableComponent {
   public constructor(private sanitizer: DomSanitizer) {
   }
 
-  
+
   public sanitize(html: string, transform?: any ): SafeHtml {
 
       let output: string

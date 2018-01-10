@@ -575,10 +575,8 @@ updateAllSelectedItems(mySelectedArray,field,value, append?) {
               );
   }
 
-  showTestConnectionModal() {
-    if (this.snmpdevForm.valid) {
-      this.viewTestConnectionModal.show(this.snmpdevForm.value);
-    }
+  showTestConnectionModal(data) {
+      this.viewTestConnectionModal.show(data);
   }
 
   showFilterModal(){

@@ -6,9 +6,9 @@
                 <label (click)="selectAllItems(true)" class="glyphicon glyphicon-check text-success"></label>-
                 <label (click)="selectAllItems(false)" class="glyphicon glyphicon-unchecked text-danger"></label>
             </th>
-            <th *ngIf="showCustom == true" [ngStyle]="exportType ? {'min-width': '95px'} : {'min-width': '80px'}">
+            <th *ngIf="showCustom == true" [ngStyle]="exportType ? {'min-width': '115px'} : {'min-width': '80px'}">
             </th>
-            <th *ngIf="showStatus == true" [ngStyle]="exportType ? {'min-width': '95px'} : {'min-width': '80px'}">
+            <th *ngIf="showStatus == true" [ngStyle]="exportType ? {'min-width': '115px'} : {'min-width': '80px'}">
             </th>
             <ng-container *ngIf="checkRows">
                 <th style="width: 80px; text-align: center; padding-bottom: 15px;" [ngClass]="rows.length === 0 ? ['bg-warning'] : ''">
@@ -60,6 +60,7 @@
                 <i *ngIf="exportType " class="glyphicon glyphicon-download-alt " [tooltip]=" 'Export item' " (click)="exportItem(row, exportType) "></i>
                 <i class="glyphicon glyphicon-eye-open " [tooltip]=" 'View item' " (click)="viewItem(row) "></i>
                 <i class="glyphicon glyphicon-edit " [tooltip]=" 'Edit item' " (click)="editItem(row) "></i>
+                <i *ngIf="showConnection" class="glyphicon glyphicon-flash " [tooltip]=" 'Test Connection' " (click)="testConnection(row) "></i>
                 <i class="glyphicon glyphicon glyphicon-remove " [tooltip]=" 'Remove Item' " (click)="removeItem(row) "></i>
             </td>
             <td *ngIf="showStatus==true " style="min-width: 170px ">
@@ -81,7 +82,7 @@
                 </td>
             </ng-container>
             <td [ngClass]=" row.class  ? (row.class[column.name] ? [ row.class[column.name] ] : '' ) : '' " (click)="cellClick(row, column.name) " *ngFor="let column of columns; let i=index " container=body [tooltip]="row.tooltipInfo ? tooltipValues : (column.name==='ID' ? row.Description : '') " [innerHtml]="sanitize(row[column.name],column.transform) " style="text-align:right ">
-                    
+
                 <ng-template #tooltipValues>
                     <h6 *ngIf="row.Index ">Indexed : {{row.Index }}</h6>
                     <ng-container *ngIf="column.name !=='Index' ">
