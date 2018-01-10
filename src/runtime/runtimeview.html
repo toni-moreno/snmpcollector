@@ -45,7 +45,7 @@
             <label style="margin-left: 10px; font-size: 100%" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label>
         </ng-container>
     </div>
-    <my-spinner [isRunning]="isRequesting"></my-spinner>
+    <my-spinner [isRunning]="isRequesting" message="Waiting for all devices to finish its gathering process..."></my-spinner>
 
     <div class="col-md-12" *ngIf="isRequesting == false">
         <div class="col-md-12" *ngIf="runtime_dev">
