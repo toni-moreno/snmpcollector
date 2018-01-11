@@ -74,10 +74,13 @@ func (mc *MeasurementCfg) CheckComputedMetricEval(parameters map[string]interfac
 
 	log.Debugf("Building check parrameters array for index measurement %s", mc.ID)
 	parameters["NFR"] = 1
-	parameters["NR"] = 1                   //Number of rows (like awk)
-	parameters["NF"] = len(mc.FieldMetric) //Number of fields ( like awk)
+	parameters["NR"] = 1                                           //Number of rows (like awk)
+	parameters["NF"] = len(mc.FieldMetric) + len(mc.OidCondMetric) //Number of fields ( like awk)
 	//getting all values to the array
 	for _, v := range mc.FieldMetric {
+		parameters[v.FieldName] = float64(1)
+	}
+	for _, v := range mc.OidCondMetric {
 		parameters[v.FieldName] = float64(1)
 	}
 	log.Debugf("PARAMETERS: %+v", parameters)
