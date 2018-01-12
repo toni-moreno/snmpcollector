@@ -370,15 +370,23 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 	switch m.cfg.GetMode {
 	case "value":
 		m.Debugf("Building parrameters array for index measurement %s", m.cfg.ID)
-		parameters["NFR"] = len(m.AllIndexedLabels) //Number of non filtered rows
-		parameters["NR"] = len(m.CurIndexedLabels)  //Number of current rows (like awk) --after filtered applied  --
-		parameters["NF"] = len(m.cfg.FieldMetric)   //Number of fields ( like awk)
+		parameters["NFR"] = len(m.AllIndexedLabels)                          //Number of non filtered rows
+		parameters["NR"] = len(m.CurIndexedLabels)                           //Number of current rows (like awk) --after filtered applied  --
+		parameters["NF"] = len(m.cfg.FieldMetric) + len(m.cfg.OidCondMetric) //Number of fields ( like awk)
 		//getting all values to the array
 		for _, v := range m.cfg.FieldMetric {
 			if metr, ok := m.OidSnmpMap[v.BaseOID]; ok {
 				metr.GetEvaluableVariables(parameters)
 			} else {
 				m.Debugf("Evaluated metric not Found for Eval key %s", v.BaseOID)
+			}
+		}
+		for _, v := range m.cfg.OidCondMetric {
+			RealOID := m.cfg.ID + "." + v.ID
+			if metr, ok := m.OidSnmpMap[RealOID]; ok {
+				metr.GetEvaluableVariables(parameters)
+			} else {
+				m.Debugf("Evaluated OIDCondition metric not Found for Eval key %s", RealOID)
 			}
 		}
 		m.Debugf("PARAMETERS: %+v", parameters)
