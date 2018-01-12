@@ -83,7 +83,7 @@ func (mt *MetricTable) GetSnmpMaps() ([]string, map[string]*metric.SnmpMetric) {
 			mt.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
 			t := vM.GetDataSrcType()
 			switch t {
-			case "STRINGEVAL", "CONDITIONEVAL":
+			case "STRINGEVAL":
 			default:
 				//this array is used in SnmpGetData to send IOD's to the end device
 				// so it can not contain any other thing than OID's
