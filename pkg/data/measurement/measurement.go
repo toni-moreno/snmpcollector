@@ -412,7 +412,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 			//getting all values to the array
 			for _, v := range m.cfg.FieldMetric {
 				if metr, ok := m.OidSnmpMap[v.BaseOID+"."+key]; ok {
-					m.Debugf("OK Field metric found %s with FieldName %s", metr.ID, metr.GetFieldName())
+					m.Debugf("OK Field metric found %s with FieldName %s", metr.GetID(), metr.GetFieldName())
 					metr.GetEvaluableVariables(parameters)
 				} else {
 					m.Debugf("Evaluated metric not Found for Eval key %s")

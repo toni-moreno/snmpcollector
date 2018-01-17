@@ -47,8 +47,6 @@ const (
 //SnmpMetric type to metric runtime
 type SnmpMetric struct {
 	cfg         *config.SnmpMetricCfg
-	ID          string
-	FieldName   string
 	Valid       bool //indicate if has been updated in the last gathered process
 	CookedValue interface{}
 	CurValue    interface{}
@@ -86,6 +84,11 @@ func (s *SnmpMetric) GetFieldName() string {
 	return s.cfg.FieldName
 }
 
+// GetID  needed to generate Influx measurements
+func (s *SnmpMetric) GetID() string {
+	return s.cfg.ID
+}
+
 // New constructor
 func New(c *config.SnmpMetricCfg) (*SnmpMetric, error) {
 	metric := &SnmpMetric{}
@@ -112,8 +115,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	}
 	s.cfg = c
 	s.RealOID = c.BaseOID
-	s.ID = s.cfg.ID
-	s.FieldName = s.cfg.FieldName // this id will be shown in the runtime webui and we need the FielName (as it will be used in the backend)
 	if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
 		s.Scale = func() {
 			s.CookedValue = (s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift
@@ -434,7 +435,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 
 // GetEvaluableVariables get all posible values to add to the
 func (s *SnmpMetric) GetEvaluableVariables(params map[string]interface{}) {
-	s.log.Debugf("Get Evaluable parameters for Metric %s", s.ID)
+	s.log.Debugf("Get Evaluable parameters for Metric %s", s.cfg.ID)
 	switch s.cfg.DataSrcType {
 	case "MULTISTRINGPARSER":
 		tags := make(map[string]string)
@@ -444,7 +445,7 @@ func (s *SnmpMetric) GetEvaluableVariables(params map[string]interface{}) {
 		}
 	default:
 		if s.Valid == true { //only valid for compute if it has been updated last
-			params[s.FieldName] = s.CookedValue
+			params[s.cfg.FieldName] = s.CookedValue
 		}
 	}
 }
@@ -453,14 +454,14 @@ func (s *SnmpMetric) addSingleField(mid string, fields map[string]interface{}) i
 
 	if s.Report == OnNonZeroReport {
 		if s.CookedValue == 0.0 {
-			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.ID, mid)
+			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
 			return 0
 		}
 	}
 	//assuming float Cooked Values
-	s.log.Debugf("generating field for %s value %f ", s.FieldName, s.CookedValue)
+	s.log.Debugf("generating field for %s value %f ", s.cfg.FieldName, s.CookedValue)
 	s.log.Debugf("DEBUG METRIC %+v", s)
-	fields[s.FieldName] = s.CookedValue
+	fields[s.cfg.FieldName] = s.CookedValue
 	return 0
 }
 
@@ -475,18 +476,18 @@ func (s *SnmpMetric) addSingleTag(mid string, tags map[string]string) int64 {
 		//case string:
 		tag = v
 	default:
-		s.log.Debugf("ERROR wrong type %T for ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v, s.ID, mid)
+		s.log.Debugf("ERROR wrong type %T for ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v, s.cfg.ID, mid)
 		return 1
 	}
 	//I don't know if a OnNonZeroReport could have sense in any configuration.
 	if s.Report == OnNonZeroReport {
 		if tag == "0" {
-			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.ID, mid)
+			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
 			return 0
 		}
 	}
-	s.log.Debugf("generating Tag for Metric: %s : tagname: %s", s.FieldName, tag)
-	tags[s.FieldName] = tag
+	s.log.Debugf("generating Tag for Metric: %s : tagname: %s", s.cfg.FieldName, tag)
+	tags[s.cfg.FieldName] = tag
 	return 0
 }
 
@@ -553,16 +554,16 @@ func (s *SnmpMetric) ImportFieldsAndTags(mid string, fields map[string]interface
 	var metSent int64
 	s.log.Debugf("DEBUG METRIC  CONFIG %+v", s.cfg)
 	if s.CookedValue == nil {
-		s.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", s.ID, mid, tags, s)
+		s.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", s.cfg.ID, mid, tags, s)
 		metError++ //not sure if an tag error should be count as metric
 		return metError, metSent
 	}
 	if s.Valid == false {
-		s.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", s.ID, mid, tags, s)
+		s.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", s.cfg.ID, mid, tags, s)
 		return 0, 0
 	}
 	if s.Report == NeverReport {
-		s.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.ID, mid)
+		s.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
 		return 0, 0
 	}
 
@@ -598,7 +599,7 @@ func (s *SnmpMetric) MarshalJSON() ([]byte, error) {
 			Type        string
 			Valid       bool
 		}{
-			FieldName:   s.FieldName,
+			FieldName:   s.cfg.FieldName,
 			CookedValue: s.CookedValue,
 			CurValue:    s.CurValue,
 			LastValue:   s.LastValue,
@@ -616,7 +617,7 @@ func (s *SnmpMetric) MarshalJSON() ([]byte, error) {
 			Type        string
 			Valid       bool
 		}{
-			FieldName:   s.FieldName,
+			FieldName:   s.cfg.FieldName,
 			CookedValue: s.CookedValue,
 			ValueMap:    s.mm,
 			CurTime:     s.CurTime,
@@ -631,7 +632,7 @@ func (s *SnmpMetric) MarshalJSON() ([]byte, error) {
 			Type        string
 			Valid       bool
 		}{
-			FieldName:   s.FieldName,
+			FieldName:   s.cfg.FieldName,
 			CookedValue: s.CookedValue,
 			CurTime:     s.CurTime,
 			Type:        s.cfg.DataSrcType,
