@@ -1,6 +1,9 @@
-# v 0.7.6 (unreleased)
+# v 0.7.6 (2018-01-17)
 ### New Features
 * Go 1.8.2 to 1.9.2 binaries
+* Added new value on NFR (Non Filtered Rows)  with total index length before filter applied, for STRINGEVAL metric types.
+* decreased memory usage per metric in memory.
+* Fix for gathering metrics from eval metrics based on oidconditionevals
 * Added new statistics measurement for each output db "selfmon_outdb_stats" , these statisctics are collected on each selfmon.freq period secods and  it will send with the following fields and tags (selfmon.extratags will be also added):
 
 field | description
@@ -36,7 +39,7 @@ mem.mCacheInuse| MCacheInuse is bytes of allocated mcache structures.
 
 ### fixes
 
-* fix for #303, #304
+* fix for #303, #304, #307, #312
 
 ### breaking changes
 
