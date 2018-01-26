@@ -280,7 +280,18 @@ func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
 }
 
 func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool) {
+	//number points
 	np := len((*data).Points())
+	//number of total fields
+	nf := 0
+	for _, v := range (*data).Points() {
+		fields, err := v.Fields()
+		if err != nil {
+			log.Debug("Some error happened when trying to get fields for point... ")
+		} else {
+			nf += len(fields)
+		}
+	}
 	// keep trying until we get it (don't drop the data)
 	startSend := time.Now()
 	err := db.client.Write(*data)
@@ -298,7 +309,7 @@ func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool
 		}
 	} else {
 		log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
-		db.stats.WriteOkUpdate(int64(np), elapsedSend)
+		db.stats.WriteOkUpdate(int64(np), int64(nf), elapsedSend)
 	}
 }
 

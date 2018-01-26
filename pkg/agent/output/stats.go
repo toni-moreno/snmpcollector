@@ -7,6 +7,10 @@ import (
 
 // InfluxStats  get stats
 type InfluxStats struct {
+	// Fields Sent
+	FieldSent int64
+	// Field Sent the max
+	FieldSentMax int64
 	// Points Sent
 	PSent int64
 	// PSentMax the max
@@ -27,6 +31,8 @@ func (is *InfluxStats) GetResetStats() *InfluxStats {
 	is.mutex.Lock()
 	defer is.mutex.Unlock()
 	retstat := &InfluxStats{
+		FieldSent:    is.FieldSent,
+		FieldSentMax: is.FieldSentMax,
 		PSent:        is.PSent,
 		PSentMax:     is.PSentMax,
 		WriteSent:    is.WriteSent,
@@ -34,6 +40,8 @@ func (is *InfluxStats) GetResetStats() *InfluxStats {
 		WriteTime:    is.WriteTime,
 		WriteTimeMax: is.WriteTimeMax,
 	}
+	is.FieldSent = 0
+	is.FieldSentMax = 0
 	is.PSent = 0
 	is.PSentMax = 0
 	is.WriteSent = 0
@@ -44,7 +52,7 @@ func (is *InfluxStats) GetResetStats() *InfluxStats {
 }
 
 // WriteOkUpdate update stats on write ok
-func (is *InfluxStats) WriteOkUpdate(ps int64, wt time.Duration) {
+func (is *InfluxStats) WriteOkUpdate(ps int64, fs int64, wt time.Duration) {
 	is.mutex.Lock()
 	defer is.mutex.Unlock()
 	if is.PSentMax < ps {
@@ -53,7 +61,11 @@ func (is *InfluxStats) WriteOkUpdate(ps int64, wt time.Duration) {
 	if is.WriteTimeMax < wt {
 		is.WriteTimeMax = wt
 	}
+	if is.FieldSentMax < fs {
+		is.FieldSentMax = fs
+	}
 	is.WriteSent++
+	is.FieldSent += fs
 	is.PSent += ps
 	is.WriteTime += wt
 }

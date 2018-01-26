@@ -220,6 +220,9 @@ func (sm *SelfMon) getOutDBStats() {
 		}
 		tm["outdb"] = dbname
 
+		fields["fields_sent"] = stats.FieldSent
+		fields["fields_sent_max"] = stats.FieldSentMax
+
 		fields["points_sent"] = stats.PSent
 		fields["points_sent_max"] = stats.PSentMax
 
