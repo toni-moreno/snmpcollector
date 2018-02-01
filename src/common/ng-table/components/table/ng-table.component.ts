@@ -25,6 +25,10 @@ export class NgTableComponent {
   @Input() public extraActions: Array<any>;
   @Input() checkedItems: Array<any>;
   @Input() checkRows: Array<any>;
+
+  @Input() roleActions : any;
+  @Input() public tableRole : string = 'fulledit';
+
   @Input() sanitizeCell: Function;
   @Input()
   public set config(conf: any) {
@@ -52,6 +56,7 @@ export class NgTableComponent {
   @Output() public exportedItem: EventEmitter<any> = new EventEmitter();
   @Output() public testedConnection: EventEmitter<any> = new EventEmitter();
   @Output() public extraActionClicked: EventEmitter<any> = new EventEmitter();
+  @Output() public customClicked: EventEmitter<any> = new EventEmitter();
 
   public showFilterRow: Boolean = false;
 
@@ -224,6 +229,12 @@ export class NgTableComponent {
   public testConnection(row: any) : void {
     this.testedConnection.emit(row);
   }
+
+  public customClick(action: string, row: any) : void {
+    this.customClicked.emit({'action' : action, 'row' : row});
+  }
+
+
   public extraActionClick(row: any, action: any, property? : any) : void {
     this.extraActionClicked.emit({row , action, property});
   }
