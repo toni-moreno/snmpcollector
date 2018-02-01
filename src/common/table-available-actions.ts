@@ -10,23 +10,23 @@ export class AvailableTableActions {
   // data is the passed extraData when declaring AvailableTableActions on each component
   checkComponentType(type, data?) : any {
     switch (type) {
-      case 'device':
+      case 'devicecfg':
         return this.getDeviceAvailableActions(data);
-      case 'metric':
+      case 'metriccfg':
         return this.getMetricAvailableActions();
-      case 'influxserver':
+      case 'influxcfg':
         return this.getInfluxServersAvailableActions();
-      case 'oidcondition':
+      case 'oidconditioncfg':
         return this.getOIDConditionsAvailableActions();
-      case 'measgroup':
+      case 'measgroupcfg':
           return this.getMeasGroupsAvailableActions();
-      case 'measfilter':
+      case 'measfiltercfg':
           return this.getMeasFiltersAvailableActions();
-      case 'customfilter':
+      case 'customfiltercfg':
           return this.getCustomFiltersAvailableActions();
-      case 'measurement':
+      case 'measurementcfg':
           return this.getMeasurementsAvailableActions();
-      case 'varcatalog':
+      case 'varcatalogcfg':
           return this.getVarCatalogAvailableActions();
       default:
         return null;
