@@ -1,4 +1,4 @@
-<h2>SNMP Metrics</h2>
+<h2>{{defaultConfig.name}}</h2>
 <ng-container [ngSwitch]="editmode">
   <ng-template ngSwitchCase="list">
     <test-modal #viewModal titleName='SNMP Metrics'></test-modal>
@@ -6,29 +6,9 @@
         [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteSNMPMetric($event)">
     </test-modal>
     <export-file-modal #exportFileModal [showValidation]="true" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
-    <div class="row">
-      <div class="col-md-8 text-left">
-        <label [tooltip]="'Clear Filter'" container="body" (click)="onResetFilter()" style="margin-top: 10px"><i class="glyphicon glyphicon-trash text-primary"></i></label>
-        <input *ngIf="config.filtering" placeholder="Filter all columns" required = "false" [(ngModel)]="myFilterValue" [ngTableFiltering]="config.filtering" class="form-control select-pages" (tableChanged)="onChangeTable(config)" />
-        <span [ngClass]="length > 0 ? ['label label-info'] : ['label label-warning']" style="font-size : 100%">{{length}} Results</span>
-        <button style ="margin-top: -5px;" type="button" (click)="newMetric()" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> New</button>
-        <button style ="margin-top: -5px;" type="button" (click)="enableEdit()" class="btn btn-primary"><i class="glyphicon glyphicon-edit"></i> {{editEnabled === false ? 'Enable Edit' : 'Disable Edit' }}</button>
-    </div>
-    <div class="col-md-4 text-right">
-        <span style="margin-left: 20px"> Items per page: </span>
-        <select class="select-pages" style="width:auto" [ngModel]="itemsPerPage || 'All'" (ngModelChange)="changeItemsPerPage($event)">
-					<option *ngFor="let option of itemsPerPageOptions" style="padding-left:2px" [value]="option.value">{{option.title}}</option>
-        </select>
-      </div>
-    </div>
-    <br>
-    <table-actions [editEnabled]="editEnabled" [counterErrors]="counterErrors" [counterItems]="counterItems || 0" [itemsSelected]="selectedArray.length" [tableAvailableActions]="tableAvailableActions" (actionApply)="applyAction($event)"></table-actions>
-    <my-spinner [isRunning]="isRequesting"></my-spinner>
-    <ng-table *ngIf="isRequesting === false" [exportType]="'snmpmetriccfg'" [config]="config" [(checkedItems)]="selectedArray" [editMode]="editEnabled" (tableChanged)="onChangeTable(config)" (exportedItem)="exportItem($event)" (viewedItem)="viewItem($event)" (editedItem)="editMetric($event)" (removedItem)="removeItem($event)" [showCustom]="true" [rows]="rows" [columns]="columns">
-    </ng-table>
-    <pagination *ngIf="config.paging" class="pagination-sm" [(ngModel)]="page" [totalItems]="length" [itemsPerPage]="itemsPerPage" [maxSize]="maxSize" [boundaryLinks]="true" [rotate]="false" (pageChanged)="onChangeTable(config, $event)" (numPages)="numPages = $event">
-    </pagination>
-    <pre *ngIf="config.paging" class="card card-block card-header">Page: {{page}} / {{numPages}}</pre>
+    <export-file-modal #exportFileModal [showValidation]="true" [exportType]="defaultConfig['slug']" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
+    <table-list #listTableComponent [typeComponent]="defaultConfig['slug']" [data]="data" [columns]="defaultConfig['table-columns']" [counterItems]="counterItems" [counterErrors]="counterErrors" [selectedArray]="selectedArray" [isRequesting]="isRequesting" [tableRole]="tableRole"
+    [roleActions]="overrideRoleActions" (customClicked)="customActions($event)"></table-list>
   </ng-template>
 
   <ng-template ngSwitchDefault>
