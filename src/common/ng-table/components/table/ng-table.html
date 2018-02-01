@@ -6,9 +6,7 @@
                 <label (click)="selectAllItems(true)" class="glyphicon glyphicon-check text-success"></label>-
                 <label (click)="selectAllItems(false)" class="glyphicon glyphicon-unchecked text-danger"></label>
             </th>
-            <th *ngIf="showCustom == true" [ngStyle]="exportType ? {'min-width': '115px'} : {'min-width': '80px'}">
-            </th>
-            <th *ngIf="showStatus == true" [ngStyle]="exportType ? {'min-width': '115px'} : {'min-width': '80px'}">
+            <th *ngIf="tableRole === 'fulledit' || tableRole === 'viewdelete' || tableRole === 'view'" [ngStyle]="exportType ? {'min-width': '125px'} : {'min-width': '80px'}">
             </th>
             <ng-container *ngIf="checkRows">
                 <th style="width: 80px; text-align: center; padding-bottom: 15px;" [ngClass]="rows.length === 0 ? ['bg-warning'] : ''">
@@ -16,7 +14,7 @@
                 </th>
             </ng-container>
             <!--HEADER -->
-            <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column" (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important;" container=body [tooltip]="column.tooltipInfo ? tooltipValues : ( column.tooltip ? column.name : '')">
+            <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column" (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important; white-space:nowrap" container=body [tooltip]="column.tooltipInfo ? tooltipValues : ( column.tooltip ? column.name : '')">
                 <ng-template #tooltipValues>
                     <ng-container>
                         <h6> {{column.title}} </h6>
@@ -29,10 +27,10 @@
                         </span>
                     </div>
                 </ng-template>
-                {{column.title}}
+                <span style="white-space: normal">{{column.title}}</span>
                 <i *ngIf="column.icon" [ngClass]="'glyphicon glyphicon-'+column.icon"></i>
                 <span *ngIf="column.tooltipInfo && column.tooltipInfo.IsTag" class="badge">Tag</span>
-                <i *ngIf="config && column.sort " class="pull-right glyphicon " [ngClass]="{ 'glyphicon-chevron-down': column.sort==='desc' , 'glyphicon-chevron-up': column.sort==='asc' } "></i>
+                <small *ngIf="config" style="display:inline" class="glyphicon text-muted" [ngClass]="{ 'glyphicon-sort' : column.sort === '' || !column.sort, 'glyphicon-chevron-down': column.sort==='desc' , 'glyphicon-chevron-up': column.sort==='asc' } "></small>
             </th>
             <ng-container *ngIf="extraActions ">
                 <th *ngFor="let action of extraActions " style="vertical-align: middle; text-align: center; width:auto !important; ">
@@ -43,9 +41,9 @@
     </thead>
     <tbody>
         <tr *ngIf="showFilterRow ">
-            <td *ngIf="showCustom==true " style="width:100px ">
+            <td *ngIf="(tableRole === 'fulledit' || tableRole === 'viewdelete' || tableRole === 'view') && showStatus === false" style="width:100px ">
             </td>
-            <td *ngIf="showStatus==true " style="width:100px ">
+            <td *ngIf="tableRole === 'fulledit' || tableRole === 'viewdelete' || tableRole === 'view'" style="width:100px ">
             </td>
 
             <td *ngFor="let column of columns ">
@@ -56,12 +54,9 @@
             <td *ngIf="editMode==true ">
                 <i [ngClass]="checkItems(row.ID) ? [ 'glyphicon glyphicon-unchecked text-danger'] : [ 'glyphicon glyphicon-check text-success'] " (click)="selectItem(row) "></i>
             </td>
-            <td *ngIf="showCustom==true ">
-                <i *ngIf="exportType " class="glyphicon glyphicon-download-alt " [tooltip]=" 'Export item' " (click)="exportItem(row, exportType) "></i>
-                <i class="glyphicon glyphicon-eye-open " [tooltip]=" 'View item' " (click)="viewItem(row) "></i>
-                <i class="glyphicon glyphicon-edit " [tooltip]=" 'Edit item' " (click)="editItem(row) "></i>
-                <i *ngIf="showConnection" class="glyphicon glyphicon-flash " [tooltip]=" 'Test Connection' " (click)="testConnection(row) "></i>
-                <i class="glyphicon glyphicon glyphicon-remove " [tooltip]=" 'Remove Item' " (click)="removeItem(row) "></i>
+            <td *ngIf="(tableRole === 'fulledit' || tableRole === 'viewdelete' || tableRole === 'view') && showStatus === false">
+                <i *ngFor="let action of roleActions" [ngClass]="action.icon" [tooltip]="action.tooltip" (click)="customClick(action.name, row)" style="padding-left:5px">
+                </i>
             </td>
             <td *ngIf="showStatus==true " style="min-width: 170px ">
                 <label style="display: inline; margin-right: 2px " container=body [tooltip]=" 'View '+ row.ID " class="label label-primary glyphicon glyphicon-eye-open " (click)="viewItem(row) "></label>

@@ -273,7 +273,7 @@
                             </ng-template>
                         </div>
                         <div style="overflow-x: scroll" class="col-md-12">
-                            <ng-table [config]="config" [sanitizeCell]="tableCellParser" (tableChanged)="onChangeTable(config)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns" [checkRows]="true">
+                            <ng-table [config]="config" [sanitizeCell]="tableCellParser" [tableRole]="tableRole" (tableChanged)="onChangeTable(config)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns" [checkRows]="true">
                             </ng-table>
                         </div>
                         <div class="col-md-12">

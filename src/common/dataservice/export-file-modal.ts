@@ -15,6 +15,7 @@ import { MeasGroupService } from '../../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../../measfilter/measfiltercfg.service';
 import { CustomFilterService } from '../../customfilter/customfilter.service';
 import { VarCatalogService } from '../../varcatalog/varcatalogcfg.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'export-file-modal',
@@ -159,6 +160,7 @@ export class ExportFileModal {
   @Input() textValidation: string;
   @Input() prepareExport : boolean = true;
   @Input() bulkExport: boolean = false;
+  @Input() exportType: any = null;
 
   @Output() public validationClicked: EventEmitter<any> = new EventEmitter();
 
@@ -168,6 +170,7 @@ export class ExportFileModal {
 
   public builder: any;
   public exportForm: any;
+  public mySubscriber: Subscription;
 
   constructor(builder: FormBuilder, public exportServiceCfg : ExportServiceCfg,
     public influxServerService: InfluxServerService, public metricMeasService: SnmpMetricService,
@@ -192,11 +195,10 @@ export class ExportFileModal {
 
   //Single Object Export:
   exportObject: any = null;
-  exportType: any = null;
 
    //Single Object
   public colorsObject : Object = {
-   "snmpdevicecfg" : 'danger',
+   "devicecfg" : 'danger',
    "influxcfg" : 'info',
    "measfiltercfg": 'warning',
    "oidconditioncfg" : 'success',
@@ -219,7 +221,7 @@ export class ExportFileModal {
 
   resultArray : any = [];
   dataArray : any = [];
-  selectedFilterProp : any = [];
+  selectedFilterProp : any = "ID";
   listFilterProp: IMultiSelectOption[] = [];
   private propSettings: IMultiSelectSettings = {
       singleSelect: true,
@@ -231,13 +233,13 @@ export class ExportFileModal {
   filter : any = "";
   //Bulk Objects
   public objectTypes : any = [
-   {'Type':"snmpdevicecfg", 'Class' : 'danger', 'Visible': false},
+   {'Type':"devicecfg", 'Class' : 'danger', 'Visible': false},
    {'Type':"influxcfg" ,'Class' : 'info', 'Visible': false},
    {'Type':"measfiltercfg", 'Class' : 'warning','Visible': false},
    {'Type':"oidconditioncfg", 'Class' : 'success', 'Visible': false},
    {'Type':"customfiltercfg", 'Class' : 'default', 'Visible': false},
    {'Type':"measurementcfg", 'Class' : 'primary', 'Visible': false},
-   {'Type':"snmpmetriccfg", 'Class' : 'warning', 'Visible': false},
+   {'Type':"metriccfg", 'Class' : 'warning', 'Visible': false},
    {'Type':"measgroupcfg", 'Class' : 'success', 'Visible': false},
    {'Type':"varcatalogcfg", 'Class' : 'default', 'Visible': false}
    ]
@@ -249,7 +251,7 @@ export class ExportFileModal {
     this.selectedType = null;
     this.exportResult = false;
     this.exportedItem = [];
-    this.exportType = null;
+    this.exportType = this.exportType || null;
     this.exportObject = null;
   }
 
@@ -263,8 +265,9 @@ export class ExportFileModal {
     };
     //Single export
     if (this.prepareExport === true) {
-      this.exportObject = exportObject.row;
-      this.exportType = exportObject.exportType;
+      console.log(exportObject);
+      this.exportObject = exportObject.row || exportObject;
+      this.exportType = exportObject.exportType || this.exportType;
       //Sets the FinalArray to export the items, in this case only be 1
       this.finalArray = [{
         'ObjectID' : this.exportObject.ID,
@@ -413,12 +416,12 @@ export class ExportFileModal {
 //Load items functions from services depending on items selected Type
   loadItems(type, filter?) {
     this.resultArray = [];
-    this.selectedFilterProp = ["ID"];
+    this.selectedFilterProp = "ID";
     this.listFilterProp = [];
-
+    if (this.mySubscriber) this.mySubscriber.unsubscribe();
     switch (type) {
-      case 'snmpdevicecfg':
-       this.snmpDeviceService.getDevices(filter)
+      case 'devicecfg':
+       this.mySubscriber = this.snmpDeviceService.getDevices(filter)
        .subscribe(
        data => {
          //Load items on selection
@@ -434,7 +437,7 @@ export class ExportFileModal {
 
       break;
       case 'influxcfg':
-       this.influxServerService.getInfluxServer(filter)
+      this.mySubscriber = this.influxServerService.getInfluxServer(filter)
        .subscribe(
        data => {
          this.dataArray=data;
@@ -448,7 +451,7 @@ export class ExportFileModal {
        );
       break;
       case 'oidconditioncfg':
-       this.oidConditionService.getConditions(filter)
+      this.mySubscriber = this.oidConditionService.getConditions(filter)
        .subscribe(
        data => {
          this.dataArray=data;
@@ -462,7 +465,7 @@ export class ExportFileModal {
        );
       break;
       case 'measfiltercfg':
-       this.measFilterService.getMeasFilter(filter)
+      this.mySubscriber = this.measFilterService.getMeasFilter(filter)
        .subscribe(
        data => {
          this.dataArray=data;
@@ -476,7 +479,7 @@ export class ExportFileModal {
        );
       break;
       case 'customfiltercfg':
-       this.customFilterService.getCustomFilter(filter)
+      this.mySubscriber = this.customFilterService.getCustomFilter(filter)
        .subscribe(
        data => {
          this.dataArray=data;
@@ -490,7 +493,7 @@ export class ExportFileModal {
        );
       break;
       case 'measurementcfg':
-       this.influxMeasService.getMeas(filter)
+      this.mySubscriber = this.influxMeasService.getMeas(filter)
        .subscribe(
        data => {
          this.dataArray=data;
@@ -503,8 +506,8 @@ export class ExportFileModal {
        () => {console.log("DONE")}
        );
       break;
-      case 'snmpmetriccfg':
-       this.metricMeasService.getMetrics(filter)
+      case 'metriccfg':
+      this.mySubscriber = this.metricMeasService.getMetrics(filter)
        .subscribe(
        data => {
          this.dataArray=data;
@@ -518,7 +521,7 @@ export class ExportFileModal {
        );
       break;
       case 'measgroupcfg':
-       this.measGroupService.getMeasGroup(filter)
+      this.mySubscriber = this.measGroupService.getMeasGroup(filter)
        .subscribe(
        data => {
          this.dataArray=data;
@@ -532,7 +535,7 @@ export class ExportFileModal {
        );
       break;
       case 'varcatalogcfg':
-      this.varCatalogService.getVarCatalog(filter)
+      this.mySubscriber = this.varCatalogService.getVarCatalog(filter)
       .subscribe(
       data => {
         this.dataArray=data;
@@ -559,7 +562,9 @@ export class ExportFileModal {
   }
 
   hide() {
+    if (this.mySubscriber) this.mySubscriber.unsubscribe();
     this.childModal.hide();
+    
   }
 
 }

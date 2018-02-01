@@ -47,7 +47,8 @@ import { AboutModal } from './home/about-modal';
 import { TreeView } from './common/dataservice/treeview';
 import { TestConnectionModal } from './common/test-connection-modal';
 import { TestFilterModal } from './customfilter/test-filter-modal';
-import { ImportFileModal } from './common/dataservice/import-file-modal'
+import { ImportFileModal } from './common/dataservice/import-file-modal';
+import { TableListComponent } from './common/table-list.component';
 
 //others
 import { WindowRef } from './common/windowref';
@@ -81,6 +82,7 @@ import { SpinnerComponent } from './common/spinner';
     InfluxServerCfgComponent,
     CustomFilterCfgComponent,
     VarCatalogCfgComponent,
+    TableListComponent,
     RuntimeComponent,
     GenericModal,
     AboutModal,
