@@ -92,7 +92,7 @@ export class TableListComponent implements OnInit, OnChanges {
   @Output() public customClicked: EventEmitter<any> = new EventEmitter();
 
   //Vars
-  private editEnabled: boolean = false;
+  public editEnabled: boolean = false;
   private rows: Array<any> = [];
   public page: number = 1;
   public itemsPerPage: number = 20;
