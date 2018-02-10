@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Knetic/govaluate"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // OidConditionCfg condition config for filters and metrics
@@ -51,6 +52,12 @@ func (oid *OidConditionCfg) Init(dbc *DatabaseCfg) error {
 		_, err := regexp.Compile(oid.CondValue)
 		if err != nil {
 			er := fmt.Sprintf("ERROR OIDCOND [%s] with Condition %s regexp error : %s ", oid.ID, oid.CondValue, err)
+			return fmt.Errorf("%s", er)
+		}
+	case oid.CondType == "nin":
+		_, err := utils.CSV2IntArray(oid.CondValue)
+		if err != nil {
+			er := fmt.Sprintf("ERROR OIDCOND [%s] type %s on value  %s  on translation error: %s", oid.ID, oid.CondType, oid.CondValue, err)
 			return fmt.Errorf("%s", er)
 		}
 	case strings.Contains(oid.CondType, "n"):

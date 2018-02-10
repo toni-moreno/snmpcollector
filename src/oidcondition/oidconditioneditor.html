@@ -71,6 +71,7 @@
             <select formControlName="CondType" id="CondType" [ngModel]="oidconditionForm.value.CondType">
               <option value="match">(match) string regexp match</option>
               <option value="notmatch">(notmatch) string regex match inverse</option>
+              <option value="nin">(nin) numeric in (value is one of the CSV values (,;|) list)</option>
               <option value="neq">(neq) numeric equal</option>
               <option value="ndif">(ndif) numeric different (not equal)</option>
               <option value="nlt">(nlt) numeric less than</option>

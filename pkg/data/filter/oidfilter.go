@@ -9,6 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // OidFilter a new Oid condition filter
@@ -96,6 +97,21 @@ func (of *OidFilter) Update() error {
 			matched := re.MatchString(str)
 			of.log.Debugf("OIDFILTER [%s] Evaluated match condition  value: %s | filter: %s | result : %t", of.OidCond, str, of.ValueCond, matched)
 			cond = matched
+		case of.TypeCond == "nin":
+			//Numeric In
+			iarray, err := utils.CSV2IntArray(of.ValueCond)
+			if err != nil {
+				of.log.Warnf("OIDFILTER [%s] error on CSV to IntegerArray accepted numeric value as value condition  current : %s  for TypeCond %s: Error: %s", of.OidCond, of.ValueCond, of.TypeCond, err)
+				return nil
+			}
+			value = snmp.PduVal2Int64(pdu)
+			cond = false
+			for _, v := range iarray {
+				cond = (value == v)
+				if cond {
+					break
+				}
+			}
 		case strings.Contains(of.TypeCond, "n"):
 			//undesrstand valueCondition as numeric
 			vc, err := strconv.Atoi(of.ValueCond)

@@ -1,9 +1,11 @@
 package utils
 
 import (
-	"time"
-
+	"fmt"
 	"github.com/Sirupsen/logrus"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // WaitAlignForNextCycle waiths untile a next cycle begins aligned with second 00 of each minute
@@ -81,4 +83,32 @@ func DiffKeyValuesInMap(X, Y map[string]string) map[string]string {
 		}
 	}
 	return diff
+}
+
+// CSV2IntArray CSV intenger array conversion
+func CSV2IntArray(csv string) ([]int64, error) {
+	var iarray []int64
+	result := Splitter(csv, ",;|")
+	for i, v := range result {
+		vc, err := strconv.Atoi(v)
+		if err != nil {
+			return iarray, fmt.Errorf("Bad Format in CSV array item %d | value %s | Error %s", i, v, err)
+		}
+		iarray = append(iarray, int64(vc))
+	}
+	return iarray, nil
+}
+
+// Splitter multiple value split
+func Splitter(s string, splits string) []string {
+	m := make(map[rune]int)
+	for _, r := range splits {
+		m[r] = 1
+	}
+
+	splitter := func(r rune) bool {
+		return m[r] == 1
+	}
+
+	return strings.FieldsFunc(s, splitter)
 }
