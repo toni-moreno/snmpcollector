@@ -10,9 +10,9 @@ export class AvailableTableActions {
   // data is the passed extraData when declaring AvailableTableActions on each component
   checkComponentType(type, data?) : any {
     switch (type) {
-      case 'devicecfg':
+      case 'snmpdevicecfg':
         return this.getDeviceAvailableActions(data);
-      case 'metriccfg':
+      case 'snmpmetriccfg':
         return this.getMetricAvailableActions();
       case 'influxcfg':
         return this.getInfluxServersAvailableActions();
