@@ -25,7 +25,7 @@ export const SnmpDeviceCfgComponentConfig: any =
       { title: 'Measurement Groups', name: 'MeasurementGroups' },
       { title: 'Measurement Filters', name: 'MeasFilters' }
     ],
-    'slug' : 'devicecfg'
+    'slug' : 'snmpdevicecfg'
   }; 
 
   export const TableRole : string = 'fulledit';

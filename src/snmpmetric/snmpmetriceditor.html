@@ -5,7 +5,6 @@
     <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this SNMP Metric will affect the following components','Deleting this SNMP Metric will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
         [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteSNMPMetric($event)">
     </test-modal>
-    <export-file-modal #exportFileModal [showValidation]="true" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
     <export-file-modal #exportFileModal [showValidation]="true" [exportType]="defaultConfig['slug']" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
     <table-list #listTableComponent [typeComponent]="defaultConfig['slug']" [data]="data" [columns]="defaultConfig['table-columns']" [counterItems]="counterItems" [counterErrors]="counterErrors" [selectedArray]="selectedArray" [isRequesting]="isRequesting" [tableRole]="tableRole"
     [roleActions]="overrideRoleActions" (customClicked)="customActions($event)"></table-list>

@@ -107,7 +107,7 @@ export class SnmpDeviceCfgComponent {
     Observable.forkJoin([this.measgroupsDeviceService.getMeasGroup(null),this.measfiltersDeviceService.getMeasFilter(null)])
               .subscribe(
                 data => {
-                  this.tableAvailableActions = new AvailableTableActions('devicecfg',[this.createMultiselectArray(data[0]),this.createMultiselectArray(data[1])]).availableOptions;
+                  this.tableAvailableActions = new AvailableTableActions('snmpdevicecfg',[this.createMultiselectArray(data[0]),this.createMultiselectArray(data[1])]).availableOptions;
                 },
                 err => console.log(err),
                 () => console.log()

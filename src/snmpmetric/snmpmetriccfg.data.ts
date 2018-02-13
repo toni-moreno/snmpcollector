@@ -12,7 +12,7 @@ export const SnmpMetricCfgComponentConfig: any =
       { title: 'Shift', name: 'Shift' },
       { title: 'IsTag', name: 'IsTag' }
     ],
-    'slug' : 'metriccfg'
+    'slug' : 'snmpmetriccfg'
   }; 
 
   export const TableRole : string = 'fulledit';

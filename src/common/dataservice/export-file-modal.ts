@@ -198,7 +198,7 @@ export class ExportFileModal {
 
    //Single Object
   public colorsObject : Object = {
-   "devicecfg" : 'danger',
+   "snmpdevicecfg" : 'danger',
    "influxcfg" : 'info',
    "measfiltercfg": 'warning',
    "oidconditioncfg" : 'success',
@@ -233,13 +233,13 @@ export class ExportFileModal {
   filter : any = "";
   //Bulk Objects
   public objectTypes : any = [
-   {'Type':"devicecfg", 'Class' : 'danger', 'Visible': false},
+   {'Type':"snmpdevicecfg", 'Class' : 'danger', 'Visible': false},
    {'Type':"influxcfg" ,'Class' : 'info', 'Visible': false},
    {'Type':"measfiltercfg", 'Class' : 'warning','Visible': false},
    {'Type':"oidconditioncfg", 'Class' : 'success', 'Visible': false},
    {'Type':"customfiltercfg", 'Class' : 'default', 'Visible': false},
    {'Type':"measurementcfg", 'Class' : 'primary', 'Visible': false},
-   {'Type':"metriccfg", 'Class' : 'warning', 'Visible': false},
+   {'Type':"snmpmetriccfg", 'Class' : 'warning', 'Visible': false},
    {'Type':"measgroupcfg", 'Class' : 'success', 'Visible': false},
    {'Type':"varcatalogcfg", 'Class' : 'default', 'Visible': false}
    ]
@@ -420,7 +420,7 @@ export class ExportFileModal {
     this.listFilterProp = [];
     if (this.mySubscriber) this.mySubscriber.unsubscribe();
     switch (type) {
-      case 'devicecfg':
+      case 'snmpdevicecfg':
        this.mySubscriber = this.snmpDeviceService.getDevices(filter)
        .subscribe(
        data => {
@@ -506,7 +506,7 @@ export class ExportFileModal {
        () => {console.log("DONE")}
        );
       break;
-      case 'metriccfg':
+      case 'snmpmetriccfg':
       this.mySubscriber = this.metricMeasService.getMetrics(filter)
        .subscribe(
        data => {
