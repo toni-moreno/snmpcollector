@@ -323,6 +323,17 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Valid = true
 			s.log.Debugf("BITS CHECK bit %+v, Position %d , RESULT %t", barray, index, s.CookedValue)
 		}
+	case "ENUM":
+		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+			idx := snmp.PduVal2Int64(pdu)
+			if val, ok := s.cfg.Names[int(idx)]; ok {
+				s.CookedValue = val
+			} else {
+				s.CookedValue = idx
+			}
+			s.Valid = true
+			s.log.Debugf("SETRAW ENUM %+v, RESULT %s", s.cfg.Names, s.CookedValue)
+		}
 	case "OCTETSTRING":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue = snmp.PduVal2str(pdu)
