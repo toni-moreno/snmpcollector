@@ -142,7 +142,7 @@ export class AvailableTableActions {
       {'title': 'Change property', 'content' :
         {'type' : 'selector', 'action' : 'ChangeProperty', 'options' : [
           {'title' : 'DataSrcType', 'type':'boolean', 'options' : [
-            'INTEGER','Integer32','Gauge32','UInteger32','Unsigned32','Counter32','Counter64','TimeTicks','BITS','OCTETSTRING','OID','IpAddress','TIMETICKS','COUNTER32','COUNTER64','COUNTERXX','HWADDR','STRINGPARSER','STRINGEVAL','CONDITIONEVAL','BITSCHK'
+            'INTEGER','Integer32','Gauge32','UInteger32','Unsigned32','Counter32','Counter64','TimeTicks','BITS','ENUM','OCTETSTRING','OID','IpAddress','TIMETICKS','COUNTER32','COUNTER64','COUNTERXX','HWADDR','STRINGPARSER','STRINGEVAL','CONDITIONEVAL','BITSCHK'
             ]
           },
           {'title': 'Scale','type':'input', 'options':

@@ -118,6 +118,7 @@ export class SnmpMetricCfgComponent {
     switch (field) {
       case 'BITS':
       case 'BITSCHK':
+      case 'ENUM':
         controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
         controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
       case 'OCTETSTRING':

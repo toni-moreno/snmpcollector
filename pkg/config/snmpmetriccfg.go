@@ -29,7 +29,7 @@ type SnmpMetricCfg struct {
 	Scale       float64        `xorm:"scale"`
 	Shift       float64        `xorm:"shift"`
 	IsTag       bool           `xorm:"'istag' default 0"` //Not Valid on  MULTISTRINGPARSER
-	ExtraData   string         `xorm:"extradata"`         //Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK
+	ExtraData   string         `xorm:"extradata"`         //Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK, ENUM
 	Names       map[int]string `xorm:"-" json:"-"`        //BitString Name array
 }
 
@@ -60,6 +60,7 @@ func (m *SnmpMetricCfg) Init() error {
 	case "COUNTERXX": //raw and Coocked increment with non_negative behaviour of Counters
 	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
 	case "BITS", "BITSCHK":
+	case "ENUM":
 	case "OCTETSTRING":
 	case "OID":
 	case "HWADDR":
@@ -91,6 +92,19 @@ func (m *SnmpMetricCfg) Init() error {
 		for _, x := range str {
 			i, _ := strconv.Atoi(x[2])
 			m.Names[i] = x[1]
+		}
+	}
+	if m.DataSrcType == "ENUM" {
+		if len(m.ExtraData) == 0 {
+			return errors.New("ENUM type requires extradata to work " + m.ID)
+		}
+		//named enum array construction for this Config
+		re := regexp.MustCompile("([a-zA-Z0-9\\-]+)\\s*\\(\\s*([0-9]+)\\s*\\)")
+		m.Names = make(map[int]string)
+		str := re.FindAllStringSubmatch(m.ExtraData, -1)
+		for _, x := range str {
+			i, _ := strconv.Atoi(x[2])
+			m.Names[i] = fmt.Sprintf("%s(%d)", x[1], i)
 		}
 	}
 	if m.DataSrcType != "STRINGEVAL" && m.DataSrcType != "CONDITIONEVAL" && !strings.HasPrefix(m.BaseOID, ".") {
@@ -226,7 +240,7 @@ func (m *SnmpMetricCfg) GetEvaluableVarNames() ([]string, error) {
 func (m *SnmpMetricCfg) GetMetricHeader(report int) interface{} {
 	var retval interface{}
 	switch m.DataSrcType {
-	case "STRINGPARSER", "BITS", "BITSCHK", "CONDITIONEVAL", "STRINGEVAL":
+	case "STRINGPARSER", "BITS", "BITSCHK", "ENUM", "CONDITIONEVAL", "STRINGEVAL":
 		retval = &struct {
 			FieldID     string
 			Type        string
