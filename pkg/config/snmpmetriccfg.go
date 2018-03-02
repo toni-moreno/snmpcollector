@@ -86,7 +86,7 @@ func (m *SnmpMetricCfg) Init() error {
 			return errors.New("BITS type requires extradata to work " + m.ID)
 		}
 		//named bits array construction for this Config
-		re := regexp.MustCompile("([a-zA-Z0-9]+)\\(([0-9]+)\\)")
+		re := regexp.MustCompile("([a-zA-Z0-9\\-_]+)\\s*\\(\\s*([0-9]+)\\s*\\)")
 		m.Names = make(map[int]string)
 		str := re.FindAllStringSubmatch(m.ExtraData, -1)
 		for _, x := range str {
@@ -99,7 +99,7 @@ func (m *SnmpMetricCfg) Init() error {
 			return errors.New("ENUM type requires extradata to work " + m.ID)
 		}
 		//named enum array construction for this Config
-		re := regexp.MustCompile("([a-zA-Z0-9\\-]+)\\s*\\(\\s*([0-9]+)\\s*\\)")
+		re := regexp.MustCompile("([a-zA-Z0-9\\-_]+)\\s*\\(\\s*([0-9]+)\\s*\\)")
 		m.Names = make(map[int]string)
 		str := re.FindAllStringSubmatch(m.ExtraData, -1)
 		for _, x := range str {
