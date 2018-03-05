@@ -329,7 +329,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			if val, ok := s.cfg.Names[int(idx)]; ok {
 				s.CookedValue = val
 			} else {
-				s.CookedValue = idx
+				s.CookedValue = strconv.Itoa(int(idx))
 			}
 			s.Valid = true
 			s.log.Debugf("SETRAW ENUM %+v, RESULT %s", s.cfg.Names, s.CookedValue)
