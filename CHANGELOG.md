@@ -1,3 +1,14 @@
+# v 0.7.7 (unreleased)
+### New Features
+* Added new Metric Type - ENUM to map values adding description to save it as STRING (thanks to https://github.com/simnv)
+* Added new OID condition type - `nin` that allows multiple numerical values on conditions
+* Added new internal metrics - fields_sent and fields_sent_max that retrieves the number of fields sent to InfluxDB on "selfmon_outdb_stats" measurement:
+
+field | description
+------|------------
+fields_sent | number of fields sent to the DB on the last period
+fields_sent_max | max number of fields sent to the DB on the last period
+
 # v 0.7.6 (2018-01-17)
 ### New Features
 * Go 1.8.2 to 1.9.2 binaries
@@ -19,7 +30,7 @@ write_time_avg | (only if write_sent > 0) average response time for all writes o
 		
 tags | description
 -----|------------
-oudb| the ID for each Output DB
+outdb| the ID for each Output DB
 
 * Improved  selfmon_gvm statistcs added the following fields
 
