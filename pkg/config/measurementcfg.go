@@ -71,22 +71,15 @@ func (mc *MeasurementCfg) CheckComputedMetricVars(parameters map[string]interfac
 
 // CheckComputedMetricEval check for computed metrics based on  Evalutation Execution
 func (mc *MeasurementCfg) CheckComputedMetricEval(parameters map[string]interface{}) error {
-
-	log.Debugf("Building check parrameters array for index measurement %s", mc.ID)
-	parameters["NFR"] = 1
-	parameters["NR"] = 1                                           //Number of rows (like awk)
-	parameters["NF"] = len(mc.FieldMetric) + len(mc.OidCondMetric) //Number of fields ( like awk)
-	//getting all values to the array
-	for _, v := range mc.FieldMetric {
-		parameters[v.FieldName] = float64(1)
-	}
-	for _, v := range mc.OidCondMetric {
-		parameters[v.FieldName] = float64(1)
-	}
-	log.Debugf("PARAMETERS: %+v", parameters)
-	//compute Evalutated metrics
 	var err error
 	var errstr []string
+	//get all the eval parameters
+	ep, _ := mc.GetEvaluableVarNames()
+	for _, t := range ep {
+		parameters[t] = float64(1)
+	}
+	parameters["NF"] = len(mc.FieldMetric) + len(mc.OidCondMetric) //Number of fields ( like awk)
+	log.Debugf("PARAMETERS: %+v", parameters)
 	for _, v := range mc.EvalMetric {
 		err = v.CheckEvalCfg(parameters)
 		if err != nil {
