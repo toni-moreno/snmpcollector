@@ -188,14 +188,24 @@ func (m *SnmpMetricCfg) GetMultiStringTagFieldMap() ([]*MetricMultiMap, error) {
 		if iType == "F" {
 			iConv = "INT"
 		}
-		if len(itcfg) > 2 {
+		if len(itcfg) > 2 && iType == "F" {
 			switch itcfg[2] {
 			case "STR":
 			case "BL":
 			case "INT":
 			case "FP":
 			default:
-				str := fmt.Sprintf("MultiString Parse Config error on Metric %s Conversion Type (%s) should be of type STR|INT|FP|BL", m.ID, itcfg[2])
+				str := fmt.Sprintf("MultiString Parse Config error on Metric %s Conversion Type (%s) for FIELD should be of type STR|INT|FP|BL", m.ID, itcfg[2])
+				log.Errorf(str)
+				return nil, errors.New(str)
+			}
+			iConv = itcfg[2]
+		}
+		if len(itcfg) > 2 && iType == "T" {
+			switch itcfg[2] {
+			case "STR":
+			default:
+				str := fmt.Sprintf("MultiString Parse Config error on Metric %s Conversion Type (%s) for TAG should be of type STR", m.ID, itcfg[2])
 				log.Errorf(str)
 				return nil, errors.New(str)
 			}

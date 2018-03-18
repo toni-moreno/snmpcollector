@@ -540,6 +540,7 @@ func (s *SnmpMetric) computeMultiStringParserValues() {
 		}
 		if err != nil {
 			s.log.Warnf("Error for Metric %s MULTISTRINGPARSER  Field [%s|%s|%s] Coversion  from  [%s] error: %s", s.cfg.ID, i.IType, i.IName, i.IConv, bitstr, err)
+			i.Value = nil
 		}
 	}
 }
@@ -550,10 +551,12 @@ func (s *SnmpMetric) addMultiStringParserValues(tags map[string]string, fields m
 	for _, i := range s.mm {
 		switch i.IType {
 		case "T":
+			if i.Value == nil {
+				continue
+			}
 			tags[i.IName] = i.Value.(string)
 		case "F":
 			fields[i.IName] = i.Value
-
 		}
 	}
 	return fErrors
