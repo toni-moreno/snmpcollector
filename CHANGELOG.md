@@ -1,5 +1,7 @@
 # v 0.7.7 (unreleased)
 ### New Features
+* Added SIGTERM handler to stop gracefully all device gathering gourutines and flush pending data to its defined output db.
+* Added SIGHUP handler to reload complete configuration and restart gathering process (as in the 'Reload Config' WebUI option)
 * Added new Metric Type - ENUM to map values adding description to save it as STRING (thanks to https://github.com/simnv)
 * Added new OID condition type - `nin` that allows multiple numerical values on conditions
 * Added new internal metrics - fields_sent and fields_sent_max that retrieves the number of fields sent to InfluxDB on "selfmon_outdb_stats" measurement:

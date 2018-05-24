@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os/signal"
+	"syscall"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -175,6 +177,24 @@ func main() {
 	}()
 	writePIDFile()
 	//Init BD config
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+	go func() {
+		select {
+		case sig := <-c:
+			switch sig {
+			case syscall.SIGTERM:
+				log.Infof("Received TERM signal")
+				agent.End()
+				log.Infof("Exiting for requested user SIGTERM")
+				os.Exit(1)
+			case syscall.SIGHUP:
+				log.Infof("Received HUP signal")
+				agent.ReloadConf()
+			}
+
+		}
+	}()
 
 	agent.MainConfig.Database.InitDB()
 	measurement.SetDB(&agent.MainConfig.Database)

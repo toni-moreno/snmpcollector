@@ -274,6 +274,36 @@ func LoadConf() {
 	//beginning  the gather process
 }
 
+// End finish all goroutines.
+func End() (time.Duration, error) {
+
+	start := time.Now()
+	log.Infof("END: begin device Gather processes stop... at %s", start.String())
+	//stop all device processes
+	DeviceProcessStop()
+	log.Info("END: begin selfmon Gather processes stop...")
+	//stop the selfmon process
+	selfmonProc.StopGather()
+	log.Info("END: waiting for all Gather gorotines stop...")
+	//wait until Done
+	gatherWg.Wait()
+	log.Info("END: releasing Device Resources")
+	ReleaseDevices()
+	log.Info("END: releasing Seflmonitoring Resources")
+	selfmonProc.End()
+	log.Info("END: begin sender processes stop...")
+	//stop all Output Emmiter
+	//log.Info("DEBUG Gather WAIT %+v", GatherWg)
+	//log.Info("DEBUG SENDER WAIT %+v", senderWg)
+	StopInfluxOut(influxdb)
+	log.Info("END: waiting for all Sender gorotines stop..")
+	senderWg.Wait()
+	log.Info("END: releasing Sender Resources")
+	ReleaseInfluxOut(influxdb)
+	log.Infof("END: Finished from %s to %s [Duration : %s]", start.String(), time.Now().String(), time.Since(start).String())
+	return time.Since(start), nil
+}
+
 // ReloadConf call to reinitialize alln configurations
 func ReloadConf() (time.Duration, error) {
 	start := time.Now()
@@ -283,29 +313,31 @@ func ReloadConf() (time.Duration, error) {
 	}
 
 	log.Infof("RELOADCONF INIT: begin device Gather processes stop... at %s", start.String())
-	//stop all device prcesses
-	DeviceProcessStop()
-	log.Info("RELOADCONF: begin selfmon Gather processes stop...")
-	//stop the selfmon process
-	selfmonProc.StopGather()
-	log.Info("RELOADCONF: waiting for all Gather gorotines stop...")
-	//wait until Done
-	gatherWg.Wait()
-	log.Info("RELOADCONF: releasing Device Resources")
-	ReleaseDevices()
-	log.Info("RELOADCONF: releasing Seflmonitoring Resources")
-	selfmonProc.End()
-	log.Info("RELOADCONF: begin sender processes stop...")
-	//stop all Output Emmiter
-	//log.Info("DEBUG Gather WAIT %+v", GatherWg)
-	//log.Info("DEBUG SENDER WAIT %+v", senderWg)
-	StopInfluxOut(influxdb)
-	log.Info("RELOADCONF: waiting for all Sender gorotines stop..")
-	senderWg.Wait()
-	log.Info("RELOADCONF: releasing Sender Resources")
-	ReleaseInfluxOut(influxdb)
+	End()
+	/*
+		//stop all device prcesses
+		DeviceProcessStop()
+		log.Info("RELOADCONF: begin selfmon Gather processes stop...")
+		//stop the selfmon process
+		selfmonProc.StopGather()
+		log.Info("RELOADCONF: waiting for all Gather gorotines stop...")
+		//wait until Done
+		gatherWg.Wait()
+		log.Info("RELOADCONF: releasing Device Resources")
+		ReleaseDevices()
+		log.Info("RELOADCONF: releasing Seflmonitoring Resources")
+		selfmonProc.End()
+		log.Info("RELOADCONF: begin sender processes stop...")
+		//stop all Output Emmiter
+		//log.Info("DEBUG Gather WAIT %+v", GatherWg)
+		//log.Info("DEBUG SENDER WAIT %+v", senderWg)
+		StopInfluxOut(influxdb)
+		log.Info("RELOADCONF: waiting for all Sender gorotines stop..")
+		senderWg.Wait()
+		log.Info("RELOADCONF: releasing Sender Resources")
+		ReleaseInfluxOut(influxdb)*/
 
-	log.Info("RELOADCONF: ĺoading configuration Again...")
+	log.Info("RELOADCONF: loading configuration Again...")
 	LoadConf()
 	log.Info("RELOADCONF: Starting all device processes again...")
 	DeviceProcessStart()
