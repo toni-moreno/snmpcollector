@@ -5,7 +5,8 @@ set -e -x
 VERSION=`cat package.json| grep version | awk -F':' '{print $2}'| tr -d "\", "`
 COMMIT=`git rev-parse --short HEAD`
 
-if [ ! -f dist/snmpcollector-${VERSION}-${COMMIT}.tar.gz ]
+
+if [ ! -f dist/snmpcollector-${VERSION}-${COMMIT}_${GOOS:-linux}_${GOARCH:-amd64}.tar.gz ]
 then
     echo "building binary...."
     npm run build:static
@@ -17,7 +18,7 @@ fi
 export VERSION
 export COMMIT
 
-cp dist/snmpcollector-${VERSION}-${COMMIT}.tar.gz docker/snmpcollector-last.tar.gz
+cp dist/snmpcollector-${VERSION}-${COMMIT}_${GOOS:-linux}_${GOARCH:-amd64}.tar.gz docker/snmpcollector-last.tar.gz
 cp conf/sample.config.toml docker/config.toml
 
 cd docker

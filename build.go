@@ -226,7 +226,8 @@ func createMinTar() {
 	runPrint("cp", "bin/snmpcollector", filepath.Join(packageRoot, "/opt/snmpcollector/bin"))
 	runPrint("cp", "bin/snmpcollector.md5", filepath.Join(packageRoot, "/opt/snmpcollector/bin"))
 	runPrint("cp", "-a", filepath.Join(workingDir, "public")+"/.", filepath.Join(packageRoot, "/opt/snmpcollector/public"))
-	runPrint("tar", "zcvf", "dist/snmpcollector-"+version+"-"+getGitSha()+".tar.gz", "-C", packageRoot, ".")
+	tarname := fmt.Sprintf("dist/snmpcollector-%s-%s_%s_%s.tar.gz", version, getGitSha(), runtime.GOOS, runtime.GOARCH)
+	runPrint("tar", "zcvf", tarname, "-C", packageRoot, ".")
 	runPrint("rm", "-rf", packageRoot)
 }
 
@@ -346,7 +347,7 @@ func build(pkg string, tags []string, flags []string) {
 	if race {
 		args = append(args, "-race")
 	}
-
+	args = append(args, "-v")
 	args = append(args, "-o", binary)
 	args = append(args, pkg)
 	setBuildEnv()
