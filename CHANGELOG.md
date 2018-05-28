@@ -1,4 +1,4 @@
-# v 0.7.7 (unreleased)
+# v 0.7.7 (2018-05-28)
 ### New Features
 * Added SIGTERM handler to stop gracefully all device gathering gourutines and flush pending data to its defined output db.
 * Added SIGHUP handler to reload complete configuration and restart gathering process (as in the 'Reload Config' WebUI option)
