@@ -200,9 +200,7 @@ func main() {
 	measurement.SetDB(&agent.MainConfig.Database)
 	impexp.SetDB(&agent.MainConfig.Database)
 
-	agent.LoadConf()
-
-	agent.DeviceProcessStart()
+	agent.Start()
 
 	webui.WebServer(filepath.Join(homeDir, "public"), httpPort, &agent.MainConfig.HTTP, agent.MainConfig.General.InstanceID)
 

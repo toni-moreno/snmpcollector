@@ -69,7 +69,8 @@ type SnmpDevice struct {
 	DeviceConnected bool
 	StateDebug      bool
 
-	Node *bus.Node `json:"-"`
+	Node      *bus.Node `json:"-"`
+	isStopped chan bool `json:"-"`
 
 	CurLogLevel     string
 	Gather          func()                                                              `json:"-"`
@@ -188,7 +189,9 @@ func (d *SnmpDevice) SnmpReset(mode string) {
 
 // StopGather send signal to stop the Gathering process
 func (d *SnmpDevice) StopGather() {
-	d.Node.SendMsg(&bus.Message{Type: "exit"})
+	d.Node.SendMsg(&bus.Message{Type: "syncexit"})
+	<-d.isStopped
+	d.log.Info("Exiting from StopGather process...")
 }
 
 //RTActivate change activatio state in runtime
@@ -326,6 +329,7 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 		return fmt.Errorf("Error on initialice device, configuration struct is nil")
 	}
 	d.cfg = c
+	d.isStopped = make(chan bool)
 	//log.Infof("Initializing device %s\n", d.cfg.ID)
 
 	//Init Logger
@@ -457,6 +461,11 @@ func (d *SnmpDevice) InitCatalogVar(globalmap map[string]interface{}) {
 func (d *SnmpDevice) AttachToBus(b *bus.Bus) {
 	d.Node = bus.NewNode(d.cfg.ID)
 	b.Join(d.Node)
+}
+
+// LeaveBus add this device to a communition bus
+func (d *SnmpDevice) LeaveBus(b *bus.Bus) {
+	b.Leave(d.Node)
 }
 
 // End The Opposite of Init() uninitialize all variables
@@ -734,7 +743,11 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					d.Infof("invoked Force Data Gather And Process")
 					d.gatherAndProcessData(t, true)
 				case "exit":
-					d.Infof("invoked EXIT from SNMP Gather process ")
+					d.Infof("invoked Asyncronous EXIT from SNMP Gather process ")
+					return
+				case "syncexit":
+					d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
+					d.isStopped <- true
 					return
 				case "filterupdate":
 					d.rtData.Lock()

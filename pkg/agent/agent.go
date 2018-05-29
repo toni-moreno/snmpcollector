@@ -188,11 +188,13 @@ func DeviceProcessStop() {
 
 // DeviceProcessStart start all devices goroutines
 func DeviceProcessStart() {
-	mutex.RLock()
-	for _, c := range devices {
-		c.StartGather(&gatherWg)
+	mutex.Lock()
+	devices = make(map[string]*device.SnmpDevice)
+	mutex.Unlock()
+
+	for k, c := range DBConfig.SnmpDevice {
+		AddDeviceInRuntime(k, c)
 	}
-	mutex.RUnlock()
 }
 
 // ReleaseDevices Executes End for each device
@@ -234,6 +236,44 @@ func initSelfMonitoring(idb map[string]*output.InfluxDB) {
 	}
 }
 
+// DeleteDeviceInRuntime
+func DeleteDeviceInRuntime(id string) error {
+
+	if dev, ok := devices[id]; ok {
+		dev.StopGather()
+		log.Debugf("Bus retuned from the exit message to the ID device %s", id)
+		dev.LeaveBus(Bus)
+		dev.End()
+		mutex.Lock()
+		delete(devices, id)
+		mutex.Unlock()
+		return nil
+		//do something here
+	}
+	log.Errorf("There is no  %s device in the runtime device list", id)
+	return nil
+}
+
+// AddDeviceInRuntime
+func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
+	//Inticialize each SNMP device and put pointer to the global map devices
+	dev := device.New(cfg)
+	dev.AttachToBus(Bus)
+	dev.InitCatalogVar(DBConfig.VarCatalog)
+	dev.SetSelfMonitoring(selfmonProc)
+	//send db's map to initialize each one its own db if needed and not yet initialized
+
+	outdb, _ := dev.GetOutSenderFromMap(influxdb)
+	outdb.Init()
+	outdb.StartSender(&senderWg)
+
+	mutex.Lock()
+	devices[k] = dev
+	dev.StartGather(&gatherWg)
+	mutex.Unlock()
+
+}
+
 // LoadConf call to initialize alln configurations
 func LoadConf() {
 	//Load all database info to Cfg struct
@@ -249,29 +289,15 @@ func LoadConf() {
 
 	config.InitMetricsCfg(&DBConfig)
 
-	//Initialize Device Runtime map
-	mutex.Lock()
-	devices = make(map[string]*device.SnmpDevice)
-	mutex.Unlock()
-
-	for k, c := range DBConfig.SnmpDevice {
-		//Inticialize each SNMP device and put pointer to the global map devices
-		dev := device.New(c)
-		dev.AttachToBus(Bus)
-		dev.InitCatalogVar(DBConfig.VarCatalog)
-		dev.SetSelfMonitoring(selfmonProc)
-		//send db's map to initialize each one its own db if needed and not yet initialized
-
-		outdb, _ := dev.GetOutSenderFromMap(influxdb)
-		outdb.Init()
-		outdb.StartSender(&senderWg)
-
-		mutex.Lock()
-		devices[k] = dev
-		mutex.Unlock()
-	}
-
 	//beginning  the gather process
+}
+
+// Start init the agent
+func Start() {
+	//Load Config
+	LoadConf()
+	//Init Processesing
+	DeviceProcessStart()
 }
 
 // End finish all goroutines.
@@ -314,33 +340,13 @@ func ReloadConf() (time.Duration, error) {
 
 	log.Infof("RELOADCONF INIT: begin device Gather processes stop... at %s", start.String())
 	End()
-	/*
-		//stop all device prcesses
-		DeviceProcessStop()
-		log.Info("RELOADCONF: begin selfmon Gather processes stop...")
-		//stop the selfmon process
-		selfmonProc.StopGather()
-		log.Info("RELOADCONF: waiting for all Gather gorotines stop...")
-		//wait until Done
-		gatherWg.Wait()
-		log.Info("RELOADCONF: releasing Device Resources")
-		ReleaseDevices()
-		log.Info("RELOADCONF: releasing Seflmonitoring Resources")
-		selfmonProc.End()
-		log.Info("RELOADCONF: begin sender processes stop...")
-		//stop all Output Emmiter
-		//log.Info("DEBUG Gather WAIT %+v", GatherWg)
-		//log.Info("DEBUG SENDER WAIT %+v", senderWg)
-		StopInfluxOut(influxdb)
-		log.Info("RELOADCONF: waiting for all Sender gorotines stop..")
-		senderWg.Wait()
-		log.Info("RELOADCONF: releasing Sender Resources")
-		ReleaseInfluxOut(influxdb)*/
 
 	log.Info("RELOADCONF: loading configuration Again...")
 	LoadConf()
 	log.Info("RELOADCONF: Starting all device processes again...")
+	//Initialize Devices in Runtime map
 	DeviceProcessStart()
+
 	log.Infof("RELOADCONF END: Finished from %s to %s [Duration : %s]", start.String(), time.Now().String(), time.Since(start).String())
 	CheckAndUnSetReloadProcess()
 

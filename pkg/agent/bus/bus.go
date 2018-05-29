@@ -121,7 +121,7 @@ func (b *Bus) Start() {
 				b.nodeLock.Unlock()
 			}
 
-			log.Info("init send to nodes")
+			log.Info("BUS: begin message distribution to nodes")
 			var wg sync.WaitGroup
 			for _, node := range nodes {
 				// This is done in a goroutine because if it
@@ -133,9 +133,9 @@ func (b *Bus) Start() {
 				}(node, received)
 			}
 			wg.Wait()
-			log.Info("end send to nodes")
+			log.Info("BUS: End send message distribution to nodes")
 			b.waitsync <- true
-			log.Info("sync sent")
+			log.Debug("BUS: sync sent")
 
 		case <-b.close:
 			return
@@ -146,13 +146,13 @@ func (b *Bus) Start() {
 // Send send message to one receiver to the Bus
 func (b *Bus) Send(id string, m *Message) {
 	b.in <- MsgCtrl{sender: nil, payload: m, receiver: id}
-	log.Debug("Send After Send")
+	log.Debugf("BUS: unicast message %s , %+v sent to node %s", m.Type, m.Data, id)
 	<-b.waitsync
 }
 
 // Broadcast send message to all nodes attached to the bus
 func (b *Bus) Broadcast(m *Message) {
 	b.in <- MsgCtrl{sender: nil, payload: m, receiver: "all"}
-	log.Debug("After Send")
+	log.Debugf("BUS: Broadcast message %s , %+v sent", m.Type, m.Data)
 	<-b.waitsync
 }

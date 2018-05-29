@@ -51,6 +51,7 @@ export class SnmpDeviceCfgComponent {
   itemsPerPageOptions : any = ItemsPerPageOptions;
   //ADDED
   editmode: string; //list , create, modify
+  online: boolean;
   snmpdevs: Array<any>;
   filter: string;
   snmpdevForm: any;
@@ -367,13 +368,13 @@ export class SnmpDeviceCfgComponent {
 
   deleteSnmpDevice(id, recursive?) {
     if (!recursive) {
-      this.snmpDeviceService.deleteDevice(id)
+      this.snmpDeviceService.deleteDevice(id,this.online)
       .subscribe(data => { },
         err => console.error(err),
         () => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
         );
     } else {
-      return this.snmpDeviceService.deleteDevice(id, true)
+      return this.snmpDeviceService.deleteDevice(id, this.online,true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -387,6 +388,25 @@ export class SnmpDeviceCfgComponent {
     this.editmode = "list";
   }
 
+  doOnline() {
+    this.online = true;
+    if (this.editmode == "create") {
+      this.saveSnmpDev() 
+    } else {
+      this.updateSnmpDev()
+    } 
+  }
+
+  doOffline() {
+    this.online = false;
+    if (this.editmode == "create") {
+      this.saveSnmpDev() 
+    } else {
+      this.updateSnmpDev()
+    } 
+
+  }
+
   saveSnmpDev() {
     if (this.snmpdevForm.valid) {
       let varCatalogsID : Array<any> = [];
@@ -394,7 +414,7 @@ export class SnmpDeviceCfgComponent {
         varCatalogsID.push(i['ID']+(i['value'] ? '='+i['value'] : ''));
       }
       this.snmpdevForm.value['DeviceVars']=varCatalogsID;
-      this.snmpDeviceService.addDevice(this.snmpdevForm.value)
+      this.snmpDeviceService.addDevice(this.snmpdevForm.value,this.online)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
         () => { this.editmode = "list"; this.reloadData() }
@@ -442,7 +462,7 @@ updateAllSelectedItems(mySelectedArray,field,value, append?) {
             varCatalogsID.push(i['ID']+(i['value'] ? '='+i['value'] : ''));
           }
           this.snmpdevForm.value['DeviceVars']=varCatalogsID;
-          this.snmpDeviceService.editDevice(this.snmpdevForm.value, this.oldID)
+          this.snmpDeviceService.editDevice(this.snmpdevForm.value, this.oldID,this.online)
             .subscribe(data => { console.log(data) },
             err => console.error(err),
             () => { this.editmode = "list"; this.reloadData() }
@@ -451,7 +471,7 @@ updateAllSelectedItems(mySelectedArray,field,value, append?) {
       }
     }
     else {
-      return this.snmpDeviceService.editDevice(component, component.ID, true)
+      return this.snmpDeviceService.editDevice(component, component.ID,this.online, true)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err})}

@@ -14,7 +14,7 @@
     <ng-template ngSwitchDefault>
     <test-filter-modal #viewTestFilterModal titleName='Filter connection:' [formValues]="snmpdevForm.value">
     </test-filter-modal>
-    <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveSnmpDev() : updateSnmpDev()">
+    <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="doOffline()">
       <ng-container>
         <div class="row well well-sm">
           <h4 style="display:inline">
@@ -26,6 +26,8 @@
           <div style="display:inline" tooltip='Submit' container=body><button class="btn btn-success" type="submit" [disabled]="!snmpdevForm.valid"> <i class="glyphicon glyphicon-ok-circle"></i></button></div>
           <div style="display:inline" tooltip='Reset' container=body><button class="btn btn-warning" type="reset" [disabled]="!snmpdevForm.dirty"><i class="glyphicon glyphicon-ban-circle"></i> </button></div>
           <div style="display:inline" tooltip='Cancel' container=body><button class="btn btn-danger" type="button" (click)="cancelEdit()"><i class="glyphicon glyphicon-remove-circle"></i></button></div>
+          <div style="display:inline" tooltip='Submit and Apply changes Online' container=body><button class="btn btn-success" type="button" (click)="doOnline()"><i class="glyphicon glyphicon-adjust"></i></button></div>
+
         </div>
       </div>
     </ng-container>
