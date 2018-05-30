@@ -77,28 +77,17 @@ export class SnmpDeviceService {
         // return an observable
         return this.httpAPI.get('/api/cfg/snmpdevice')
         .map( (responseData) => {
-            return responseData.json();
+            let ret = responseData.json();
+            console.log(ret);
+            let data: Array<any>=[];
+            ret.forEach(element => {
+                element.Cfg["isRuntime"]=element.IsRuntime;
+                data.push(element.Cfg)
+            });
+            console.log(data);
+            return data
         })
-        .map((snmpdevs) => {
-            console.log("MAP SERVICE",snmpdevs);
-            let result = [];
-            if (snmpdevs) {
-                _.forEach(snmpdevs,function(value,key){
-                    console.log("FOREACH LOOP",value,value.ID);
-                    if(filter_s && filter_s.length > 0 ) {
-                        console.log("maching: "+value.ID+ "filter: "+filter_s);
-                        var re = new RegExp(filter_s, 'gi');
-                        if (value.ID.match(re)){
-                            result.push(value);
-                        }
-                        console.log(value.ID.match(re));
-                    } else {
-                        result.push(value);
-                    }
-                });
-            }
-            return result;
-        });
+ 
     }
     getDevicesById(id : string) {
         // return an observable

@@ -236,6 +236,17 @@ func initSelfMonitoring(idb map[string]*output.InfluxDB) {
 	}
 }
 
+// IsDeviceRuntime check if deviceID exist in the runtime array
+func IsDeviceInRuntime(id string) bool {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if _, ok := devices[id]; ok {
+		return true
+	}
+	return false
+
+}
+
 // DeleteDeviceInRuntime
 func DeleteDeviceInRuntime(id string) error {
 
