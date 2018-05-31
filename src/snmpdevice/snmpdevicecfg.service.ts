@@ -77,15 +77,7 @@ export class SnmpDeviceService {
         // return an observable
         return this.httpAPI.get('/api/cfg/snmpdevice')
         .map( (responseData) => {
-            let ret = responseData.json();
-            console.log(ret);
-            let data: Array<any>=[];
-            ret.forEach(element => {
-                element.Cfg["isRuntime"]=element.IsRuntime;
-                data.push(element.Cfg)
-            });
-            console.log(data);
-            return data
+            return responseData.json();
         })
  
     }

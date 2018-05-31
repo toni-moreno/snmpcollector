@@ -29,8 +29,9 @@ func NewAPICfgSnmpDevice(m *macaron.Macaron) error {
 	return nil
 }
 
+//DeviceStatMap
 type DeviceStatMap struct {
-	Cfg       *config.SnmpDeviceCfg
+	config.SnmpDeviceCfg
 	IsRuntime bool
 }
 
@@ -46,7 +47,7 @@ func GetSNMPDevices(ctx *Context) {
 	dsmap := []*DeviceStatMap{}
 	for _, v := range devcfgarray {
 		rt := agent.IsDeviceInRuntime(v.ID)
-		dsmap = append(dsmap, &DeviceStatMap{Cfg: v, IsRuntime: rt})
+		dsmap = append(dsmap, &DeviceStatMap{*v, rt})
 	}
 	ctx.JSON(200, &dsmap)
 	log.Debugf("Getting DEVICEs %+v", &dsmap)
