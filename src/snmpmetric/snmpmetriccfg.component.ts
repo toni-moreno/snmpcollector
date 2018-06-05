@@ -133,8 +133,16 @@ export class SnmpMetricCfgComponent {
         controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
         break;
       case 'STRINGPARSER':
+        controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]) })
+        controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
+        controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
+        controlArray.push({'ID': 'Scale', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
+        controlArray.push({'ID': 'Shift', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
+        break;
       case 'MULTISTRINGPARSER':
         controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]) })
+        controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
+        break;
       case 'STRINGEVAL':
         controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
         controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });

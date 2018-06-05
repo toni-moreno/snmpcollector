@@ -535,7 +535,7 @@ func (s *SnmpMetric) computeMultiStringParserValues() {
 			i.Value, err = strconv.ParseInt(bitstr, 10, 64)
 		case "BL":
 			i.Value, err = strconv.ParseBool(bitstr)
-		case "FL":
+		case "FP":
 			i.Value, err = strconv.ParseFloat(bitstr, 64)
 		}
 		if err != nil {
