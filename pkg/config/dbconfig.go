@@ -4,7 +4,7 @@ package config
 type SnmpDeviceCfg struct {
 	ID string `xorm:"'id' unique" binding:"Required"`
 	//snmp connection config
-	Host       string   `xorm:"host" binding:"Required"`
+	Host       string   `xorm:"host" binding:"Required;AlphaDashDot"`
 	Port       int      `xorm:"port" binding:"Required"`
 	SystemOIDs []string `xorm:"systemoids"` //for non MIB-2 based devices
 	Retries    int      `xorm:"retries"`
