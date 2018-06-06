@@ -118,7 +118,7 @@ export class SnmpDeviceCfgComponent {
   createStaticForm() {
     this.snmpdevForm = this.builder.group({
       ID: [this.snmpdevForm ? this.snmpdevForm.value.ID : '', Validators.required],
-      Host: [this.snmpdevForm ? this.snmpdevForm.value.Host : '', Validators.required],
+      Host: [this.snmpdevForm ? this.snmpdevForm.value.Host : '', Validators.compose([Validators.required, ValidationService.hostNameValidator])],
       Port: [this.snmpdevForm ? this.snmpdevForm.value.Port : 161, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       Retries: [this.snmpdevForm ? this.snmpdevForm.value.Retries : 5, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       Timeout: [this.snmpdevForm ? this.snmpdevForm.value.Timeout : 20, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],

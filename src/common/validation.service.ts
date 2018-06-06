@@ -9,6 +9,7 @@ export class ValidationService {
             'invalidFloat': 'Invalid number. Must be a float. i.e: 3.2, -4',
             'invalidInteger': 'Invalid number. Must be an integer',
             'invalidExtraTags': 'Invalid format. Must be key=value, separated by commas',
+            'invalidFQDNHost': 'Invalid host format. Must be a valid IP or hostname',
             'invalidWhiteSpaces': 'Invalid. Can\'t contain white spaces',
             'invalidUInteger': 'Invalid Number . Must be a Unsigned (positive) Integer',
             'invalidUInteger8': 'Invalid Number . Must be a Unsigned (positive) Integer with range 0-255',
@@ -145,12 +146,25 @@ export class ValidationService {
             }
         }
     }
+
     static extraTags(control) {
         if (control.value){
             if (control.value.toString().match(/^([\w._:-]+[=][\w._:-]+[,]?){1,}$/g) || control.value.toString() == "") {
                 return null;
             } else {
                 return { 'invalidExtraTags': true };
+            }
+        }
+    }
+
+    static hostNameValidator(control) {
+        if (control.value){
+            // Regex to check valid IP or hostname
+            // From https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
+            if (control.value.toString().match(/^[a-z\d]([a-z\d\-]{0,61}[a-z\d])?(\.[a-z\d]([a-z\d\-]{0,61}[a-z\d])?)*$/i)) {
+                return null;
+            } else {
+                return { 'invalidFQDNHost': true };
             }
         }
     }
