@@ -1,6 +1,7 @@
 <h2>{{defaultConfig.name}}</h2>
 <test-connection-modal #viewTestConnectionModal titleName='Test connection for:'>
 </test-connection-modal>
+<div #blocker style="position: absolute; top: 50%;"></div>
 <ng-container [ngSwitch]="editmode">
     <ng-template ngSwitchCase="list">
     <test-modal #viewModal titleName='Device'></test-modal>
@@ -9,12 +10,13 @@
     </test-modal>
     <export-file-modal #exportFileModal [showValidation]="true" [exportType]="defaultConfig['slug']" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
     <table-list #listTableComponent [typeComponent]="defaultConfig['slug']" [data]="data" [columns]="defaultConfig['table-columns']" [counterItems]="counterItems" [counterErrors]="counterErrors" [selectedArray]="selectedArray" [isRequesting]="isRequesting" [tableRole]="tableRole"
-    [roleActions]="overrideRoleActions" overrideEditEnabled="true" [tableAvailableActions]="tableAvailableActions" (customClicked)="customActions($event)"></table-list>
+    [roleActions]="overrideRoleActions" [extraActions]="extraActions" overrideEditEnabled="true" [tableAvailableActions]="tableAvailableActions" (customClicked)="customActions($event)"
+    (extraActionClicked)="onExtraActionClicked($event)"></table-list>
     </ng-template>
     <ng-template ngSwitchDefault>
     <test-filter-modal #viewTestFilterModal titleName='Filter connection:' [formValues]="snmpdevForm.value">
     </test-filter-modal>
-    <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="doOffline()">
+    <form [formGroup]="snmpdevForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveSnmpDev(snmpdevForm.value) : updateSnmpDev(false,snmpdevForm.value)">
       <ng-container>
         <div class="row well well-sm">
           <h4 style="display:inline">
@@ -26,8 +28,7 @@
           <div style="display:inline" tooltip='Submit' container=body><button class="btn btn-success" type="submit" [disabled]="!snmpdevForm.valid"> <i class="glyphicon glyphicon-ok-circle"></i></button></div>
           <div style="display:inline" tooltip='Reset' container=body><button class="btn btn-warning" type="reset" [disabled]="!snmpdevForm.dirty"><i class="glyphicon glyphicon-ban-circle"></i> </button></div>
           <div style="display:inline" tooltip='Cancel' container=body><button class="btn btn-danger" type="button" (click)="cancelEdit()"><i class="glyphicon glyphicon-remove-circle"></i></button></div>
-          <div style="display:inline" tooltip='Submit and Apply changes Online' container=body><button class="btn btn-success" type="button" (click)="doOnline()"><i class="glyphicon glyphicon-adjust"></i></button></div>
-
+          <div style="display:inline; margin-left: 10px; border-left: 1px solid #337ab7" tooltip='Submit and apply changes on runtime' container=body ><button  class="btn btn-success" style="margin-left: 10px;" type="button" (click)="editmode === 'create' ? saveSnmpDev(snmpdevForm.value,'full') : updateSnmpDev(false,snmpdevForm.value,'full')"><i class="glyphicon glyphicon-adjust"></i></button></div>
         </div>
       </div>
     </ng-container>

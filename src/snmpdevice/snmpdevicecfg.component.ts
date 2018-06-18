@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild,ViewContainerRef } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
@@ -9,7 +9,8 @@ import { VarCatalogService } from '../varcatalog/varcatalogcfg.service';
 import { ValidationService } from '../common/validation.service';
 import { Observable } from 'rxjs/Rx';
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
-
+import { BlockUIService } from '../common/blockui/blockui-service';
+import { BlockUIComponent } from '../common/blockui/blockui-component';
 
 import { GenericModal } from '../common/generic-modal';
 import { ExportFileModal } from '../common/dataservice/export-file-modal';
@@ -23,13 +24,13 @@ import { AvailableTableActions } from '../common/table-available-actions';
 import { SpinnerComponent } from '../common/spinner';
 
 import { TableListComponent } from '../common/table-list.component';
-import { SnmpDeviceCfgComponentConfig, TableRole, OverrideRoleActions } from './snmpdevicecfg.data';
+import { SnmpDeviceCfgComponentConfig, TableRole, OverrideRoleActions, ExtraActions } from './snmpdevicecfg.data';
 
 declare var _:any;
 
 @Component({
   selector: 'snmpdevs',
-  providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService, VarCatalogService],
+  providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService, VarCatalogService,BlockUIService],
   templateUrl: './snmpdeviceeditor.html',
   styleUrls: ['../css/component-styles.css']
 })
@@ -40,6 +41,7 @@ export class SnmpDeviceCfgComponent {
   @ViewChild('viewTestConnectionModal') public viewTestConnectionModal: TestConnectionModal;
   @ViewChild('viewTestFilterModal') public viewTestFilterModal: TestFilterModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
+  @ViewChild('blocker', { read: ViewContainerRef }) container: ViewContainerRef;
 
   editEnabled : boolean = false;
   selectedArray : any = [];
@@ -51,7 +53,6 @@ export class SnmpDeviceCfgComponent {
   itemsPerPageOptions : any = ItemsPerPageOptions;
   //ADDED
   editmode: string; //list , create, modify
-  online: boolean;
   snmpdevs: Array<any>;
   filter: string;
   snmpdevForm: any;
@@ -95,8 +96,9 @@ export class SnmpDeviceCfgComponent {
 
   varsArray: Array<Object> = [];
   selectedVars: Array<any> = [];
+  public extraActions: any = ExtraActions;
 
-  constructor(public snmpDeviceService: SnmpDeviceService, public varCatalogService: VarCatalogService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService,  public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
+  constructor(public snmpDeviceService: SnmpDeviceService, public varCatalogService: VarCatalogService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService,  public exportServiceCfg : ExportServiceCfg, builder: FormBuilder, private _blocker: BlockUIService) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -271,6 +273,52 @@ export class SnmpDeviceCfgComponent {
     }
   }
 
+  onExtraActionClicked(data: any) {
+    console.log(data);
+    switch (data.action) {
+      case 'changeruntime':
+        this.listChangeRTSnmpDev(data.row,data.property)
+        break;
+      case 'updateruntime':
+        this.listChangeRTSnmpDev(data.row)
+        break;
+      case 'deletefull':
+        this.deleteSnmpDevice(data.row.ID,'full',false);
+      break;
+      default:
+      break;
+    }
+  }
+
+  listChangeRTSnmpDev(data,property?) {
+    console.log(property)
+    if (property) {
+        if (data[property] === false) {
+          this._blocker.start(this.container, "Adding new device on runtime. Please wait...");
+          this.snmpDeviceService.addDevice(data,'runtime')
+          .subscribe(data => { this.editmode = "list"; this._blocker.stop(); this.reloadData() },
+          err => {console.error(err),this._blocker.stop();},
+          () => { console.log("DONE") }
+          );
+      
+        } else if (data[property] === true) {
+          this._blocker.start(this.container, "Removing new device on runtime. Please wait...");
+          this.snmpDeviceService.deleteDevice(data.ID,'runtime')
+          .subscribe(data => { this.editmode = "list"; this._blocker.stop(); this.reloadData() },
+          err => {console.error(err),this._blocker.stop();},
+          () => { console.log("DONE") }
+          );  
+        } 
+      } else {
+        this._blocker.start(this.container, "Updating new device on runtime. Please wait...");
+        this.snmpDeviceService.editDevice(data,data.ID,'runtime')
+        .subscribe(data => { this.editmode = "list"; this._blocker.stop(); this.reloadData() },
+          err => {console.error(err),this._blocker.stop();},
+        () => { console.log("DONE") }
+        );
+    }
+  }
+
 
   viewItem(id) {
     console.log("id: ", id);
@@ -287,8 +335,8 @@ export class SnmpDeviceCfgComponent {
     this.isRequesting = true;
     for (let i in myArray) {
       console.log("Removing ",myArray[i].ID)
-      this.deleteSnmpDevice(myArray[i].ID,true);
-      obsArray.push(this.deleteSnmpDevice(myArray[i].ID,true));
+      this.deleteSnmpDevice(myArray[i].ID,false,true);
+      obsArray.push(this.deleteSnmpDevice(myArray[i].ID,false,true));
     }
     this.genericForkJoin(obsArray);
   }
@@ -366,15 +414,27 @@ export class SnmpDeviceCfgComponent {
     );
   }
 
-  deleteSnmpDevice(id, recursive?) {
+  deleteSnmpDevice(id, mode, recursive?) {
     if (!recursive) {
-      this.snmpDeviceService.deleteDevice(id,this.online)
+      if (mode) {
+        let r = confirm("Remove from runtime and configuration device "+id+". Proceed?");
+         if (r === true) {
+          this._blocker.start(this.container, "Removing device from runtime and configuration. Please wait...");
+          this.snmpDeviceService.deleteDevice(id,mode)
+          .subscribe(data => { this._blocker.stop() },
+            err => {console.error(err); this._blocker.stop()},
+            () => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
+            );
+         }
+         return
+        } 
+      this.snmpDeviceService.deleteDevice(id,mode)
       .subscribe(data => { },
         err => console.error(err),
         () => {this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData()}
         );
     } else {
-      return this.snmpDeviceService.deleteDevice(id, this.online,true)
+      return this.snmpDeviceService.deleteDevice(id, mode,true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -388,39 +448,21 @@ export class SnmpDeviceCfgComponent {
     this.editmode = "list";
   }
 
-  doOnline() {
-    this.online = true;
-    if (this.editmode == "create") {
-      this.saveSnmpDev() 
-    } else {
-      this.updateSnmpDev()
-    } 
-  }
-
-  doOffline() {
-    this.online = false;
-    if (this.editmode == "create") {
-      this.saveSnmpDev() 
-    } else {
-      this.updateSnmpDev()
-    } 
-
-  }
-
-  saveSnmpDev() {
-    if (this.snmpdevForm.valid) {
-      let varCatalogsID : Array<any> = [];
+  saveSnmpDev(data,online?) {
+    let varCatalogsID : Array<any> = [];
       for (let i of this.varsArray) {
         varCatalogsID.push(i['ID']+(i['value'] ? '='+i['value'] : ''));
       }
-      this.snmpdevForm.value['DeviceVars']=varCatalogsID;
-      this.snmpDeviceService.addDevice(this.snmpdevForm.value,this.online)
-        .subscribe(data => { console.log(data) },
-        err => console.error(err),
+      data['DeviceVars']=varCatalogsID;
+      if (online) {
+        this._blocker.start(this.container, "Adding new device on runtime. Please wait...");
+      }
+      this.snmpDeviceService.addDevice(data,online)
+        .subscribe(data => { this._blocker.stop(); console.log(data) },
+        err =>  { console.error(err); this._blocker.stop(); },
         () => { this.editmode = "list"; this.reloadData() }
         );
-    }
-  }
+   }
 
 updateAllSelectedItems(mySelectedArray,field,value, append?) {
   let obsArray = [];
@@ -449,29 +491,30 @@ updateAllSelectedItems(mySelectedArray,field,value, append?) {
   this.counterErrors = [];
 }
 
-  updateSnmpDev(recursive?,component?) {
+  updateSnmpDev(recursive,component,mode?) {
     if(!recursive) {
-      if (this.snmpdevForm.valid) {
-        var r = true;
-        if (this.snmpdevForm.value.ID != this.oldID) {
-          r = confirm("Changing Device ID from " + this.oldID + " to " + this.snmpdevForm.value.ID + ". Proceed?");
-        }
-        if (r == true) {
-          let varCatalogsID : Array<any> = [];
-          for (let i of this.varsArray) {
-            varCatalogsID.push(i['ID']+(i['value'] ? '='+i['value'] : ''));
-          }
-          this.snmpdevForm.value['DeviceVars']=varCatalogsID;
-          this.snmpDeviceService.editDevice(this.snmpdevForm.value, this.oldID,this.online)
-            .subscribe(data => { console.log(data) },
-            err => console.error(err),
-            () => { this.editmode = "list"; this.reloadData() }
-            );
-        }
+      var r = true;
+      if (component.ID != this.oldID) {
+        r = confirm("Changing Device ID from " + this.oldID + " to " + component.ID + ". Proceed?");
       }
+      if (r == true) {
+        let varCatalogsID : Array<any> = [];
+        for (let i of this.varsArray) {
+          varCatalogsID.push(i['ID']+(i['value'] ? '='+i['value'] : ''));
+        }
+        if(mode) {
+          this._blocker.start(this.container, "Updating new device on runtime. Please wait...");
+        }
+        component['DeviceVars']=varCatalogsID;
+        this.snmpDeviceService.editDevice(component, this.oldID,mode)
+          .subscribe(data => { this._blocker.stop(); this.editmode = "list"; this.reloadData() },
+          err =>  { console.error(err); this._blocker.stop(); },
+          () => { }
+          );
+      }      
     }
     else {
-      return this.snmpDeviceService.editDevice(component, component.ID,this.online, true)
+      return this.snmpDeviceService.editDevice(component, component.ID,mode, true)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err})}

@@ -28,6 +28,38 @@ export const SnmpDeviceCfgComponentConfig: any =
     'slug' : 'snmpdevicecfg'
   }; 
 
+export const ExtraActions: any = {
+  data: [
+    {
+      title: 'Runtime Ops', content: [
+        {
+          type: 'boolean-label', 
+          enabled: '<label class="glyphicon glyphicon-minus-sign"></label>',
+          disabled: '<i role="button" class="glyphicon glyphicon-plus-sign"></i>',
+          property: 'IsRuntime', 
+          action: 'changeruntime',
+          tooltip: 'Un/Deploy device in runtime'
+        },
+        {
+          type: 'boolean-label', 
+          enabled: '<label class="glyphicon glyphicon-refresh"></label>',
+          disabled: null,
+          property: 'IsRuntime', 
+          action: 'updateruntime',
+          tooltip: 'Refresh device configuration in runtime'
+        },
+        {
+          type: 'button-label',
+          text: '<label role="button" class="glyphicon glyphicon-remove-sign"></label>',
+          property: 'Active',
+          action: 'deletefull',
+          tooltip: 'Delete in runtime and config'
+        }
+      ]
+    }],
+  position: 'first'
+};
+  
   export const TableRole : string = 'fulledit';
   export const OverrideRoleActions : Array<Object> = [
     {'name':'export', 'type':'icon', 'icon' : 'glyphicon glyphicon-download-alt text-default', 'tooltip': 'Export item'},

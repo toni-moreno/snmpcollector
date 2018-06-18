@@ -38,38 +38,39 @@ export class SnmpDeviceService {
         return value;
     }
 
-    addDevice(dev,online?) {
+    addDevice(dev,mode?) {
         var url = '/api/cfg/snmpdevice/';
-        if ( online == true ) {
-            url +='/online'
+        if (mode) {
+            url += mode
         }
         return this.httpAPI.post(url,JSON.stringify(dev,this.parseJSON))
         .map( (responseData) => responseData.json());
     }
 
-    editDevice(dev, id, online,hideAlert?) {
-        console.log("DEV: ",dev);
+    editDevice(dev, id, mode?,hideAlert?) {
+        console.log("DEV: ",dev,mode);
         var url = '/api/cfg/snmpdevice/'+id;
-        if ( online == true ) {
-            url +='/online'
+        if (mode) {
+            url += '/'+mode
         }
+        console.log("URL",url);
         //TODO: Se tiene que coger el oldid para substituir en la configuración lo que toque!!!!
         return this.httpAPI.put(url,JSON.stringify(dev,this.parseJSON),null,hideAlert)
         .map( (responseData) => responseData.json());
     }
 
-    deleteDevice(id : string, online,hideAlert?) {
+    deleteDevice(id : string, mode?,hideAlert?) {
         // return an observable
         console.log("ID: ",id);
         console.log("DELETING");
         var url = '/api/cfg/snmpdevice/'+id;
-        if ( online == true ) {
-            url +='/online'
+        if (mode) {
+            url += '/'+mode
         }
         return this.httpAPI.delete(url, null, hideAlert)
-        .map( (responseData) =>
-         responseData.json()
-        );
+        .map( (responseData) => {
+            responseData.json();
+        })
     };
 
 

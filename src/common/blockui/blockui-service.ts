@@ -1,7 +1,5 @@
 import { Injectable, ApplicationRef, ViewContainerRef, Component, ComponentRef, ComponentFactoryResolver, ComponentFactory, ViewChild } from '@angular/core';
-
-import { BlockUIComponent } from './blockui-component'; // error here, wrong path
-
+import { BlockUIComponent } from './blockui-component';
 
 @Injectable()
 export class BlockUIService {
@@ -10,9 +8,8 @@ export class BlockUIService {
     constructor(private _appRef: ApplicationRef, private _resolver: ComponentFactoryResolver) {
     }
 
-    public start(placeholder, prop) { // placeholder missing!
-        //let elementRef: ViewContainerRef = (<any>this._appRef)['_rootComponents'][0].location; // remove this
-        let elementRef = placeholder; // add this
+    public start(placeholder, prop) {
+        let elementRef = placeholder;
         return this.startInside(elementRef, null, prop);
     }
 
