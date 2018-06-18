@@ -90,7 +90,15 @@ func AddSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	mode := ctx.Params(":mode")
 	log.Printf("ADDING DEVICE %+v mode(%s)", dev, mode)
 	switch mode {
-	case "online":
+	case "runtime":
+		err := addDeviceOnline("deploy", dev.ID, &dev)
+		if err != nil {
+			log.Warningf("Error on insert for device %s  , error: %s", dev.ID, err)
+			ctx.JSON(404, err.Error())
+		} else {
+			ctx.JSON(200, &dev)
+		}
+	case "full":
 		err := addDeviceOnline("add", dev.ID, &dev)
 		if err != nil {
 			log.Warningf("Error on insert for device %s  , error: %s", dev.ID, err)
@@ -117,7 +125,22 @@ func UpdateSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	mode := ctx.Params(":mode")
 	log.Printf("UPDATING DEVICE %s in mode(%s)", id, mode)
 	switch mode {
-	case "online":
+	case "runtime":
+		var err error
+		err = agent.DeleteDeviceInRuntime(id)
+		if err != nil {
+			log.Warningf("Error on online delete device %s  , error %s", dev.ID, err)
+			ctx.JSON(404, err.Error())
+			return
+		}
+		err = addDeviceOnline("deploy", id, &dev)
+		if err != nil {
+			log.Warningf("Error on insert for device %s  , error: %s", dev.ID, err)
+			ctx.JSON(404, err.Error())
+		} else {
+			ctx.JSON(200, &dev)
+		}
+	case "full":
 		var err error
 		err = agent.DeleteDeviceInRuntime(id)
 		if err != nil {
@@ -152,7 +175,16 @@ func DeleteSNMPDevice(ctx *Context) {
 	mode := ctx.Params(":mode")
 	log.Printf("DELETING DEVICE %s in mode(%s)", id, mode)
 	switch mode {
-	case "online":
+	case "runtime":
+		err := agent.DeleteDeviceInRuntime(id)
+		if err != nil {
+			log.Warningf("Error on online delete device %s  , error %s", id, err)
+			ctx.JSON(404, err.Error())
+			return
+		} else {
+			ctx.JSON(200, "deleted")
+		}
+	case "full":
 		err := agent.DeleteDeviceInRuntime(id)
 		if err != nil {
 			log.Warningf("Error on online delete device %s  , error %s", id, err)

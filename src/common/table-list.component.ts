@@ -56,7 +56,10 @@ declare var _: any;
       (tableChanged)="onChangeTable(config)"
       (customClicked)="customClick($event.action, $event.row)"
       [tableRole]="tableRole"
-      [roleActions]="roleActions">
+      [roleActions]="roleActions"
+      [extraActions]="extraActions"
+      (extraActionClicked)="extraActionClick($event)"
+      >
     </ng-table>
 
     <!-- Pagination -->
@@ -85,11 +88,14 @@ export class TableListComponent implements OnInit, OnChanges {
     {'name':'edit', 'type':'icon', 'icon' : 'glyphicon glyphicon-edit text-warning', 'tooltip': 'Edit item'},
     {'name':'remove', 'type':'icon', 'icon' : 'glyphicon glyphicon glyphicon-remove text-danger', 'tooltip': 'Remove item'}
   ]
+  @Input() extraActions : any = null;
 
   @Input() sanitizeCell: Function;
   @Input() public tableAvailableActions: any;
 
   @Output() public customClicked: EventEmitter<any> = new EventEmitter();
+  @Output() public extraActionClicked: EventEmitter<any> = new EventEmitter();
+
 
   //Vars
   public editEnabled: boolean = false;
@@ -244,5 +250,8 @@ export class TableListComponent implements OnInit, OnChanges {
   customClick(clicked: string, event: any = "", data: any = ""): void {
     this.customClicked.emit({ 'option': clicked, 'event': event, 'data': data });
   }
-
+  
+  public extraActionClick(event) : void {
+    this.extraActionClicked.emit(event);
+  }
 }
