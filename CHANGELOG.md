@@ -1,3 +1,7 @@
+# v 0.8.0 ( unreleased ) 
+### New Features
+* Added new capabilities to add , modify and delete devices online ( avoids restart the gathering ocess  on the other devices) 
+
 # v 0.7.7 (2018-05-28)
 ### New Features
 * Added SIGTERM handler to stop gracefully all device gathering gourutines and flush pending data to its defined output db.
