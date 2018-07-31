@@ -39,8 +39,19 @@ npm run build:prod               # will build fronted and backend
 
 ### Creating minimal package tar.gz
 
+After building frontend and backend you wil do
+
 ```bash
 npm run postbuild #will build fronted and backend
+```
+
+### Creating rpm and deb packages
+
+you  will need previously installed the fpm/rpm and deb packaging tools.
+After building frontend and backend  you will do.
+
+```bash
+go run build.go latest
 ```
 
 ### Running first time
