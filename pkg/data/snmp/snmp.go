@@ -432,7 +432,7 @@ func PduVal2Hwaddr(pdu gosnmp.SnmpPDU) (string, error) {
 	default:
 		return "", fmt.Errorf("invalid type (%T) for hwaddr conversion", value)
 	}
-	return string(value.([]byte)), nil
+	return value.(string), nil
 }
 
 // PduVal2IPaddr transform data o IP address
