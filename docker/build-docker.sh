@@ -2,6 +2,9 @@
 
 set -e -x
 
+go tool dist env > /tmp/goenv.tmp
+. /tmp/goenv.tmp
+
 VERSION=`cat package.json| grep version | awk -F':' '{print $2}'| tr -d "\", "`
 COMMIT=`git rev-parse --short HEAD`
 
@@ -26,6 +29,4 @@ cd docker
 sudo docker build --label version="${VERSION}" --label commitid="${COMMIT}" -t tonimoreno/snmpcollector:${VERSION} -t tonimoreno/snmpcollector:latest .
 rm snmpcollector-last.tar.gz
 rm config.toml
-
-sudo docker push tonimoreno/snmpcollector:${VERSION}
-sudo docker push tonimoreno/snmpcollector:latest
+rm /tmp/goenv.tmp
