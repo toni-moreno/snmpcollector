@@ -12,7 +12,8 @@ export class InfluxServerService {
 
     parseJSON(key,value) {
         if ( key == 'Port'  ||
-        key == 'Timeout' ) {
+        key == 'Timeout' ||
+        key == 'BufferSize' ) {
           return parseInt(value);
         }
         if ( key == 'EnableSSL' ||

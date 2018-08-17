@@ -92,6 +92,7 @@ export class InfluxServerCfgComponent {
       SSLCert: [this.influxserverForm ? this.influxserverForm.value.SSLCert : ''],
       SSLKey: [this.influxserverForm ? this.influxserverForm.value.SSLKey : ''],
       InsecureSkipVerify: [this.influxserverForm ? this.influxserverForm.value.InsecureSkipVerify : 'true'],
+      BufferSize: [this.influxserverForm ? this.influxserverForm.value.BufferSize : 65535, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       Description: [this.influxserverForm ? this.influxserverForm.value.Description : '']
     });
   }

@@ -191,9 +191,6 @@ func NewNotInitInfluxDB(c *config.InfluxCfg) *InfluxDB {
 	}
 }
 
-// MaxBatchPoints max queue points
-const MaxBatchPoints = 65535
-
 // TimeWriteRetry time wait
 const TimeWriteRetry = 10
 
@@ -215,7 +212,7 @@ func (db *InfluxDB) Init() {
 	log.Infof("Initializing influxdb with id = [ %s ]", db.cfg.ID)
 
 	log.Infof("Connecting to: %s", db.cfg.Host)
-	db.iChan = make(chan *client.BatchPoints, MaxBatchPoints)
+	db.iChan = make(chan *client.BatchPoints, db.cfg.BufferSize)
 	db.chExit = make(chan bool)
 	if err := db.Connect(); err != nil {
 		log.Errorln("failed connecting to: ", db.cfg.Host)
@@ -280,6 +277,7 @@ func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
 }
 
 func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool) {
+	var bufferPercent float32
 	//number points
 	np := len((*data).Points())
 	//number of total fields
@@ -296,20 +294,22 @@ func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool
 	startSend := time.Now()
 	err := db.client.Write(*data)
 	elapsedSend := time.Since(startSend)
+
+	bufferPercent = (float32(len(db.iChan)) * 100.0) / float32(db.cfg.BufferSize)
 	if err != nil {
-		db.stats.WriteErrUpdate(elapsedSend)
+		db.stats.WriteErrUpdate(elapsedSend, bufferPercent)
 		log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
 		// If the queue is not full we will resend after a while
 		if enqueueonerror {
 			log.Debug("queing data again...")
-			if len(db.iChan) < MaxBatchPoints {
+			if len(db.iChan) < db.cfg.BufferSize {
 				db.iChan <- data
 				time.Sleep(TimeWriteRetry * time.Second)
 			}
 		}
 	} else {
 		log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
-		db.stats.WriteOkUpdate(int64(np), int64(nf), elapsedSend)
+		db.stats.WriteOkUpdate(int64(np), int64(nf), elapsedSend, bufferPercent)
 	}
 }
 

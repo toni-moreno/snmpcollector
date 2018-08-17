@@ -23,7 +23,9 @@ type InfluxStats struct {
 	WriteTime time.Duration
 	// WriteTimeMax
 	WriteTimeMax time.Duration
-	mutex        sync.Mutex
+	// BufferPercentUsed
+	BufferPercentUsed float32
+	mutex             sync.Mutex
 }
 
 // GetResetStats get stats for this InfluxStats Output
@@ -31,14 +33,15 @@ func (is *InfluxStats) GetResetStats() *InfluxStats {
 	is.mutex.Lock()
 	defer is.mutex.Unlock()
 	retstat := &InfluxStats{
-		FieldSent:    is.FieldSent,
-		FieldSentMax: is.FieldSentMax,
-		PSent:        is.PSent,
-		PSentMax:     is.PSentMax,
-		WriteSent:    is.WriteSent,
-		WriteErrors:  is.WriteErrors,
-		WriteTime:    is.WriteTime,
-		WriteTimeMax: is.WriteTimeMax,
+		FieldSent:         is.FieldSent,
+		FieldSentMax:      is.FieldSentMax,
+		PSent:             is.PSent,
+		PSentMax:          is.PSentMax,
+		WriteSent:         is.WriteSent,
+		WriteErrors:       is.WriteErrors,
+		WriteTime:         is.WriteTime,
+		WriteTimeMax:      is.WriteTimeMax,
+		BufferPercentUsed: is.BufferPercentUsed,
 	}
 	is.FieldSent = 0
 	is.FieldSentMax = 0
@@ -48,11 +51,12 @@ func (is *InfluxStats) GetResetStats() *InfluxStats {
 	is.WriteErrors = 0
 	is.WriteTime = 0
 	is.WriteTimeMax = 0
+	is.BufferPercentUsed = 0
 	return retstat
 }
 
 // WriteOkUpdate update stats on write ok
-func (is *InfluxStats) WriteOkUpdate(ps int64, fs int64, wt time.Duration) {
+func (is *InfluxStats) WriteOkUpdate(ps int64, fs int64, wt time.Duration, bufferPercent float32) {
 	is.mutex.Lock()
 	defer is.mutex.Unlock()
 	if is.PSentMax < ps {
@@ -68,10 +72,11 @@ func (is *InfluxStats) WriteOkUpdate(ps int64, fs int64, wt time.Duration) {
 	is.FieldSent += fs
 	is.PSent += ps
 	is.WriteTime += wt
+	is.BufferPercentUsed = bufferPercent
 }
 
 // WriteErrUpdate update stats on write error
-func (is *InfluxStats) WriteErrUpdate(wt time.Duration) {
+func (is *InfluxStats) WriteErrUpdate(wt time.Duration, bufferPercent float32) {
 	is.mutex.Lock()
 	defer is.mutex.Unlock()
 
@@ -80,4 +85,5 @@ func (is *InfluxStats) WriteErrUpdate(wt time.Duration) {
 	}
 	is.WriteErrors++
 	is.WriteTime += wt
+	is.BufferPercentUsed = bufferPercent
 }

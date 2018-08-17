@@ -11,6 +11,7 @@ export const InfluxServerCfgComponentConfig: any =
       { title: 'Retention', name: 'Retention' },
       { title: 'Precision', name: 'Precision' },
       { title: 'Timeout', name: 'Timeout' },
+      { title: 'Buffer Size', name: 'BufferSize' },
       { title: 'User Agent', name: 'UserAgent' }
     ],
     'slug' : 'influxcfg'

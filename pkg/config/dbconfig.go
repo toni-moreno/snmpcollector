@@ -63,6 +63,7 @@ type InfluxCfg struct {
 	SSLCert            string `xorm:"ssl_cert"`
 	SSLKey             string `xorm:"ssl_key"`
 	InsecureSkipVerify bool   `xorm:"insecure_skip_verify"`
+	BufferSize         int    `xorm:"'buffer_size' default 65535"`
 	Description        string `xorm:"description"`
 }
 

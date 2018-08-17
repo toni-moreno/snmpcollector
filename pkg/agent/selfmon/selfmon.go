@@ -232,6 +232,8 @@ func (sm *SelfMon) getOutDBStats() {
 		fields["write_time"] = sec
 		fields["write_time_max"] = stats.WriteTimeMax.Seconds()
 
+		fields["buffer_percent_used"] = stats.BufferPercentUsed
+
 		if stats.WriteSent > 0 {
 			fields["points_sent_avg"] = float64(stats.PSent) / float64(stats.WriteSent)
 			fields["write_time_avg"] = sec / float64(stats.WriteSent)
