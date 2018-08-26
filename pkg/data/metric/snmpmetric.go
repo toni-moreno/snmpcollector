@@ -111,14 +111,45 @@ func (s *SnmpMetric) SetLogger(l *logrus.Logger) {
 
 // Conversion functions
 
+func (s *SnmpMetric) convertFromUInteger() {
+	//the only acceptable conversions
+	// signed integer 64 -> float64
+	// signet integer 64 -> boolean ( true if value != 0 )
+	switch s.cfg.Conversion {
+	case config.INTEGER:
+		return
+	case config.FLOAT:
+		s.CookedValue = float64(s.CookedValue.(uint64))
+		return
+	case config.BOOLEAN:
+		if s.CookedValue.(uint64) != 0 {
+			s.CookedValue = true
+		} else {
+			s.CookedValue = false
+		}
+		return
+	default:
+		s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
+	}
+}
+
 func (s *SnmpMetric) convertFromInteger() {
 	//the only acceptable conversions
 	// signed integer 64 -> float64
+	// signet integer 64 -> boolean ( true if value != 0 )
 	switch s.cfg.Conversion {
 	case config.INTEGER:
 		return
 	case config.FLOAT:
 		s.CookedValue = float64(s.CookedValue.(int64))
+		return
+	case config.BOOLEAN:
+		if s.CookedValue.(int64) != 0 {
+			s.CookedValue = true
+		} else {
+			s.CookedValue = false
+		}
+		return
 	default:
 		s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
 	}
@@ -130,10 +161,18 @@ func (s *SnmpMetric) convertFromFloat() {
 	switch s.cfg.Conversion {
 	case config.INTEGER:
 		s.CookedValue = int64(math.Round(s.CookedValue.(float64)))
+		return
 	case config.FLOAT:
 		return
+	case config.BOOLEAN:
+		if s.CookedValue.(float64) != 0.0 {
+			s.CookedValue = true
+		} else {
+			s.CookedValue = false
+		}
+		return
 	default:
-		s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
+		s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
 	}
 }
 
@@ -153,6 +192,7 @@ func (s *SnmpMetric) convertFromString() {
 			return
 		}
 		s.CookedValue = value
+		return
 	case config.FLOAT:
 		value, err := strconv.ParseFloat(s.CookedValue.(string), 64)
 		if err != nil {
@@ -160,6 +200,7 @@ func (s *SnmpMetric) convertFromString() {
 			return
 		}
 		s.CookedValue = value
+		return
 	case config.BOOLEAN:
 		value, err := strconv.ParseBool(s.CookedValue.(string))
 		if err != nil {
@@ -167,8 +208,9 @@ func (s *SnmpMetric) convertFromString() {
 			return
 		}
 		s.CookedValue = value
+		return
 	default:
-		s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
+		s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
 	}
 }
 
@@ -176,11 +218,18 @@ func (s *SnmpMetric) convertFromAny() {
 	switch s.CookedValue.(type) {
 	case float32, float64:
 		s.convertFromFloat()
-	case uint64, uint32, int64, int32: //review uint vs int
+		return
+	case uint64, uint32:
+		s.convertFromUInteger()
+		return
+	case int64, int32:
 		s.convertFromInteger()
+		return
 	case string:
 		s.convertFromString()
+		return
 	case bool:
+		s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
 	default:
 	}
 }
@@ -253,7 +302,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			//s.CookedValue = float64(val)
 			s.CookedValue = snmp.PduVal2UInt64(pdu)
 			s.CurTime = now
-			s.convertFromInteger()
+			s.convertFromUInteger()
 			s.Scale()
 			s.Valid = true
 		}
@@ -297,7 +346,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 					s.CookedValue = s.CurValue.(uint64) - s.LastValue.(uint64)
 				}
 			}
-			s.Convert = s.convertFromInteger
+			s.Convert = s.convertFromUInteger
 		}
 	case "COUNTER64": //Increment computed
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
@@ -341,7 +390,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 					s.CookedValue = s.CurValue.(uint64) - s.LastValue.(uint64)
 				}
 			}
-			s.Convert = s.convertFromInteger
+			s.Convert = s.convertFromUInteger
 		}
 	case "COUNTERXX": //Generic Counter With Unknown range or buggy counters that  Like Non negative derivative
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
@@ -387,7 +436,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 					s.log.Warnf("Warning Negative COUNTER increment [current: %d | last: %d ] last value will be sent %f", s.CurValue, s.LastValue, s.CookedValue)
 				}
 			}
-			s.Convert = s.convertFromInteger
+			s.Convert = s.convertFromUInteger
 		}
 	case "BITS":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
@@ -535,7 +584,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.CookedValue = result
 			//conversion depends onthe type of the evaluted data.
 			s.CurTime = time.Now()
-			s.Convert()
+			s.Convert() //default
 			s.Scale()
 			s.Valid = true
 		}
