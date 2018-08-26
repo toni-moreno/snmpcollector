@@ -18,6 +18,39 @@ type MetricMultiMap struct {
 	Value interface{}
 }
 
+type ConversionMode int
+
+const (
+	FLOAT     ConversionMode = 0
+	INTEGER   ConversionMode = 1
+	UNSIGNED  ConversionMode = 2
+	STRING    ConversionMode = 3
+	BOOLEAN   ConversionMode = 4
+	HWADDRESS ConversionMode = 5
+	IPADDRESS ConversionMode = 6
+)
+
+// GetString transform type to string
+func (c ConversionMode) GetString() string {
+	switch c {
+	case FLOAT:
+		return "FLOAT"
+	case INTEGER:
+		return "INTEGER"
+	case UNSIGNED:
+		return "UNSIGNED INTEGER"
+	case STRING:
+		return "STRING"
+	case BOOLEAN:
+		return "BOOLEAN"
+	case HWADDRESS:
+		return "HARDWARE ADDRESS"
+	case IPADDRESS:
+		return "IP ADDRESS"
+	}
+	return ""
+}
+
 //SnmpMetricCfg Metric config
 type SnmpMetricCfg struct {
 	ID          string         `xorm:"'id' unique" binding:"Required"` //name of the key in the config array
@@ -28,9 +61,10 @@ type SnmpMetricCfg struct {
 	GetRate     bool           `xorm:"getrate"` //ony Valid with COUNTERS
 	Scale       float64        `xorm:"scale"`
 	Shift       float64        `xorm:"shift"`
-	IsTag       bool           `xorm:"'istag' default 0"` //Not Valid on  MULTISTRINGPARSER
-	ExtraData   string         `xorm:"extradata"`         //Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK, ENUM
-	Names       map[int]string `xorm:"-" json:"-"`        //BitString Name array
+	IsTag       bool           `xorm:"'istag' default 0"`      //Not Valid on  MULTISTRINGPARSER
+	ExtraData   string         `xorm:"extradata"`              //Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK, ENUM
+	Conversion  ConversionMode `xorm:"'conversion' default 0"` // Conversion will be always float for
+	Names       map[int]string `xorm:"-" json:"-"`             //BitString Name array
 }
 
 /*
@@ -142,6 +176,48 @@ func (m *SnmpMetricCfg) Init() error {
 		return fmt.Errorf("ExtraData not set in metric Config %s type  %s", m.ID, m.DataSrcType)
 	}
 	return nil
+}
+
+// GetValidConversions
+func (m *SnmpMetricCfg) GetValidConversions() ([]ConversionMode, error) {
+	switch m.DataSrcType {
+	case "INTEGER",
+		"Integer32",
+		"Gauge32",
+		"UInteger32",
+		"Unsigned32":
+		return []ConversionMode{FLOAT, INTEGER}, nil
+	case "Counter32",
+		"COUNTER32",
+		"Counter64",
+		"COUNTER64",
+		"COUNTERXX": //raw and cooked increment of Counter32
+		return []ConversionMode{FLOAT, INTEGER}, nil
+	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
+		return []ConversionMode{FLOAT, INTEGER}, nil
+	case "BITSCHK":
+		return []ConversionMode{FLOAT, INTEGER, BOOLEAN}, nil
+	case "BITS": //no conversion  neeeded (not triggered)
+		return []ConversionMode{STRING}, nil
+	case "ENUM": //no conversion  neeeded (not triggered)
+		return []ConversionMode{STRING}, nil
+	case "OCTETSTRING": //no conversion  neeeded (not triggered)
+		return []ConversionMode{STRING}, nil
+	case "OID": //no conversion  neeeded (not triggered)
+		return []ConversionMode{STRING}, nil
+	case "HWADDR", "IpAddress": //no conversion  neeeded (not triggered)
+		return []ConversionMode{STRING}, nil
+	case "STRINGPARSER":
+		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, nil
+	case "MULTISTRINGPARSER": //no conversion  needed
+		return []ConversionMode{}, nil
+	case "STRINGEVAL":
+		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, nil
+	case "CONDITIONEVAL": //not conversion will be triggered
+		return []ConversionMode{INTEGER}, nil
+	default:
+		return []ConversionMode{}, errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
+	}
 }
 
 // CheckEvalCfg : check evaluated expresion based in govaluate
