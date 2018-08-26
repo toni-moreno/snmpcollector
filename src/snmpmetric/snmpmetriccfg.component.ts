@@ -38,6 +38,7 @@ export class SnmpMetricCfgComponent {
   public isRequesting : boolean;
   public counterItems : number = null;
   public counterErrors: any = [];
+  public conversionModes: Array<any>;
 
   itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
@@ -87,7 +88,8 @@ export class SnmpMetricCfgComponent {
       ID: [this.snmpmetForm ? this.snmpmetForm.value.ID : '', Validators.required],
       FieldName: [this.snmpmetForm ? this.snmpmetForm.value.FieldName : '', Validators.required],
       DataSrcType: [this.snmpmetForm ? this.snmpmetForm.value.DataSrcType : 'Gauge32', Validators.required],
-      Description: [this.snmpmetForm ? this.snmpmetForm.value.Description : '']
+      Description: [this.snmpmetForm ? this.snmpmetForm.value.Description : ''],
+      Conversion: [this.snmpmetForm ? this.snmpmetForm.value.Conversion : 0]
     });
   }
 
@@ -114,6 +116,25 @@ export class SnmpMetricCfgComponent {
   setDynamicFields (field : any, override? : boolean) : void  {
     //Saves on the array all values to push into formGroup
     let controlArray : Array<any> = [];
+    let value : any;
+
+    if (this.snmpmetForm ) {
+      //need a clone of the object 
+      value = { ...this.snmpmetForm.value}
+      //force required fields to be not null to get Conversion modes on the cloned object
+      value['ID']='test'
+      value['FieldName']='test'
+    } else {
+      value = { ID: 'test', FieldName: 'test', DataSrcType: 'Gauge32' };
+    }
+    this.snmpMetricService.getConversionModes(value)
+    .subscribe(data => {
+      this.conversionModes = data;
+      console.log(this.conversionModes)
+      },
+      err => console.error(err)
+    );
+ 
 
     switch (field) {
       case 'BITS':
@@ -126,11 +147,13 @@ export class SnmpMetricCfgComponent {
       case 'IpAddress':
         controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]) })
         controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
+        controlArray.push({'ID': 'Conversion', 'defVal' : 3, 'Validators' : Validators.required, 'override' : override })
         break;
       case 'CONDITIONEVAL':
         this.getOidCond();
         controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
-        controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
+        controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });        
+        controlArray.push({'ID': 'Conversion', 'defVal' : 1, 'Validators' : Validators.required, 'override' : override })
         break;
       case 'STRINGPARSER':
         controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]) })
@@ -138,6 +161,7 @@ export class SnmpMetricCfgComponent {
         controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
         controlArray.push({'ID': 'Scale', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
         controlArray.push({'ID': 'Shift', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
+        controlArray.push({'ID': 'Conversion', 'defVal' : 0, 'Validators' : Validators.required, 'override' : override })
         break;
       case 'MULTISTRINGPARSER':
         controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]) })
@@ -148,6 +172,7 @@ export class SnmpMetricCfgComponent {
         controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
         controlArray.push({'ID': 'Scale', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
         controlArray.push({'ID': 'Shift', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
+        controlArray.push({'ID': 'Conversion', 'defVal' : 0, 'Validators' : Validators.required, 'override' : override })
         break;
       case 'COUNTER32':
       case 'COUNTER64':
@@ -159,6 +184,7 @@ export class SnmpMetricCfgComponent {
         controlArray.push({'ID': 'Scale', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
         controlArray.push({'ID': 'Shift', 'defVal' : '0', 'Validators' : Validators.compose([Validators.required, ValidationService.floatValidator]) })
         controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
+        controlArray.push({'ID': 'Conversion', 'defVal' : 1, 'Validators' : Validators.required, 'override' : override })
         break;
     }
     //Reload the formGroup with new values saved on controlArray

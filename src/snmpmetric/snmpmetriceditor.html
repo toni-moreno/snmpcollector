@@ -123,6 +123,20 @@
         </div>
       </div>
 
+      <div class="form-group" *ngIf="snmpmetForm.controls.Conversion && snmpmetForm.value.DataSrcType != 'MULTISTRINGPARSER' ">
+        <label class="control-label col-sm-2" for="Conversion">Conversion</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Conversion mode "></i>
+        <div class="col-sm-9">
+          <select formControlName="Conversion" id="Conversion" [ngModel]="snmpmetForm.value.Conversion">
+              <option *ngFor='let controlList of conversionModes' [value]="controlList.ID">
+                {{controlList.Value}}
+              </option>
+          </select>
+          <!--input formControlName="Conversion" id="Conversion" [ngModel]="snmpmetForm.value.Conversion"/-->
+          <control-messages [control]="snmpmetForm.controls.Conversion"></control-messages>
+        </div>
+      </div>
+
       <div class="form-group" *ngIf="snmpmetForm.controls.GetRate">
         <label class="control-label col-sm-2" for="GetRate">GetRate</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Normalize the returned value by time"></i>
@@ -135,10 +149,10 @@
         </div>
       </div>
     </div>
-      <div class="well well-sm" *ngIf="snmpmetForm.controls.Scale || snmpmetForm.controls.Shift">
-          <span class="editsection">
-            Metric Autoscale
-          </span>
+    <div class="well well-sm" *ngIf="snmpmetForm.controls.Scale || snmpmetForm.controls.Shift">
+      <span class="editsection">
+        Metric Autoscale
+      </span>
       <div class="form-group" style="margin-top: 25px" *ngIf="snmpmetForm.controls.Scale">
         <label class="control-label col-sm-2" for="Scale">Scale</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Scale the returned value by a num"></i>
@@ -157,10 +171,10 @@
         </div>
       </div>
     </div>
-          <div class="well well-sm">
-            <span class="editsection">
-              Extra Settings
-            </span>
+    <div class="well well-sm">
+      <span class="editsection">
+        Extra Settings
+      </span>
       <div class="form-group" style="margin-top: 25px">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the SNMP Metric"></i>

@@ -19,6 +19,7 @@ func NewAPICfgSnmpMetric(m *macaron.Macaron) error {
 		m.Delete("/:id", reqSignedIn, DeleteMetric)
 		m.Get("/:id", reqSignedIn, GetMetricByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetMetricsAffectOnDel)
+		m.Post("/convmodes", reqSignedIn, bind(config.SnmpMetricCfg{}), GetConversionModes)
 	})
 
 	return nil
@@ -98,4 +99,26 @@ func GetMetricsAffectOnDel(ctx *Context) {
 	} else {
 		ctx.JSON(200, &obarray)
 	}
+}
+
+type ConversionItem struct {
+	ID      int
+	Value   string
+	Default bool
+}
+
+// GetConversionModes Return conversion modes from datasource Type
+func GetConversionModes(ctx *Context, dev config.SnmpMetricCfg) {
+	var response []ConversionItem
+	cfgarray, def, err := dev.GetValidConversions()
+	if err != nil {
+		ctx.JSON(404, err.Error())
+		log.Errorf("Error on get  Conversion Mode :%s", err)
+		return
+	}
+	for k, v := range cfgarray {
+		response = append(response, ConversionItem{ID: int(v), Value: v.GetString(), Default: (k == def)})
+	}
+	ctx.JSON(200, &response)
+	log.Debugf("Got Conversion Items Array Metrics %+v", &response)
 }

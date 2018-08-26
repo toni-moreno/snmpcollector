@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -65,6 +66,34 @@ type SnmpMetricCfg struct {
 	ExtraData   string         `xorm:"extradata"`              //Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK, ENUM
 	Conversion  ConversionMode `xorm:"'conversion' default 0"` // Conversion will be always float for
 	Names       map[int]string `xorm:"-" json:"-"`             //BitString Name array
+}
+
+// MarshalJSON marshall
+func (s *SnmpMetricCfg) MarshalJSON() ([]byte, error) {
+	type Alias SnmpMetricCfg
+	return json.Marshal(&struct {
+		Conversion int `json:"conversion"`
+		*Alias
+	}{
+		Conversion: int(s.Conversion),
+		Alias:      (*Alias)(s),
+	})
+}
+
+// UnmarshalJSON
+func (s *SnmpMetricCfg) UnmarshalJSON(data []byte) error {
+	type Alias SnmpMetricCfg
+	aux := &struct {
+		Conversion int `json:"Conversion"`
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	s.Conversion = ConversionMode(aux.Conversion)
+	return nil
 }
 
 /*
@@ -178,45 +207,50 @@ func (m *SnmpMetricCfg) Init() error {
 	return nil
 }
 
-// GetValidConversions
-func (m *SnmpMetricCfg) GetValidConversions() ([]ConversionMode, error) {
+// GetValidConversions return Conversion Modes Array and the de default/sugested value beginning from 0
+func (m *SnmpMetricCfg) GetValidConversions() ([]ConversionMode, int, error) {
 	switch m.DataSrcType {
 	case "INTEGER",
 		"Integer32",
 		"Gauge32",
 		"UInteger32",
 		"Unsigned32":
-		return []ConversionMode{FLOAT, INTEGER}, nil
+		return []ConversionMode{FLOAT, INTEGER}, 1, nil
 	case "Counter32",
 		"COUNTER32",
 		"Counter64",
 		"COUNTER64",
 		"COUNTERXX": //raw and cooked increment of Counter32
-		return []ConversionMode{FLOAT, INTEGER}, nil
+		if m.GetRate == true {
+			return []ConversionMode{FLOAT, INTEGER}, 0, nil
+		} else {
+			return []ConversionMode{FLOAT, INTEGER}, 1, nil
+		}
+
 	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
-		return []ConversionMode{FLOAT, INTEGER}, nil
+		return []ConversionMode{FLOAT, INTEGER}, 1, nil
 	case "BITSCHK":
-		return []ConversionMode{FLOAT, INTEGER, BOOLEAN}, nil
+		return []ConversionMode{FLOAT, INTEGER, BOOLEAN}, 2, nil
 	case "BITS": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, nil
+		return []ConversionMode{STRING}, 0, nil
 	case "ENUM": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, nil
+		return []ConversionMode{STRING}, 0, nil
 	case "OCTETSTRING": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, nil
+		return []ConversionMode{STRING}, 0, nil
 	case "OID": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, nil
+		return []ConversionMode{STRING}, 0, nil
 	case "HWADDR", "IpAddress": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, nil
+		return []ConversionMode{STRING}, 0, nil
 	case "STRINGPARSER":
-		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, nil
+		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, 0, nil
 	case "MULTISTRINGPARSER": //no conversion  needed
-		return []ConversionMode{}, nil
+		return []ConversionMode{}, 0, nil
 	case "STRINGEVAL":
-		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, nil
+		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, 0, nil
 	case "CONDITIONEVAL": //not conversion will be triggered
-		return []ConversionMode{INTEGER}, nil
+		return []ConversionMode{INTEGER}, 0, nil
 	default:
-		return []ConversionMode{}, errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
+		return []ConversionMode{}, 0, errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
 	}
 }
 
