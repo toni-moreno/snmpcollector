@@ -101,24 +101,31 @@ func GetMetricsAffectOnDel(ctx *Context) {
 	}
 }
 
+// Conversion Item for selection
 type ConversionItem struct {
-	ID      int
-	Value   string
-	Default bool
+	ID    int
+	Value string
+}
+
+// ConversionItems array with all items and default/suggested value for this metric
+type ConversionItems struct {
+	Default int
+	Items   []ConversionItem
 }
 
 // GetConversionModes Return conversion modes from datasource Type
 func GetConversionModes(ctx *Context, dev config.SnmpMetricCfg) {
-	var response []ConversionItem
+	var citem []ConversionItem
 	cfgarray, def, err := dev.GetValidConversions()
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		log.Errorf("Error on get  Conversion Mode :%s", err)
 		return
 	}
-	for k, v := range cfgarray {
-		response = append(response, ConversionItem{ID: int(v), Value: v.GetString(), Default: (k == def)})
+	for _, v := range cfgarray {
+		citem = append(citem, ConversionItem{ID: int(v), Value: v.GetString()})
 	}
-	ctx.JSON(200, &response)
-	log.Debugf("Got Conversion Items Array Metrics %+v", &response)
+	response := &ConversionItems{Default: int(def), Items: citem}
+	ctx.JSON(200, response)
+	log.Debugf("Got Conversion Items Array Metrics %+v", response)
 }

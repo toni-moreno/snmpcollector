@@ -129,8 +129,10 @@ export class SnmpMetricCfgComponent {
     }
     this.snmpMetricService.getConversionModes(value)
     .subscribe(data => {
-      this.conversionModes = data;
-      console.log(this.conversionModes)
+      this.conversionModes = data.Items;
+      console.log("ITEMS:",data.Items)
+      this.snmpmetForm.value['Conversion'] = data.Default;
+      console.log("CONVERSION:",this.conversionModes)
       },
       err => console.error(err)
     );

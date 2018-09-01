@@ -29,11 +29,14 @@ const (
 	BOOLEAN   ConversionMode = 4
 	HWADDRESS ConversionMode = 5
 	IPADDRESS ConversionMode = 6
+	NONE      ConversionMode = 5000
 )
 
 // GetString transform type to string
 func (c ConversionMode) GetString() string {
 	switch c {
+	case NONE:
+		return "NONE"
 	case FLOAT:
 		return "FLOAT"
 	case INTEGER:
@@ -69,30 +72,30 @@ type SnmpMetricCfg struct {
 }
 
 // MarshalJSON marshall
-func (s *SnmpMetricCfg) MarshalJSON() ([]byte, error) {
+func (m *SnmpMetricCfg) MarshalJSON() ([]byte, error) {
 	type Alias SnmpMetricCfg
 	return json.Marshal(&struct {
 		Conversion int `json:"conversion"`
 		*Alias
 	}{
-		Conversion: int(s.Conversion),
-		Alias:      (*Alias)(s),
+		Conversion: int(m.Conversion),
+		Alias:      (*Alias)(m),
 	})
 }
 
-// UnmarshalJSON
-func (s *SnmpMetricCfg) UnmarshalJSON(data []byte) error {
+// UnmarshalJSON unmarshall for conversion mode
+func (m *SnmpMetricCfg) UnmarshalJSON(data []byte) error {
 	type Alias SnmpMetricCfg
 	aux := &struct {
 		Conversion int `json:"Conversion"`
 		*Alias
 	}{
-		Alias: (*Alias)(s),
+		Alias: (*Alias)(m),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	s.Conversion = ConversionMode(aux.Conversion)
+	m.Conversion = ConversionMode(aux.Conversion)
 	return nil
 }
 
@@ -208,49 +211,49 @@ func (m *SnmpMetricCfg) Init() error {
 }
 
 // GetValidConversions return Conversion Modes Array and the de default/sugested value beginning from 0
-func (m *SnmpMetricCfg) GetValidConversions() ([]ConversionMode, int, error) {
+func (m *SnmpMetricCfg) GetValidConversions() ([]ConversionMode, ConversionMode, error) {
 	switch m.DataSrcType {
 	case "INTEGER",
 		"Integer32",
 		"Gauge32",
 		"UInteger32",
 		"Unsigned32":
-		return []ConversionMode{FLOAT, INTEGER}, 1, nil
+		return []ConversionMode{FLOAT, INTEGER}, INTEGER, nil
 	case "Counter32",
-		"COUNTER32",
-		"Counter64",
+		"Counter64":
+		return []ConversionMode{FLOAT, INTEGER}, INTEGER, nil
+	case "COUNTER32",
 		"COUNTER64",
 		"COUNTERXX": //raw and cooked increment of Counter32
 		if m.GetRate == true {
-			return []ConversionMode{FLOAT, INTEGER}, 0, nil
+			return []ConversionMode{FLOAT, INTEGER}, FLOAT, nil
 		} else {
-			return []ConversionMode{FLOAT, INTEGER}, 1, nil
+			return []ConversionMode{FLOAT, INTEGER}, INTEGER, nil
 		}
-
 	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
-		return []ConversionMode{FLOAT, INTEGER}, 1, nil
+		return []ConversionMode{FLOAT, INTEGER}, INTEGER, nil
 	case "BITSCHK":
-		return []ConversionMode{FLOAT, INTEGER, BOOLEAN}, 2, nil
+		return []ConversionMode{FLOAT, INTEGER, BOOLEAN}, BOOLEAN, nil
 	case "BITS": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, 0, nil
+		return []ConversionMode{STRING}, STRING, nil
 	case "ENUM": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, 0, nil
+		return []ConversionMode{STRING}, STRING, nil
 	case "OCTETSTRING": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, 0, nil
+		return []ConversionMode{STRING}, STRING, nil
 	case "OID": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, 0, nil
+		return []ConversionMode{STRING}, STRING, nil
 	case "HWADDR", "IpAddress": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, 0, nil
+		return []ConversionMode{STRING}, STRING, nil
 	case "STRINGPARSER":
-		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, 0, nil
+		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, FLOAT, nil
 	case "MULTISTRINGPARSER": //no conversion  needed
-		return []ConversionMode{}, 0, nil
+		return []ConversionMode{NONE}, NONE, nil
 	case "STRINGEVAL":
-		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, 0, nil
+		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, FLOAT, nil
 	case "CONDITIONEVAL": //not conversion will be triggered
-		return []ConversionMode{INTEGER}, 0, nil
+		return []ConversionMode{INTEGER}, INTEGER, nil
 	default:
-		return []ConversionMode{}, 0, errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
+		return []ConversionMode{NONE}, NONE, errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
 	}
 }
 
