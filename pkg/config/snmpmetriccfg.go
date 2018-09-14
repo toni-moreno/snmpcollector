@@ -238,8 +238,8 @@ func (m *SnmpMetricCfg) GetValidConversions() ([]ConversionMode, ConversionMode,
 		return []ConversionMode{STRING}, STRING, nil
 	case "ENUM": //no conversion  neeeded (not triggered)
 		return []ConversionMode{STRING}, STRING, nil
-	case "OCTETSTRING": //no conversion  neeeded (not triggered)
-		return []ConversionMode{STRING}, STRING, nil
+	case "OCTETSTRING": //no conversion  needed (not triggered)
+		return []ConversionMode{STRING, INTEGER}, STRING, nil
 	case "OID": //no conversion  neeeded (not triggered)
 		return []ConversionMode{STRING}, STRING, nil
 	case "HWADDR", "IpAddress": //no conversion  neeeded (not triggered)

@@ -276,7 +276,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	case "TIMETICKS": //Cooked TimeTicks
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := snmp.PduVal2Int64(pdu)
-			//s.CookedValue = float64(val / 100) //now data in secoonds
 			s.CookedValue = val / 100 //now data in secoonds
 			s.CurTime = now
 			s.convertFromInteger()
@@ -287,8 +286,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		//Signed Integers
 	case "INTEGER", "Integer32":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			//val := snmp.PduVal2Int64(pdu)
-			//s.CookedValue = float64(val)
 			s.CookedValue = snmp.PduVal2Int64(pdu)
 			s.CurTime = now
 			s.convertFromInteger()
@@ -298,8 +295,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		//Unsigned Integers
 	case "Counter32", "Gauge32", "Counter64", "TimeTicks", "UInteger32", "Unsigned32":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			//val := snmp.PduVal2UInt64(pdu)
-			//s.CookedValue = float64(val)
 			s.CookedValue = snmp.PduVal2UInt64(pdu)
 			s.CurTime = now
 			s.convertFromUInteger()
@@ -339,10 +334,8 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					//s.CookedValue = float64(math.MaxUint32 - s.LastValue.(uint64) + s.CurValue.(uint64))
 					s.CookedValue = math.MaxUint32 - s.LastValue.(uint64) + s.CurValue.(uint64)
 				} else {
-					//s.CookedValue = float64(s.CurValue.(uint64) - s.LastValue.(uint64))
 					s.CookedValue = s.CurValue.(uint64) - s.LastValue.(uint64)
 				}
 			}
@@ -383,10 +376,8 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					//s.CookedValue = float64(math.MaxUint64 - s.LastValue.(uint64) + s.CurValue.(uint64))
 					s.CookedValue = math.MaxUint64 - s.LastValue.(uint64) + s.CurValue.(uint64)
 				} else {
-					//s.CookedValue = float64(s.CurValue.(uint64) - s.LastValue.(uint64))
 					s.CookedValue = s.CurValue.(uint64) - s.LastValue.(uint64)
 				}
 			}
@@ -427,7 +418,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Compute = func(arg ...interface{}) {
 				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
 				if s.CurValue.(uint64) >= s.LastValue.(uint64) {
-					//s.CookedValue = float64(s.CurValue.(uint64) - s.LastValue.(uint64))
 					s.CookedValue = s.CurValue.(uint64) - s.LastValue.(uint64)
 					s.Convert()
 					s.Scale()
@@ -479,11 +469,26 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.log.Debugf("SETRAW ENUM %+v, RESULT %s", s.cfg.Names, s.CookedValue)
 		}
 	case "OCTETSTRING":
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue = snmp.PduVal2str(pdu)
-			s.CurTime = now
-			s.Valid = true
+		switch s.cfg.Conversion {
+		case config.INTEGER:
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+				val, err := snmp.PduValHexString2Uint(pdu)
+				s.CookedValue = val
+				s.CurTime = now
+				if err != nil {
+					s.log.Warnf("Error on HexString to UINT conversion: %s", err)
+					return
+				}
+				s.Valid = true
+			}
+		case config.STRING:
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+				s.CookedValue = snmp.PduVal2str(pdu)
+				s.CurTime = now
+				s.Valid = true
+			}
 		}
+
 	case "OID":
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			s.CookedValue = snmp.PduVal2OID(pdu)
@@ -522,16 +527,10 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] cause  void capturing group", s.cfg.ID, s.cfg.ExtraData, str)
 				return
 			}
-			/*value, err := strconv.ParseFloat(retarray[1], 64)
-			if err != nil {
-				s.log.Warnf("Error parsing float for metric %s : error: %s", s.cfg.ID, err)
-				return
-			}
-			s.CookedValue = value*/
 			s.CookedValue = retarray[1]
 			s.CurTime = now
 			s.convertFromString()
-			//s.Scale() <-only valid if Integuer or String
+			//s.Scale() <-only valid if Integer or Float
 			s.Valid = true
 		}
 	case "MULTISTRINGPARSER":
@@ -564,7 +563,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		s.expr = expression
 		//set Process Data
 		s.Compute = func(arg ...interface{}) {
-			//parameters := make(map[string]interface{})
 			parameters := arg[0].(map[string]interface{})
 			s.log.Debugf("Evaluating Metric %s with eval expresion [%s] with parameters %+v", s.cfg.ID, s.cfg.ExtraData, parameters)
 			result, err := s.expr.Evaluate(parameters)
