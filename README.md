@@ -11,7 +11,8 @@ If you want to build a package yourself, or contribute. Here is a guide for how 
 
 ### Dependencies
 
-- Go 1.5
+- Go 1.5 for snmpcollector < 0.8
+- Go 1.11 for snmpcollector >= 0.8
 - NodeJS >=6.2.1
 
 ### Get Code
