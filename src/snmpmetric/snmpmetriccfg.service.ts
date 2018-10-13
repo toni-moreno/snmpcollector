@@ -72,7 +72,7 @@ export class SnmpMetricService {
 
     getConversionModes(dev) {
         console.log("DEV: ",dev);
-        return this.httpAPI.post('/api/cfg/metric/convmodes/',JSON.stringify(dev,this.parseJSON))
+        return this.httpAPI.post('/api/cfg/metric/convmodes/',JSON.stringify(dev,this.parseJSON),null,true)
         .map( (responseData) => responseData.json());
     };
 
