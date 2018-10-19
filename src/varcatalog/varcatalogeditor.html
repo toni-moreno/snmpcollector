@@ -2,7 +2,7 @@
 <ng-container [ngSwitch]="editmode">
     <ng-template ngSwitchCase="list">
         <test-modal #viewModal titleName='Variable Catalog'></test-modal>
-        <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this VarCatalogiables will affect the following components','Deleting this InfluxDB Server will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
+        <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this variable will affect the following components','Deleting this variable will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
         [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteVarCatalog($event)">
     </test-modal>
     <export-file-modal #exportFileModal [showValidation]="true" [exportType]="defaultConfig['slug']" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
@@ -30,7 +30,7 @@
           </span>
           <div class="form-group" style="margin-top: 25px">
             <label class="control-label col-sm-2" for="ID">ID</label>
-            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier for Global Variable"></i>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Text String that uniquely identify the variable"></i>
             <div class="col-sm-9">
                 <input formControlName="ID" id="ID" [ngModel]="varcatalogForm.value.ID" />
                 <control-messages [control]="varcatalogForm.controls.ID"></control-messages>
@@ -39,7 +39,7 @@
 
         <div class="form-group">
             <label class="control-label col-sm-2" for="Type">Type</label>
-            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Address of VarCatalog"></i>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The type of the variable"></i>
             <div class="col-sm-9">
                 <select formControlName="Type" id="Type" [ngModel]="varcatalogForm.value.Type">
                     <option value="string">String</option>
@@ -53,7 +53,7 @@
 
         <div class="form-group">
             <label class="control-label col-sm-2" for="Value">Default Value</label>
-            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Connection port to InfluxDB server {{varcatalogForm.value.Host}}"></i>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The default value if not redefined elsewhere"></i>
             <div class="col-sm-9">
                 <input formControlName="Value" id="Value" [ngModel]="varcatalogForm.value.Value" />
                 <control-messages [control]="varcatalogForm.controls.Value"></control-messages>
@@ -65,7 +65,7 @@
             Extra Settings
           </span>
           <div class="form-group" style="margin-top: 25px">            <label class="control-label col-sm-2" for="Description">Description</label>
-            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the InfluxDB Server"></i>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Some useful description to administrators"></i>
             <div class="col-sm-9">
                 <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]="varcatalogForm.value.Description"> </textarea>
                 <control-messages [control]="varcatalogForm.controls.Description"></control-messages>

@@ -66,7 +66,7 @@
       <div *ngIf="oidconditionForm.controls.CondType">
         <div class="form-group">
           <label class="control-label col-sm-2" for="CondType">CondType</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Retrieve value type"></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Select the matching OID Condition"></i>
           <div class="col-sm-9">
             <select formControlName="CondType" id="CondType" [ngModel]="oidconditionForm.value.CondType">
               <option value="match">(match) string regexp match</option>
@@ -84,7 +84,7 @@
         </div>
         <div class="form-group" *ngIf="oidconditionForm.controls.CondValue">
           <label class="control-label col-sm-2" for="CondValue">CondValue</label>
-          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Value to match the OID Condition"></i>
           <div class="col-sm-9">
             <input formControlName="CondValue" id="CondValue" [ngModel]="oidconditionForm.value.CondValue"/>
             <control-messages [control]="oidconditionForm.controls.CondValue"></control-messages>
