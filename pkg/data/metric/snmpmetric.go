@@ -90,15 +90,8 @@ func (s *SnmpMetric) GetID() string {
 	return s.cfg.ID
 }
 
-// New constructor
-func New(c *config.SnmpMetricCfg) (*SnmpMetric, error) {
-	metric := &SnmpMetric{}
-	err := metric.Init(c)
-	return metric, err
-}
-
-// NewWithLog create a new snmpmetric with a specific logger
-func NewWithLog(c *config.SnmpMetricCfg, l *logrus.Logger) (*SnmpMetric, error) {
+// New create a new snmpmetric with a specific logger
+func New(c *config.SnmpMetricCfg, l *logrus.Logger) (*SnmpMetric, error) {
 	metric := &SnmpMetric{log: l}
 	err := metric.Init(c)
 	return metric, err
@@ -470,6 +463,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		}
 	case "OCTETSTRING":
 		switch s.cfg.Conversion {
+
 		case config.INTEGER:
 			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				val, err := snmp.PduValHexString2Uint(pdu)
@@ -481,7 +475,18 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				}
 				s.Valid = true
 			}
+		//For compatibility purposes with previous versions
+		case config.FLOAT:
+			s.log.Errorf("WARNING ON SNMPMETRIC ( %s ): You are using version >=0.8 version without database upgrade: you should upgrade the DB by executing this SQL on your database \"update snmp_metric_cfg set Conversion=3 where datasrctype='OCTETSTRING';\", to avoid this message ", s.cfg.ID)
+			fallthrough
 		case config.STRING:
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
+				s.CookedValue = snmp.PduVal2str(pdu)
+				s.CurTime = now
+				s.Valid = true
+			}
+		default:
+			s.log.Errorf("WARNING ON SNMPMETRIC ( %s ): Invalid conversion mode from OCTETSTRING to %s", s.cfg.ID, s.cfg.Conversion.GetString())
 			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				s.CookedValue = snmp.PduVal2str(pdu)
 				s.CurTime = now

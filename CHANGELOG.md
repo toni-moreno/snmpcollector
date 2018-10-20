@@ -6,10 +6,13 @@
 * Implement HexString to INTEGUER conversion , implements #310
 
 ### fixes
+* Fix CVE-2018-3721 vulnerability
 
 ### breaking changes
+* IMPORTANT!!!: OCTECSTRING  SnmpMetric type  should be manualy updated with the following SQL in the database;
+update snmp_metric_cfg set Conversion=3 where datasrctype='OCTETSTRING';
+* STRINGPARSER SnmpMetric Type no longer will be Scaled with Scale/shift values.
 
-* STRINGPARSER Type no longer will Use Scale/shift values.
 
 # v 0.7.7 (2018-05-28)
 ### New Features
