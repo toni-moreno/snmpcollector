@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/go-macaron/binding"
-	"github.com/toni-moreno/snmpcollector/pkg/agent"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/data/filter"
+	"snmpcollector/pkg/agent"
+	"snmpcollector/pkg/config"
+	"snmpcollector/pkg/data/filter"
 	"gopkg.in/macaron.v1"
 )
 

@@ -9,8 +9,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"snmpcollector/pkg/agent/output"
+	"snmpcollector/pkg/config"
 )
 
 var (

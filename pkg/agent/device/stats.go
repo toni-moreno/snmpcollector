@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
+	"snmpcollector/pkg/agent/selfmon"
 )
 
 // DevStatType a device stat type

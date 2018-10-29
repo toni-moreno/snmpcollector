@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/go-macaron/binding"
-	"github.com/toni-moreno/snmpcollector/pkg/agent"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"snmpcollector/pkg/agent"
+	"snmpcollector/pkg/agent/output"
+	"snmpcollector/pkg/config"
 	"gopkg.in/macaron.v1"
 )
 

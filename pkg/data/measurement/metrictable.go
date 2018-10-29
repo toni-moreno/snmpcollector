@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
+	"snmpcollector/pkg/config"
+	"snmpcollector/pkg/data/metric"
 )
 
 // MetricRow Measurment row type

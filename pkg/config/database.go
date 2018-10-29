@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
+
 	// _ needed to sqlite3
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -120,6 +121,44 @@ func (dbc *DatabaseCfg) InitDB() {
 	}
 	if err = dbc.x.Sync(new(OidConditionCfg)); err != nil {
 		log.Fatalf("Fail to sync database OidConditionCfg: %v\n", err)
+	}
+
+	SetupDefaultDbData(dbc)
+}
+
+// SetupDefaultDbData initialize our database with mandatory default values
+func SetupDefaultDbData(dbc *DatabaseCfg) {
+
+	// create default monitoring InfluxDB
+
+	var id string
+	hastInfluxDb, existsError := dbc.x.Table("influx_cfg").Where("ID = ?", "influx").Cols("ID").Get(&id)
+
+	if existsError != nil {
+		log.Fatalf("Error on determine wether monitioring InfluxDB exists, error: %s", existsError)
+	}
+
+	if !hastInfluxDb {
+		monitoringInfluxDB := InfluxCfg{
+			ID:                 "influx",
+			Host:               "influxdb",
+			Port:               8086,
+			DB:                 "monitoring",
+			User:               "admin",
+			Password:           "admin",
+			Retention:          "autogen",
+			Precision:          "s",
+			Timeout:            30,
+			UserAgent:          "snmpcollector",
+			EnableSSL:          false,
+			InsecureSkipVerify: true,
+			BufferSize:         65535,
+		}
+
+		affected, err := dbc.AddInfluxCfg(monitoringInfluxDB)
+		if err != nil {
+			log.Fatalf("Error on insert monitoring InfluxDB, affected : %+v , error: %s", affected, err)
+		}
 	}
 }
 

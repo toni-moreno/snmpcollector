@@ -4,7 +4,7 @@ import (
 	//"github.com/go-macaron/binding"
 	"strconv"
 
-	"github.com/toni-moreno/snmpcollector/pkg/agent"
+	"snmpcollector/pkg/agent"
 	"gopkg.in/macaron.v1"
 )
 

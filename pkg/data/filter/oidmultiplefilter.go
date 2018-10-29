@@ -5,7 +5,7 @@ import (
 	"github.com/Knetic/govaluate"
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"snmpcollector/pkg/config"
 )
 
 // OidMultipleFilter a new Oid condition filter

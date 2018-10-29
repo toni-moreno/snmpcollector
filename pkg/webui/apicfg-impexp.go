@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/go-macaron/binding"
-	"github.com/toni-moreno/snmpcollector/pkg/data/impexp"
+	"snmpcollector/pkg/data/impexp"
 	"gopkg.in/macaron.v1"
 )
 

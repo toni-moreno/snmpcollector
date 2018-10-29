@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
+	"snmpcollector/pkg/data/utils"
 )
 
 //MeasurementCfg the measurement configuration

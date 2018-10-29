@@ -1,6 +1,6 @@
 [Unit]
 Description=SnmpCollector Agent
-Documentation=http://github.com/toni-moreno/snmpcollector
+Documentation=http://snmpcollector
 Wants=network-online.target
 After=network-online.target
 

@@ -2,7 +2,7 @@ package filter
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"snmpcollector/pkg/config"
 )
 
 // CustomFilter a filter created from a device query, usuali used only with the DeviceOrigin , but could be used on more than one but

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Knetic/govaluate"
-	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
+	"snmpcollector/pkg/data/utils"
 )
 
 // OidConditionCfg condition config for filters and metrics

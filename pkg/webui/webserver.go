@@ -12,7 +12,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"snmpcollector/pkg/config"
 	"gopkg.in/macaron.v1"
 )
 

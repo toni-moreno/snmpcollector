@@ -4,21 +4,23 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
+	"io"
 	"encoding/json"
 	"strings"
 	"sync"
 	"time"
 
+	"snmpcollector/pkg/agent/bus"
+	"snmpcollector/pkg/agent/output"
+	"snmpcollector/pkg/agent/selfmon"
+	"snmpcollector/pkg/config"
+	"snmpcollector/pkg/data/measurement"
+	"snmpcollector/pkg/data/snmp"
+	"snmpcollector/pkg/data/utils"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/data/measurement"
-	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
-	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var (
@@ -323,7 +325,10 @@ Init  does the following
 - Initialize not set variables to some defaults
 - Initialize logfile for this device
 - Initialize comunication channels and initial device state
+
 */
+
+
 func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	if c == nil {
 		return fmt.Errorf("Error on initialice device, configuration struct is nil")
@@ -344,12 +349,26 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 		d.cfg.LogLevel = "info"
 	}
 
-	f, _ := os.OpenFile(d.cfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	//f, _ := os.OpenFile(d.cfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	d.log = logrus.New()
-	d.log.Out = f
+
+  
+	lumberjackLogger := &lumberjack.Logger{
+		Filename:   d.cfg.LogFile,
+		MaxSize:    5,
+		MaxBackups: 2,
+		MaxAge:     1,
+	  }
+
+	  d.log.Out = lumberjackLogger
+	  io.MultiWriter(os.Stdout, lumberjackLogger)
+	  //d.log.Out = f
+	 
+
 	l, _ := logrus.ParseLevel(d.cfg.LogLevel)
 	d.log.Level = l
 	d.CurLogLevel = d.log.Level.String()
+	
 	//Formatter for time
 	customFormatter := new(logrus.TextFormatter)
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"

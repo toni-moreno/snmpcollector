@@ -7,8 +7,8 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/Sirupsen/logrus"
-	"github.com/toni-moreno/snmpcollector/pkg/agent"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"snmpcollector/pkg/agent"
+	"snmpcollector/pkg/config"
 )
 
 var (

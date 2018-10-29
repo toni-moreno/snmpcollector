@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-macaron/binding"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"snmpcollector/pkg/config"
 )
 
 // ImportCheck  returns and ExportData type with error summary

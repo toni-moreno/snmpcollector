@@ -8,8 +8,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
-	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
-	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
+	"snmpcollector/pkg/data/snmp"
+	"snmpcollector/pkg/data/utils"
 )
 
 // OidFilter a new Oid condition filter

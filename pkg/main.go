@@ -15,16 +15,16 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/toni-moreno/snmpcollector/pkg/agent"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/data/impexp"
-	"github.com/toni-moreno/snmpcollector/pkg/data/measurement"
-	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
-	"github.com/toni-moreno/snmpcollector/pkg/webui"
+	"snmpcollector/pkg/agent"
+	"snmpcollector/pkg/agent/bus"
+	"snmpcollector/pkg/agent/device"
+	"snmpcollector/pkg/agent/output"
+	"snmpcollector/pkg/agent/selfmon"
+	"snmpcollector/pkg/config"
+	"snmpcollector/pkg/data/impexp"
+	"snmpcollector/pkg/data/measurement"
+	"snmpcollector/pkg/data/snmp"
+	"snmpcollector/pkg/webui"
 )
 
 var (
@@ -195,6 +195,8 @@ func main() {
 
 		}
 	}()
+	
+	// Delete Database in Development 
 
 	agent.MainConfig.Database.InitDB()
 	measurement.SetDB(&agent.MainConfig.Database)

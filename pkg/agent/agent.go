@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"snmpcollector/pkg/agent/bus"
+	"snmpcollector/pkg/agent/device"
+	"snmpcollector/pkg/agent/output"
+	"snmpcollector/pkg/agent/selfmon"
+	"snmpcollector/pkg/config"
 )
 
 // Version X.Y.Z based versioning

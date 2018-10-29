@@ -8,11 +8,11 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/soniah/gosnmp"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/data/filter"
-	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
-	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
-	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
+	"snmpcollector/pkg/config"
+	"snmpcollector/pkg/data/filter"
+	"snmpcollector/pkg/data/metric"
+	"snmpcollector/pkg/data/snmp"
+	"snmpcollector/pkg/data/utils"
 )
 
 var (

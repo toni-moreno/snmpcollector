@@ -226,7 +226,7 @@ func createMinTar() {
 	runPrint("cp", "bin/snmpcollector", filepath.Join(packageRoot, "/opt/snmpcollector/bin"))
 	runPrint("cp", "bin/snmpcollector.md5", filepath.Join(packageRoot, "/opt/snmpcollector/bin"))
 	runPrint("cp", "-a", filepath.Join(workingDir, "public")+"/.", filepath.Join(packageRoot, "/opt/snmpcollector/public"))
-	tarname := fmt.Sprintf("dist/snmpcollector-%s-%s_%s_%s.tar.gz", version, getGitSha(), runtime.GOOS, runtime.GOARCH)
+	tarname := "dist/snmpcollector.tar.gz"
 	runPrint("tar", "zcvf", tarname, "-C", packageRoot, ".")
 	runPrint("rm", "-rf", packageRoot)
 }
@@ -366,9 +366,9 @@ func build(pkg string, tags []string, flags []string) {
 func ldflags(flags []string) string {
 	var b bytes.Buffer
 	b.WriteString("-w")
-	b.WriteString(fmt.Sprintf(" -X github.com/toni-moreno/snmpcollector/pkg/agent.Version=%s", version))
-	b.WriteString(fmt.Sprintf(" -X github.com/toni-moreno/snmpcollector/pkg/agent.Commit=%s", getGitSha()))
-	b.WriteString(fmt.Sprintf(" -X github.com/toni-moreno/snmpcollector/pkg/agent.BuildStamp=%d", buildStamp()))
+	b.WriteString(fmt.Sprintf(" -X snmpcollector/pkg/agent.Version=%s", version))
+	b.WriteString(fmt.Sprintf(" -X snmpcollector/pkg/agent.Commit=%s", getGitSha()))
+	b.WriteString(fmt.Sprintf(" -X snmpcollector/pkg/agent.BuildStamp=%d", buildStamp()))
 	for _, f := range flags {
 		b.WriteString(fmt.Sprintf(" %s", f))
 	}
@@ -384,9 +384,9 @@ func rmr(paths ...string) {
 
 func clean() {
 	//	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
-	rmr("public")
+	// disable ui: rmr("public")
 	//rmr("tmp")
-	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/toni-moreno/snmpcollector", goos, goarch)))
+	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/snmpcollector", goos, goarch)))
 }
 
 func setBuildEnv() {

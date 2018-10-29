@@ -2,8 +2,8 @@ package webui
 
 import (
 	"github.com/go-macaron/binding"
-	"github.com/toni-moreno/snmpcollector/pkg/agent"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"snmpcollector/pkg/agent"
+	"snmpcollector/pkg/config"
 	"gopkg.in/macaron.v1"
 )
 
