@@ -272,7 +272,7 @@ export class VarCatalogCfgComponent {
       if (this.varcatalogForm.valid) {
         var r = true;
         if (this.varcatalogForm.value.ID != this.oldID) {
-          r = confirm("Changing Influx Server ID from " + this.oldID + " to " + this.varcatalogForm.value.ID + ". Proceed?");
+          r = confirm("Changing variable identifier " + this.oldID + " to " + this.varcatalogForm.value.ID + ". Proceed?");
         }
         if (r == true) {
           this.varCatalogService.editVarCatalog(this.varcatalogForm.value, this.oldID, true)

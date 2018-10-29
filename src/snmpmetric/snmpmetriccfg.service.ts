@@ -16,6 +16,9 @@ export class SnmpMetricService {
         key == 'Shift') {
             return parseFloat(value);
         };
+        if ( key == 'Conversion') {
+            return parseInt(value);
+        }
         if (key == 'GetRate' ||
         key == 'IsTag' ) return ( value === "true" || value === true);
         return value; 
@@ -66,6 +69,12 @@ export class SnmpMetricService {
         .map( (responseData) =>
             responseData.json()
     )};
+
+    getConversionModes(dev) {
+        console.log("DEV: ",dev);
+        return this.httpAPI.post('/api/cfg/metric/convmodes/',JSON.stringify(dev,this.parseJSON),null,true)
+        .map( (responseData) => responseData.json());
+    };
 
     checkOnDeleteMetric(id : string){
       return this.httpAPI.get('/api/cfg/metric/checkondel/'+id)

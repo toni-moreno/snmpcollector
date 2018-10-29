@@ -336,6 +336,16 @@ func PduVal2str(pdu gosnmp.SnmpPDU) string {
 	return ""
 }
 
+// PduValHexString2Uint transform PDU HexString to uint64
+func PduValHexString2Uint(pdu gosnmp.SnmpPDU) (uint64, error) {
+	value := pdu.Value
+	if pdu.Type == gosnmp.OctetString {
+		result, err := strconv.ParseUint(string(value.([]byte)), 16, 64)
+		return result, err
+	}
+	return 0, fmt.Errorf("The PDU scanned is not and OctecString as expected")
+}
+
 // PduVal2OID transform PDU data to string
 func PduVal2OID(pdu gosnmp.SnmpPDU) string {
 	value := pdu.Value

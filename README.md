@@ -1,8 +1,8 @@
-# SnmpCollector [![Go Report Card](https://goreportcard.com/badge/snmpcollector)](https://goreportcard.com/report/snmpcollector)
+# SnmpCollector [![Go Report Card](https://goreportcard.com/badge/github.com/toni-moreno/snmpcollector)](https://goreportcard.com/report/github.com/toni-moreno/snmpcollector)
 
-SnmpCollector is a full featured Generic SNMP data collector with Web Administration Interface Open Source tool which has as main goal simplify  the configuration for getting data from any  device witch snmp protocol support and send resulting data to an influxdb backend.
+SnmpCollector is a full featured Generic SNMP data collector with Web Administration Interface Open Source tool which has as main goal simplify  the configuration for getting data from any  device which snmp protocol support and send resulting data to an influxdb backend.
 
-For complete information on installation from  binary package and configuration you could  read the [snmpcollector wiki](https://snmpcollector/wiki).
+For complete information on installation from binary package and configuration you could read the [snmpcollector wiki](https://github.com/toni-moreno/snmpcollector/wiki).
 
 If you wish to compile from source code you can follow the next steps
 
@@ -11,20 +11,21 @@ If you want to build a package yourself, or contribute. Here is a guide for how 
 
 ### Dependencies
 
-- Go 1.5
+- Go 1.5 for snmpcollector < 0.8
+- Go 1.11 for snmpcollector >= 0.8
 - NodeJS >=6.2.1
 
 ### Get Code
 
 ```bash
-go get -d snmpcollector/...
+go get -d github.com/toni-moreno/snmpcollector/...
 ```
 
 ### Building the backend
 
 
 ```bash
-cd $GOPATH/src/snmpcollector
+cd $GOPATH/src/github.com/toni-moreno/snmpcollector
 go run build.go setup            # only needed once to install godep
 godep restore                    # will pull down all golang lib dependencies in your current GOPATH
 ```

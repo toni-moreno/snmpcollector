@@ -154,7 +154,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 		idx := NewMetricRow()
 		for k, smcfg := range mt.cfg.FieldMetric {
 			mt.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
-			metr, err := metric.New(smcfg)
+			metr, err := metric.New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [value] field metric %d : Error: %s ", k, err)
 				continue
@@ -164,7 +164,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 		}
 		for k, smcfg := range mt.cfg.EvalMetric {
 			mt.Debugf("initializing [value] [evaluated] metric cfg %s", smcfg.ID)
-			metr, err := metric.New(smcfg)
+			metr, err := metric.New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [value] [evaluated] field metric %d : Error: %s ", k, err)
 				continue
@@ -175,7 +175,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 		}
 		for k, smcfg := range mt.cfg.OidCondMetric {
 			mt.Debugf("initializing [value] [oid condition evaluated] metric cfg %s", smcfg.ID)
-			metr, err := metric.NewWithLog(smcfg, mt.log)
+			metr, err := metric.New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [value] [oid condition evaluated] field metric %d : Error: %s ", k, err)
 				continue
@@ -194,7 +194,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 			idx := NewMetricRow()
 			mt.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
 			for k, smcfg := range mt.cfg.FieldMetric {
-				metr, err := metric.New(smcfg)
+				metr, err := metric.New(smcfg, mt.log)
 				if err != nil {
 					mt.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
 					continue
@@ -204,7 +204,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 				idx.Add(smcfg.ID, metr)
 			}
 			for k, smcfg := range mt.cfg.EvalMetric {
-				metr, err := metric.New(smcfg)
+				metr, err := metric.New(smcfg, mt.log)
 				if err != nil {
 					mt.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
 					continue
@@ -244,7 +244,7 @@ func (mt *MetricTable) Push(p map[string]string) error {
 		idx := NewMetricRow()
 		mt.Infof("initializing [indexed] metric cfg for [%s/%s]", key, label)
 		for k, smcfg := range mt.cfg.FieldMetric {
-			metr, err := metric.New(smcfg)
+			metr, err := metric.New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
 				continue
@@ -254,7 +254,7 @@ func (mt *MetricTable) Push(p map[string]string) error {
 			idx.Add(smcfg.ID, metr)
 		}
 		for k, smcfg := range mt.cfg.EvalMetric {
-			metr, err := metric.New(smcfg)
+			metr, err := metric.New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
 				continue
