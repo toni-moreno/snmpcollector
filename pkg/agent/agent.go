@@ -78,8 +78,8 @@ func SetLogger(l *logrus.Logger) {
 
 // CheckReloadProcess check if the agent is doing a reloading just now
 func CheckReloadProcess() bool {
-	reloadMutex.Lock()
-	defer reloadMutex.Unlock()
+	reloadMutex.RLock()
+	defer reloadMutex.RUnlock()
 	return reloadProcess
 }
 
