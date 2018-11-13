@@ -131,10 +131,10 @@ func GetDevice(id string) (*device.SnmpDevice, error) {
 		return nil, fmt.Errorf("There is a reload process running.... please wait until finished ")
 	}
 	mutex.RLock()
+	defer mutex.RUnlock()
 	if dev, ok = devices[id]; !ok {
 		return nil, fmt.Errorf("there is not any device with id %s running", id)
 	}
-	mutex.RUnlock()
 	return dev, nil
 }
 
