@@ -552,7 +552,7 @@ func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Metric id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Infof("Updated SnmpMetric Config to %s devices ", affecteddev)
+		log.Infof("Updated SnmpMetric Config to %d devices ", affecteddev)
 	}
 
 	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
@@ -575,7 +575,7 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 	var devices []*MeasurementFieldCfg
 	var obj []*DbObjAction
 	if err := dbc.x.Where("id_metric_cfg='" + id + "'").Find(&devices); err != nil {
-		log.Warnf("Error on Get Snmp Metric Cfg id %d for devices , error: %s", id, err)
+		log.Warnf("Error on Get Snmp Metric Cfg id %s for devices , error: %s", id, err)
 		return nil, err
 	}
 

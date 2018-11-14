@@ -122,7 +122,7 @@ func (dbc *DatabaseCfg) UpdateInfluxCfg(id string, dev InfluxCfg) (int64, error)
 			session.Rollback()
 			return 0, fmt.Errorf("Error on Update InfluxConfig on update id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Infof("Updated Influx Config to %s devices ", affecteddev)
+		log.Infof("Updated Influx Config to %d devices ", affecteddev)
 	}
 
 	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
@@ -145,7 +145,7 @@ func (dbc *DatabaseCfg) GetInfluxCfgAffectOnDel(id string) ([]*DbObjAction, erro
 	var devices []*SnmpDeviceCfg
 	var obj []*DbObjAction
 	if err := dbc.x.Where("outdb='" + id + "'").Find(&devices); err != nil {
-		log.Warnf("Error on Get Outout db id %d for devices , error: %s", id, err)
+		log.Warnf("Error on Get Outout db id %s for devices , error: %s", id, err)
 		return nil, err
 	}
 

@@ -271,13 +271,13 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 	}
 	err = mc.CheckComputedMetricVars(varmapcopy)
 	if err != nil {
-		log.Warnf(" This computed Metric has Variable errors!! please review its definition", err)
+		log.Warnf(" This computed Metric has Variable errors!! please review its definition Error: %s", err)
 		return err
 	}
 
 	err = mc.CheckComputedMetricEval(varmapcopy)
 	if err != nil {
-		log.Warnf(" This computed Metric has Evaluation errors!! please review its definition", err)
+		log.Warnf(" This computed Metric has Evaluation errors!! please review its definition Error: %s", err)
 		return err
 	}
 
@@ -476,7 +476,7 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 	defer session.Close()
 
 	if id != dev.ID { //ID has been changed
-		log.Infof("Updated Measurement Config to %s devices ", affecteddev)
+		log.Infof("Updated Measurement Config to %d devices ", affecteddev)
 
 		affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").Cols("id_measurement_cfg").Update(&MGroupsMeasurements{IDMeasurementCfg: dev.ID})
 		if err != nil {
@@ -494,7 +494,7 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
 
-		log.Infof("Updated Measurement config to %s devices ", affecteddev)
+		log.Infof("Updated Measurement config to %d devices ", affecteddev)
 	}
 	//delete all previous values
 	affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").Delete(&MeasurementFieldCfg{})

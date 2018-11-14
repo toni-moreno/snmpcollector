@@ -156,7 +156,7 @@ func (dbc *DatabaseCfg) UpdateMGroupsCfg(id string, dev MGroupsCfg) (int64, erro
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Metric id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Infof("Updated Measurement Group Config to %s devices ", affecteddev)
+		log.Infof("Updated Measurement Group Config to %d devices ", affecteddev)
 	}
 	//Remove all measurements in group.
 	_, err = session.Where("id_mgroup_cfg='" + id + "'").Delete(&MGroupsMeasurements{})
@@ -198,7 +198,7 @@ func (dbc *DatabaseCfg) GetMGroupsCfgAffectOnDel(id string) ([]*DbObjAction, err
 	var devices []*SnmpDevMGroups
 	var obj []*DbObjAction
 	if err := dbc.x.Where("id_mgroup_cfg='" + id + "'").Find(&devices); err != nil {
-		log.Warnf("Error on Get Measrument groups id %d for devices , error: %s", id, err)
+		log.Warnf("Error on Get Measrument groups id %s for devices , error: %s", id, err)
 		return nil, err
 	}
 

@@ -175,7 +175,7 @@ func (dbc *DatabaseCfg) DelSnmpDeviceCfg(id string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Infof("Deleted Successfully device with ID %s [] %d Measurement Groups Affected , %d Filters Afected ]", id, affectedmg, affectedft, affectedcf)
+	log.Infof("Deleted Successfully device with ID %s [] %d Measurement Groups affected , %d Filters affected ,%d Custom filter  affected]", id, affectedmg, affectedft, affectedcf)
 	dbc.addChanges(affected + affectedmg + affectedft + affectedcf)
 	return affected, nil
 }
@@ -243,7 +243,7 @@ func (dbc *DatabaseCfg) GeSnmpDeviceCfgAffectOnDel(id string) ([]*DbObjAction, e
 	var devices []*CustomFilterCfg
 	var obj []*DbObjAction
 	if err := dbc.x.Where("related_dev='" + id + "'").Find(&devices); err != nil {
-		log.Warnf("Error on Get Custotm Filter id %d for devices , error: %s", id, err)
+		log.Warnf("Error on Get Custotm Filter id %s for devices , error: %s", id, err)
 		return nil, err
 	}
 	for _, val := range devices {
