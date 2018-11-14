@@ -113,6 +113,17 @@ export class SnmpMetricCfgComponent {
     }
   }
 
+  checkExistConversion(Items:any,current: any): boolean {
+    let exist : boolean
+    exist = false
+    _.forEach(Items,function(value,key){
+      if ( value.ID == current ) {
+        exist = true
+      }
+    });
+    return exist
+  }
+
   setDynamicFields (field : any, override? : boolean) : void  {
     //Saves on the array all values to push into formGroup
     let controlArray : Array<any> = [];
@@ -131,7 +142,10 @@ export class SnmpMetricCfgComponent {
     .subscribe(data => {
       this.conversionModes = data.Items;
       console.log("ITEMS:",data.Items)
-      this.snmpmetForm.value['Conversion'] = data.Default;
+      if (this.editmode == 'create' ||  !this.checkExistConversion(data.Items,this.snmpmetForm.value['Conversion']) ) {
+        //only if new creation or the current conversion doesn't exist in  the new type
+        this.snmpmetForm.value['Conversion'] = data.Default;
+      }
       console.log("CONVERSION:",this.conversionModes)
       },
       err => console.error(err)

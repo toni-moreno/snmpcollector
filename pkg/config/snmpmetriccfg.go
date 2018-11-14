@@ -67,15 +67,15 @@ type SnmpMetricCfg struct {
 	Shift       float64        `xorm:"shift"`
 	IsTag       bool           `xorm:"'istag' default 0"`      //Not Valid on  MULTISTRINGPARSER
 	ExtraData   string         `xorm:"extradata"`              //Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK, ENUM
-	Conversion  ConversionMode `xorm:"'conversion' default 0"` // Conversion will be always float for
+	Conversion  ConversionMode `xorm:"'conversion' default 0"` //Conversion will be always float for
 	Names       map[int]string `xorm:"-" json:"-"`             //BitString Name array
 }
 
-// MarshalJSON marshall
+// MarshalJSON marshall (not sure if needed here....)
 func (m *SnmpMetricCfg) MarshalJSON() ([]byte, error) {
 	type Alias SnmpMetricCfg
 	return json.Marshal(&struct {
-		Conversion int `json:"conversion"`
+		Conversion int `json:"Conversion"`
 		*Alias
 	}{
 		Conversion: int(m.Conversion),
