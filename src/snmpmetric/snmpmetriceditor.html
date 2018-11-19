@@ -135,7 +135,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.controls.Conversion && snmpmetForm.value.DataSrcType != 'MULTISTRINGPARSER' ">
+      <div class="form-group" *ngIf="snmpmetForm.controls.Conversion && snmpmetForm.value.DataSrcType != 'MULTISTRINGPARSER' && snmpmetForm.value.IsTag == 'false'  ">
           <label class="control-label col-sm-2" for="Conversion">Conversion</label>
           <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Conversion mode "></i>
           <div class="col-sm-9">

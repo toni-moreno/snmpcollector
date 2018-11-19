@@ -191,7 +191,7 @@ func (dbc *DatabaseCfg) UpdateCustomFilterCfg(id string, dev CustomFilterCfg) (i
 	if err != nil {
 		return 0, err
 	}
-	log.Infof("Updated new CustomFilterCfg Successfully with id %s [ %s id changed]", dev.ID, affecteddev)
+	log.Infof("Updated new CustomFilterCfg Successfully with id %s [ %d id changed]", dev.ID, affecteddev)
 	dbc.addChanges(affected)
 	return affected, nil
 }
@@ -201,7 +201,7 @@ func (dbc *DatabaseCfg) GetCustomFilterCfgAffectOnDel(id string) ([]*DbObjAction
 	var filters []*MeasFilterCfg
 	var obj []*DbObjAction
 	if err := dbc.x.Where("filter_name='" + id + "'").Find(&filters); err != nil {
-		log.Warnf("Error on Get CustomID  id %d for Measurement Filters , error: %s", id, err)
+		log.Warnf("Error on Get CustomID  id %s for Measurement Filters , error: %s", id, err)
 		return nil, err
 	}
 

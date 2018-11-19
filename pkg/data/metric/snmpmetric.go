@@ -130,6 +130,9 @@ func (s *SnmpMetric) convertFromUInteger() {
 			s.CookedValue = false
 		}
 		return
+	case config.STRING:
+		s.CookedValue = strconv.FormatUint(s.CookedValue.(uint64), 10)
+		return
 	default:
 		s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
 	}
@@ -160,6 +163,9 @@ func (s *SnmpMetric) convertFromInteger() {
 			s.CookedValue = false
 		}
 		return
+	case config.STRING:
+		s.CookedValue = strconv.FormatInt(s.CookedValue.(int64), 10)
+		return
 	default:
 		s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
 	}
@@ -188,6 +194,9 @@ func (s *SnmpMetric) convertFromFloat() {
 		} else {
 			s.CookedValue = false
 		}
+		return
+	case config.STRING:
+		s.CookedValue = strconv.FormatFloat(s.CookedValue.(float64), 'f', -1, 64)
 		return
 	default:
 		s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
@@ -269,6 +278,10 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	s.RealOID = c.BaseOID
 	//set default conversion funcion
 	s.Convert = s.convertFromAny
+	//Force conversion to STRING if metric is tag.
+	if s.cfg.IsTag == true {
+		s.cfg.Conversion = config.STRING
+	}
 	if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
 		s.Scale = func() {
 			switch v := s.CookedValue.(type) {
@@ -667,7 +680,7 @@ func (s *SnmpMetric) addSingleField(mid string, fields map[string]interface{}) i
 		}
 	}
 	//assuming float Cooked Values
-	s.log.Debugf("generating field for %s value %f ", s.cfg.FieldName, s.CookedValue)
+	s.log.Debugf("generating field for %s value %#v ", s.cfg.FieldName, s.CookedValue)
 	s.log.Debugf("DEBUG METRIC %+v", s)
 	fields[s.cfg.FieldName] = s.CookedValue
 	return 0
@@ -677,14 +690,10 @@ func (s *SnmpMetric) addSingleTag(mid string, tags map[string]string) int64 {
 
 	var tag string
 	switch v := s.CookedValue.(type) {
-	case float64:
-		//most of times these will be integers
-		tag = strconv.FormatInt(int64(v), 10)
 	case string:
-		//case string:
 		tag = v
 	default:
-		s.log.Debugf("ERROR wrong type %T for ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", v, s.cfg.ID, mid)
+		s.log.Debugf("ERROR wrong type %T for ID [%s] from MEASUREMENT[ %s ] when converting to TAG(STRING) won't be reported to the output backend", v, s.cfg.ID, mid)
 		return 1
 	}
 	//I don't know if a OnNonZeroReport could have sense in any configuration.

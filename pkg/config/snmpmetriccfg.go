@@ -67,15 +67,15 @@ type SnmpMetricCfg struct {
 	Shift       float64        `xorm:"shift"`
 	IsTag       bool           `xorm:"'istag' default 0"`      //Not Valid on  MULTISTRINGPARSER
 	ExtraData   string         `xorm:"extradata"`              //Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK, ENUM
-	Conversion  ConversionMode `xorm:"'conversion' default 0"` // Conversion will be always float for
+	Conversion  ConversionMode `xorm:"'conversion' default 0"` //Conversion will be always float for
 	Names       map[int]string `xorm:"-" json:"-"`             //BitString Name array
 }
 
-// MarshalJSON marshall
+// MarshalJSON marshall (not sure if needed here....)
 func (m *SnmpMetricCfg) MarshalJSON() ([]byte, error) {
 	type Alias SnmpMetricCfg
 	return json.Marshal(&struct {
-		Conversion int `json:"conversion"`
+		Conversion int `json:"Conversion"`
 		*Alias
 	}{
 		Conversion: int(m.Conversion),
@@ -552,7 +552,7 @@ func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Metric id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Infof("Updated SnmpMetric Config to %s devices ", affecteddev)
+		log.Infof("Updated SnmpMetric Config to %d devices ", affecteddev)
 	}
 
 	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
@@ -575,7 +575,7 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 	var devices []*MeasurementFieldCfg
 	var obj []*DbObjAction
 	if err := dbc.x.Where("id_metric_cfg='" + id + "'").Find(&devices); err != nil {
-		log.Warnf("Error on Get Snmp Metric Cfg id %d for devices , error: %s", id, err)
+		log.Warnf("Error on Get Snmp Metric Cfg id %s for devices , error: %s", id, err)
 		return nil, err
 	}
 

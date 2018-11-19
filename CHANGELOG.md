@@ -1,16 +1,15 @@
-# v 0.8.0 ( unreleased ) 
+# v 0.8.0 ( 2018-11-05) 
 ### New Features
 * Added new capabilities to add , modify and delete devices online ( avoids restart the gathering ocess  on the other devices) 
 * Go 1.9.8 to 1.11 binaries 
 * Added a new Conversión parameter to most of the snmpmetric types.
-* Implement HexString to INTEGUER conversion , implements #310
+* Implement HexString to INTEGER conversion , implements #310
 
 ### fixes
 * Fix CVE-2018-3721 vulnerability
 
 ### breaking changes
-* IMPORTANT!!!: OCTECSTRING  SnmpMetric type  should be manualy updated with the following SQL in the database;
-update snmp_metric_cfg set Conversion=3 where datasrctype='OCTETSTRING';
+* IMPORTANT!!!: OCTECSTRING  SnmpMetric type  should be manualy updated with the following SQL in the database after the upgrade, "update snmp_metric_cfg set Conversion=3 where datasrctype='OCTETSTRING';" an then restart proces or reload config.
 * STRINGPARSER SnmpMetric Type no longer will be Scaled with Scale/shift values.
 
 

@@ -123,7 +123,7 @@ func (dbc *DatabaseCfg) UpdateMeasFilterCfg(id string, dev MeasFilterCfg) (int64
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Filter id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Infof("Updated Measurement Filter Config to %s devices ", affecteddev)
+		log.Infof("Updated Measurement Filter Config to %d devices ", affecteddev)
 	}
 
 	//update data

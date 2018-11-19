@@ -139,7 +139,7 @@ func (dbc *DatabaseCfg) UpdateVarCatalogCfg(id string, dev VarCatalogCfg) (int64
 			}
 			log.Infof("Updated STRING EVAL Metric %s devices old variable name %s new %s", v.ID, dev.ID, id)
 		}
-		log.Infof("Updated VarCatalogiableConfig to %s devices ", affecteddev)
+		log.Infof("Updated VarCatalogiableConfig to %d devices ", affecteddev)
 	}
 
 	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
