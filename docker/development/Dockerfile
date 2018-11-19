@@ -7,9 +7,9 @@ RUN apt-get install -y  curl git gcc
 RUN curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
 RUN bash nodesource_setup.sh
 RUN apt-get install -y nodejs
-RUN curl -O https://storage.googleapis.com/golang/go1.9.1.linux-amd64.tar.gz
-RUN tar -xvf go1.9.1.linux-amd64.tar.gz -C /usr/local
-RUN rm go1.9.1.linux-amd64.tar.gz
+RUN curl -O https://storage.googleapis.com/golang/go1.11.1.linux-amd64.tar.gz
+RUN tar -xvf go1.11.1.linux-amd64.tar.gz -C /usr/local
+RUN rm go1.11.1.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
 ENV GOROOT=/usr/local/go
 ENV GOPATH=/app
