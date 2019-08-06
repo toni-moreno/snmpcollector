@@ -28,7 +28,12 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 			ms, me := vMtr.ImportFieldsAndTags(m.cfg.ID, Fields, Tags)
 			metSent += ms
 			metError += me
-			t = vMtr.CurTime
+			//check again if metric is valid
+			if vMtr.Valid == true {
+				t = vMtr.CurTime
+			} else {
+				m.Debugf("SKIPPING TS due to invalid %s metric %s", m.cfg.ID, vMtr.CurTime)
+			}
 		}
 		m.Debugf("FIELDS:%+v", Fields)
 
@@ -59,8 +64,12 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 				ms, me := vMtr.ImportFieldsAndTags(m.cfg.ID, Fields, Tags)
 				metSent += ms
 				metError += me
-				//reported gathered time for the measurment is choosed as the last field time
-				t = vMtr.CurTime
+				//check again if metric is valid
+				if vMtr.Valid == true {
+					t = vMtr.CurTime
+				} else {
+					m.Debugf("SKIPPING TS due to invalid %s metric %s", m.cfg.ID, vMtr.CurTime)
+				}
 			}
 			//here we can chek Fields names prior to send data
 			m.Debugf("FIELDS:%+v TAGS:%+v", Fields, Tags)
