@@ -780,7 +780,8 @@ func (s *SnmpMetric) ImportFieldsAndTags(mid string, fields map[string]interface
 	}
 	if s.Valid == false {
 		s.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", s.cfg.ID, mid, tags, s)
-		return 0, 0
+		metError++
+		return metError, metSent
 	}
 	if s.Report == NeverReport {
 		s.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)

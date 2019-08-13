@@ -360,15 +360,15 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 		return
 	}
 
-	parameters := make(map[string]interface{})
-	//copy of the catalog map
-	for k, v := range catalog {
-		parameters[k] = v
-	}
-
 	//copy the input
 	switch m.cfg.GetMode {
 	case "value":
+		parameters := make(map[string]interface{})
+		//copy of the catalog map
+		for k, v := range catalog {
+			parameters[k] = v
+		}
+
 		m.Debugf("Building parrameters array for index measurement %s", m.cfg.ID)
 		parameters["NFR"] = len(m.AllIndexedLabels)                          //Number of non filtered rows
 		parameters["NR"] = len(m.CurIndexedLabels)                           //Number of current rows (like awk) --after filtered applied  --
@@ -403,6 +403,11 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 		}
 	case "indexed", "indexed_it":
 		for key, val := range m.CurIndexedLabels {
+			parameters := make(map[string]interface{})
+			//copy of the catalog map
+			for k, v := range catalog {
+				parameters[k] = v
+			}
 			//building parameters array
 			m.Debugf("Building parrameters array for index %s/%s", key, val)
 			parameters["NFR"] = len(m.AllIndexedLabels) //Number of non filtered rows
