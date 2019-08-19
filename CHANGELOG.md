@@ -1,3 +1,13 @@
+# v 0.8.1 ( Unreleased ) 
+### New Features
+
+
+### fixes
+* Fix #379,#409,#410
+
+### breaking changes
+
+
 # v 0.8.0 ( 2018-11-05) 
 ### New Features
 * Added new capabilities to add , modify and delete devices online ( avoids restart the gathering ocess  on the other devices) 
