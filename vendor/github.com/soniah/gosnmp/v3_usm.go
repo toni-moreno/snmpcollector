@@ -1,12 +1,12 @@
-package gosnmp
-
-// Copyright 2012-2016 The GoSNMP Authors. All rights reserved.  Use of this
+// Copyright 2012-2018 The GoSNMP Authors. All rights reserved.  Use of this
 // source code is governed by a BSD-style license that can be found in the
 // LICENSE file.
 
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
+package gosnmp
 
 import (
 	"bytes"
@@ -19,6 +19,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
+	"sync"
 	"sync/atomic"
 )
 
@@ -44,6 +45,10 @@ const (
 
 // UsmSecurityParameters is an implementation of SnmpV3SecurityParameters for the UserSecurityModel
 type UsmSecurityParameters struct {
+	// localAESSalt must be 64bit aligned to use with atomic operations.
+	localAESSalt uint64
+	localDESSalt uint32
+
 	AuthoritativeEngineID    string
 	AuthoritativeEngineBoots uint32
 	AuthoritativeEngineTime  uint32
@@ -59,9 +64,6 @@ type UsmSecurityParameters struct {
 
 	secretKey  []byte
 	privacyKey []byte
-
-	localDESSalt uint32
-	localAESSalt uint64
 
 	Logger Logger
 }
@@ -130,16 +132,10 @@ func (sp *UsmSecurityParameters) validate(flags SnmpV3MsgFlags) error {
 		if sp.PrivacyProtocol <= NoPriv {
 			return fmt.Errorf("SecurityParameters.PrivacyProtocol is required")
 		}
-		if sp.PrivacyPassphrase == "" {
-			return fmt.Errorf("SecurityParameters.PrivacyPassphrase is required")
-		}
 		fallthrough
 	case AuthNoPriv:
 		if sp.AuthenticationProtocol <= NoAuth {
 			return fmt.Errorf("SecurityParameters.AuthenticationProtocol is required")
-		}
-		if sp.AuthenticationPassphrase == "" {
-			return fmt.Errorf("SecurityParameters.AuthenticationPassphrase is required")
 		}
 		fallthrough
 	case NoAuthNoPriv:
@@ -148,6 +144,18 @@ func (sp *UsmSecurityParameters) validate(flags SnmpV3MsgFlags) error {
 		}
 	default:
 		return fmt.Errorf("MsgFlags must be populated with an appropriate security level")
+	}
+
+	if sp.PrivacyProtocol > NoPriv {
+		if sp.PrivacyPassphrase == "" {
+			return fmt.Errorf("SecurityParameters.PrivacyPassphrase is required when a privacy protocol is specified.")
+		}
+	}
+
+	if sp.AuthenticationProtocol > NoAuth {
+		if sp.AuthenticationPassphrase == "" {
+			return fmt.Errorf("SecurityParameters.AuthenticationPassphrase is required when an authentication protocol is specified.")
+		}
 	}
 
 	return nil
@@ -186,22 +194,46 @@ func castUsmSecParams(secParams SnmpV3SecurityParameters) (*UsmSecurityParameter
 	return s, nil
 }
 
+var (
+	passwordKeyHashCache = make(map[string][]byte)
+	passwordKeyHashMutex sync.RWMutex
+)
+
+// Common passwordToKey algorithm, "caches" the result to avoid extra computation each reuse
+func cachedPasswordToKey(hash hash.Hash, hashType string, password string) []byte {
+	cacheKey := hashType + ":" + password
+
+	passwordKeyHashMutex.RLock()
+	value := passwordKeyHashCache[cacheKey]
+	passwordKeyHashMutex.RUnlock()
+
+	if value != nil {
+		return value
+	}
+	var pi int // password index
+	for i := 0; i < 1048576; i += 64 {
+		var chunk []byte
+		for e := 0; e < 64; e++ {
+			chunk = append(chunk, password[pi%len(password)])
+			pi++
+		}
+		hash.Write(chunk)
+	}
+	hashed := hash.Sum(nil)
+
+	passwordKeyHashMutex.Lock()
+	passwordKeyHashCache[cacheKey] = hashed
+	passwordKeyHashMutex.Unlock()
+
+	return hashed
+}
+
 // MD5 HMAC key calculation algorithm
 func md5HMAC(password string, engineID string) []byte {
-	comp := md5.New()
-	plen := len(password)
-	if plen > 0 {
-		var pi int // password index
-		for i := 0; i < 1048576; i += 64 {
-			var chunk []byte
-			for e := 0; e < 64; e++ {
-				chunk = append(chunk, password[pi%plen])
-				pi++
-			}
-			comp.Write(chunk)
-		}
-	}
-	compressed := comp.Sum(nil)
+	var compressed []byte
+
+	compressed = cachedPasswordToKey(md5.New(), "MD5", password)
+
 	local := md5.New()
 	local.Write(compressed)
 	local.Write([]byte(engineID))
@@ -212,20 +244,10 @@ func md5HMAC(password string, engineID string) []byte {
 
 // SHA HMAC key calculation algorithm
 func shaHMAC(password string, engineID string) []byte {
-	hash := sha1.New()
-	plen := len(password)
-	if plen > 0 {
-		var pi int // password index
-		for i := 0; i < 1048576; i += 64 {
-			var chunk []byte
-			for e := 0; e < 64; e++ {
-				chunk = append(chunk, password[pi%plen])
-				pi++
-			}
-			hash.Write(chunk)
-		}
-	}
-	hashed := hash.Sum(nil)
+	var hashed []byte
+
+	hashed = cachedPasswordToKey(sha1.New(), "SHA1", password)
+
 	local := sha1.New()
 	local.Write(hashed)
 	local.Write([]byte(engineID))
@@ -236,12 +258,14 @@ func shaHMAC(password string, engineID string) []byte {
 
 func genlocalkey(authProtocol SnmpV3AuthProtocol, passphrase string, engineID string) []byte {
 	var secretKey []byte
+
 	switch authProtocol {
 	default:
 		secretKey = md5HMAC(passphrase, engineID)
 	case SHA:
 		secretKey = shaHMAC(passphrase, engineID)
 	}
+
 	return secretKey
 }
 

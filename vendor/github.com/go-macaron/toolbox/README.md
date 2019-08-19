@@ -45,20 +45,21 @@ func (dc *dummyChecker) Check() error {
 
 // ...
 m.Use(toolbox.Toolboxer(m, toolbox.Options{
-	URLPrefix:			"/debug",			// URL prefix for toolbox dashboard.
-	HealthCheckURL:		"/healthcheck", 	// URL for health check request.
+	URLPrefix:			"/debug",			// URL prefix for toolbox dashboard
+	HealthCheckURL:		"/healthcheck", 	// URL for health check request
 	HealthCheckers: []HealthChecker{
 		new(dummyChecker),
-	},										// Health checkers.
+	},										// Health checkers
 	HealthCheckFuncs: []*toolbox.HealthCheckFuncDesc{
 		&toolbox.HealthCheckFuncDesc{
 			Desc: "Database connection",
 			Func: func() error { return "OK" },
 		},
-	},										// Health check functions.
-	PprofURLPrefix:		"/debug/pprof/", 	// URL prefix of pprof.
-	ProfileURLPrefix:	"/debug/profile/", 	// URL prefix of profile.
-	ProfilePath:		"profile", 			// Path store profile files.
+	},										// Health check functions
+	DisableDebug:		false,				// Turns off all debug functionality when true
+	PprofURLPrefix:		"/debug/pprof/", 	// URL prefix of pprof
+	ProfileURLPrefix:	"/debug/profile/", 	// URL prefix of profile
+	ProfilePath:		"profile",			// Path store profile files
 }))
 // ...
 ```
