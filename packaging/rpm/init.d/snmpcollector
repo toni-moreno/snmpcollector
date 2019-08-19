@@ -80,7 +80,7 @@ case "$1" in
 
     # Prepare environment
     mkdir -p "$LOG_DIR" "$DATA_DIR" && chown "$SNMPCOL_USER":"$SNMPCOL_GROUP" "$LOG_DIR" "$DATA_DIR"
-    touch "$PID_FILE" && chown "$SNMPCOL_USER":"$SNNMPCOL_GROUP" "$PID_FILE"
+    touch "$PID_FILE" && chown "$SNMPCOL_USER":"$SNMPCOL_GROUP" "$PID_FILE"
 
     if [ -n "$MAX_OPEN_FILES" ]; then
       ulimit -n $MAX_OPEN_FILES

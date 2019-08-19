@@ -25,7 +25,7 @@ DESC="SnmpCollector Agent"
 DEFAULT=/etc/default/$NAME
 
 SNMPCOL_USER=snmpcol
-SNMOCOL_GROUP=snmpcol
+SNMPCOL_GROUP=snmpcol
 SNMPCOL_HOME=/usr/share/snmpcollector
 CONF_DIR=/etc/snmpcollector
 WORK_DIR=$SNMPCOL_HOME
