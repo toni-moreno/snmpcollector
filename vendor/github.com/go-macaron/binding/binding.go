@@ -22,6 +22,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -32,7 +33,7 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-const _VERSION = "0.5.0"
+const _VERSION = "0.6.0"
 
 func Version() string {
 	return _VERSION
@@ -268,8 +269,41 @@ var (
 	AlphaDashPattern    = regexp.MustCompile("[^\\d\\w-_]")
 	AlphaDashDotPattern = regexp.MustCompile("[^\\d\\w-_\\.]")
 	EmailPattern        = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?")
-	URLPattern          = regexp.MustCompile(`(http|https):\/\/(?:\\S+(?::\\S*)?@)?[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
 )
+
+// Copied from github.com/asaskevich/govalidator.
+const _MAX_URL_RUNE_COUNT = 2083
+const _MIN_URL_RUNE_COUNT = 3
+
+var (
+	urlSchemaRx    = `((ftp|tcp|udp|wss?|https?):\/\/)`
+	urlUsernameRx  = `(\S+(:\S*)?@)`
+	urlIPRx        = `([1-9]\d?|1\d\d|2[01]\d|22[0-3])(\.(1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.([0-9]\d?|1\d\d|2[0-4]\d|25[0-4]))`
+	ipRx           = `(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))`
+	urlSubdomainRx = `((www\.)|([a-zA-Z0-9]([-\.][-\._a-zA-Z0-9]+)*))`
+	urlPortRx      = `(:(\d{1,5}))`
+	urlPathRx      = `((\/|\?|#)[^\s]*)`
+	URLPattern     = regexp.MustCompile(`^` + urlSchemaRx + `?` + urlUsernameRx + `?` + `((` + urlIPRx + `|(\[` + ipRx + `\])|(([a-zA-Z0-9]([a-zA-Z0-9-_]+)?[a-zA-Z0-9]([-\.][a-zA-Z0-9]+)*)|(` + urlSubdomainRx + `?))?(([a-zA-Z\x{00a1}-\x{ffff}0-9]+-?-?)*[a-zA-Z\x{00a1}-\x{ffff}0-9]+)(?:\.([a-zA-Z\x{00a1}-\x{ffff}]{1,}))?))\.?` + urlPortRx + `?` + urlPathRx + `?$`)
+)
+
+// IsURL check if the string is an URL.
+func isURL(str string) bool {
+	if str == "" || utf8.RuneCountInString(str) >= _MAX_URL_RUNE_COUNT || len(str) <= _MIN_URL_RUNE_COUNT || strings.HasPrefix(str, ".") {
+		return false
+	}
+	u, err := url.Parse(str)
+	if err != nil {
+		return false
+	}
+	if strings.HasPrefix(u.Host, ".") {
+		return false
+	}
+	if u.Host == "" && (u.Path != "" && !strings.Contains(u.Path, ".")) {
+		return false
+	}
+	return URLPattern.MatchString(str)
+
+}
 
 type (
 	// Rule represents a validation rule.
@@ -470,7 +504,7 @@ VALIDATE_RULES:
 			str := fmt.Sprintf("%v", fieldValue)
 			if len(str) == 0 {
 				continue
-			} else if !URLPattern.MatchString(str) {
+			} else if !isURL(str) {
 				errors.Add([]string{field.Name}, ERR_URL, "Url")
 				break VALIDATE_RULES
 			}

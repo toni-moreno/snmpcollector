@@ -1,4 +1,4 @@
-// Copyright 2012-2016 The GoSNMP Authors. All rights reserved.  Use of this
+// Copyright 2012-2018 The GoSNMP Authors. All rights reserved.  Use of this
 // source code is governed by a BSD-style license that can be found in the
 // LICENSE file.
 
@@ -66,6 +66,11 @@ func Check(err error) {
 
 func (x *GoSNMP) decodeValue(data []byte, msg string) (retVal *variable, err error) {
 	retVal = new(variable)
+
+	// values matching this mask have the type in subsequent byte
+	if data[0]&AsnExtensionID == AsnExtensionID {
+		data = data[1:]
+	}
 
 	switch Asn1BER(data[0]) {
 
@@ -155,13 +160,20 @@ func (x *GoSNMP) decodeValue(data []byte, msg string) (retVal *variable, err err
 		// 0x43
 		x.logPrint("decodeValue: type is TimeTicks")
 		length, cursor := parseLength(data)
-		ret, err := parseInt(data[cursor:length])
+		ret, err := parseUint(data[cursor:length])
 		if err != nil {
 			x.logPrintf("decodeValue: err is %v", err)
 			break
 		}
 		retVal.Type = TimeTicks
 		retVal.Value = ret
+	case Opaque:
+		// 0x44
+		x.logPrint("decodeValue: type is Opaque")
+		length, cursor := parseLength(data)
+		opaqueData := data[cursor:length]
+		// recursively decode opaque data
+		return x.decodeValue(opaqueData, msg)
 	case Counter64:
 		// 0x46
 		x.logPrint("decodeValue: type is Counter64")
@@ -173,6 +185,18 @@ func (x *GoSNMP) decodeValue(data []byte, msg string) (retVal *variable, err err
 		}
 		retVal.Type = Counter64
 		retVal.Value = ret
+	case OpaqueFloat:
+		// 0x78
+		x.logPrint("decodeValue: type is OpaqueFloat")
+		length, cursor := parseLength(data)
+		retVal.Type = OpaqueFloat
+		retVal.Value, err = parseFloat32(data[cursor:length])
+	case OpaqueDouble:
+		// 0x79
+		x.logPrint("decodeValue: type is OpaqueDouble")
+		length, cursor := parseLength(data)
+		retVal.Type = OpaqueDouble
+		retVal.Value, err = parseFloat64(data[cursor:length])
 	case NoSuchObject:
 		// 0x80
 		x.logPrint("decodeValue: type is NoSuchObject")
@@ -323,18 +347,41 @@ func marshalBase128Int(out *bytes.Buffer, n int64) (err error) {
 	return nil
 }
 
-// marshalInt16 builds a byte representation of
-// a 16 bit int in BigEndian form.
-func marshalInt16(value int) (rs []byte, err error) {
-	if value <= 0xff {
-		rs = []byte{byte(value)}
+/*
+	snmp Integer32 and INTEGER:
+	-2^31 and 2^31-1 inclusive (-2147483648 to 2147483647 decimal)
+	(FYI https://groups.google.com/forum/#!topic/comp.protocols.snmp/1xaAMzCe_hE)
+
+	versus:
+
+	snmp Counter32, Gauge32, TimeTicks, Unsigned32: (below)
+	non-negative integer, maximum value of 2^32-1 (4294967295 decimal)
+*/
+
+// marshalInt32 builds a byte representation of a signed 32 bit int in BigEndian form
+// ie -2^31 and 2^31-1 inclusive (-2147483648 to 2147483647 decimal)
+func marshalInt32(value int) (rs []byte, err error) {
+	rs = make([]byte, 4)
+	if 0 <= value && value <= 2147483647 {
+		binary.BigEndian.PutUint32(rs, uint32(value))
+		i := 0
+		for ; i < 3; i++ {
+			if rs[i] != 0 {
+				break
+			}
+		}
+		rs = rs[i:]
 		return rs, nil
 	}
-	if value > 0xff && value <= 0xffff {
-		rs = []byte{byte(((value >> 8) & 0xff)), byte((value & 0xff))}
+	if -2147483648 <= value && value < 0 {
+		value = ^value
+		binary.BigEndian.PutUint32(rs, uint32(value))
+		for k,v := range rs {
+			rs[k] = ^v
+		}
 		return rs, nil
 	}
-	return nil, fmt.Errorf("Unable to marshal %v", rs)
+	return nil, fmt.Errorf("unable to marshal %d", value)
 }
 
 // Counter32, Gauge32, TimeTicks, Unsigned32
@@ -451,7 +498,7 @@ func oidToString(oid []int) (ret string) {
 	return strings.Join(oidAsString, ".")
 }
 
-// MrSpock changes. TODO NO tests for this yet - waiting for .pcap
+// TODO no tests
 func ipv4toBytes(ip net.IP) []byte {
 	return []byte(ip)[12:]
 }
@@ -619,9 +666,9 @@ func parseRawField(data []byte, msg string) (interface{}, int, error) {
 		}
 	case TimeTicks:
 		length, cursor := parseLength(data)
-		ret, err := parseInt(data[cursor:length])
+		ret, err := parseUint(data[cursor:length])
 		if err != nil {
-			return nil, 0, fmt.Errorf("Error in parseInt: %s", err)
+			return nil, 0, fmt.Errorf("Error in parseUint: %s", err)
 		}
 		return ret, length, nil
 	}
@@ -655,6 +702,26 @@ func parseUint(bytes []byte) (uint, error) {
 		return 0, errors.New("integer too large")
 	}
 	return uint(ret64), nil
+}
+
+func parseFloat32(bytes []byte) (ret float32, err error) {
+	if len(bytes) > 4 {
+		// We'll overflow a uint64 in this case.
+		err = errors.New("float too large")
+		return
+	}
+	ret = math.Float32frombits(binary.BigEndian.Uint32(bytes))
+	return
+}
+
+func parseFloat64(bytes []byte) (ret float64, err error) {
+	if len(bytes) > 8 {
+		// We'll overflow a uint64 in this case.
+		err = errors.New("float too large")
+		return
+	}
+	ret = math.Float64frombits(binary.BigEndian.Uint64(bytes))
+	return
 }
 
 // Issue 4389: math/big: add SetUint64 and Uint64 functions to *Int

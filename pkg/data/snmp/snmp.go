@@ -244,7 +244,7 @@ func GetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, Sys
 			value := fmt.Sprintf("%s = %s", oidname, string(pdu.Value.([]byte)))
 			tmpDesc = append(tmpDesc, value)
 		case gosnmp.TimeTicks: // like sysUpTime
-			seconds := uint32(pdu.Value.(int)) / 100
+			seconds := uint32(pdu.Value.(uint)) / 100
 			value := fmt.Sprintf("%s = %d seconds", oidname, seconds)
 			tmpDesc = append(tmpDesc, value)
 		}
@@ -295,7 +295,7 @@ func GetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, er
 			}
 		case 1: // sysUpTime    .1.3.6.1.2.1.1.3.0
 			if pdu.Type == gosnmp.TimeTicks {
-				seconds := uint32(pdu.Value.(int)) / 100
+				seconds := uint32(pdu.Value.(uint)) / 100
 				info.SysUptime = time.Duration(seconds) * time.Second
 			} else {
 				l.Warnf("Error on getting system %s SysDescr return data of type %v", id, pdu.Type)
