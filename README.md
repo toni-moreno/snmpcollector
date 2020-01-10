@@ -1,5 +1,7 @@
 # SnmpCollector [![Go Report Card](https://goreportcard.com/badge/github.com/toni-moreno/snmpcollector)](https://goreportcard.com/report/github.com/toni-moreno/snmpcollector)
 
+Simple Network Management Protocol (SNMP) is an internet standard protocol which can be used to remotely retrieve the operational statistics of the routers and firewalls. Devices that typically support SNMP include routers, switches, servers, workstations and more.
+
 SnmpCollector is a full featured Generic SNMP data collector with Web Administration Interface Open Source tool which has as main goal simplify  the configuration for getting data from any  device which snmp protocol support and send resulting data to an influxdb backend.
 
 For complete information on installation from binary package and configuration you could read the [snmpcollector wiki](https://github.com/toni-moreno/snmpcollector/wiki).
