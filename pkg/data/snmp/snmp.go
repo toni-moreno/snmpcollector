@@ -78,11 +78,7 @@ func PduVal2Cooked(pdu gosnmp.SnmpPDU) interface{} {
 	case gosnmp.ObjectDescription:
 		return PduVal2str(pdu)
 	case gosnmp.IPAddress:
-		ip, err := PduVal2IPaddr(pdu)
-		if err != nil {
-			mainlog.Errorf("Error on SNMP IPAddress decode on PDU[%#+v] Error: %s\n", pdu, err)
-		}
-		return ip
+		return PduVal2str(pdu)
 	case gosnmp.Counter32:
 		return PduVal2Int64(pdu)
 	case gosnmp.Gauge32:
@@ -329,11 +325,32 @@ func GetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, er
 
 // PduVal2str transform PDU data to string
 func PduVal2str(pdu gosnmp.SnmpPDU) string {
-	value := pdu.Value
-	if pdu.Type == gosnmp.OctetString {
-		return string(value.([]byte))
+	switch pdu.Type {
+		case gosnmp.Integer:
+			return strconv.FormatInt(PduVal2Int64(pdu), 10)
+		case gosnmp.Counter32:
+			return strconv.FormatInt(PduVal2Int64(pdu), 10)
+		case gosnmp.Gauge32:
+			return strconv.FormatInt(PduVal2Int64(pdu), 10)
+		case gosnmp.TimeTicks:
+			return strconv.FormatInt(PduVal2Int64(pdu), 10)
+		case gosnmp.Counter64:
+			return strconv.FormatInt(PduVal2Int64(pdu), 10)
+		case gosnmp.Uinteger32:
+			return strconv.FormatInt(PduVal2Int64(pdu), 10)
+		case gosnmp.OctetString:
+			return string(pdu.Value.([]byte))
+		case gosnmp.ObjectIdentifier:
+			return PduVal2OID(pdu)
+		case gosnmp.IPAddress:
+			ip, err := PduVal2IPaddr(pdu)
+			if err != nil {
+				mainlog.Errorf("Error on SNMP IPAddress decode on PDU[%#+v] Error: %s\n", pdu, err)
+			}
+			return ip
+		default:
+			return ""
 	}
-	return ""
 }
 
 // PduValHexString2Uint transform PDU HexString to uint64

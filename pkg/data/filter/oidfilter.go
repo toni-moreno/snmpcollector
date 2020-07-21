@@ -91,7 +91,7 @@ func (of *OidFilter) Update() error {
 			str := snmp.PduVal2str(pdu)
 			re, err := regexp.Compile(of.ValueCond)
 			if err != nil {
-				of.log.Warnf("OIDFILTER [%s] Evaluated notmatch condition  value: %s | filter: %s | ERROR : %s", of.OidCond, str, of.ValueCond, err)
+				of.log.Warnf("OIDFILTER [%s] Evaluated match condition  value: %s | filter: %s | ERROR : %s", of.OidCond, str, of.ValueCond, err)
 				break
 			}
 			matched := re.MatchString(str)
