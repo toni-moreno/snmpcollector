@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"gopkg.in/macaron.v1"
 )

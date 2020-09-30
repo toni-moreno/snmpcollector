@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Knetic/govaluate"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 )

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/filter"

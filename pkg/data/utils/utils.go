@@ -2,7 +2,7 @@ package utils
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"time"

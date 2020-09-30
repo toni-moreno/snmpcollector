@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"

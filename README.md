@@ -15,19 +15,19 @@ If you want to build a package yourself, or contribute. Here is a guide for how 
 - Go 1.11 for snmpcollector >= 0.8
 - NodeJS >=6.2.1
 
-### Get Code
+### Get Code and  setup example config
 
 ```bash
-go get -d github.com/toni-moreno/snmpcollector/...
+git clone https://github.com/toni-moreno/snmpcollector.git
+cd snmpcollector
+cp conf/sample.config.toml conf/config.toml
 ```
 
 ### Building the backend
 
 
 ```bash
-cd $GOPATH/src/github.com/toni-moreno/snmpcollector
-go run build.go setup            # only needed once to install godep
-godep restore                    # will pull down all golang lib dependencies in your current GOPATH
+go run build.go build           
 ```
 
 ### Building frontend and backend in production mode
@@ -69,7 +69,7 @@ This will create a default user with username *adm1* and password *adm1pass* (do
 
 To rebuild on source change (requires that you executed godep restore)
 ```bash
-go get github.com/Unknwon/bra
+go get github.com/unknwon/bra
 npm start
 ```
 will init a change autodetect webserver with angular-cli (ng serve) and also a autodetect and recompile process with bra for the backend
