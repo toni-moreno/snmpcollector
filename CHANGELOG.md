@@ -1,5 +1,6 @@
 # v 0.8.1 ( Unreleased ) 
 ### New Features
+* Upgraded dependencies from dep to gomodules
 
 
 ### fixes

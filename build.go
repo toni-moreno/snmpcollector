@@ -60,9 +60,6 @@ func main() {
 
 	for _, cmd := range flag.Args() {
 		switch cmd {
-		case "setup":
-			setup()
-
 		case "build":
 			pkg := "./pkg/"
 			clean()
@@ -318,14 +315,6 @@ func ensureGoPath() {
 
 func ChangeWorkingDir(dir string) {
 	os.Chdir(dir)
-}
-
-func setup() {
-	runPrint("go", "get", "-v", "github.com/tools/godep")
-	//pending to check if these following 3 lines are really needed
-	runPrint("go", "get", "-v", "github.com/blang/semver")
-	runPrint("go", "get", "-v", "github.com/mattn/go-sqlite3")
-	runPrint("go", "install", "-v", "github.com/mattn/go-sqlite3")
 }
 
 func test(pkg string) {

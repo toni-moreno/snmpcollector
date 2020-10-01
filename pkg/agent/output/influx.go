@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/influxdata/influxdb/client/v2"
+	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )

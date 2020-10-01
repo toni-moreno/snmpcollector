@@ -3,7 +3,7 @@ package measurement
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
 )

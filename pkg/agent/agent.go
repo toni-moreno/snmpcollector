@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"

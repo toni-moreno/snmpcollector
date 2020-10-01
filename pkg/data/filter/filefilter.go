@@ -2,7 +2,7 @@ package filter
 
 import (
 	"errors"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path/filepath"
