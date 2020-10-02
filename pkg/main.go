@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/kelseyhightower/envconfig"
+
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
@@ -120,6 +122,15 @@ func init() {
 		log.Errorf("Fatal error config file: %s \n", err)
 		os.Exit(1)
 	}
+	log.Debugf("CONFIG FROM FILE : %+v", &agent.MainConfig)
+
+	err = envconfig.Process("SNMPCOL_", &agent.MainConfig)
+	if err != nil {
+		log.Warnf("Some error happened when trying to read config from env: %s", err)
+	}
+
+	log.Debugf("CONFIG AFTER MERGE : %+v", &agent.MainConfig)
+
 	cfg := &agent.MainConfig
 
 	if len(cfg.General.LogDir) > 0 {

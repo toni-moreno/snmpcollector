@@ -1,6 +1,7 @@
 # v 0.8.1 ( Unreleased ) 
 ### New Features
 * Upgraded dependencies from dep to gomodules
+* Added config through environment vars ( docker friendly )
 
 
 ### fixes

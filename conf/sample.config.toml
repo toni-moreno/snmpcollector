@@ -6,17 +6,22 @@
 [general]
  # InstanceID will be a string identifying the collector , It will be useful when
  # more than one running on the same server, this ID will be shown in the WebUI.
+ # could be set also with SNMPCOL_GENERAL_INSTANCE_ID env var
  instanceID = "WAN Communicactions"
+
  # datadir set the directory where the data will be placed , also sqlite db if set as db engine
  # if not set the default datadir will be placed in the configuration directory
+ # could be set also with SNMPCOL_GENERAL_DATA_DIR env var, default $CWD
  # datadir = "/var/lib/snmpcollector"
 
  # there are as many logs as devices configured
  # logdir set the Directory path for each device individual log, default is /var/log/snmpcollector
+ # could be set also with SNMPCOL_GENERAL_LOG_DIR env var, default $CWD
  # logdir = "/var/log/somelogpath"
- # NOTE: main process log is now sent to standard output
+
  # logLevel set the main process log level
  # valid values: panic,fatal,error,warn,info,debug
+ # could also be set with SNMPCOL_GENERAL_LOG_LEVEL env var, default info if not set
  logLevel = "warn"
 
  ############################
@@ -24,18 +29,33 @@
  ############################
 
 [database]
-#type sets the sql backend
-#valid values sqlite3,mysql
+# type sets the sql backend
+# valid values sqlite3,mysql
+# could be set also with SNMPCOL_DATABASE_DRIVER_TYPE default sqlite3
  type = "sqlite3"
+
 # these parameters are only for mysql (use mysql_setup.sql before)
+# could be set also with SNMPCOL_DATABASE_SERVER_HOST env var default localhost
 # host = 127.0.0.1:3306
+
+# user  Username to connect into DB (apply only to mysql/postgresql)
+# could be set also with SNMPCOL_DATABASE_USERNAME env var default synthetix
 # user = "snmpcoluser"
+
+# password Password to connect into DB (apply only to mysql/postgresql)
+# could also be set with SNMPCOL_DATABASE_PASSWORD env var default synthetix
 # password = "snmpcolpass"
+
 # name sets the database name
+# could also be set with SNMPCOL_DATABASE_NAME  env var default synthetix_db
  name = "snmpcollector"
-#sqllogfile sets the name for a file in the log/ directory where sql backend will write all SQL transactions
-#sqllogfile = "sql.log"
- # debug adds extra verbosity to the SQL log
+
+# sqllogfile sets the name for a file in the log/ directory where sql backend will write all SQL transactions
+# could also be set with SNMPCOL_DATABASE_SQL_LOG_FILE env var 
+# sqllogfile = "sql.log"
+
+# debug adds extra verbosity to the SQL log
+# could also be set with SNMPCOL_DATABASE_SQL_DEBUG env var
  debug = false
 
 
@@ -57,15 +77,24 @@
 # *gc.gc_per_interval
 
 [selfmon]
- #enable true/false enable/disable self monitoring
+ # enable true/false enable/disable self monitoring
+ # could also be set with SNMPCOL_SELFMON_ENABLED env var
  enabled = true
- #send data Frequency
+
+ # send data Frequency
+ # could also be set with SNMPCOL_SELFMON_FREQ env var
  freq = 60
- #prefix for measurement naming
+
+ # prefix for measurement naming
+ # could also be set with SNMPCOL_SELFMON_PREFIX env var
  prefix = ""
+ 
  #inherit device tags
+  # could also be set with SNMPCOL_SELFMON_INHERIT_JOB_TAGS env var
  inheritdevicetags = true
+
  #adds extra tags to the measurement config should be set as a csv - tag=value1,tag2=value2,...,tagN=valN
+ # could also be set withSNMPCOL_SELFMON_EXTRATAGS env va
  extratags = [ "instance=snmpcollector01" ]
 
 ############################
@@ -73,10 +102,18 @@
 ############################
 
 [http]
- #port where webserver will listen waiting for connections
+ # port where webserver will listen waiting for connections
+ # could also be set with SNMPCOL_HTTP_PORT  env var
  port   = 8090
- #Admin credentials to access to the SnmpCollector agent
+
+ # Admin user to log in the UI
+ # could also be set with SNMPCOL_HTTP_ADMIN_USER  env var
  adminuser = "adm1"
+
+ # Admin password to log in the UI
+ # could also be set with SNMPCOL_HTTP_ADMIN_PASSWORD  env var
  adminpassword = "adm1pass"
- #When more than one instance you will need customize the cookie_id allowing navigate to all instances
+
+ # When more than one instance you will need customize the cookie_id allowing navigate to all instances
+ # could also be set with SNMPCOL_HTTP_COOKIE_ID  env var
  cookieid ="my_instance_cookie"
