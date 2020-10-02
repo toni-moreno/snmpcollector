@@ -1,7 +1,8 @@
 # v 0.8.1 ( Unreleased ) 
 ### New Features
 * Upgraded dependencies from dep to gomodules
-* Added config through environment vars ( docker friendly )
+* Added config through environment vars ( docker friendly ),implements #420
+* Added new HTTP option "listen" as substitute for "port" ( still running but deprecated ) 
 
 
 ### fixes
@@ -9,6 +10,7 @@
 
 ### breaking changes
 
+* no longer supported "-httpPort" command line parameter use "-httpListen" instead (still supported but deprecated Port option at config file)  
 
 # v 0.8.0 ( 2018-11-05) 
 ### New Features

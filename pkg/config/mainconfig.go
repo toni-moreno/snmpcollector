@@ -36,8 +36,10 @@ type SelfMonConfig struct {
 }
 
 //HTTPConfig has webserver config options
+// Port should be deprecated from version >= 0.8.1
 type HTTPConfig struct {
 	Port          int    `mapstructure:"port"  envconfig:"SNMPCOL_HTTP_PORT"`
+	Listen        string `mapstructure:"listen"  envconfig:"SNMPCOL_HTTP_LISTEN"`
 	AdminUser     string `mapstructure:"adminuser" envconfig:"SNMPCOL_HTTP_ADMIN_USER"`
 	AdminPassword string `mapstructure:"adminpassword" envconfig:"SNMPCOL_HTTP_ADMIN_PASSWORD"`
 	CookieID      string `mapstructure:"cookieid" envconfig:"SNMPCOL_HTTP_COOKIE_ID"`

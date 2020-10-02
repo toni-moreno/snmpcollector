@@ -102,9 +102,10 @@
 ############################
 
 [http]
- # port where webserver will listen waiting for connections
- # could also be set with SNMPCOL_HTTP_PORT  env var
- port   = 8090
+ #  listen where webserver will listen waiting for connections
+ # could also be set with SNMPCOL_HTTP_LISTEN  env var
+ listen   = ":8090"
+ # NOTE: port = 8090 still usable option but DEPRECATED!!
 
  # Admin user to log in the UI
  # could also be set with SNMPCOL_HTTP_ADMIN_USER  env var

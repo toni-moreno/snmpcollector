@@ -34,7 +34,7 @@ var (
 	quit       = make(chan struct{})
 	startTime  = time.Now()
 	getversion bool
-	httpPort   = 8080
+	httpListen = ":8080"
 	appdir     = os.Getenv("PWD")
 	homeDir    string
 	pidFile    string
@@ -66,7 +66,7 @@ func flags() *flag.FlagSet {
 	var f flag.FlagSet
 	f.BoolVar(&getversion, "version", getversion, "display the version")
 	f.StringVar(&configFile, "config", configFile, "config file")
-	f.IntVar(&httpPort, "http", httpPort, "http port")
+	f.StringVar(&httpListen, "http", httpListen, "http port")
 	f.StringVar(&logDir, "logs", logDir, "log directory")
 	f.StringVar(&homeDir, "home", homeDir, "home directory")
 	f.StringVar(&dataDir, "data", dataDir, "Data directory")
@@ -213,6 +213,6 @@ func main() {
 
 	agent.Start()
 
-	webui.WebServer(filepath.Join(homeDir, "public"), httpPort, &agent.MainConfig.HTTP, agent.MainConfig.General.InstanceID)
+	webui.WebServer(filepath.Join(homeDir, "public"), httpListen, &agent.MainConfig.HTTP, agent.MainConfig.General.InstanceID)
 
 }

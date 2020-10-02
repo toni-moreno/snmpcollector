@@ -48,15 +48,9 @@ type UserLogin struct {
 var cookie string
 
 // WebServer the main process
-func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id string) {
+func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id string) {
 	confHTTP = cfg
 	instanceID = id
-	var port int
-	if cfg.Port > 0 {
-		port = cfg.Port
-	} else {
-		port = httpPort
-	}
 
 	bind := binding.Bind
 
@@ -195,9 +189,23 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 
 	NewAPIRtDevice(m)
 
-	log.Printf("Server is running on localhost:%d...", port)
-	httpServer := fmt.Sprintf("0.0.0.0:%d", port)
-	err := http.ListenAndServe(httpServer, m)
+	//Begin server
+
+	var listen string
+
+	if len(cfg.Listen) > 0 {
+		listen = cfg.Listen
+	} else {
+		if cfg.Port > 0 {
+			log.Warnf("Use Port config option is DEPRECATED use listen: \":%d\" Instead", cfg.Port)
+			listen = fmt.Sprintf("0.0.0.0:%d", cfg.Port)
+
+		} else {
+			listen = httpListen
+		}
+	}
+	log.Infof("WEBUI: Server is running on %s...", listen)
+	err := http.ListenAndServe(listen, m)
 	if err != nil {
 		log.Errorf("Error en starting HTTP server: %s", err)
 	}
