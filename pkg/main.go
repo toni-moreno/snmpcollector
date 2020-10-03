@@ -133,18 +133,19 @@ func init() {
 
 	cfg := &agent.MainConfig
 
-	if cfg.General.LogMode != "file" {
+	log.Infof("Main agent Logging will be written to %s ", cfg.General.LogMode)
+	if cfg.General.LogMode == "console" {
 		//default if not set
 		log.Out = os.Stdout
 
 	} else {
 		if len(cfg.General.LogDir) > 0 {
 			logDir = cfg.General.LogDir
-			os.Mkdir(logDir, 0755)
-			//Log output
-			f, _ := os.OpenFile(logDir+"/snmpcollector.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
-			log.Out = f
 		}
+		os.Mkdir(logDir, 0755)
+		//Log output
+		f, _ := os.OpenFile(logDir+"/snmpcollector.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+		log.Out = f
 	}
 
 	if len(cfg.General.LogLevel) > 0 {
