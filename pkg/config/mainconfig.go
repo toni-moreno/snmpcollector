@@ -11,6 +11,7 @@ type GeneralConfig struct {
 	HomeDir    string `mapstructure:"homedir" envconfig:"SNMPCOL_GENERAL_HOME_DIR"`
 	DataDir    string `mapstructure:"datadir" envconfig:"SNMPCOL_GENERAL_DATA_DIR" `
 	LogLevel   string `mapstructure:"loglevel" envconfig:"SNMPCOL_GENERAL_LOG_LEVEL"`
+	LogMode    string `mapstructure:"log_mode" envconfig:"SNMPCOL_GENERAL_LOG_MODE"`
 }
 
 //DatabaseCfg de configuration for the database
@@ -23,6 +24,7 @@ type DatabaseCfg struct {
 	Password   string `mapstructure:"password" envconfig:"SNMPCOL_DATABASE_PASSWORD"`
 	SQLLogFile string `mapstructure:"sqllogfile" envconfig:"SNMPCOL_DATABASE_SQL_LOG_FILE"`
 	Debug      string `mapstructure:"debug" envconfig:"SNMPCOL_DATABASE_SQL_DEBUG"`
+	LogMode    string `mapstructure:"log_mode" envconfig:"SNMPCOL_DATABASE_LOG_MODE"`
 	x          *xorm.Engine
 }
 

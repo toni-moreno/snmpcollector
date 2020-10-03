@@ -133,13 +133,20 @@ func init() {
 
 	cfg := &agent.MainConfig
 
-	if len(cfg.General.LogDir) > 0 {
-		logDir = cfg.General.LogDir
-		os.Mkdir(logDir, 0755)
-		//Log output
-		f, _ := os.OpenFile(logDir+"/snmpcollector.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
-		log.Out = f
+	if cfg.General.LogMode != "file" {
+		//default if not set
+		log.Out = os.Stdout
+
+	} else {
+		if len(cfg.General.LogDir) > 0 {
+			logDir = cfg.General.LogDir
+			os.Mkdir(logDir, 0755)
+			//Log output
+			f, _ := os.OpenFile(logDir+"/snmpcollector.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+			log.Out = f
+		}
 	}
+
 	if len(cfg.General.LogLevel) > 0 {
 		l, _ := logrus.ParseLevel(cfg.General.LogLevel)
 		log.Level = l
@@ -169,10 +176,13 @@ func init() {
 	//devices needs access to all db loaded data
 	device.SetDBConfig(&agent.DBConfig)
 	device.SetLogDir(logDir)
+
 	measurement.SetConfDir(confDir)
 	webui.SetLogger(log)
 	webui.SetLogDir(logDir)
 	webui.SetConfDir(confDir)
+	webui.SetLogMode(cfg.General.LogMode)
+
 	agent.SetLogger(log)
 
 	impexp.SetLogger(log)

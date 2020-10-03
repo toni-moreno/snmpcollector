@@ -22,7 +22,12 @@
  # logLevel set the main process log level
  # valid values: panic,fatal,error,warn,info,debug
  # could also be set with SNMPCOL_GENERAL_LOG_LEVEL env var, default info if not set
- logLevel = "warn"
+ loglevel = "info"
+ # Log mode  could be "file/console" if console have been selected
+ # the content for the main snmpcollector.log and http_access.log will 
+ # be writen in stdout 
+ # could be set also with  SNMPCOL_GENERAL_LOG_MODE env var
+ log_mode = "file"
 
  ############################
  # DataBase Config
@@ -50,9 +55,16 @@
 # could also be set with SNMPCOL_DATABASE_NAME  env var default synthetix_db
  name = "snmpcollector"
 
+
+# Log mode  could be "none/file/console" 
+# if console have been selected all the SQL queries  will be writen into stdout 
+# if file queries will be written in the logdir with name "sqllogfile" parameter if set or "sql.log" if not set 
+# could be set also with  SNMPCOL_DATABASE_LOG_MODE env var
+log_mode = "none"
+
 # sqllogfile sets the name for a file in the log/ directory where sql backend will write all SQL transactions
 # could also be set with SNMPCOL_DATABASE_SQL_LOG_FILE env var 
-# sqllogfile = "sql.log"
+# sqllogfile = "mysql.log"
 
 # debug adds extra verbosity to the SQL log
 # could also be set with SNMPCOL_DATABASE_SQL_DEBUG env var

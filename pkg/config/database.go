@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
+
 	// _ needed to sqlite3
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -66,13 +67,24 @@ func (dbc *DatabaseCfg) InitDB() {
 		log.Fatalf("Fail to create engine: %v\n", err)
 	}
 
-	if len(dbc.SQLLogFile) != 0 {
+	if len(dbc.LogMode) > 0 && dbc.LogMode != "none" {
+		log.Infof("Enabled SQL logging into: %s", dbc.LogMode)
 		dbc.x.ShowSQL(true)
-		f, error := os.Create(logDir + "/" + dbc.SQLLogFile)
-		if err != nil {
-			log.Errorln("Fail to create log file  ", error)
+		if dbc.LogMode == "console" {
+
+			dbc.x.SetLogger(xorm.NewSimpleLogger(os.Stdout))
+		} else {
+			filename := "sql.log"
+			if len(dbc.SQLLogFile) > 0 {
+				filename = dbc.SQLLogFile
+			}
+			f, error := os.Create(logDir + "/" + filename)
+			if err != nil {
+				log.Errorln("Fail to create log file  ", error)
+			}
+			dbc.x.SetLogger(xorm.NewSimpleLogger(f))
 		}
-		dbc.x.SetLogger(xorm.NewSimpleLogger(f))
+
 	}
 	if dbc.Debug == "true" {
 		dbc.x.Logger().SetLevel(core.LOG_DEBUG)

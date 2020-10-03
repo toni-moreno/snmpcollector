@@ -67,7 +67,6 @@ This will create a default user with username *adm1* and password *adm1pass* (do
 
 ### Recompile backend on source change (only for developers)
 
-To rebuild on source change (requires that you executed godep restore)
 ```bash
 go get github.com/unknwon/bra
 npm start

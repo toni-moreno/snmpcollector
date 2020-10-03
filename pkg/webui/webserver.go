@@ -2,6 +2,7 @@ package webui
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/go-macaron/binding"
 	"github.com/go-macaron/session"
@@ -22,11 +23,17 @@ var (
 	log        *logrus.Logger
 	confHTTP   *config.HTTPConfig
 	instanceID string
+	logMode    string
 )
 
 // SetLogDir et dir for logs
 func SetLogDir(dir string) {
 	logDir = dir
+}
+
+// SetLogMode et dir for logs
+func SetLogMode(mode string) {
+	logMode = mode
 }
 
 // SetConfDir et dir for logs
@@ -64,7 +71,13 @@ func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id 
 		SigningMethod: jwt.SigningMethodHS256,
 	})*/
 
-	f, _ := os.OpenFile(logDir+"/http_access.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	var f io.Writer
+
+	if logMode == "file" {
+		f, _ = os.OpenFile(logDir+"/http_access.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	} else {
+		f = os.Stdout
+	}
 	m := macaron.NewWithLogger(f)
 	m.Use(macaron.Logger())
 	m.Use(macaron.Recovery())
