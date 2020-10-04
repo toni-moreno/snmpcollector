@@ -14,8 +14,13 @@
  # could be set also with SNMPCOL_GENERAL_DATA_DIR env var, default $CWD
  # datadir = "/var/lib/snmpcollector"
 
+ # homedir set the directory where the public web dir will be placed
+ # if not set the default homedir will be placed in the current directory
+ # could be set also with SNMPCOL_GENERAL_HOME_DIR env var, default $CWD
+ # homedir = "/var/lib/snmpcollector"
+
  # there are as many logs as devices configured
- # logdir set the Directory path for each device individual log, default is /var/log/snmpcollector
+ # logdir set the Directory path for each device individual log
  # could be set also with SNMPCOL_GENERAL_LOG_DIR env var, default $CWD
  # logdir = "/var/log/somelogpath"
 
@@ -23,6 +28,7 @@
  # valid values: panic,fatal,error,warn,info,debug
  # could also be set with SNMPCOL_GENERAL_LOG_LEVEL env var, default info if not set
  loglevel = "info"
+
  # Log mode  could be "file/console" if console have been selected
  # the content for the main snmpcollector.log and http_access.log will 
  # be writen in stdout 
@@ -44,15 +50,15 @@
 # host = 127.0.0.1:3306
 
 # user  Username to connect into DB (apply only to mysql/postgresql)
-# could be set also with SNMPCOL_DATABASE_USERNAME env var default synthetix
+# could be set also with SNMPCOL_DATABASE_USERNAME env var
 # user = "snmpcoluser"
 
 # password Password to connect into DB (apply only to mysql/postgresql)
-# could also be set with SNMPCOL_DATABASE_PASSWORD env var default synthetix
+# could also be set with SNMPCOL_DATABASE_PASSWORD env var
 # password = "snmpcolpass"
 
 # name sets the database name
-# could also be set with SNMPCOL_DATABASE_NAME  env var default synthetix_db
+# could also be set with SNMPCOL_DATABASE_NAME  env var
  name = "snmpcollector"
 
 
@@ -101,12 +107,12 @@ log_mode = "none"
  # could also be set with SNMPCOL_SELFMON_PREFIX env var
  prefix = ""
  
- #inherit device tags
-  # could also be set with SNMPCOL_SELFMON_INHERIT_JOB_TAGS env var
+ # inherit device tags
+ # could also be set with SNMPCOL_SELFMON_INHERIT_DEVICE_TAGS env var
  inheritdevicetags = true
 
- #adds extra tags to the measurement config should be set as a csv - tag=value1,tag2=value2,...,tagN=valN
- # could also be set withSNMPCOL_SELFMON_EXTRATAGS env va
+ # adds extra tags to the measurement config should be set as a csv - tag=value1,tag2=value2,...,tagN=valN
+ # could also be set with SNMPCOL_SELFMON_EXTRATAGS env va
  extratags = [ "instance=snmpcollector01" ]
 
 ############################
@@ -114,7 +120,7 @@ log_mode = "none"
 ############################
 
 [http]
- #  listen where webserver will listen waiting for connections
+ # listen where webserver will listen waiting for connections
  # could also be set with SNMPCOL_HTTP_LISTEN  env var
  listen   = ":8090"
  # NOTE: port = 8090 still usable option but DEPRECATED!!
