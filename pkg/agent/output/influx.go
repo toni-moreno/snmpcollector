@@ -3,6 +3,7 @@ package output
 import (
 	"fmt"
 	"math/rand"
+	"snmpcollector/pkg/rabbitmq"
 	"strings"
 	"sync"
 	"time"
@@ -212,7 +213,11 @@ func (db *InfluxDB) Init() {
 	log.Infof("Initializing influxdb with id = [ %s ]", db.cfg.ID)
 
 	log.Infof("Connecting to: %s", db.cfg.Host)
+
+
 	db.iChan = make(chan *client.BatchPoints, db.cfg.BufferSize)
+
+
 	db.chExit = make(chan bool)
 	if err := db.Connect(); err != nil {
 		log.Errorln("failed connecting to: ", db.cfg.Host)
@@ -282,20 +287,37 @@ func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool
 	np := len((*data).Points())
 	//number of total fields
 	nf := 0
+
+	var rabbitMqInfluxPointsStored = make(map[string]int)
+
 	for _, v := range (*data).Points() {
-		fields, err := v.Fields()
-		if err != nil {
+
+		fields, errFields := v.Fields()
+		if errFields != nil {
 			log.Debug("Some error happened when trying to get fields for point... ")
 		} else {
 			nf += len(fields)
 		}
+
+
+		// prepare rabbitmq messages
+		tags := v.Tags()
+		pointStr := v.String()
+
+		pointMeasurement := v.Name()
+
+		pointStored := rabbitmq.GetInfluxPointStored(pointMeasurement, tags)
+		rabbitMqInfluxPointsStored[pointStored] = 1 // we just need the key, we wont send point stored twice
+		log.Info(" pointStr: %s, %s, %s", pointStr, pointMeasurement, tags)
 	}
+
+
 	// keep trying until we get it (don't drop the data)
 	startSend := time.Now()
 	err := db.client.Write(*data)
 	elapsedSend := time.Since(startSend)
 
-	bufferPercent = (float32(len(db.iChan)) * 100.0) / float32(db.cfg.BufferSize)
+	bufferPercent = float32(len(db.iChan) * 100.0) / float32(db.cfg.BufferSize)
 	if err != nil {
 		db.stats.WriteErrUpdate(elapsedSend, bufferPercent)
 		log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
@@ -310,6 +332,12 @@ func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool
 	} else {
 		log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
 		db.stats.WriteOkUpdate(int64(np), int64(nf), elapsedSend, bufferPercent)
+
+
+		// publish through rabbitmq
+		rabbitmq.PublishInfluxPointStored(rabbitMqInfluxPointsStored)
+
+
 	}
 }
 
@@ -319,34 +347,36 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 	time.Sleep(5)
 	log.Infof("beginning Influx Sender thread: [%s]", db.cfg.ID)
 	for {
-		select {
-		case <-db.chExit:
-			//need to flush all data
 
-			chanlen := len(db.iChan) // get number of entries in the batchpoint channel
-			log.Infof("Flushing %d batchpoints of data in OutDB %s ", chanlen, db.cfg.ID)
-			for i := 0; i < chanlen; i++ {
-				//flush them
-				data := <-db.iChan
-				//this process only will work if backend is  running ok elsewhere points will be lost
-				db.sendBatchPoint(data, false)
+
+			select {
+			case <-db.chExit:
+				//need to flush all data
+
+				chanlen := len(db.iChan) // get number of entries in the batchpoint channel
+				log.Infof("Flushing %d batchpoints of data in OutDB %s ", chanlen, db.cfg.ID)
+				for i := 0; i < chanlen; i++ {
+					//flush them
+					data := <-db.iChan
+					//this process only will work if backend is  running ok elsewhere points will be lost
+					db.sendBatchPoint(data, false)
+				}
+
+				log.Infof("EXIT from Influx sender process for device [%s] ", db.cfg.ID)
+				db.SetStartedAs(false)
+				return
+			case data := <-db.iChan:
+				if data == nil {
+					log.Warn("null influx input")
+					continue
+				}
+				if db.client == nil {
+					log.Warn("db Client not initialized yet!!!!!")
+					continue
+				}
+
+				db.sendBatchPoint(data, true)
 			}
 
-			log.Infof("EXIT from Influx sender process for device [%s] ", db.cfg.ID)
-			db.SetStartedAs(false)
-			return
-		case data := <-db.iChan:
-			if data == nil {
-				log.Warn("null influx input")
-				continue
-			}
-			if db.client == nil {
-				log.Warn("db Client not initialized yet!!!!!")
-				continue
-			}
-
-			db.sendBatchPoint(data, true)
-
-		}
 	}
 }

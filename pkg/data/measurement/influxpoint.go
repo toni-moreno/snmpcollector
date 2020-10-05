@@ -7,12 +7,13 @@ import (
 )
 
 //GetInfluxPoint get points from measuremnetsl
-func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, int64, int64, []*client.Point) {
+func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, int64, int64, map[string][]*client.Point) {
 	var metSent int64
 	var metError int64
 	var measSent int64
 	var measError int64
-	var ptarray []*client.Point
+
+	var points = make(map[string][]*client.Point)
 
 	switch m.cfg.GetMode {
 	case "value":
@@ -32,15 +33,63 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 		}
 		m.Debugf("FIELDS:%+v", Fields)
 
-		pt, err := client.NewPoint(m.cfg.Name, Tags, Fields, t)
-		if err != nil {
-			m.Warnf("error in influx point building:%s", err)
-			measError++
-		} else {
-			m.Debugf("GENERATED INFLUX POINT[%s] value: %+v", m.cfg.Name, pt)
-			ptarray = append(ptarray, pt)
-			measSent++
-			k.Valid = true
+		for fieldsKey, fieldsV := range Fields {
+
+			switch fieldType := fieldsV.(type) {
+			case map[string]interface{}:
+
+				for fieldK, fieldV := range fieldType {
+
+					if fieldV != nil {
+
+						// handle sub indexes
+
+						var indexField = make(map[string]interface{})
+
+						indexField[fieldsKey] = fieldV
+						if fieldK != "" {
+							indexField["subIndexesValues"] = fieldK
+							Tags["subIndexes"] = fieldK
+						}
+
+
+						pt, err := client.NewPoint(m.cfg.Name, Tags, indexField, t)
+						if err != nil {
+							m.Warnf("error in influx point building:%s", err)
+							measError++
+						} else {
+							m.Debugf("GENERATED INFLUX POINT[%s] value: %+v", m.cfg.Name, pt)
+
+							var ptarray = points[fieldK]
+							ptarray = append(ptarray, pt)
+							points[fieldK] = ptarray
+
+							measSent++
+							k.Valid = true
+						}
+					}
+				}
+
+			default:
+				// handle unknown type
+
+				pt, err := client.NewPoint(m.cfg.Name, Tags, Fields, t)
+				if err != nil {
+					m.Warnf("error in influx point building:%s", err)
+					measError++
+				} else {
+					m.Debugf("GENERATED INFLUX POINT[%s] value: %+v", m.cfg.Name, pt)
+
+					var ptarray = points[""]
+					ptarray = append(ptarray, pt)
+					points[""] = ptarray
+
+					measSent++
+					k.Valid = true
+				}
+
+			}
+
 		}
 
 	case "indexed", "indexed_it":
@@ -64,20 +113,70 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 			}
 			//here we can chek Fields names prior to send data
 			m.Debugf("FIELDS:%+v TAGS:%+v", Fields, Tags)
-			pt, err := client.NewPoint(m.cfg.Name, Tags, Fields, t)
-			if err != nil {
-				m.Warnf("error in influx point creation :%s", err)
-				measError++
-			} else {
-				m.Debugf("GENERATED INFLUX POINT[%s] index [%s]: %+v", m.cfg.Name, idx, pt)
-				ptarray = append(ptarray, pt)
-				measSent++
-				vIdx.Valid = true
+
+			for fieldsKey, fieldsV := range Fields {
+
+				switch fieldType := fieldsV.(type) {
+				case map[string]interface{}:
+
+					for fieldK, fieldV := range fieldType {
+
+						if fieldV != nil {
+
+							// handle sub indexes
+
+							var indexField = make(map[string]interface{})
+
+							indexField[fieldsKey] = fieldV
+							if fieldK != "" {
+								indexField["subIndexesValues"] = fieldK
+								Tags["subIndexes"] = fieldK
+							}
+
+							pt, err := client.NewPoint(m.cfg.Name, Tags, indexField, t)
+
+							if err != nil {
+								m.Warnf("error in influx point creation :%s", err)
+								measError++
+							} else {
+								m.Debugf("GENERATED INFLUX POINT[%s] index [%s]: %+v", m.cfg.Name, idx, pt)
+
+								var ptarray = points[fieldK]
+								ptarray = append(ptarray, pt)
+								points[fieldK] = ptarray
+
+								measSent++
+								vIdx.Valid = true
+							}
+						}
+					}
+
+				default:
+					// handle unknown type
+
+					pt, err := client.NewPoint(m.cfg.Name, Tags, Fields, t)
+					if err != nil {
+						m.Warnf("error in influx point creation :%s", err)
+						measError++
+					} else {
+						m.Debugf("GENERATED INFLUX POINT[%s] index [%s]: %+v", m.cfg.Name, idx, pt)
+
+						var ptarray = points[""]
+						ptarray = append(ptarray, pt)
+						points[""] = ptarray
+
+						measSent++
+						vIdx.Valid = true
+					}
+
+				}
+
 			}
+
 		}
 
 	}
 
-	return metSent, metError, measSent, measError, ptarray
+	return metSent, metError, measSent, measError, points
 
 }

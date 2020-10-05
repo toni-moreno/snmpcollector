@@ -161,7 +161,7 @@ export class ValidationService {
         if (control.value){
             // Regex to check valid IP or hostname
             // From https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
-            if (control.value.toString().match(/^[a-z\d]([a-z\d\-]{0,61}[a-z\d])?(\.[a-z\d]([a-z\d\-]{0,61}[a-z\d])?)*$/i)) {
+            if (control.value.toString().match(/^[a-z\d]([a-z\d\-\_]{0,61}[a-z\d])?(\.[a-z\d]([a-z\d\-\_]{0,61}[a-z\d])?)*$/i)) {
                 return null;
             } else {
                 return { 'invalidFQDNHost': true };

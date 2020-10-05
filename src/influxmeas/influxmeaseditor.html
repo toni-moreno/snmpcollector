@@ -73,6 +73,15 @@
           </div>
         </div>
 
+        <div class="form-group" *ngIf="influxmeasForm.controls.IndexOID">
+          <label class="control-label col-sm-2" for="IndexDescrOID">IndexDescrOID</label>
+          <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The index OID to translate the indices"></i>
+          <div class="col-sm-9">
+            <input formControlName="IndexDescrOID" id="IndexDescrOID" [ngModel]="influxmeasForm.value.IndexDescrOID"/>
+            <control-messages [control]="influxmeasForm.controls.IndexOID"></control-messages>
+          </div>
+        </div>
+
           <div class="form-group" *ngIf="influxmeasForm.controls.TagOID">
             <label class="control-label col-sm-2" for="TagOID">TagOID</label>
             <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="The Tag OID will allow us to get real Tag Name not provided in the IndexOID"></i>
@@ -111,6 +120,23 @@
             <control-messages [control]="influxmeasForm.controls.IndexAsValue"></control-messages><b>(Deprecated)</b>
           </div>
         </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Encoding">Encoding</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Encoding for indexes which are for example represented as mac addresses"></i>
+
+
+        <div class="col-sm-9">
+          <select formControlName="Encoding" id="Encoding" [ngModel]="influxmeasForm.value.Encoding">
+            <option value="">No Encoding</option>
+            <option value="MAC">MAC</option>
+          </select>
+          <control-messages [control]="influxmeasForm.controls.Encoding"></control-messages>
+        </div>
+
+
+
+      </div>
 
       <div class="form-group">
         <label class="control-label col-sm-2" for="Fields">Fields</label>

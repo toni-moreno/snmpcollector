@@ -35,6 +35,8 @@ export class InfluxMeasCfgComponent {
   public isRequesting : boolean;
   public counterItems : number = null;
   public counterErrors: any = [];
+  public myTexts = {};
+  public mySettings = {};
 
   itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
@@ -122,9 +124,11 @@ export class InfluxMeasCfgComponent {
         controlArray.push({'ID': 'TagOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
       case 'indexed':
         controlArray.push({'ID': 'IndexOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
+        controlArray.push({'ID': 'IndexDescrOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
         controlArray.push({'ID': 'IndexTag', 'defVal' : '', 'Validators' : Validators.required});
         controlArray.push({'ID': 'IndexTagFormat', 'defVal' : ''});
-        controlArray.push({'ID': 'IndexAsValue', 'defVal' : 'false', 'Validators' : Validators.required});
+        controlArray.push({'ID': 'IndexAsValue', 'defVal' : 'false', 'Validators' : Validators.required})
+        controlArray.push({'ID': 'Encoding', 'defVal' : ''});
       break;
       default:
         break;

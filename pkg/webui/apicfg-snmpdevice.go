@@ -2,10 +2,9 @@ package webui
 
 import (
 	"github.com/go-macaron/binding"
+	"gopkg.in/macaron.v1"
 	"snmpcollector/pkg/agent"
 	"snmpcollector/pkg/config"
-	"snmpcollector/pkg/data/snmp"
-	"gopkg.in/macaron.v1"
 )
 
 // NewAPICfgSnmpDevice SnmpDevice REST API creator
@@ -15,6 +14,7 @@ func NewAPICfgSnmpDevice(m *macaron.Macaron) error {
 
 	// Data sources
 	m.Group("/api/cfg/snmpdevice", func() {
+		m.Get("/count", reqSignedIn, GetNrOfSNMPDevices)
 		m.Get("/", reqSignedIn, GetSNMPDevices)
 		m.Post("/", reqSignedIn, bind(config.SnmpDeviceCfg{}), AddSNMPDevice)
 		m.Post("/:mode", reqSignedIn, bind(config.SnmpDeviceCfg{}), AddSNMPDevice)
@@ -33,6 +33,18 @@ func NewAPICfgSnmpDevice(m *macaron.Macaron) error {
 type DeviceStatMap struct {
 	config.SnmpDeviceCfg
 	IsRuntime bool
+}
+
+// GetNrOfSNMPDevices Return number  of snmpdevice to frontend
+func GetNrOfSNMPDevices(ctx *Context) {
+	count, err := agent.MainConfig.Database.GetNumberOfSnmpDevices()
+	if err != nil {
+		ctx.JSON(500, err.Error())
+		log.Errorf("Error on GetNrOfSNMPDevices :%+s", err)
+		return
+	}
+	ctx.JSON(200, count)
+	log.Debugf("Getting GetNrOfSNMPDevices %d", count)
 }
 
 // GetSNMPDevices Return snmpdevice list to frontend
@@ -54,15 +66,21 @@ func GetSNMPDevices(ctx *Context) {
 }
 
 func addDeviceOnline(mode string, id string, dev *config.SnmpDeviceCfg) error {
+
+
+	// DISABLED: we also want to add offline devices to the collector
+
+	/*
 	//First doing Ping
 	log.Infof("trying to ping device %s : %+v", dev.ID, dev)
-
 	_, sysinfo, err := snmp.GetClient(dev, log, "ping", false, 0)
 	if err != nil {
 		log.Debugf("ERROR  on query device : %s", err)
 		return err
 	}
 	log.Info("Device Ping ok : %#v", sysinfo)
+	*/
+
 	// Next updating database
 	switch mode {
 	case "add":
@@ -84,6 +102,7 @@ func addDeviceOnline(mode string, id string, dev *config.SnmpDeviceCfg) error {
 	agent.AddDeviceInRuntime(dev.ID, dev)
 	return nil
 }
+
 
 // AddSNMPDevice Insert new snmpdevice to de internal BBDD --pending--
 func AddSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {

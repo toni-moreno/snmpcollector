@@ -2,7 +2,7 @@
 
 FROM ubuntu:16.04
 
-COPY ../ /app
+COPY .. /app
 RUN apt-get update && apt-get install -y locales
 RUN apt-get install -y golang curl 
 RUN curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh

@@ -61,7 +61,7 @@ func (of *OidMultipleFilter) Init(arg ...interface{}) error {
 		}
 		of.condMap[par] = &oidcond
 		of.log.Debugf("OIDMULTIPLEFILTER [%s]  get %s Filter %+v", of.EvalCondition, par, oidcond)
-		f := NewOidFilter(oidcond.OIDCond, oidcond.CondType, oidcond.CondValue, of.log)
+		f := NewOidFilter(oidcond.OIDCond, oidcond.CondType, oidcond.CondValue, of.log, oidcond.Encoding)
 		f.Init(of.Walk)
 		of.oidFilterMap[par] = f
 	}

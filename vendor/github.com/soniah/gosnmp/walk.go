@@ -73,6 +73,8 @@ RequestLoop:
 				}
 				break RequestLoop
 			}
+
+
 			if v.Name == oid {
 				return fmt.Errorf("OID not increasing: %s", v.Name)
 			}

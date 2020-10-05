@@ -381,6 +381,10 @@ func PduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 		val = int64(value)
 	case uint64:
 		val = int64(value)
+	case float32:
+		val = int64(value)
+	case float64:
+		val = int64(value)
 	case string:
 		// for testing and other apps - numbers may appear as strings
 		var err error
@@ -477,7 +481,7 @@ const (
 // Release release the GoSNMP object
 func Release(client *gosnmp.GoSNMP) {
 	if client != nil {
-		client.Conn.Close()
+		// defer client.Conn.Close()
 	}
 }
 

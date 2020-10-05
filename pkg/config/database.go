@@ -138,27 +138,69 @@ func SetupDefaultDbData(dbc *DatabaseCfg) {
 		log.Fatalf("Error on determine wether monitioring InfluxDB exists, error: %s", existsError)
 	}
 
+
+	var influxHost = os.Getenv("INFLUXDB_HOST")
+	if influxHost == "" {
+		influxHost = "localhost" // default
+	}
+
+	var influxDB = os.Getenv("INFLUXDB_DB")
+	if influxDB == "" {
+		influxDB = "monitoring" // default
+	}
+
+	var influxUser = os.Getenv("INFLUXDB_USER")
+	if influxUser == "" {
+		influxUser = "admin" // default
+	}
+
+	var influxPassword = os.Getenv("INFLUXDB_USER_PASSWORD")
+	if influxPassword == "" {
+		influxPassword = "admin" // default
+	}
+
 	if !hastInfluxDb {
+		// create default influx db
+
 		monitoringInfluxDB := InfluxCfg{
 			ID:                 "influx",
-			Host:               "influxdb",
+			Host:               influxHost,
 			Port:               8086,
-			DB:                 "monitoring",
-			User:               "admin",
-			Password:           "admin",
+			DB:                 influxDB,
+			User:               influxUser,
+			Password:           influxPassword,
 			Retention:          "autogen",
 			Precision:          "s",
 			Timeout:            30,
 			UserAgent:          "snmpcollector",
 			EnableSSL:          false,
 			InsecureSkipVerify: true,
-			BufferSize:         65535,
+			BufferSize:         1000,
 		}
 
 		affected, err := dbc.AddInfluxCfg(monitoringInfluxDB)
 		if err != nil {
 			log.Fatalf("Error on insert monitoring InfluxDB, affected : %+v , error: %s", affected, err)
 		}
+	} else {
+		// update default influx db
+
+		var defaultInfluxDb, err = dbc.GetInfluxCfgByID("influx")
+		if err != nil {
+			log.Fatalf("Error on update default InfluxDB with env variables, error: %s", err)
+		} else {
+
+			defaultInfluxDb.Host = influxHost
+			defaultInfluxDb.DB = influxDB
+			defaultInfluxDb.User = influxUser
+			defaultInfluxDb.Password = influxPassword
+
+			var _, err = dbc.UpdateInfluxCfg(defaultInfluxDb.ID, defaultInfluxDb)
+			if err != nil {
+				log.Fatalf("Error on update default InfluxDB with env variables, error: %s", err)
+			}
+		}
+
 	}
 }
 

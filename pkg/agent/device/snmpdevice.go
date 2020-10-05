@@ -1,11 +1,11 @@
 package device
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
-	"io"
-	"encoding/json"
 	"strings"
 	"sync"
 	"time"
@@ -70,6 +70,7 @@ type SnmpDevice struct {
 	DeviceActive    bool
 	DeviceConnected bool
 	StateDebug      bool
+	Exited					bool
 
 	Node      *bus.Node `json:"-"`
 	isStopped chan bool `json:"-"`
@@ -126,6 +127,7 @@ func (d *SnmpDevice) getBasicStats() *DevStat {
 	stat.DeviceConnected = d.DeviceConnected
 	stat.NumMeasurements = len(d.Measurements)
 	stat.NumMetrics = sum
+	stat.Exited = d.Exited
 	if d.SysInfo != nil {
 		stat.SysDescription = d.SysInfo.SysDescr
 	} else {
@@ -192,6 +194,7 @@ func (d *SnmpDevice) SnmpReset(mode string) {
 // StopGather send signal to stop the Gathering process
 func (d *SnmpDevice) StopGather() {
 	d.Node.SendMsg(&bus.Message{Type: "syncexit"})
+	// d.Node.SendMsg(&bus.Message{Type: "exit"})
 	<-d.isStopped
 	d.log.Info("Exiting from StopGather process...")
 }
@@ -268,7 +271,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 					continue
 				}
 				//creating a new measurement runtime object and asigning to array
-				imeas, err := measurement.New(mVal, d.log, c, d.cfg.DisableBulk)
+				imeas, err := measurement.New(mVal, d.log, c, d.cfg.DisableBulk, d.cfg.SpecificInterfaceFilters, d.cfg.SpecificMetricFilters)
 				if err != nil {
 					d.Errorf("Error on measurement initialization  Error: %s", err)
 					continue
@@ -324,7 +327,7 @@ Init  does the following
 
 - Initialize not set variables to some defaults
 - Initialize logfile for this device
-- Initialize comunication channels and initial device state
+- Initialize communication channels and initial device state
 
 */
 
@@ -489,6 +492,7 @@ func (d *SnmpDevice) LeaveBus(b *bus.Bus) {
 
 // End The Opposite of Init() uninitialize all variables
 func (d *SnmpDevice) End() {
+	d.Exited = true
 	d.Node.Close()
 	for _, val := range d.snmpClientMap {
 		snmp.Release(val)
@@ -746,12 +750,38 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 	d.Infof("Beginning gather process for device on host (%s)", d.cfg.Host)
 
 	t := time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
-	for {
+
+	//_, err := agent.MainConfig.Database.GetSnmpDeviceCfgByID(d.cfg.ID)
+	//if err != nil {
+	//	deviceStillExists = false
+	// }
+
+
+
+	for d.stats.Exited != true {
 
 		t = d.gatherAndProcessData(t, false)
 
+
+		// if (d.cfg.UpdateFltFreq - d.Stats.ReloadLoopsPending) > 2 {
+		//	_, exists := cfg.SnmpDevice[d.cfg.ID]
+		//	if exists != true {
+		//		break
+		//	}
+		// }
+
+
 	LOOP:
-		for {
+		for d.stats.Exited != true {
+
+			// if (d.cfg.UpdateFltFreq - d.Stats.ReloadLoopsPending) > 2 {
+			//	_, exists := cfg.SnmpDevice[d.cfg.ID]
+			//	if exists != true {
+			//		break
+			//	}
+			// }
+
+
 			select {
 			case <-t.C:
 				break LOOP
@@ -767,7 +797,14 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 				case "syncexit":
 					d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
 					d.isStopped <- true
-					return
+					d.rtData.Lock()
+					d.DeviceActive = false
+					d.cfg.Active = false
+					d.stats.Exited = true
+					d.Exited = true
+					d.rtData.Unlock()
+					break
+					// return
 				case "filterupdate":
 					d.rtData.Lock()
 					d.setReloadLoopsPending(1)
@@ -818,6 +855,15 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 			d.statsData.Lock()
 			d.Stats = d.getBasicStats()
 			d.statsData.Unlock()
+
+			if d.Stats.Exited == true  {
+				break
+			}
 		}
+
+		if d.Stats.Exited == true  {
+			break
+		}
+
 	}
 }

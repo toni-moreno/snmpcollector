@@ -18,6 +18,7 @@ type OidConditionCfg struct {
 	CondType    string `xorm:"cond_type"`
 	CondValue   string `xorm:"cond_value"`
 	Description string `xorm:"description"`
+	Encoding		string `xorm:"encoding"`
 }
 
 // Init Initialize a OIDConditionCfg

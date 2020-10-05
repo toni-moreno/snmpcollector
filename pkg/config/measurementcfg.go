@@ -14,6 +14,7 @@ type MeasurementCfg struct {
 	Name           string `xorm:"name" binding:"Required"`
 	GetMode        string `xorm:"getmode" binding:"In(value,indexed,indexed_it)"` //value ,indexed  (direct tag), indexed_it ( indirect_tag)
 	IndexOID       string `xorm:"indexoid"`                                       //only valid if Indexed (direct or indirect)
+	IndexDescrOID  string `xorm:"index_descr_oid"`                                // translation for indices
 	TagOID         string `xorm:"tagoid"`                                         //only valid if inderecta TAG indexeded
 	IndexTag       string `xorm:"indextag"`
 	IndexTagFormat string `xorm:"indextagformat"`
@@ -26,6 +27,7 @@ type MeasurementCfg struct {
 	EvalMetric    []*SnmpMetricCfg `xorm:"-" json:"-"`
 	OidCondMetric []*SnmpMetricCfg `xorm:"-" json:"-"`
 	Description   string           `xorm:"description"`
+	Encoding string					`xorm:"encoding"`
 }
 
 //CheckComputedMetricVars check for computed metrics based on check if variable definition exist

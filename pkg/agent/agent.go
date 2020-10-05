@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"snmpcollector/pkg/rabbitmq"
 	"sync"
 	"time"
 
@@ -279,6 +280,10 @@ func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 	// send a db map to initialize each one its own db if needed
 	outdb, _ := dev.GetOutSenderFromMap(influxdb)
 	outdb.Init()
+
+	// init rabbitmq
+	rabbitmq.Init()
+
 	outdb.StartSender(&senderWg)
 
 	mutex.Lock()

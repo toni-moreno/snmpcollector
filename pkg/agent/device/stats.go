@@ -79,6 +79,7 @@ type DevStat struct {
 	NumMeasurements int
 	SysDescription  string
 	NumMetrics      int
+	Exited	bool
 }
 
 // Init initializes the device stat object

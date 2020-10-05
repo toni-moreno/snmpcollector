@@ -3,6 +3,8 @@ package metric
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/getsentry/raven-go"
+	"reflect"
 
 	"math"
 	"regexp"
@@ -48,16 +50,16 @@ const (
 type SnmpMetric struct {
 	cfg         *config.SnmpMetricCfg
 	Valid       bool //indicate if has been updated in the last gathered process
-	CookedValue interface{}
-	CurValue    interface{}
-	LastValue   interface{}
+	CookedValue map[string]interface{}
+	CurValue    map[string]interface{}
+	LastValue   map[string]interface{}
 	CurTime     time.Time
 	LastTime    time.Time
 	ElapsedTime float64
 	Compute     func(arg ...interface{})                `json:"-"`
 	Scale       func()                                  `json:"-"`
 	Convert     func()                                  `json:"-"`
-	SetRawData  func(pdu gosnmp.SnmpPDU, now time.Time) `json:"-"`
+	SetRawData  func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) `json:"-"`
 	RealOID     string
 	Report      int //if false this metric won't be sent to the output buffer (is just taken as a coomputed input for other metrics)
 	//for STRINGPARSER/MULTISTRINGPARSER
@@ -93,6 +95,9 @@ func (s *SnmpMetric) GetID() string {
 // New create a new snmpmetric with a specific logger
 func New(c *config.SnmpMetricCfg, l *logrus.Logger) (*SnmpMetric, error) {
 	metric := &SnmpMetric{log: l}
+	metric.CookedValue = make(map[string]interface{})
+	metric.CurValue = make(map[string]interface{})
+	metric.LastValue = make(map[string]interface{})
 	err := metric.Init(c)
 	return metric, err
 }
@@ -106,167 +111,235 @@ func (s *SnmpMetric) SetLogger(l *logrus.Logger) {
 
 func (s *SnmpMetric) convertFromUInteger() {
 	//check first the rigth
-	switch vt := s.CookedValue.(type) {
-	case uint64:
-		//everything ok
-		break
-	default:
-		s.log.Errorf("ERROR: expected value on metric %s type UINT64 and got %T  type ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
-		return
-	}
-	//the only acceptable conversions
-	// signed integer 64 -> float64
-	// signet integer 64 -> boolean ( true if value != 0 )
-	switch s.cfg.Conversion {
-	case config.INTEGER:
-		return
-	case config.FLOAT:
-		s.CookedValue = float64(s.CookedValue.(uint64))
-		return
-	case config.BOOLEAN:
-		if s.CookedValue.(uint64) != 0 {
-			s.CookedValue = true
-		} else {
-			s.CookedValue = false
+	for cookedValueKey, cookedValue := range s.CookedValue {
+
+		if cookedValue == nil {
+			delete(s.CookedValue, cookedValueKey)
+			continue
 		}
-		return
-	case config.STRING:
-		s.CookedValue = strconv.FormatUint(s.CookedValue.(uint64), 10)
-		return
-	default:
-		s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
+
+		var reflectType = reflect.TypeOf(cookedValue)
+		s.log.Info("cookedValue type: ", reflectType)
+
+		switch vt := cookedValue.(type) {
+		case int64:
+			//everything ok
+			break
+		case uint64:
+			s.CookedValue[cookedValueKey] = int64(cookedValue.(uint64))
+			cookedValue = s.CookedValue[cookedValueKey]
+			break
+		case float64:
+			s.CookedValue[cookedValueKey] = int64(cookedValue.(float64))
+			cookedValue = s.CookedValue[cookedValueKey]
+			break
+		default:
+			s.log.Errorf("ERROR: expected value on metric %s type UINT64 and got %T  type ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
+			// var msg = fmt.Sprintf("ERROR: expected value on metric %s type UINT64 and got %T  type ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
+			// raven.CaptureMessage(msg, map[string]string{"category": "typecast"})
+			continue
+		}
+		//the only acceptable conversions
+		// signed integer 64 -> float64
+		// signet integer 64 -> boolean ( true if value != 0 )
+		switch s.cfg.Conversion {
+		case config.INTEGER:
+			continue
+		case config.FLOAT:
+			s.CookedValue[cookedValueKey] = float64(cookedValue.(int64))
+			continue
+		case config.BOOLEAN:
+			if cookedValue.(int64) != 0 {
+				s.CookedValue[cookedValueKey] = true
+			} else {
+				s.CookedValue[cookedValueKey]= false
+			}
+			continue
+		case config.STRING:
+			s.CookedValue[cookedValueKey] = strconv.FormatInt(cookedValue.(int64), 10)
+			continue
+		default:
+			s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
+		}
+
 	}
 }
 
 func (s *SnmpMetric) convertFromInteger() {
-	switch vt := s.CookedValue.(type) {
-	case int64:
-		//everything ok
-		break
-	default:
-		s.log.Errorf("ERROR: expected value on metric %s type INT64 and got %T ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
-		return
-	}
-	//the only acceptable conversions
-	// signed integer 64 -> float64
-	// signet integer 64 -> boolean ( true if value != 0 )
-	switch s.cfg.Conversion {
-	case config.INTEGER:
-		return
-	case config.FLOAT:
-		s.CookedValue = float64(s.CookedValue.(int64))
-		return
-	case config.BOOLEAN:
-		if s.CookedValue.(int64) != 0 {
-			s.CookedValue = true
-		} else {
-			s.CookedValue = false
+	for cookedValueKey, cookedValue := range s.CookedValue {
+
+
+		if cookedValue == nil {
+			delete(s.CookedValue, cookedValueKey)
+			continue
 		}
-		return
-	case config.STRING:
-		s.CookedValue = strconv.FormatInt(s.CookedValue.(int64), 10)
-		return
-	default:
-		s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
+
+		var reflectType = reflect.TypeOf(cookedValue)
+		s.log.Info("cookedValue type: ", reflectType)
+
+		switch vt := cookedValue.(type) {
+		case int64:
+			//everything ok
+			break
+		case uint64:
+			s.CookedValue[cookedValueKey] = int64(cookedValue.(uint64))
+			cookedValue = s.CookedValue[cookedValueKey]
+			break
+		case float64:
+			s.CookedValue[cookedValueKey] = int64(cookedValue.(float64))
+			cookedValue = s.CookedValue[cookedValueKey]
+			break
+		default:
+			s.log.Errorf("ERROR: expected value on metric %s type INT64 and got %T ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
+			// var msg = fmt.Sprintf("ERROR: expected value on metric %s type INT64 and got %T ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
+			// raven.CaptureMessage(msg, map[string]string{"category": "typecast"})
+			continue
+		}
+		//the only acceptable conversions
+		// signed integer 64 -> float64
+		// signet integer 64 -> boolean ( true if value != 0 )
+		switch s.cfg.Conversion {
+		case config.INTEGER:
+			continue
+		case config.FLOAT:
+			s.CookedValue[cookedValueKey] = float64(cookedValue.(int64))
+			continue
+		case config.BOOLEAN:
+			if cookedValue.(int64) != 0 {
+				s.CookedValue[cookedValueKey] = true
+			} else {
+				s.CookedValue[cookedValueKey] = false
+			}
+			continue
+		case config.STRING:
+			s.CookedValue[cookedValueKey]= strconv.FormatInt(cookedValue.(int64), 10)
+			continue
+		default:
+			s.log.Errorf("Bad conversion: requested %s from %T type", s.cfg.Conversion.GetString(), s.CookedValue)
+		}
+
 	}
 }
 
 func (s *SnmpMetric) convertFromFloat() {
-	switch vt := s.CookedValue.(type) {
-	case float64:
-		//everything ok
-		break
-	default:
-		s.log.Errorf("ERROR: expected value on metric %s type Float64 and got %T type ( %+v) \n", s.cfg.ID, vt, s.CookedValue)
-		return
-	}
-	//the only acceptable conversions
-	// signed float -> int64 (will do rounded value)
-	switch s.cfg.Conversion {
-	case config.INTEGER:
-		s.CookedValue = int64(math.Round(s.CookedValue.(float64)))
-		return
-	case config.FLOAT:
-		return
-	case config.BOOLEAN:
-		if s.CookedValue.(float64) != 0.0 {
-			s.CookedValue = true
-		} else {
-			s.CookedValue = false
+	for cookedValueKey, cookedValue := range s.CookedValue {
+
+		if cookedValue == nil {
+			delete(s.CookedValue, cookedValueKey)
+			continue
 		}
-		return
-	case config.STRING:
-		s.CookedValue = strconv.FormatFloat(s.CookedValue.(float64), 'f', -1, 64)
-		return
-	default:
-		s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
+
+		switch vt := cookedValue.(type) {
+		case float64:
+			//everything ok
+			break
+		default:
+			s.log.Errorf("ERROR: expected value on metric %s type Float64 and got %T type ( %+v) \n", s.cfg.ID, vt, s.CookedValue)
+			var msg = fmt.Sprintf("ERROR: expected value on metric %s type Float64 and got %T type ( %+v) \n", s.cfg.ID, vt, s.CookedValue)
+			raven.CaptureMessage(msg, map[string]string{"category": "typecast"})
+			continue
+		}
+		//the only acceptable conversions
+		// signed float -> int64 (will do rounded value)
+		switch s.cfg.Conversion {
+		case config.INTEGER:
+			s.CookedValue[cookedValueKey] = int64(math.Round(cookedValue.(float64)))
+			continue
+		case config.FLOAT:
+			continue
+		case config.BOOLEAN:
+			if cookedValue.(float64) != 0.0 {
+				s.CookedValue[cookedValueKey] = true
+			} else {
+				s.CookedValue[cookedValueKey] = false
+			}
+			continue
+		case config.STRING:
+			s.CookedValue[cookedValueKey] = strconv.FormatFloat(cookedValue.(float64), 'f', -1, 64)
+			continue
+		default:
+			s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
+		}
 	}
+
 }
 
 func (s *SnmpMetric) convertFromString() {
-	switch vt := s.CookedValue.(type) {
-	case string:
-		//everything ok
-		break
-	default:
-		s.log.Errorf("ERROR: expected value on metric %s type STRING and got %T type ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
-		return
+	for cookedValueKey, cookedValue := range s.CookedValue {
+
+		switch vt := cookedValue.(type) {
+		case string:
+			//everything ok
+			break
+		default:
+			s.log.Errorf("ERROR: expected value on metric %s type STRING and got %T type ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
+			// var msg = fmt.Sprintf("ERROR: expected value on metric %s type STRING and got %T type ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
+			// raven.CaptureMessage(msg, map[string]string{"category": "typecast"})
+			continue
+		}
+		//the only acceptable conversions
+		// string -> int64
+		// string -> float (the default)
+		// string -> boolean
+		// string -> string
+		switch s.cfg.Conversion {
+		case config.STRING:
+			continue
+		case config.INTEGER:
+			value, err := strconv.ParseInt(cookedValue.(string), 10, 64)
+			if err != nil {
+				s.log.Warnf("Error parsing Integer from String  %s metric %s : error: %s", cookedValue.(string), s.cfg.ID, err)
+				continue
+			}
+			s.CookedValue[cookedValueKey] = value
+			continue
+		case config.FLOAT:
+			value, err := strconv.ParseFloat(cookedValue.(string), 64)
+			if err != nil {
+				s.log.Warnf("Error parsing float from String  %s metric %s : error: %s", cookedValue.(string), s.cfg.ID, err)
+				continue
+			}
+			s.CookedValue[cookedValueKey] = value
+			continue
+		case config.BOOLEAN:
+			value, err := strconv.ParseBool(cookedValue.(string))
+			if err != nil {
+				s.log.Warnf("Error parsing Boolean from String  %s metric %s : error: %s", cookedValue.(string), s.cfg.ID, err)
+				continue
+			}
+			s.CookedValue[cookedValueKey] = value
+			continue
+		default:
+			s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
+		}
 	}
-	//the only acceptable conversions
-	// string -> int64
-	// string -> float (the default)
-	// string -> boolean
-	// string -> string
-	switch s.cfg.Conversion {
-	case config.STRING:
-		return
-	case config.INTEGER:
-		value, err := strconv.ParseInt(s.CookedValue.(string), 10, 64)
-		if err != nil {
-			s.log.Warnf("Error parsing Integer from String  %s metric %s : error: %s", s.CookedValue.(string), s.cfg.ID, err)
-			return
-		}
-		s.CookedValue = value
-		return
-	case config.FLOAT:
-		value, err := strconv.ParseFloat(s.CookedValue.(string), 64)
-		if err != nil {
-			s.log.Warnf("Error parsing float from String  %s metric %s : error: %s", s.CookedValue.(string), s.cfg.ID, err)
-			return
-		}
-		s.CookedValue = value
-		return
-	case config.BOOLEAN:
-		value, err := strconv.ParseBool(s.CookedValue.(string))
-		if err != nil {
-			s.log.Warnf("Error parsing Boolean from String  %s metric %s : error: %s", s.CookedValue.(string), s.cfg.ID, err)
-			return
-		}
-		s.CookedValue = value
-		return
-	default:
-		s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
-	}
+
 }
 
 func (s *SnmpMetric) convertFromAny() {
-	switch s.CookedValue.(type) {
-	case float32, float64:
-		s.convertFromFloat()
-		return
-	case uint64, uint32:
-		s.convertFromUInteger()
-		return
-	case int64, int32:
-		s.convertFromInteger()
-		return
-	case string:
-		s.convertFromString()
-		return
-	case bool:
-		s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
-	default:
+
+	for _, cookedValue := range s.CookedValue {
+
+		switch cookedValue.(type) {
+		case float32, float64:
+			s.convertFromFloat()
+			continue
+		case uint64, uint32:
+			s.convertFromUInteger()
+			continue
+		case int64, int32:
+			s.convertFromInteger()
+			continue
+		case string:
+			s.convertFromString()
+			continue
+		case bool:
+			s.log.Errorf("Bad conversion: requested on metric %s: to type  %s from %T type", s.cfg.ID, s.cfg.Conversion.GetString(), s.CookedValue)
+		default:
+		}
 	}
+
+
 }
 
 // Init Initialice a new snmpmetric object with the specific configuration
@@ -284,18 +357,23 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	}
 	if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
 		s.Scale = func() {
-			switch v := s.CookedValue.(type) {
-			case uint64:
-				//should return Integer
-				val := (s.cfg.Scale * float64(s.CookedValue.(uint64))) + s.cfg.Shift
-				s.CookedValue = uint64(math.Round(val))
-			case float64:
-				//should return float
-				s.CookedValue = float64((s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift)
-			case string:
-				s.log.Errorf("Error Trying to  Scale Function from non numbered STRING type value : %s ", s.CookedValue)
-			default:
-				s.log.Errorf("Error Trying to  Scale Function from unknown type %T value: %#+v", v, s.CookedValue)
+
+			for cookedValueKey, cookedValue := range s.CookedValue {
+
+				switch v := cookedValue.(type) {
+				case uint64:
+					//should return Integer
+					val := (s.cfg.Scale * float64(cookedValue.(uint64))) + s.cfg.Shift
+					s.CookedValue[cookedValueKey] = uint64(math.Round(val))
+				case float64:
+					//should return float
+					s.CookedValue[cookedValueKey] = float64((s.cfg.Scale * float64(cookedValue.(float64))) + s.cfg.Shift)
+				case string:
+					s.log.Errorf("Error Trying to  Scale Function from non numbered STRING type value : %s ", s.CookedValue)
+				default:
+					s.log.Errorf("Error Trying to  Scale Function from unknown type %T value: %#+v", v, s.CookedValue)
+				}
+
 			}
 
 		}
@@ -303,354 +381,481 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 		s.Scale = func() {
 		}
 	}
-	switch s.cfg.DataSrcType {
-	case "CONDITIONEVAL":
-		//select
-		cond, err := dbc.GetOidConditionCfgByID(s.cfg.ExtraData)
-		if err != nil {
-			s.log.Errorf("Error getting CONDITIONEVAL [id: %s ] data : %s", s.cfg.ExtraData, err)
-		}
-		//get Regexp
-		if cond.IsMultiple == true {
-			s.condflt = filter.NewOidMultipleFilter(cond.OIDCond, s.log)
-		} else {
-			s.condflt = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, s.log)
-		}
-		s.Compute = func(arg ...interface{}) {
-			s.condflt.Init(arg...)
-			s.condflt.Update()
-			s.CookedValue = s.condflt.Count()
-			s.CurTime = time.Now()
-			s.Valid = true
-		}
-		//Sign
-		//set Process Data
-	case "TIMETICKS": //Cooked TimeTicks
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			val := snmp.PduVal2Int64(pdu)
-			s.CookedValue = val / 100 //now data in secoonds
-			s.CurTime = now
-			s.Scale()
-			s.convertFromInteger()
-			s.Valid = true
-		}
 
-		//Signed Integers
-	case "INTEGER", "Integer32":
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue = snmp.PduVal2Int64(pdu)
-			s.CurTime = now
-			s.Scale()
-			s.convertFromInteger()
-			s.Valid = true
-		}
-		//Unsigned Integers
-	case "Counter32", "Gauge32", "Counter64", "TimeTicks", "UInteger32", "Unsigned32":
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue = snmp.PduVal2UInt64(pdu)
-			s.CurTime = now
-			s.Scale()
-			s.convertFromUInteger()
-			s.Valid = true
-		}
-	case "COUNTER32": //Increment computed
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			//first time only set values and reassign itself to the complete method this will avoi to send invalid data
-			val := snmp.PduVal2UInt64(pdu)
-			s.CurValue = val
-			s.CurTime = now
-			s.Valid = true
-			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-				val := snmp.PduVal2UInt64(pdu)
-				s.LastTime = s.CurTime
-				s.LastValue = s.CurValue
-				s.CurValue = val
-				s.CurTime = now
-				s.Compute()
-				s.Scale()
-				s.Convert()
-				s.Valid = true
-			}
-		}
-		if s.cfg.GetRate == true {
-			s.Compute = func(arg ...interface{}) {
-				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					s.CookedValue = float64(math.MaxUint32-s.LastValue.(uint64)+s.CurValue.(uint64)) / s.ElapsedTime
-				} else {
-					s.CookedValue = float64(s.CurValue.(uint64)-s.LastValue.(uint64)) / s.ElapsedTime
-				}
-			}
-			s.Convert = s.convertFromFloat
-		} else {
-			s.Compute = func(arg ...interface{}) {
-				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					s.CookedValue = math.MaxUint32 - s.LastValue.(uint64) + s.CurValue.(uint64)
-				} else {
-					s.CookedValue = s.CurValue.(uint64) - s.LastValue.(uint64)
-				}
-			}
-			s.Convert = s.convertFromUInteger
-		}
-	case "COUNTER64": //Increment computed
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			//log.Debugf("========================================>COUNTER64: first time :%s ", s.RealOID)
-			//first time only set values and reassign itself to the complete method
-			val := snmp.PduVal2UInt64(pdu)
-			s.CurValue = val
-			s.CurTime = now
-			s.Valid = true
-			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-				//log.Debugf("========================================>COUNTER64: the other time:%s", s.RealOID)
-				val := snmp.PduVal2UInt64(pdu)
-				s.LastTime = s.CurTime
-				s.LastValue = s.CurValue
-				s.CurValue = val
-				s.CurTime = now
-				s.Compute()
-				s.Scale()
-				s.Convert()
-				s.Valid = true
-			}
-		}
-		if s.cfg.GetRate == true {
-			s.Compute = func(arg ...interface{}) {
-				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					s.CookedValue = float64(math.MaxUint64-s.LastValue.(uint64)+s.CurValue.(uint64)) / s.ElapsedTime
-				} else {
-					s.CookedValue = float64(s.CurValue.(uint64)-s.LastValue.(uint64)) / s.ElapsedTime
-				}
-			}
-			s.Convert = s.convertFromFloat
-		} else {
-			s.Compute = func(arg ...interface{}) {
-				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue.(uint64) < s.LastValue.(uint64) {
-					s.CookedValue = math.MaxUint64 - s.LastValue.(uint64) + s.CurValue.(uint64)
-				} else {
-					s.CookedValue = s.CurValue.(uint64) - s.LastValue.(uint64)
-				}
-			}
-			s.Convert = s.convertFromUInteger
-		}
-	case "COUNTERXX": //Generic Counter With Unknown range or buggy counters that  Like Non negative derivative
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			//first time only set values and reassign itself to the complete method this will avoi to send invalid data
-			val := snmp.PduVal2UInt64(pdu)
-			s.CurValue = val
-			s.CurTime = now
-			s.Valid = true
-			s.log.Debugf("FIRST RAW(post-compute): %T - %#+v", s.CookedValue, s.CookedValue)
-			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-				val := snmp.PduVal2UInt64(pdu)
-				s.LastTime = s.CurTime
-				s.LastValue = s.CurValue
-				s.CurValue = val
-				s.CurTime = now
-				s.Compute()
-				s.Valid = true
-			}
-		}
-		if s.cfg.GetRate == true {
-			s.Compute = func(arg ...interface{}) {
-				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue.(uint64) >= s.LastValue.(uint64) {
-					s.CookedValue = float64(s.CurValue.(uint64)-s.LastValue.(uint64)) / s.ElapsedTime
-					s.Scale()
-					s.Convert()
-				} else {
-					// Else => nothing to do last value will be sent
-					s.log.Warnf("Warning Negative COUNTER increment [current: %d | last: %d ] last value will be sent %f", s.CurValue, s.LastValue, s.CookedValue)
-				}
-			}
-			s.Convert = s.convertFromFloat
-		} else {
-			s.Compute = func(arg ...interface{}) {
-				s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
-				if s.CurValue.(uint64) >= s.LastValue.(uint64) {
-					s.CookedValue = s.CurValue.(uint64) - s.LastValue.(uint64)
-					s.Scale()
-					s.Convert()
-				} else {
-					// Else => nothing to do last value will be sent
-					s.log.Warnf("Warning Negative COUNTER increment [current: %d | last: %d ] last value will be sent %f", s.CurValue, s.LastValue, s.CookedValue)
-				}
-			}
-			s.Convert = s.convertFromUInteger
-		}
-	case "BITS":
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			barray := snmp.PduVal2BoolArray(pdu)
-			names := []string{}
-			for i, b := range barray {
-				if b {
-					names = append(names, s.cfg.Names[i])
-				}
-			}
-			s.CookedValue = strings.Join(names, ",")
-			s.CurTime = now
-			s.Valid = true
-			s.log.Debugf("SETRAW BITS %+v, RESULT %s", s.cfg.Names, s.CookedValue)
-		}
-	case "BITSCHK":
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			barray := snmp.PduVal2BoolArray(pdu)
-			index, _ := strconv.Atoi(s.cfg.ExtraData)
-			b := barray[index]
-			if b {
-				s.CookedValue = 1.0
-			} else {
-				s.CookedValue = 0.0
-			}
-			s.Convert()
-			s.CurTime = now
-			s.Valid = true
-			s.log.Debugf("BITS CHECK bit %+v, Position %d , RESULT %t", barray, index, s.CookedValue)
-		}
-	case "ENUM":
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			idx := snmp.PduVal2Int64(pdu)
-			if val, ok := s.cfg.Names[int(idx)]; ok {
-				s.CookedValue = val
-			} else {
-				s.CookedValue = strconv.Itoa(int(idx))
-			}
-			s.Valid = true
-			s.log.Debugf("SETRAW ENUM %+v, RESULT %s", s.cfg.Names, s.CookedValue)
-		}
-	case "OCTETSTRING":
-		switch s.cfg.Conversion {
-
-		case config.INTEGER:
-			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-				val, err := snmp.PduValHexString2Uint(pdu)
-				s.CookedValue = val
-				s.CurTime = now
-				if err != nil {
-					s.log.Warnf("Error on HexString to UINT conversion: %s", err)
-					return
-				}
-				s.Valid = true
-			}
-		//For compatibility purposes with previous versions
-		case config.FLOAT:
-			s.log.Errorf("WARNING ON SNMPMETRIC ( %s ): You are using version >=0.8 version without database upgrade: you should upgrade the DB by executing this SQL on your database \"update snmp_metric_cfg set Conversion=3 where datasrctype='OCTETSTRING';\", to avoid this message ", s.cfg.ID)
-			fallthrough
-		case config.STRING:
-			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-				s.CookedValue = snmp.PduVal2str(pdu)
-				s.CurTime = now
-				s.Valid = true
-			}
-		default:
-			s.log.Errorf("WARNING ON SNMPMETRIC ( %s ): Invalid conversion mode from OCTETSTRING to %s", s.cfg.ID, s.cfg.Conversion.GetString())
-			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-				s.CookedValue = snmp.PduVal2str(pdu)
-				s.CurTime = now
-				s.Valid = true
-			}
-		}
-
-	case "OID":
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue = snmp.PduVal2OID(pdu)
-			s.CurTime = now
-			s.Valid = true
-		}
-	case "IpAddress":
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue, _ = snmp.PduVal2IPaddr(pdu)
-			s.CurTime = now
-			s.Valid = true
-		}
-	case "HWADDR":
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			s.CookedValue, _ = snmp.PduVal2Hwaddr(pdu)
-			s.CurTime = now
-			s.Valid = true
-		}
-	case "STRINGPARSER":
-		//get Regexp
-		re, err := regexp.Compile(s.cfg.ExtraData)
-		if err != nil {
-			return fmt.Errorf("Error on initialice STRINGPARSER, invalind Regular Expression : %s", s.cfg.ExtraData)
-		}
-		s.re = re
-		//set Process Data
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			str := snmp.PduVal2str(pdu)
-			retarray := s.re.FindStringSubmatch(str)
-			if len(retarray) < 2 {
-				s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] without capturing group", s.cfg.ID, s.cfg.ExtraData, str)
-				return
-			}
-			//retarray[0] contains full string
-			if len(retarray[1]) == 0 {
-				s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] cause  void capturing group", s.cfg.ID, s.cfg.ExtraData, str)
-				return
-			}
-			s.CookedValue = retarray[1]
-			s.CurTime = now
-			s.convertFromString()
-			//s.Scale() <-only valid if Integer or Float
-			s.Valid = true
-		}
-	case "MULTISTRINGPARSER":
-		//get Regexp
-		re, err := regexp.Compile(s.cfg.ExtraData)
-		if err != nil {
-			return fmt.Errorf("Error on initialice MULTISTRINGPARSER, invalind Regular Expression : %s", s.cfg.ExtraData)
-		}
-		s.re = re
-
-		mm, err := s.cfg.GetMultiStringTagFieldMap()
-		if err != nil {
-			return fmt.Errorf("Error on initialice MULTISTRINGPARSER, invalind Field/Tag definition Format : %s", err)
-		}
-		s.mm = mm
-		//set Process Data
-		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			str := snmp.PduVal2str(pdu)
-			s.CookedValue = str
-			s.CurTime = now
-			s.Valid = true
-		}
-	case "STRINGEVAL":
-
-		expression, err := govaluate.NewEvaluableExpression(s.cfg.ExtraData)
-		if err != nil {
-			s.log.Errorf("Error on initialice STRINGEVAL, evaluation : %s : ERROR : %s", s.cfg.ExtraData, err)
-			return err
-		}
-		s.expr = expression
-		//set Process Data
-		s.Compute = func(arg ...interface{}) {
-			parameters := arg[0].(map[string]interface{})
-			s.log.Debugf("Evaluating Metric %s with eval expresion [%s] with parameters %+v", s.cfg.ID, s.cfg.ExtraData, parameters)
-			result, err := s.expr.Evaluate(parameters)
-			if err != nil {
-				s.log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", s.cfg.ID, s.cfg.ExtraData, err)
-				return
-			}
-			//Influxdb has not support for NaN,Inf values
-			//https://github.com/influxdata/influxdb/issues/4089
-			switch v := result.(type) {
-			case float64:
-				if math.IsNaN(v) || math.IsInf(v, 0) {
-					s.log.Warnf("Warning in metric %s On EVAL string: %s : Value is not a valid Floating Pint (NaN/Inf) : %f", s.cfg.ID, s.cfg.ExtraData, v)
-					return
-				}
-			}
-			s.CookedValue = result
-			//conversion depends onthe type of the evaluted data.
-			s.CurTime = time.Now()
-			s.Scale()
-			s.Convert() //default
-			s.Valid = true
-		}
+	if len(s.CookedValue) == 0 {
+		s.CookedValue[""] = nil // init values for setting raw data methods
 	}
+
+	for cookedValueKey := range s.CookedValue {
+
+		switch s.cfg.DataSrcType {
+		case "CONDITIONEVAL":
+			//select
+			cond, err := dbc.GetOidConditionCfgByID(s.cfg.ExtraData)
+			if err != nil {
+				s.log.Errorf("Error getting CONDITIONEVAL [id: %s ] data : %s", s.cfg.ExtraData, err)
+			}
+			//get Regexp
+			if cond.IsMultiple == true {
+				s.condflt = filter.NewOidMultipleFilter(cond.OIDCond, s.log)
+			} else {
+				s.condflt = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, s.log, cond.Encoding)
+			}
+			s.Compute = func(arg ...interface{}) {
+				s.condflt.Init(arg...)
+				s.condflt.Update()
+				s.CookedValue[cookedValueKey] = s.condflt.Count()
+				s.CurTime = time.Now()
+				s.Valid = true
+			}
+			//Sign
+			//set Process Data
+		case "TIMETICKS": //Cooked TimeTicks
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+				val := snmp.PduVal2Int64(pdu)
+				s.CookedValue[valKey] = val / 100 //now data in secoonds
+				s.CurTime = now
+				s.Scale()
+				s.convertFromInteger()
+				s.Valid = true
+			}
+
+			//Signed Integers
+		case "INTEGER", "Integer32":
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+				s.CookedValue[valKey] = snmp.PduVal2Int64(pdu)
+				s.CurTime = now
+				s.Scale()
+				s.convertFromInteger()
+				s.Valid = true
+			}
+			//Unsigned Integers
+		case "Counter32", "Gauge32", "Counter64", "TimeTicks", "UInteger32", "Unsigned32":
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+				s.CookedValue[valKey] = uint64(snmp.PduVal2UInt64(pdu))
+				s.CurTime = now
+				s.Scale()
+				s.convertFromUInteger()
+				s.Valid = true
+			}
+		case "COUNTER32": //Increment computed
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+				//first time only set values and reassign itself to the complete method this will avoi to send invalid data
+
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				val := snmp.PduVal2UInt64(pdu)
+				s.CurValue[cookedValueKey] = val
+				s.CurTime = now
+				s.Valid = true
+
+				s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+					valKey = cookedValueKey
+					if subIndexes != nil {
+						valKey = subIndex
+					}
+
+					val := snmp.PduVal2UInt64(pdu)
+					s.LastTime = s.CurTime
+					s.LastValue[valKey] = s.CurValue[valKey]
+					s.CurValue[valKey]= val
+					s.CurTime = now
+					s.Compute()
+					s.Scale()
+					s.Convert()
+					s.Valid = true
+				}
+			}
+			if s.cfg.GetRate == true {
+				s.Compute = func(arg ...interface{}) {
+					s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+					if s.CurValue[cookedValueKey].(uint64) < s.LastValue[cookedValueKey].(uint64) {
+						s.CookedValue[cookedValueKey] = float64(math.MaxUint32-s.LastValue[cookedValueKey].(uint64)+s.CurValue[cookedValueKey].(uint64)) / s.ElapsedTime
+					} else {
+						s.CookedValue[cookedValueKey] = float64(s.CurValue[cookedValueKey].(uint64)-s.LastValue[cookedValueKey].(uint64)) / s.ElapsedTime
+					}
+				}
+				s.Convert = s.convertFromFloat
+			} else {
+				s.Compute = func(arg ...interface{}) {
+					s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+					if s.CurValue[cookedValueKey].(uint64) < s.LastValue[cookedValueKey].(uint64) {
+						s.CookedValue[cookedValueKey] = math.MaxUint32 - s.LastValue[cookedValueKey].(uint64) + s.CurValue[cookedValueKey].(uint64)
+					} else {
+						s.CookedValue[cookedValueKey] = s.CurValue[cookedValueKey].(uint64) - s.LastValue[cookedValueKey].(uint64)
+					}
+				}
+				s.Convert = s.convertFromUInteger
+			}
+		case "COUNTER64": //Increment computed
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+				//log.Debugf("========================================>COUNTER64: first time :%s ", s.RealOID)
+				//first time only set values and reassign itself to the complete method
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+
+				val := snmp.PduVal2UInt64(pdu)
+				s.CurValue[valKey] = val
+				s.CurTime = now
+				s.Valid = true
+				s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+					//log.Debugf("========================================>COUNTER64: the other time:%s", s.RealOID)
+
+					valKey = cookedValueKey
+					if subIndexes != nil {
+						valKey = subIndex
+					}
+
+					val := snmp.PduVal2UInt64(pdu)
+					s.LastTime = s.CurTime
+					s.LastValue[valKey] = s.CurValue[valKey]
+					s.CurValue[valKey] = val
+					s.CurTime = now
+					s.Compute()
+					s.Scale()
+					s.Convert()
+					s.Valid = true
+				}
+			}
+			if s.cfg.GetRate == true {
+				s.Compute = func(arg ...interface{}) {
+					s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+					if s.CurValue[cookedValueKey].(uint64) < s.LastValue[cookedValueKey].(uint64) {
+						s.CookedValue[cookedValueKey] = float64(math.MaxUint64-s.LastValue[cookedValueKey].(uint64)+s.CurValue[cookedValueKey].(uint64)) / s.ElapsedTime
+					} else {
+						s.CookedValue[cookedValueKey] = float64(s.CurValue[cookedValueKey].(uint64)-s.LastValue[cookedValueKey].(uint64)) / s.ElapsedTime
+					}
+				}
+				s.Convert = s.convertFromFloat
+			} else {
+				s.Compute = func(arg ...interface{}) {
+					s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+					if s.CurValue[cookedValueKey].(uint64) < s.LastValue[cookedValueKey].(uint64) {
+						s.CookedValue[cookedValueKey] = math.MaxUint64 - s.LastValue[cookedValueKey].(uint64) + s.CurValue[cookedValueKey].(uint64)
+					} else {
+						s.CookedValue[cookedValueKey] = s.CurValue[cookedValueKey].(uint64) - s.LastValue[cookedValueKey].(uint64)
+					}
+				}
+				s.Convert = s.convertFromUInteger
+			}
+		case "COUNTERXX": //Generic Counter With Unknown range or buggy counters that  Like Non negative derivative
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+				//first time only set values and reassign itself to the complete method this will avoi to send invalid data
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				val := snmp.PduVal2UInt64(pdu)
+				s.CurValue[cookedValueKey] = val
+				s.CurTime = now
+				s.Valid = true
+				s.log.Debugf("FIRST RAW(post-compute): %T - %#+v", s.CookedValue, s.CookedValue)
+				s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+					valKey = cookedValueKey
+					if subIndexes != nil {
+						valKey = subIndex
+					}
+
+					val := snmp.PduVal2UInt64(pdu)
+					s.LastTime = s.CurTime
+					s.LastValue[valKey] = s.CurValue[valKey]
+					s.CurValue[valKey] = val
+					s.CurTime = now
+					s.Compute()
+					s.Valid = true
+				}
+			}
+			if s.cfg.GetRate == true {
+				s.Compute = func(arg ...interface{}) {
+					s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+					if s.CurValue[cookedValueKey].(uint64) >= s.LastValue[cookedValueKey].(uint64) {
+						s.CookedValue[cookedValueKey] = float64(s.CurValue[cookedValueKey].(uint64)-s.LastValue[cookedValueKey].(uint64)) / s.ElapsedTime
+						s.Scale()
+						s.Convert()
+					} else {
+						// Else => nothing to do last value will be sent
+						s.log.Warnf("Warning Negative COUNTER increment [current: %d | last: %d ] last value will be sent %f", s.CurValue[cookedValueKey], s.LastValue[cookedValueKey], s.CookedValue[cookedValueKey])
+					}
+				}
+				s.Convert = s.convertFromFloat
+			} else {
+				s.Compute = func(arg ...interface{}) {
+					s.ElapsedTime = s.CurTime.Sub(s.LastTime).Seconds()
+					if s.CurValue[cookedValueKey].(uint64) >= s.LastValue[cookedValueKey].(uint64) {
+						s.CookedValue[cookedValueKey] = s.CurValue[cookedValueKey].(uint64) - s.LastValue[cookedValueKey].(uint64)
+						s.Scale()
+						s.Convert()
+					} else {
+						// Else => nothing to do last value will be sent
+						s.log.Warnf("Warning Negative COUNTER increment [current: %d | last: %d ] last value will be sent %f", s.CurValue[cookedValueKey], s.LastValue[cookedValueKey], s.CookedValue[cookedValueKey])
+					}
+				}
+				s.Convert = s.convertFromUInteger
+			}
+		case "BITS":
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				barray := snmp.PduVal2BoolArray(pdu)
+				names := []string{}
+				for i, b := range barray {
+					if b {
+						names = append(names, s.cfg.Names[i])
+					}
+				}
+				s.CookedValue[valKey] = strings.Join(names, ",")
+				s.CurTime = now
+				s.Valid = true
+				s.log.Debugf("SETRAW BITS %+v, RESULT %s", s.cfg.Names, s.CookedValue)
+			}
+		case "BITSCHK":
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				barray := snmp.PduVal2BoolArray(pdu)
+				index, _ := strconv.Atoi(s.cfg.ExtraData)
+				b := barray[index]
+				if b {
+					s.CookedValue[valKey] = 1.0
+				} else {
+					s.CookedValue[valKey] = 0.0
+				}
+				s.Convert()
+				s.CurTime = now
+				s.Valid = true
+				s.log.Debugf("BITS CHECK bit %+v, Position %d , RESULT %t", barray, index, s.CookedValue)
+			}
+		case "ENUM":
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				idx := snmp.PduVal2Int64(pdu)
+				if val, ok := s.cfg.Names[int(idx)]; ok {
+					s.CookedValue[valKey] = val
+				} else {
+					s.CookedValue[valKey] = strconv.Itoa(int(idx))
+				}
+				s.Valid = true
+				s.log.Debugf("SETRAW ENUM %+v, RESULT %s", s.cfg.Names, s.CookedValue)
+			}
+		case "OCTETSTRING":
+			switch s.cfg.Conversion {
+
+			case config.INTEGER:
+				s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+					var valKey = cookedValueKey
+					if subIndexes != nil {
+						valKey = subIndex
+					}
+
+					val, err := snmp.PduValHexString2Uint(pdu)
+					s.CookedValue[valKey] = val
+					s.CurTime = now
+					if err != nil {
+						s.log.Warnf("Error on HexString to UINT conversion: %s", err)
+						return
+					}
+					s.Valid = true
+				}
+				//For compatibility purposes with previous versions
+			case config.FLOAT:
+				s.log.Errorf("WARNING ON SNMPMETRIC ( %s ): You are using version >=0.8 version without database upgrade: you should upgrade the DB by executing this SQL on your database \"update snmp_metric_cfg set Conversion=3 where datasrctype='OCTETSTRING';\", to avoid this message ", s.cfg.ID)
+				fallthrough
+			case config.STRING:
+				s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+					var valKey = cookedValueKey
+					if subIndexes != nil {
+						valKey = subIndex
+					}
+
+					s.CookedValue[valKey] = snmp.PduVal2str(pdu)
+					s.CurTime = now
+					s.Valid = true
+				}
+			default:
+				s.log.Errorf("WARNING ON SNMPMETRIC ( %s ): Invalid conversion mode from OCTETSTRING to %s", s.cfg.ID, s.cfg.Conversion.GetString())
+				s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+					var valKey = cookedValueKey
+					if subIndexes != nil {
+						valKey = subIndex
+					}
+
+					s.CookedValue[valKey] = snmp.PduVal2str(pdu)
+					s.CurTime = now
+					s.Valid = true
+				}
+			}
+
+		case "OID":
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				s.CookedValue[valKey] = snmp.PduVal2OID(pdu)
+				s.CurTime = now
+				s.Valid = true
+			}
+		case "IpAddress":
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				s.CookedValue[valKey], _ = snmp.PduVal2IPaddr(pdu)
+				s.CurTime = now
+				s.Valid = true
+			}
+		case "HWADDR":
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				s.CookedValue[valKey], _ = snmp.PduVal2Hwaddr(pdu)
+				s.CurTime = now
+				s.Valid = true
+			}
+		case "STRINGPARSER":
+			//get Regexp
+			re, err := regexp.Compile(s.cfg.ExtraData)
+			if err != nil {
+				return fmt.Errorf("Error on initialice STRINGPARSER, invalind Regular Expression : %s", s.cfg.ExtraData)
+			}
+			s.re = re
+			//set Process Data
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				str := snmp.PduVal2str(pdu)
+				retarray := s.re.FindStringSubmatch(str)
+				if len(retarray) < 2 {
+					s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] without capturing group", s.cfg.ID, s.cfg.ExtraData, str)
+					return
+				}
+				//retarray[0] contains full string
+				if len(retarray[1]) == 0 {
+					s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] cause  void capturing group", s.cfg.ID, s.cfg.ExtraData, str)
+					return
+				}
+				s.CookedValue[valKey] = retarray[1]
+				s.CurTime = now
+				s.convertFromString()
+				//s.Scale() <-only valid if Integer or Float
+				s.Valid = true
+			}
+		case "MULTISTRINGPARSER":
+			//get Regexp
+			re, err := regexp.Compile(s.cfg.ExtraData)
+			if err != nil {
+				return fmt.Errorf("Error on initialice MULTISTRINGPARSER, invalind Regular Expression : %s", s.cfg.ExtraData)
+			}
+			s.re = re
+
+			mm, err := s.cfg.GetMultiStringTagFieldMap()
+			if err != nil {
+				return fmt.Errorf("Error on initialice MULTISTRINGPARSER, invalind Field/Tag definition Format : %s", err)
+			}
+			s.mm = mm
+			//set Process Data
+			s.SetRawData = func(pdu gosnmp.SnmpPDU, subIndexes []string, subIndex string, now time.Time) {
+
+				var valKey = cookedValueKey
+				if subIndexes != nil {
+					valKey = subIndex
+				}
+
+				str := snmp.PduVal2str(pdu)
+				s.CookedValue[valKey] = str
+				s.CurTime = now
+				s.Valid = true
+			}
+		case "STRINGEVAL":
+
+			expression, err := govaluate.NewEvaluableExpression(s.cfg.ExtraData)
+			if err != nil {
+				s.log.Errorf("Error on initialice STRINGEVAL, evaluation : %s : ERROR : %s", s.cfg.ExtraData, err)
+				return err
+			}
+			s.expr = expression
+			//set Process Data
+			s.Compute = func(arg ...interface{}) {
+				parameters := arg[0].(map[string]interface{})
+				s.log.Debugf("Evaluating Metric %s with eval expresion [%s] with parameters %+v", s.cfg.ID, s.cfg.ExtraData, parameters)
+				result, err := s.expr.Evaluate(parameters)
+				if err != nil {
+					s.log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", s.cfg.ID, s.cfg.ExtraData, err)
+					return
+				}
+				//Influxdb has not support for NaN,Inf values
+				//https://github.com/influxdata/influxdb/issues/4089
+				switch v := result.(type) {
+				case float64:
+					if math.IsNaN(v) || math.IsInf(v, 0) {
+						s.log.Warnf("Warning in metric %s On EVAL string: %s : Value is not a valid Floating Pint (NaN/Inf) : %f", s.cfg.ID, s.cfg.ExtraData, v)
+						return
+					}
+				}
+				s.CookedValue[cookedValueKey] = result
+				//conversion depends onthe type of the evaluted data.
+				s.CurTime = time.Now()
+				s.Scale()
+				s.Convert() //default
+				s.Valid = true
+			}
+		}
+
+	}
+
+
 	return nil
 }
 
@@ -673,82 +878,94 @@ func (s *SnmpMetric) GetEvaluableVariables(params map[string]interface{}) {
 
 func (s *SnmpMetric) addSingleField(mid string, fields map[string]interface{}) int64 {
 
-	if s.Report == OnNonZeroReport {
-		if s.CookedValue == 0.0 {
-			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
-			return 0
+		if s.Report == OnNonZeroReport {
+			if s.CookedValue[""] == 0.0 {
+				s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
+				return 0
+			}
 		}
-	}
-	//assuming float Cooked Values
-	s.log.Debugf("generating field for %s value %#v ", s.cfg.FieldName, s.CookedValue)
-	s.log.Debugf("DEBUG METRIC %+v", s)
-	fields[s.cfg.FieldName] = s.CookedValue
+		//assuming float Cooked Values
+		s.log.Debugf("generating field for %s value %#v ", s.cfg.FieldName, s.CookedValue)
+		s.log.Debugf("DEBUG METRIC %+v", s)
+		fields[s.cfg.FieldName] = s.CookedValue
+
+
 	return 0
 }
 
 func (s *SnmpMetric) addSingleTag(mid string, tags map[string]string) int64 {
 
-	var tag string
-	switch v := s.CookedValue.(type) {
-	case string:
-		tag = v
-	default:
-		s.log.Debugf("ERROR wrong type %T for ID [%s] from MEASUREMENT[ %s ] when converting to TAG(STRING) won't be reported to the output backend", v, s.cfg.ID, mid)
-		return 1
-	}
-	//I don't know if a OnNonZeroReport could have sense in any configuration.
-	if s.Report == OnNonZeroReport {
-		if tag == "0" {
-			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
-			return 0
+	for _, cookedValue := range s.CookedValue {
+		var tag string
+		switch v := cookedValue.(type) {
+		case string:
+			tag = v
+		default:
+			s.log.Debugf("ERROR wrong type %T for ID [%s] from MEASUREMENT[ %s ] when converting to TAG(STRING) won't be reported to the output backend", v, s.cfg.ID, mid)
+			return 1
 		}
+		//I don't know if a OnNonZeroReport could have sense in any configuration.
+		if s.Report == OnNonZeroReport {
+			if tag == "0" {
+				s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
+				return 0
+			}
+		}
+		s.log.Debugf("generating Tag for Metric: %s : tagname: %s", s.cfg.FieldName, tag)
+		tags[s.cfg.FieldName] = tag
 	}
-	s.log.Debugf("generating Tag for Metric: %s : tagname: %s", s.cfg.FieldName, tag)
-	tags[s.cfg.FieldName] = tag
+
+
 	return 0
 }
 
 func (s *SnmpMetric) computeMultiStringParserValues() {
-	ni := len(s.mm)
-	var str string
-	switch v := s.CookedValue.(type) {
-	case string:
-		str = s.CookedValue.(string)
-	default:
-		s.log.Warnf("Error for metric [%s] Type value is not string is %T", s.cfg.ID, v)
-		return
+
+	for _, cookedValue := range s.CookedValue {
+
+		ni := len(s.mm)
+		var str string
+		switch v := cookedValue.(type) {
+		case string:
+			str = cookedValue.(string)
+		default:
+			s.log.Warnf("Error for metric [%s] Type value is not string is %T", s.cfg.ID, v)
+			return
+		}
+
+		retarray := s.re.FindStringSubmatch(str)
+		if len(retarray) < ni {
+			s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] without capturing group", s.cfg.ID, s.cfg.ExtraData, str)
+			return
+		}
+		//retarray[0] contains full string
+		if len(retarray[1]) == 0 {
+			s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] cause  void capturing group", s.cfg.ID, s.cfg.ExtraData, str)
+			return
+		}
+		for k, i := range s.mm {
+			s.log.Debugf("Parsing Metric %s MULTISTRING %d value %s (part %s)", s.cfg.ID, k, retarray[0], retarray[k+1])
+
+			var err error
+			bitstr := retarray[k+1]
+			switch i.IConv {
+			case "STR":
+				i.Value = bitstr
+			case "INT":
+				i.Value, err = strconv.ParseInt(bitstr, 10, 64)
+			case "BL":
+				i.Value, err = strconv.ParseBool(bitstr)
+			case "FP":
+				i.Value, err = strconv.ParseFloat(bitstr, 64)
+			}
+			if err != nil {
+				s.log.Warnf("Error for Metric %s MULTISTRINGPARSER  Field [%s|%s|%s] Coversion  from  [%s] error: %s", s.cfg.ID, i.IType, i.IName, i.IConv, bitstr, err)
+				i.Value = nil
+			}
+		}
 	}
 
-	retarray := s.re.FindStringSubmatch(str)
-	if len(retarray) < ni {
-		s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] without capturing group", s.cfg.ID, s.cfg.ExtraData, str)
-		return
-	}
-	//retarray[0] contains full string
-	if len(retarray[1]) == 0 {
-		s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] cause  void capturing group", s.cfg.ID, s.cfg.ExtraData, str)
-		return
-	}
-	for k, i := range s.mm {
-		s.log.Debugf("Parsing Metric %s MULTISTRING %d value %s (part %s)", s.cfg.ID, k, retarray[0], retarray[k+1])
 
-		var err error
-		bitstr := retarray[k+1]
-		switch i.IConv {
-		case "STR":
-			i.Value = bitstr
-		case "INT":
-			i.Value, err = strconv.ParseInt(bitstr, 10, 64)
-		case "BL":
-			i.Value, err = strconv.ParseBool(bitstr)
-		case "FP":
-			i.Value, err = strconv.ParseFloat(bitstr, 64)
-		}
-		if err != nil {
-			s.log.Warnf("Error for Metric %s MULTISTRINGPARSER  Field [%s|%s|%s] Coversion  from  [%s] error: %s", s.cfg.ID, i.IType, i.IName, i.IConv, bitstr, err)
-			i.Value = nil
-		}
-	}
 }
 
 func (s *SnmpMetric) addMultiStringParserValues(tags map[string]string, fields map[string]interface{}) int64 {

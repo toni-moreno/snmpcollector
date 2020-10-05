@@ -142,6 +142,8 @@ export class SnmpDeviceCfgComponent {
       MeasurementGroups: [this.snmpdevForm ? this.snmpdevForm.value.MeasurementGroups : null],
       MeasFilters: [this.snmpdevForm ? this.snmpdevForm.value.MeasFilters : null],
       Description: [this.snmpdevForm ? this.snmpdevForm.value.Description : ''],
+      SpecificInterfaceFilters: [this.snmpdevForm ? this.snmpdevForm.value.SpecificInterfaceFilters : ''],
+      SpecificMetricFilters: [this.snmpdevForm ? this.snmpdevForm.value.SpecificMetricFilters : '']
     });
   }
 

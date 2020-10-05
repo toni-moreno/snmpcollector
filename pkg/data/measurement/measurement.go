@@ -2,6 +2,9 @@ package measurement
 
 import (
 	"fmt"
+	"net"
+	"regexp"
+	"strings"
 
 	"strconv"
 	"time"
@@ -42,10 +45,12 @@ type Measurement struct {
 	snmpOids         []string
 	OidSnmpMap       map[string]*metric.SnmpMetric `json:"-"` //snmpMetric mapped with real OID's
 	AllIndexedLabels map[string]string             //`json:"-"` //all available values on the remote device
+	AllIfDescrLabels map[string]string
 	CurIndexedLabels map[string]string             //`json:"-"`
 	idxPosInOID      int
 	idx2PosInOID     int
 	curIdxPos        int //used in Walk functions could be variable depending on the Index (or IndexTag)
+	curIfDescrxPos   int //used in Walk functions could be variable depending on the IfDescr
 	FilterCfg        *config.MeasFilterCfg
 	Filter           filter.Filter
 	log              *logrus.Logger
@@ -53,11 +58,13 @@ type Measurement struct {
 	DisableBulk      bool                                `json:"-"`
 	GetData          func() (int64, int64, int64, error) `json:"-"`
 	Walk             func(string, gosnmp.WalkFunc) error `json:"-"`
+	deviceSpecificInterfaceFilters string
+	deviceSpecificMetricFilters string
 }
 
 //New  creates object with config , log + goSnmp client
-func New(c *config.MeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool) (*Measurement, error) {
-	m := &Measurement{ID: c.ID, MName: c.Name, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
+func New(c *config.MeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP,db bool, deviceSpecificInterfaceFilters string, deviceSpecificMetricFilters string) (*Measurement, error) {
+	m := &Measurement{ID: c.ID, MName: c.Name, cfg: c, log: l, snmpClient: cli, DisableBulk: db, deviceSpecificInterfaceFilters: deviceSpecificInterfaceFilters, deviceSpecificMetricFilters: deviceSpecificMetricFilters}
 	err := m.Init()
 	return m, err
 }
@@ -106,6 +113,20 @@ func (m *Measurement) Init() error {
 		m.AllIndexedLabels = il
 		//Final Selected Indexes are All Indexed
 		m.CurIndexedLabels = m.AllIndexedLabels
+
+
+
+		// ifDescr labels
+		if len(m.cfg.IndexDescrOID) > 0 {
+			ifDescr, ifDescrErr := m.loadIfDescrLabels(m.cfg.IndexDescrOID)
+			if ifDescrErr != nil {
+				m.Errorf("Error while trying to load ifDescr Labels on for measurement ERROR: %s", err)
+				return err
+			}
+			m.AllIfDescrLabels = ifDescr
+		}
+
+
 	}
 
 	/********************************
@@ -177,7 +198,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 				return fmt.Errorf("Error invalid Multiple Condition Filter : %s", err)
 			}
 		} else {
-			m.Filter = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, m.log)
+			m.Filter = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, m.log, cond.Encoding)
 			err = m.Filter.Init(m.Walk)
 			if err != nil {
 				return fmt.Errorf("Error invalid OID condition Filter : %s", err)
@@ -224,6 +245,21 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 		return false, err
 	}
 	m.AllIndexedLabels = il
+
+
+	// ifDescr labels
+	if len(m.cfg.IndexDescrOID) > 0 {
+		ifDescr, ifDescrErr := m.loadIfDescrLabels(m.cfg.IndexDescrOID)
+		if ifDescrErr != nil {
+			m.Errorf("Error while trying to load ifDescr Labels on for measurement ERROR: %s", err)
+			return false, err
+		}
+		m.AllIfDescrLabels = ifDescr
+	}
+
+
+
+
 	if m.Filter == nil {
 		m.Debugf("There is no filter configured in this measurement %s", m.cfg.ID)
 		//check if curindexed different of AllIndexed
@@ -310,20 +346,90 @@ func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 			errors++
 			return nil //if error return the bulk process will stop
 		}
+
+
 		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
 			m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
 			processed++
-			metr.SetRawData(pdu, now)
+			metr.SetRawData(pdu, nil, "", now)
 		} else {
-			m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v", pdu.Name, m.cfg.ID)
+			var subSet = false
+			var pduOids = strings.Split(pdu.Name, ".")
+
+			var mapKey = ""
+
+			for _, oid := range pduOids {
+
+				if mapKey == "" {
+					if oid != "" {
+						mapKey = "." + oid
+					}
+					continue
+				}
+
+				if mapVal, ok :=  m.OidSnmpMap[mapKey]; ok {
+
+					var subOids = strings.Split(pdu.Name, mapKey)
+					var subOid = strings.Join(subOids,"")
+
+
+					subSet    = true
+
+
+					m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
+
+					if len(m.cfg.IndexDescrOID) > 0 && m.AllIfDescrLabels != nil {
+						var lastOidIndex = subOids[len(subOids) -1]
+						var lastOids = strings.Split(lastOidIndex, ".")
+						var lastOid = lastOids[len(lastOids) -1]
+						if _, present := m.AllIfDescrLabels[lastOid]; present {
+							subOid = m.AllIfDescrLabels[lastOid]
+						}
+					}
+
+					processed++
+					mapVal.SetRawData(pdu, subOids, subOid, now)
+
+					break
+				}
+				mapKey += "." + oid
+			}
+
+
+			if !subSet {
+				m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v", pdu.Name, m.cfg.ID)
+			}
 		}
+
 		return nil
 	}
 
+
 	for _, v := range m.cfg.FieldMetric {
-		if err := m.Walk(v.BaseOID, setRawData); err != nil {
-			m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
-			errors += int64(m.MetricTable.Len())
+		var filtered = false
+
+		if len(m.deviceSpecificMetricFilters) > 0 { // check if field metric should be used
+			if strings.Contains(m.deviceSpecificMetricFilters, v.FieldName) != true {
+				filtered = true
+			}
+		}
+		if !filtered {
+			var walkAll = len(m.deviceSpecificInterfaceFilters) <= 0
+			if walkAll {
+				if err := m.Walk(v.BaseOID, setRawData); err != nil {
+					m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
+					errors += int64(m.MetricTable.Len())
+				}
+			} else {
+				// load only available indices
+				for labelKey := range m.AllIndexedLabels {
+					var labelOID = v.BaseOID + "." + labelKey
+					if err := m.Walk(labelOID, setRawData); err != nil {
+						m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
+						errors += int64(m.MetricTable.Len())
+					}
+				}
+			}
 		}
 	}
 
@@ -472,7 +578,7 @@ func (m *Measurement) SnmpGetData() (int64, int64, int64, error) {
 			if metr, ok := m.OidSnmpMap[oid]; ok {
 				m.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %+v ", m.cfg.ID, oid, val)
 				sent++
-				metr.SetRawData(pdu, now)
+				metr.SetRawData(pdu, nil, "", now)
 			} else {
 				m.Errorf("OID %s Not Found in measurement %s", oid, m.cfg.ID)
 			}
@@ -508,7 +614,17 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		name := "ErrorOnGetIdxValue"
 		switch pdu.Type {
 		case gosnmp.OctetString:
-			name = string(pdu.Value.([]byte))
+			var bytes = pdu.Value.([]byte)
+
+			if m.cfg.Encoding == "MAC" {
+				var mac = net.HardwareAddr(bytes).String()
+				name = mac // name = string(bytes)
+			} else {
+				name = string(bytes)
+			}
+
+
+
 			m.Debugf("Got the following OctetString index for [%s/%s]", suffix, name)
 		case gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
 			name = strconv.FormatUint(snmp.PduVal2UInt64(pdu), 10)
@@ -526,6 +642,30 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		default:
 			m.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric or IPAddress Value", m.cfg.IndexOID)
 		}
+
+
+		// TODO: implement measurement filter
+		if len(m.deviceSpecificInterfaceFilters) > 0 {
+			var filterConditionValues = strings.Split(m.deviceSpecificInterfaceFilters, ";")
+			var matched = false
+			for _, filterConditionValue := range filterConditionValues {
+				if matched {
+					continue
+				}
+				re, err := regexp.Compile(strings.ToUpper(filterConditionValue))
+				if err != nil {
+					m.Warnf("OIDFILTER [%s] Evaluated notmatch condition  value: %s | filter: %s | ERROR : %s", name, filterConditionValue, err)
+					return nil
+				}
+				matched = re.MatchString(strings.ToUpper(name))
+			}
+
+			if !matched {
+				return nil
+			}
+		}
+
+
 		allindex[suffix] = name
 		return nil
 	}
@@ -583,4 +723,66 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		m.Warnf("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexIt)
 	}
 	return allindexIt, nil
+}
+
+
+
+func (m *Measurement) loadIfDescrLabels(ifDescrOID string) (map[string]string, error) {
+
+	m.Debugf("Looking up loadIfDescrLabels %s ", m.cfg.ID)
+
+	allIfDescr := make(map[string]string)
+
+	setRawData := func(pdu gosnmp.SnmpPDU) error {
+		m.Debugf("received SNMP  pdu:%+v", pdu)
+		if pdu.Value == nil {
+			m.Warnf("no value retured by pdu :%+v", pdu)
+			return nil //if error return the bulk process will stop
+		}
+		if len(pdu.Name) < m.curIfDescrxPos+1 {
+			m.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", m.curIdxPos, pdu)
+			return nil //if error return the bulk process will stop
+		}
+		//i := strings.LastIndex(pdu.Name, ".")
+		suffix := pdu.Name[m.curIfDescrxPos+1:]
+
+		if m.cfg.IndexAsValue == true {
+			allIfDescr[suffix] = suffix
+			return nil
+		}
+		name := "ErrorOnGetIdxValue"
+		switch pdu.Type {
+		case gosnmp.OctetString:
+			var bytes = pdu.Value.([]byte)
+			name = string(bytes)
+			m.Debugf("Got the following OctetString index for [%s/%s]", suffix, name)
+		case gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
+			name = strconv.FormatUint(snmp.PduVal2UInt64(pdu), 10)
+			m.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
+		case gosnmp.Integer:
+			name = strconv.FormatInt(snmp.PduVal2Int64(pdu), 10)
+			m.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
+		case gosnmp.IPAddress:
+			var err error
+			name, err = snmp.PduVal2IPaddr(pdu)
+			m.Debugf("Got the following IPaddress index for [%s/%s]", suffix, name)
+			if err != nil {
+				m.Errorf("Error on loadIfDescr Labels IPAddress to string conversion: %s", err)
+			}
+		default:
+			m.Errorf("Error in loadIfDescrLabels %s ERR: Not String or numeric or IPAddress Value", m.cfg.IndexOID)
+		}
+		allIfDescr[suffix] = name
+		return nil
+	}
+
+	m.curIfDescrxPos = len(ifDescrOID)
+	err := m.Walk(ifDescrOID, setRawData)
+
+	if err != nil {
+		m.Errorf("loadIfDescrLabels - SNMP WALK error: %s", err)
+		return allIfDescr, err
+	}
+
+	return allIfDescr, nil
 }

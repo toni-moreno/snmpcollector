@@ -47,8 +47,8 @@ RUN  tar zxvf snmpcollector.tar.gz -C .
 
 WORKDIR /opt/snmpcollector
 
-COPY ./docker/config.toml ./conf
-COPY ./docker/start.sh /
+COPY ../../docker ./conf
+COPY ../../docker /
 
 # RUN  mkdir ./log
 

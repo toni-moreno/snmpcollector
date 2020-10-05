@@ -14,7 +14,7 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 		wg.Add(1)
 		go func(m *measurement.Measurement) {
 			defer wg.Done()
-			bpts, _ := d.Influx.BP()
+
 			d.Debugf("-------Processing measurement : %s", m.ID)
 
 			nGets, nProcs, nErrs, _ := m.GetData()
@@ -24,18 +24,27 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 			m.ComputeEvaluatedMetrics(d.VarMap)
 
 			//prepare batchpoint
-			metSent, metError, measSent, measError, points := m.GetInfluxPoint(d.TagMap)
+			metSent, metError, measSent, measError, pointsArray := m.GetInfluxPoint(d.TagMap)
 			d.stats.AddMeasStats(metSent, metError, measSent, measError)
 			startInfluxStats := time.Now()
-			if bpts != nil {
-				(*bpts).AddPoints(points)
-				//send data
-				d.Influx.Send(bpts)
-			} else {
-				d.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
+
+			for _, points := range pointsArray {
+
+				bpts, _ := d.Influx.BP()
+
+				if bpts != nil {
+					(*bpts).AddPoints(points)
+					//send data
+					d.Influx.Send(bpts)
+				} else {
+					d.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
+				}
+
 			}
+
 			elapsedInfluxStats := time.Since(startInfluxStats)
 			d.stats.AddSentDuration(startInfluxStats, elapsedInfluxStats)
+
 
 		}(m)
 	}
@@ -63,11 +72,16 @@ func (d *SnmpDevice) measSeqGatherAndSend() {
 		m.ComputeEvaluatedMetrics(d.VarMap)
 
 		//prepare batchpoint
-		metSent, metError, measSent, measError, points := m.GetInfluxPoint(d.TagMap)
+		metSent, metError, measSent, measError, pointsArray := m.GetInfluxPoint(d.TagMap)
 		d.stats.AddMeasStats(metSent, metError, measSent, measError)
-		if bpts != nil {
-			(*bpts).AddPoints(points)
+
+		for _, points := range pointsArray {
+			if bpts != nil {
+				(*bpts).AddPoints(points)
+			}
 		}
+
+
 	}
 
 	elapsedSnmpStats := time.Since(startSnmpStats)

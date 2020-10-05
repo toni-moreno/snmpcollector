@@ -44,6 +44,8 @@ type SnmpDeviceCfg struct {
 	//Filters for measurements
 	MeasurementGroups []string `xorm:"-"`
 	MeasFilters       []string `xorm:"-"`
+	SpecificInterfaceFilters	string `xorm:"specific_interface_filters"`
+	SpecificMetricFilters	string `xorm:"specific_metric_filters"`
 }
 
 // InfluxCfg is the main configuration for any InfluxDB TSDB

@@ -1,6 +1,9 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 /***************************
 	SNMPDevice Services
@@ -38,6 +41,17 @@ func (dbc *DatabaseCfg) GetSnmpDeviceCfgMap(filter string) (map[string]*SnmpDevi
 	}
 	return devcfgmap, err
 }
+
+func (dbc *DatabaseCfg) GetNumberOfSnmpDevices() (int, error) {
+	var err error
+	// var devices []*SnmpDeviceCfg
+	// counts, err := dbc.x.Count(&devices)
+	// counts, err := dbc.x.SQL("SELECT count(*) AS total from snmp_device_cfg").Count(&devices)
+	result, err := dbc.x.QueryString("SELECT count(*) AS total from snmp_device_cfg")
+	counts, _ := strconv.Atoi(result[0]["total"])
+	return counts, err
+}
+
 
 /*GetSnmpDeviceCfgArray generate an array of devices with all its information */
 func (dbc *DatabaseCfg) GetSnmpDeviceCfgArray(filter string) ([]*SnmpDeviceCfg, error) {
@@ -94,10 +108,16 @@ func (dbc *DatabaseCfg) GetSnmpDeviceCfgArray(filter string) ([]*SnmpDeviceCfg, 
 
 /*AddSnmpDeviceCfg for adding new devices*/
 func (dbc *DatabaseCfg) AddSnmpDeviceCfg(dev SnmpDeviceCfg) (int64, error) {
+
 	var err error
 	var affected, newmg, newft int64
 	session := dbc.x.NewSession()
 	defer session.Close()
+
+	_, err = dbc.GetSnmpDeviceCfgByID(dev.ID)
+	if err == nil { //device exist already in the database
+		return dbc.UpdateSnmpDeviceCfg(dev.ID, dev)	
+	}
 
 	affected, err = session.Insert(dev)
 	if err != nil {

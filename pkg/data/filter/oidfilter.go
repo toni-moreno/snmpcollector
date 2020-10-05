@@ -2,6 +2,7 @@ package filter
 
 import (
 	"fmt"
+	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -18,13 +19,14 @@ type OidFilter struct {
 	OidCond      string
 	TypeCond     string
 	ValueCond    string
+	Encoding		 string
 	log          *logrus.Logger
 	Walk         func(string, gosnmp.WalkFunc) error `json:"-"`
 }
 
 // NewOidFilter create a new filter for OID conditions
-func NewOidFilter(oidcond string, typecond string, value string, l *logrus.Logger) *OidFilter {
-	return &OidFilter{OidCond: oidcond, TypeCond: typecond, ValueCond: value, log: l}
+func NewOidFilter(oidcond string, typecond string, value string, l *logrus.Logger, encoding string) *OidFilter {
+	return &OidFilter{OidCond: oidcond, TypeCond: typecond, ValueCond: value, log: l, Encoding: encoding}
 }
 
 // Init initialize
@@ -88,7 +90,15 @@ func (of *OidFilter) Update() error {
 			cond = !matched
 		case of.TypeCond == "match":
 			//m.log.Debugf("PDU: %+v", pdu)
-			str := snmp.PduVal2str(pdu)
+
+			str := ""
+			if of.Encoding == "MAC" {
+				var bytes = pdu.Value.([]byte)
+				str = net.HardwareAddr(bytes).String()
+			} else {
+				str = snmp.PduVal2str(pdu)
+			}
+
 			re, err := regexp.Compile(of.ValueCond)
 			if err != nil {
 				of.log.Warnf("OIDFILTER [%s] Evaluated notmatch condition  value: %s | filter: %s | ERROR : %s", of.OidCond, str, of.ValueCond, err)

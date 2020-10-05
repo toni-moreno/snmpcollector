@@ -7,9 +7,9 @@ RUN apt-get install -y  curl git gcc
 RUN curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
 RUN bash nodesource_setup.sh
 RUN apt-get install -y nodejs
-RUN curl -O https://storage.googleapis.com/golang/go1.11.1.linux-amd64.tar.gz
-RUN tar -xvf go1.11.1.linux-amd64.tar.gz -C /usr/local
-RUN rm go1.11.1.linux-amd64.tar.gz
+RUN curl -O https://storage.googleapis.com/golang/go1.12.1.linux-amd64.tar.gz
+RUN tar -xvf go1.12.1.linux-amd64.tar.gz -C /usr/local
+RUN rm go1.12.1.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
 ENV GOROOT=/usr/local/go
 ENV GOPATH=/app
@@ -18,7 +18,7 @@ ENV PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 COPY ./setup.sh .
 RUN bash setup.sh 
 COPY  . .
-RUN mv docker/start.sh /
+RUN mv docker/start-dev.sh /
 
-ENTRYPOINT [ "/start.sh" ]
+ENTRYPOINT [ "/start-dev.sh" ]
 

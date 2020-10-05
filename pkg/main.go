@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/newrelic/go-agent"
 	"os/signal"
+	"snmpcollector/pkg/rabbitmq"
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
-
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -77,7 +78,6 @@ func flags() *flag.FlagSet {
 		})
 		fmt.Fprintf(os.Stderr, "\nAll settings can be set in config file: %s\n", configFile)
 		os.Exit(1)
-
 	}
 	return &f
 }
@@ -168,6 +168,33 @@ func init() {
 	bus.SetLogger(log)
 	//
 	log.Infof("Set Default directories : \n   - Exec: %s\n   - Config: %s\n   -Logs: %s\n -Home: %s\n", appdir, confDir, logDir, homeDir)
+
+
+	// init sentry
+	if len(os.Getenv("SENTRY_DSN")) > 0 {
+	 	// raven.SetDSN(os.Getenv("SENTRY_DSN"))
+	}
+
+
+
+
+
+	// init newrelic
+
+	if os.Getenv("NEW_RELIC_AGENT_ENABLED") == "true" {
+
+		config := newrelic.NewConfig(os.Getenv("APP_NAME"), os.Getenv("NR_APP_KEY"))
+		_, newRelicError := newrelic.NewApplication(config)
+
+		if newRelicError != nil {
+			fmt.Printf("error on init rew relic: %s", err)
+		}
+
+	}
+
+
+
+
 }
 
 func main() {
@@ -195,7 +222,7 @@ func main() {
 
 		}
 	}()
-	
+
 	// Delete Database in Development 
 
 	agent.MainConfig.Database.InitDB()
@@ -203,6 +230,8 @@ func main() {
 	impexp.SetDB(&agent.MainConfig.Database)
 
 	agent.Start()
+
+	rabbitmq.SetLogger(log)
 
 	webui.WebServer(filepath.Join(homeDir, "public"), httpPort, &agent.MainConfig.HTTP, agent.MainConfig.General.InstanceID)
 
