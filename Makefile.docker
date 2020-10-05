@@ -1,0 +1,37 @@
+REPO_VERSION=$(shell git describe --abbrev=0 --tag)
+IMAGE_VERSION=$(REPO_VERSION)
+DOCKER_FILE?=./
+NETWORK_NAME?=host
+REGISTRY=tonimoreno
+DATE=$(shell date +%Y%m%d%H%M%S )
+
+.PHONY: all clean-image clean build-image build push force-build-image force-build run
+
+all: build
+
+clean-image:
+	docker rmi $(REGISTRY)/snmpcollector:$(REPO_VERSION)
+
+clean: clean-image
+
+
+build-image:
+	docker build -t $(REGISTRY)/snmpcollector:$(IMAGE_VERSION) $(DOCKER_FILE)
+	docker build -t $(REGISTRY)/snmpcollector:latest $(DOCKER_FILE)
+
+build:  build-image
+
+push: 
+	docker push  $(REGISTRY)/snmpcollector:$(IMAGE_VERSION)
+	docker push  $(REGISTRY)/snmpcollector:latest
+
+force-build-image:
+	docker rmi -f $(REGISTRY)/snmpcollector:$(IMAGE_VERSION)
+	docker rmi -f $(REGISTRY)/snmpcollector:latest
+	docker build --no-cache  -t $(REGISTRY)/snmpcollector:$(IMAGE_VERSION) $(DOCKER_FILE)
+	docker build --no-cache  -t $(REGISTRY)/snmpcollector:latest $(DOCKER_FILE)
+
+test-image:
+	docker run -p 8090:8090 -e  SNMPCOL_GENERAL_LOG_MODE=console $(REGISTRY)/snmpcollector:$(IMAGE_VERSION)
+
+

@@ -42,7 +42,8 @@ func main() {
 	log.SetFlags(0)
 
 	ensureGoPath()
-	readVersionFromPackageJson()
+	//readVersionFromPackageJson()
+	readVersionFromGit()
 
 	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
 
@@ -134,6 +135,26 @@ func readVersionFromPackageJson() {
 
 	version = jsonObj["version"].(string)
 	linuxPackageVersion = version
+	linuxPackageIteration = ""
+
+	// handle pre version stuff (deb / rpm does not support semver)
+	parts := strings.Split(version, "-")
+
+	if len(parts) > 1 {
+		linuxPackageVersion = parts[0]
+		linuxPackageIteration = parts[1]
+	}
+}
+
+func readVersionFromGit() {
+	cmd := "git describe --abbrev=0 --tag"
+	out, err := exec.Command("bash", "-c", cmd).Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	linuxPackageVersion = strings.TrimSpace(string(out))
+	version = linuxPackageVersion
 	linuxPackageIteration = ""
 
 	// handle pre version stuff (deb / rpm does not support semver)
