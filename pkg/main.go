@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/kelseyhightower/envconfig"
+
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
@@ -32,7 +34,7 @@ var (
 	quit       = make(chan struct{})
 	startTime  = time.Now()
 	getversion bool
-	httpPort   = 8080
+	httpListen = ":8080"
 	appdir     = os.Getenv("PWD")
 	homeDir    string
 	pidFile    string
@@ -64,7 +66,7 @@ func flags() *flag.FlagSet {
 	var f flag.FlagSet
 	f.BoolVar(&getversion, "version", getversion, "display the version")
 	f.StringVar(&configFile, "config", configFile, "config file")
-	f.IntVar(&httpPort, "http", httpPort, "http port")
+	f.StringVar(&httpListen, "http", httpListen, "http port")
 	f.StringVar(&logDir, "logs", logDir, "log directory")
 	f.StringVar(&homeDir, "home", homeDir, "home directory")
 	f.StringVar(&dataDir, "data", dataDir, "Data directory")
@@ -120,15 +122,32 @@ func init() {
 		log.Errorf("Fatal error config file: %s \n", err)
 		os.Exit(1)
 	}
+	log.Debugf("CONFIG FROM FILE : %+v", &agent.MainConfig)
+
+	err = envconfig.Process("SNMPCOL_", &agent.MainConfig)
+	if err != nil {
+		log.Warnf("Some error happened when trying to read config from env: %s", err)
+	}
+
+	log.Debugf("CONFIG AFTER MERGE : %+v", &agent.MainConfig)
+
 	cfg := &agent.MainConfig
 
-	if len(cfg.General.LogDir) > 0 {
-		logDir = cfg.General.LogDir
+	log.Infof("Main agent Logging will be written to %s ", cfg.General.LogMode)
+	if cfg.General.LogMode == "console" {
+		//default if not set
+		log.Out = os.Stdout
+
+	} else {
+		if len(cfg.General.LogDir) > 0 {
+			logDir = cfg.General.LogDir
+		}
 		os.Mkdir(logDir, 0755)
 		//Log output
 		f, _ := os.OpenFile(logDir+"/snmpcollector.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 		log.Out = f
 	}
+
 	if len(cfg.General.LogLevel) > 0 {
 		l, _ := logrus.ParseLevel(cfg.General.LogLevel)
 		log.Level = l
@@ -158,10 +177,13 @@ func init() {
 	//devices needs access to all db loaded data
 	device.SetDBConfig(&agent.DBConfig)
 	device.SetLogDir(logDir)
+
 	measurement.SetConfDir(confDir)
 	webui.SetLogger(log)
 	webui.SetLogDir(logDir)
 	webui.SetConfDir(confDir)
+	webui.SetLogMode(cfg.General.LogMode)
+
 	agent.SetLogger(log)
 
 	impexp.SetLogger(log)
@@ -202,6 +224,6 @@ func main() {
 
 	agent.Start()
 
-	webui.WebServer(filepath.Join(homeDir, "public"), httpPort, &agent.MainConfig.HTTP, agent.MainConfig.General.InstanceID)
+	webui.WebServer(filepath.Join(homeDir, "public"), httpListen, &agent.MainConfig.HTTP, agent.MainConfig.General.InstanceID)
 
 }

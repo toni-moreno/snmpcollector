@@ -2,6 +2,7 @@ package webui
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/go-macaron/binding"
 	"github.com/go-macaron/session"
@@ -22,11 +23,17 @@ var (
 	log        *logrus.Logger
 	confHTTP   *config.HTTPConfig
 	instanceID string
+	logMode    string
 )
 
 // SetLogDir et dir for logs
 func SetLogDir(dir string) {
 	logDir = dir
+}
+
+// SetLogMode et dir for logs
+func SetLogMode(mode string) {
+	logMode = mode
 }
 
 // SetConfDir et dir for logs
@@ -48,15 +55,9 @@ type UserLogin struct {
 var cookie string
 
 // WebServer the main process
-func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id string) {
+func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id string) {
 	confHTTP = cfg
 	instanceID = id
-	var port int
-	if cfg.Port > 0 {
-		port = cfg.Port
-	} else {
-		port = httpPort
-	}
 
 	bind := binding.Bind
 
@@ -70,7 +71,13 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 		SigningMethod: jwt.SigningMethodHS256,
 	})*/
 
-	f, _ := os.OpenFile(logDir+"/http_access.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	var f io.Writer
+
+	if logMode == "file" {
+		f, _ = os.OpenFile(logDir+"/http_access.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	} else {
+		f = os.Stdout
+	}
 	m := macaron.NewWithLogger(f)
 	m.Use(macaron.Logger())
 	m.Use(macaron.Recovery())
@@ -195,9 +202,23 @@ func WebServer(publicPath string, httpPort int, cfg *config.HTTPConfig, id strin
 
 	NewAPIRtDevice(m)
 
-	log.Printf("Server is running on localhost:%d...", port)
-	httpServer := fmt.Sprintf("0.0.0.0:%d", port)
-	err := http.ListenAndServe(httpServer, m)
+	//Begin server
+
+	var listen string
+
+	if len(cfg.Listen) > 0 {
+		listen = cfg.Listen
+	} else {
+		if cfg.Port > 0 {
+			log.Warnf("Use Port config option is DEPRECATED use listen: \":%d\" Instead", cfg.Port)
+			listen = fmt.Sprintf("0.0.0.0:%d", cfg.Port)
+
+		} else {
+			listen = httpListen
+		}
+	}
+	log.Infof("WEBUI: Server is running on %s...", listen)
+	err := http.ListenAndServe(listen, m)
 	if err != nil {
 		log.Errorf("Error en starting HTTP server: %s", err)
 	}

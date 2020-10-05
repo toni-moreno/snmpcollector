@@ -14,6 +14,7 @@ require (
 	github.com/go-xorm/xorm v0.7.1
 	github.com/influxdata/influxdb v1.7.0
 	github.com/influxdata/platform v0.0.0-20181110005748-2f8893f5d5e3 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/sirupsen/logrus v1.2.0
 	github.com/soniah/gosnmp v1.16.0

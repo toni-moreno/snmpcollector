@@ -6,36 +6,74 @@
 [general]
  # InstanceID will be a string identifying the collector , It will be useful when
  # more than one running on the same server, this ID will be shown in the WebUI.
+ # could be set also with SNMPCOL_GENERAL_INSTANCE_ID env var
  instanceID = "WAN Communicactions"
+
  # datadir set the directory where the data will be placed , also sqlite db if set as db engine
  # if not set the default datadir will be placed in the configuration directory
+ # could be set also with SNMPCOL_GENERAL_DATA_DIR env var, default $CWD
  # datadir = "/var/lib/snmpcollector"
 
+ # homedir set the directory where the public web dir will be placed
+ # if not set the default homedir will be placed in the current directory
+ # could be set also with SNMPCOL_GENERAL_HOME_DIR env var, default $CWD
+ # homedir = "/var/lib/snmpcollector"
+
  # there are as many logs as devices configured
- # logdir set the Directory path for each device individual log, default is /var/log/snmpcollector
+ # logdir set the Directory path for each device individual log
+ # could be set also with SNMPCOL_GENERAL_LOG_DIR env var, default $CWD
  # logdir = "/var/log/somelogpath"
- # NOTE: main process log is now sent to standard output
+
  # logLevel set the main process log level
  # valid values: panic,fatal,error,warn,info,debug
- logLevel = "warn"
+ # could also be set with SNMPCOL_GENERAL_LOG_LEVEL env var, default info if not set
+ loglevel = "info"
+
+ # Log mode  could be "file/console" if console have been selected
+ # the content for the main snmpcollector.log and http_access.log will 
+ # be writen in stdout 
+ # could be set also with  SNMPCOL_GENERAL_LOG_MODE env var
+ log_mode = "file"
 
  ############################
  # DataBase Config
  ############################
 
 [database]
-#type sets the sql backend
-#valid values sqlite3,mysql
+# type sets the sql backend
+# valid values sqlite3,mysql
+# could be set also with SNMPCOL_DATABASE_DRIVER_TYPE default sqlite3
  type = "sqlite3"
+
 # these parameters are only for mysql (use mysql_setup.sql before)
+# could be set also with SNMPCOL_DATABASE_SERVER_HOST env var default localhost
 # host = 127.0.0.1:3306
+
+# user  Username to connect into DB (apply only to mysql/postgresql)
+# could be set also with SNMPCOL_DATABASE_USERNAME env var
 # user = "snmpcoluser"
+
+# password Password to connect into DB (apply only to mysql/postgresql)
+# could also be set with SNMPCOL_DATABASE_PASSWORD env var
 # password = "snmpcolpass"
+
 # name sets the database name
+# could also be set with SNMPCOL_DATABASE_NAME  env var
  name = "snmpcollector"
-#sqllogfile sets the name for a file in the log/ directory where sql backend will write all SQL transactions
-#sqllogfile = "sql.log"
- # debug adds extra verbosity to the SQL log
+
+
+# Log mode  could be "none/file/console" 
+# if console have been selected all the SQL queries  will be writen into stdout 
+# if file queries will be written in the logdir with name "sqllogfile" parameter if set or "sql.log" if not set 
+# could be set also with  SNMPCOL_DATABASE_LOG_MODE env var
+log_mode = "none"
+
+# sqllogfile sets the name for a file in the log/ directory where sql backend will write all SQL transactions
+# could also be set with SNMPCOL_DATABASE_SQL_LOG_FILE env var 
+# sqllogfile = "mysql.log"
+
+# debug adds extra verbosity to the SQL log
+# could also be set with SNMPCOL_DATABASE_SQL_DEBUG env var
  debug = false
 
 
@@ -57,15 +95,24 @@
 # *gc.gc_per_interval
 
 [selfmon]
- #enable true/false enable/disable self monitoring
+ # enable true/false enable/disable self monitoring
+ # could also be set with SNMPCOL_SELFMON_ENABLED env var
  enabled = true
- #send data Frequency
+
+ # send data Frequency
+ # could also be set with SNMPCOL_SELFMON_FREQ env var
  freq = 60
- #prefix for measurement naming
+
+ # prefix for measurement naming
+ # could also be set with SNMPCOL_SELFMON_PREFIX env var
  prefix = ""
- #inherit device tags
+ 
+ # inherit device tags
+ # could also be set with SNMPCOL_SELFMON_INHERIT_DEVICE_TAGS env var
  inheritdevicetags = true
- #adds extra tags to the measurement config should be set as a csv - tag=value1,tag2=value2,...,tagN=valN
+
+ # adds extra tags to the measurement config should be set as a csv - tag=value1,tag2=value2,...,tagN=valN
+ # could also be set with SNMPCOL_SELFMON_EXTRATAGS env va
  extratags = [ "instance=snmpcollector01" ]
 
 ############################
@@ -73,10 +120,19 @@
 ############################
 
 [http]
- #port where webserver will listen waiting for connections
- port   = 8090
- #Admin credentials to access to the SnmpCollector agent
+ # listen where webserver will listen waiting for connections
+ # could also be set with SNMPCOL_HTTP_LISTEN  env var
+ listen   = ":8090"
+ # NOTE: port = 8090 still usable option but DEPRECATED!!
+
+ # Admin user to log in the UI
+ # could also be set with SNMPCOL_HTTP_ADMIN_USER  env var
  adminuser = "adm1"
+
+ # Admin password to log in the UI
+ # could also be set with SNMPCOL_HTTP_ADMIN_PASSWORD  env var
  adminpassword = "adm1pass"
- #When more than one instance you will need customize the cookie_id allowing navigate to all instances
+
+ # When more than one instance you will need customize the cookie_id allowing navigate to all instances
+ # could also be set with SNMPCOL_HTTP_COOKIE_ID  env var
  cookieid ="my_instance_cookie"
