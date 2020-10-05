@@ -7,7 +7,9 @@
 * Added new DATABASE option "log_mode" (none/file/console) to enable or disable SQL logs and choose where to write (file/console)
 
 ### fixes
-* Fix #379,#409,#410
+* Fix #379,#409,#410,#442
+* Fixed lodash vulnerabily, bump to 4.17.19
+* Fixed jquery vulnerability, Bump from 3.0.0 to 3.5.0
 
 ### breaking changes
 

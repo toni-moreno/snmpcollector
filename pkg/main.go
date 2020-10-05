@@ -200,22 +200,28 @@ func main() {
 	writePIDFile()
 	//Init BD config
 	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGABRT, syscall.SIGINT)
 	go func() {
-		select {
-		case sig := <-c:
-			switch sig {
-			case syscall.SIGTERM:
-				log.Infof("Received TERM signal")
-				agent.End()
-				log.Infof("Exiting for requested user SIGTERM")
-				os.Exit(1)
-			case syscall.SIGHUP:
-				log.Infof("Received HUP signal")
-				agent.ReloadConf()
-			}
+		for {
+			select {
+			case sig := <-c:
+				switch sig {
+				case syscall.SIGABRT, syscall.SIGINT:
+					log.Infof("Received %v signal: Forcing shutdown", sig)
+					os.Exit(1)
+				case syscall.SIGTERM:
+					log.Infof("Received %v signal: Trigger a ordered shutdown (could take some time)", sig)
+					agent.End()
+					log.Infof("Exiting for requested user: %v", sig)
+					os.Exit(1)
+				case syscall.SIGHUP:
+					log.Infof("Received HUP signal: Trigger a ordered reload (could take some time -- usually Max gathering time form all nodes --)")
+					agent.ReloadConf()
+				}
 
+			}
 		}
+
 	}()
 
 	agent.MainConfig.Database.InitDB()
