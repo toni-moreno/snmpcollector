@@ -1,11 +1,11 @@
-# v 0.8.1 ( Unreleased ) 
+# v 0.8.1 ( 2020-10-06 ) 
 ### New Features
 * Upgraded dependencies from dep to gomodules
 * Added config through environment vars ( docker friendly ),implements #420
 * Added new HTTP option "listen" as substitute for "port" ( still running but deprecated ).
 * Added new GENERAL option "log_mode" (file/console) to enable only main agent logs and http_access.log to be written in console. This option does not affect to the device runtime/debug logs that will be written in a file in the logdir with filename as the id of the device.
 * Added new DATABASE option "log_mode" (none/file/console) to enable or disable SQL logs and choose where to write (file/console)
-* New improved Dockerfile and now docker image could be built from Makefile.docker
+* New improved Dockerfile (now running as non root user) and now docker image could be built from Makefile.docker
 
 ### fixes
 * Fix #379,#409,#410,#442
