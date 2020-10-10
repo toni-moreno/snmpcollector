@@ -303,7 +303,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 	var errors int64
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
-		m.Debugf("received SNMP  pdu:%+v", pdu)
+		m.Debugf("DEBUG pdu [%+v] || Value type %T [%x]", pdu, pdu.Value, pdu.Type)
 		gathered++
 		if pdu.Value == nil {
 			m.Warnf("no value retured by pdu :%+v", pdu)
@@ -467,7 +467,7 @@ func (m *Measurement) SnmpGetData() (int64, int64, int64, error) {
 		}
 
 		for _, pdu := range pkt.Variables {
-			m.Debugf("DEBUG pdu:%+v", pdu)
+			m.Debugf("DEBUG pdu [%+v] || Value type %T [%x] ", pdu, pdu.Value, pdu.Type)
 			if pdu.Value == nil {
 				errs++
 				continue

@@ -1,3 +1,13 @@
+# v 0.8.2 ( unreleased ) 
+### New Features
+* Added snmpmetric unit tests
+
+### fixes
+* Fixed  #446
+
+### breaking changes
+
+
 # v 0.8.1 ( 2020-10-06 ) 
 ### New Features
 * Upgraded dependencies from dep to gomodules
@@ -14,7 +24,8 @@
 
 ### breaking changes
 
-* no longer supported "-httpPort" command line parameter use "-httpListen" instead (still supported but deprecated Port option at config file)  
+* no longer supported "-httpPort" command line parameter use "-httpListen" instead (still supported but deprecated Port option at config file) 
+* DOCKER IMAGE upgrade needs for previous ownership change to UID/GID=472 on all its persistent files/volumes 
 
 # v 0.8.0 ( 2018-11-05) 
 ### New Features
