@@ -12,18 +12,22 @@ require (
 	github.com/go-sql-driver/mysql v1.4.0
 	github.com/go-xorm/core v0.6.0
 	github.com/go-xorm/xorm v0.7.1
+	github.com/google/go-cmp v0.2.0
+	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/influxdata/influxdb v1.7.0
 	github.com/influxdata/platform v0.0.0-20181110005748-2f8893f5d5e3 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/sirupsen/logrus v1.2.0
+	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
+	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/soniah/gosnmp v1.16.0
 	github.com/spf13/cast v1.3.0 // indirect
 	github.com/spf13/viper v1.2.1
-	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	golang.org/x/crypto v0.0.0-20181106171534-e4dc69e5b2fd // indirect
 	golang.org/x/net v0.0.0-20181108082009-03003ca0c849 // indirect
-	google.golang.org/appengine v1.3.0 // indirect
+	golang.org/x/sys v0.0.0-20191020152052-9984515f0562 // indirect
 	gopkg.in/ini.v1 v1.39.0 // indirect
 	gopkg.in/macaron.v1 v1.3.1
+	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
