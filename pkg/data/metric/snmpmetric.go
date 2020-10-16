@@ -577,11 +577,58 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.log.Errorf("WARNING ON SNMPMETRIC ( %s ): You are using version >=0.8 version without database upgrade: you should upgrade the DB by executing this SQL on your database \"update snmp_metric_cfg set Conversion=3 where datasrctype='OCTETSTRING';\", to avoid this message ", s.cfg.ID)
 			fallthrough
 		case config.STRING:
+			s.Compute = func(arg ...interface{}) {
+			}
 			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 				s.CookedValue = snmp.PduVal2str(pdu)
 				s.CurTime = now
+				s.Compute()
 				s.Valid = true
 			}
+			//check if trimming needed
+			if len(s.cfg.ExtraData) > 0 {
+				if s.cfg.ExtraData == "trimspace" {
+					s.Compute = func(arg ...interface{}) {
+						s.CookedValue = strings.TrimSpace(s.CookedValue.(string))
+					}
+					break
+				}
+				//https://regex101.com/r/55riOI/1/
+				var re = regexp.MustCompile(`([^\(]*)\(([^\)]*)\)$`)
+				if !re.MatchString(s.cfg.ExtraData) {
+					s.log.Errorf("Error on get Trim Config for OctecString with config %s", s.cfg.ExtraData)
+					break
+				}
+
+				res := re.FindStringSubmatch(s.cfg.ExtraData)
+				//s.log.Debugf("REGEXP: %+v", res)
+				if len(res) < 3 {
+					s.log.Errorf("Error on get Trim Config for OctecString got %v", res)
+					break
+				}
+				function := res[1]
+				args := strings.Trim(res[2], "'\"") //removed unneded quotes if arguments enclosed on "" or ''
+				s.log.Debugf("Trim type [%s] with args [%s]", function, args)
+				switch function {
+				case "trimspace":
+					s.Compute = func(arg ...interface{}) {
+						s.CookedValue = strings.TrimSpace(s.CookedValue.(string))
+					}
+				case "trim":
+					s.Compute = func(arg ...interface{}) {
+						s.CookedValue = strings.Trim(s.CookedValue.(string), args)
+					}
+				case "trimleft":
+					s.Compute = func(arg ...interface{}) {
+						s.CookedValue = strings.TrimLeft(s.CookedValue.(string), args)
+					}
+				case "trimright":
+					s.Compute = func(arg ...interface{}) {
+						s.CookedValue = strings.TrimRight(s.CookedValue.(string), args)
+					}
+				}
+			}
+
 		default:
 			s.log.Errorf("WARNING ON SNMPMETRIC ( %s ): Invalid conversion mode from OCTETSTRING to %s", s.cfg.ID, s.cfg.Conversion.GetString())
 			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
