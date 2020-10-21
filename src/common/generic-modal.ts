@@ -1,11 +1,11 @@
 import { Component, Input, Output, Pipe, PipeTransform, ViewChild, EventEmitter } from '@angular/core';
-import { FormGroup,FormControl } from '@angular/forms';
+import { FormGroup, FormControl } from '@angular/forms';
 import { ModalDirective } from 'ngx-bootstrap';
 
 
 @Component({
-    selector: 'test-modal',
-    template: `
+  selector: 'test-modal',
+  template: `
       <div bsModal #childModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
@@ -25,17 +25,25 @@ import { ModalDirective } from 'ngx-bootstrap';
                 <div  *ngFor="let entry of myObject | objectParser">
                   <dl class="dl-horizontal" *ngIf="entry.value !='' && entry.value != null">
                     <dt>{{entry.key}} <label *ngIf="isArray(entry.value)" class="label label-primary" style="display: inline-table; margin:0px">{{ entry.value.length}}</label></dt>
-                    <dd *ngIf="!isArray(entry.value)">
+                    <dd *ngIf="!isArray(entry.value) && !isObject(entry.value)">
                       {{entry.value}}
                     </dd>
+                    <ng-container *ngIf="isObject(entry.value) && !isArray(entry.value)">
+                      <ng-container *ngIf="entry.value.multi">
+                      <dd *ngFor="let multi of entry.value.multi | objectParser">
+                      {{multi.key}} - {{multi.value}}
+                      </dd>
+                       </ng-container>
+                    </ng-container>
                     <div *ngIf="isArray(entry.value)" style="margin-bottom:10px">
                       <div *ngFor="let val of entry.value; let i = index">
                         <div *ngIf="isObject(val)">
                           <dd *ngIf="val.Report != null" [ngClass]="reportMetricStatus[val.Report]?.class">{{val?.ID}} <i [ngClass]="reportMetricStatus[val.Report]?.icon"></i>
-                          <dd *ngIf="val.Report == null">{{val.TagID}} - {{val.Alias}}</dd>
+                          <dd *ngIf="val.Report == null && !val.Label">{{val.TagID}} - {{val.Alias}}</dd>
+                          <dd *ngIf="!val.Report && val.Label"> {{val.Label}} - {{val.GetMode}} </dd>
                         </div>
                         <div *ngIf="!isObject(val)">
-                          <dd> {{val}}</dd>
+                          <dd> {{val | json}}</dd>
                         </div>
                       </div>
                     </div>
@@ -56,22 +64,22 @@ import { ModalDirective } from 'ngx-bootstrap';
 
 export class GenericModal {
   @ViewChild('childModal') public childModal: ModalDirective;
-  @Input() titleName : any;
+  @Input() titleName: any;
   @Input() customMessage: string;
   @Input() showValidation: boolean;
   @Input() textValidation: string;
   @Input() customMessageClass: string;
   @Input() controlSize: boolean;
 
-  @Output() public validationClicked:EventEmitter<any> = new EventEmitter();
+  @Output() public validationClicked: EventEmitter<any> = new EventEmitter();
 
-  public validationClick(myId: string):void {
+  public validationClick(myId: string): void {
     this.validationClicked.emit(myId);
   }
 
   constructor() { }
   myObject: any = null;
-  empty : any = false;
+  empty: any = false;
 
   public reportMetricStatus: Array<Object> = [
     { value: 0, name: 'Never Report', icon: 'glyphicon glyphicon-remove-circle', class: 'text-danger' },
@@ -79,19 +87,19 @@ export class GenericModal {
     { value: 2, name: 'Report if not zero', icon: 'glyphicon glyphicon-ban-circle', class: 'text-warning' }
   ];
 
-  parseObject( myObject : any){
+  parseObject(myObject: any) {
     this.myObject = myObject;
     this.empty = (Object.keys(myObject).length > 1);
     this.childModal.show();
   }
 
-  isArray (myObject) {
+  isArray(myObject) {
     return myObject instanceof Array;
   }
 
-  isObject (myObject) {
-  return typeof myObject === 'object'
-}
+  isObject(myObject) {
+    return typeof myObject === 'object'
+  }
 
 
   hide() {

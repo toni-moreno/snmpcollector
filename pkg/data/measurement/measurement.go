@@ -2,8 +2,9 @@ package measurement
 
 import (
 	"fmt"
-
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gosnmp/gosnmp"
@@ -37,7 +38,7 @@ type Measurement struct {
 	cfg              *config.MeasurementCfg
 	ID               string
 	MName            string
-	TagName          string
+	TagName          []string
 	MetricTable      *MetricTable
 	snmpOids         []string
 	OidSnmpMap       map[string]*metric.SnmpMetric `json:"-"` //snmpMetric mapped with real OID's
@@ -53,6 +54,7 @@ type Measurement struct {
 	DisableBulk      bool                                `json:"-"`
 	GetData          func() (int64, int64, int64, error) `json:"-"`
 	Walk             func(string, gosnmp.WalkFunc) error `json:"-"`
+	MultiIndexMeas   []*Measurement
 }
 
 //New  creates object with config , log + goSnmp client
@@ -82,6 +84,7 @@ func (m *Measurement) Init() error {
 		m.GetData = m.SnmpWalkData
 	}
 
+	// If GetMode is multiindex, we can reuse a simple measurement to init each one and get all funcions...?
 	switch {
 	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
 		m.Walk = m.snmpClient.Walk
@@ -89,10 +92,24 @@ func (m *Measurement) Init() error {
 		m.Walk = m.snmpClient.BulkWalk
 	}
 
+	if m.cfg.GetMode == "indexed_multiple" {
+		// Create, init and store the var into base measurement
+		err := m.InitMultiIndex()
+		if err != nil {
+			return err
+		}
+		// Load all dependencies and load base measurement
+		err = m.LoadMultiIndex()
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	//loading all posible values in 	m.AllIndexedLabels
-	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" {
+	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" || m.cfg.GetMode == "indexed_mit" {
 		m.idxPosInOID = len(m.cfg.IndexOID)
-		m.TagName = m.cfg.IndexTag
+		m.TagName = append([]string{}, m.cfg.IndexTag)
 		if (m.cfg.GetMode) == "indexed_it" {
 			m.idx2PosInOID = len(m.cfg.TagOID)
 		}
@@ -113,6 +130,228 @@ func (m *Measurement) Init() error {
 	 * ******************************/
 	m.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the walk device] | OID=>Metric MAP")
 	m.MetricTable = NewMetricTable(m.cfg, m.log, m.CurIndexedLabels)
+	return nil
+}
+
+// InitMultiIndex initializes measurements from MultiIndexCfg
+func (m *Measurement) InitMultiIndex() error {
+
+	// Create an array of measurements, based on length of indexed_multiple:
+
+	multimeas := []*Measurement{}
+
+	// Go over all defined measuremens in MultiIndex...
+	for _, v := range m.cfg.MultiIndexCfg {
+		// Create a new measurement cfg from multiindex fields...
+		mcfg := config.MeasurementCfg{
+			ID:             m.ID + ".." + v.Label,
+			Name:           v.Label,
+			GetMode:        v.GetMode,
+			IndexOID:       v.IndexOID,
+			TagOID:         v.TagOID,
+			MultiTagOID:    v.MultiTagOID,
+			IndexTag:       v.IndexTag,
+			IndexTagFormat: v.IndexTagFormat,
+			Description:    v.Description,
+			Fields:         m.cfg.Fields,
+			FieldMetric:    m.cfg.FieldMetric,
+		}
+
+		//create entirely new measurement based on provided CFG
+		mm, err := New(&mcfg, m.log, m.snmpClient, m.DisableBulk)
+		if err != nil {
+			return err
+		}
+
+		//append it with order
+		multimeas = append(multimeas, mm)
+	}
+
+	// Save it in memory...
+	m.MultiIndexMeas = multimeas
+	return nil
+}
+
+// AddMultiFilter - initializes filter for each existin measurement defined in MultiIndexMeas
+func (m *Measurement) AddMultiFilter() {
+	for _, meas := range m.MultiIndexMeas {
+		meas.AddFilter(meas.FilterCfg, false)
+	}
+}
+
+// UpdateMultiFilter - updates filter for each existin measurement defined in MultiIndexMeas
+func (m *Measurement) UpdateMultiFilter() {
+	for _, meas := range m.MultiIndexMeas {
+		meas.UpdateFilter()
+	}
+}
+
+// BuildMultiIndexLabels - builds the multi index labels. Returns the CurIndexedLabels and TagName from processed result
+func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, error) {
+
+	// Declare array of MultiIndexFormat
+	allindex := MultiIndexFormatArray{}
+
+	// Start deep copy of defined indexed measurements
+	for i, mindex := range m.MultiIndexMeas {
+		ci := make(map[string]string)
+		// as CurIndexedLabels is a map, need to make a safe copy of its value in new map
+		for i, k := range mindex.CurIndexedLabels {
+			ci[i] = k
+		}
+		iformat := &MultiIndexFormat{
+			CurIndexedLabels: ci,
+			TagName:          mindex.TagName,
+			Index:            i,
+			DepDesc:          m.cfg.MultiIndexCfg[i].Dependency,
+			Label:            mindex.ID,
+		}
+		if len(iformat.DepDesc) > 0 {
+			err := iformat.GetDepMultiParams()
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+		allindex = append(allindex, iformat)
+	}
+
+	sort.Sort(MultiIndexFormatArray(allindex))
+
+	m.Debugf("Starting to process %d multiindex", len(allindex))
+
+	// Process dependencies | si: sort indexed | index: index info
+	for si, index := range allindex {
+		// Load on index Dependency all dependency params
+		m.Debugf("[%s] - GOT INDEX MULTIPARAMS --> %+v", index.Label, index.Dependency)
+
+		if index.Dependency != nil {
+			if index.Dependency.Index > len(allindex)-1 {
+				return nil, nil, fmt.Errorf("[%s] - Dependency is out of index range - %d [len: %d], read from %s", m.ID, index.Dependency.Index, len(allindex)-1, index.Label)
+			}
+			//Read the real id from dependency one, as it is orderered, it is guaranteed that it has already been processed
+			ri, err := allindex.GetDepIndex(index.Dependency.Index)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			//Check if the index is itself, just skip it
+			if si == ri {
+				m.Warnf("[%s] - Detected same IDX on dependency index, skipping it", index.Label)
+				continue
+			}
+
+			// Set CurIndexedLabels, ci: current index, cv: current value
+			for ci, cv := range index.CurIndexedLabels {
+				section := ci
+				if index.Dependency.Start != -1 {
+					section, err = sectionDotSlice(ci, index.Dependency.Start, index.Dependency.End)
+					if err != nil {
+						m.Warnf("[%] - SectionDotSlice Error: %s", index.Label, err)
+						return nil, nil, err
+					}
+				}
+				// check if section is found and split results by '|', dv : dependency value
+				if dv, ok := allindex[ri].CurIndexedLabels[section]; ok {
+					index.CurIndexedLabels[ci] = dv + "|" + cv
+				} else {
+					fill := ""
+					fillt := ""
+					switch index.Dependency.Strategy[1] {
+					case "SKIP":
+						delete(index.CurIndexedLabels, ci)
+					case "FILL":
+						if len(index.Dependency.Strategy) == 3 {
+							fillt = index.Dependency.Strategy[2]
+						}
+						fallthrough
+					default:
+						//fill need to be the number of retrieved tagNames
+						for i := 0; i < len(allindex[ri].TagName); i++ {
+							fill += fillt + "|"
+						}
+						index.CurIndexedLabels[ci] = fill + cv
+					}
+				}
+			}
+
+			// Set TagName
+			index.TagName = append(allindex[ri].TagName, index.TagName...)
+
+		} else {
+			m.Debugf("[%s] - has no dependency", index.Label)
+		}
+	}
+
+	// As the result is built with index, we can use a simply split(.) to mantain an array order
+	// Examples:
+	// s = strings.Split(m.cfg.MultiIndexResult ".")
+	// s = []string{"1", "2", "IDX{0}", "45", "IDX{1}", "4"}
+	// s = []string{"IDX{0}", "4", "IDX{1}", "5", "6"}
+	// s = []string{"IDX{0}"}
+
+	s := strings.Split(m.cfg.MultiIndexResult, ".")
+
+	resindex, suffix, err := BuildParseResults(allindex, s)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Start process of merge all generated IDX...
+	// Go over all indexes, start from the first and go over merging it
+	// Values will be stored as MultiIndexFormat, as it includes all indexes and tags...
+
+	// Exampple:
+	// [(1.1) = "TAG1A", (1.2) = "TAG1B"]
+	// [(2.1) = "TAG2A", (2.2) = "TAG2B"]
+
+	//RESULT:
+	// [(1.1.2.1)="TAG1A|TAG2A"]
+	// [(1.1.2.2)="TAG1A|TAG2B"]
+	// [(1.2.2.1)="TAG1B|TAG2A"]
+	// [(1.2.2.2)="TAG1B|TAG2B"]
+
+	// Exampple:
+	// [(1.1) = "TAG1A", (1.2) = "TAG1B"]
+	// [(2.1) = "TAG2A", (2.2) = "TAG2B"]
+	// [(3.1) = "TAG3A", (3.2) = "TAG3B"]
+
+	//RESULT:
+	// [(1.1.2.1.3.1)="TAG1A|TAG2A|TAG3A"]
+	// [(1.1.2.1.3.1)="TAG1A|TAG2A|TAG3B"]
+	// [(1.1.2.2.3.1)="TAG1A|TAG2B|TAG3A"]
+	// [(1.1.2.2.3.2)="TAG1A|TAG2B|TAG3B"]
+	// [(1.2.2.1.3.1)="TAG1B|TAG2A|TAG3A"]
+	// [(1.2.2.1.3.2)="TAG1B|TAG2A|TAG3B"]
+	// [(1.2.2.1.3.1)="TAG1B|TAG2B|TAG3A"]
+	// [(1.2.2.1.3.1)="TAG1B|TAG2B|TAG3B"]
+
+	// Merge process...
+	fresult, errmerge := MergeResults(resindex, suffix)
+	if errmerge != nil {
+		return nil, nil, errmerge
+	}
+	m.Debugf("Got final multiindex result index labels: %+v", fresult.CurIndexedLabels)
+	m.Debugf("Got final multiindex result tag names: %+v", fresult.TagName)
+
+	return fresult.CurIndexedLabels, fresult.TagName, nil
+}
+
+// LoadMultiIndex loads the multiindex with all attached measurements
+func (m *Measurement) LoadMultiIndex() error {
+
+	// Load MultiIndex labels based on dependencies
+	mil, tag, err := m.BuildMultiIndexLabels()
+	if err != nil {
+		return err
+	}
+
+	// Finally, set up base measurement
+	m.TagName = tag
+	m.AllIndexedLabels = mil
+	m.CurIndexedLabels = mil
+	m.MetricTable = NewMetricTable(m.cfg, m.log, mil)
+
+	m.InitBuildRuntime()
 	return nil
 }
 
@@ -146,17 +385,54 @@ func (m *Measurement) InitBuildRuntime() {
 
 }
 
-// AddFilter attach a filtering process to the measurement
-func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
+// CheckInitFilter loads measurement filter on measurement if name/label is matched
+func (m *Measurement) CheckInitFilter(f *config.MeasFilterCfg) (bool, bool) {
+	// check if filter must be applied on base measurement
+	if m.cfg.GetMode != "value" && f.IDMeasurementCfg == m.ID {
+		m.FilterCfg = f
+		return true, false
+	}
+	// check if filter must be applied on multi index
+	if m.cfg.GetMode == "indexed_multiple" {
+		for _, mi := range m.MultiIndexMeas {
+			// to be unique, multiple filter is defined as base<ID>..index<ID>
+			if f.IDMeasurementCfg == mi.ID {
+				mi.FilterCfg = f
+				return true, true
+			}
+		}
+	}
+	return false, false
+}
+
+// AddFilter attach a filtering process to the measurement, but it is not initialized
+func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool) error {
 	var err error
 	if m.cfg.GetMode == "value" {
 		return fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
 	}
-	if f == nil {
+
+	// If multi, all multi indexes must be reloaded and reload main measurement
+	if multi {
+		m.AddMultiFilter()
+		err := m.LoadMultiIndex()
+		if err != nil {
+			return err
+		}
+	}
+
+	// If multi and the current measurement doesn't have any filter to be applied, just skip it
+	if m.FilterCfg == nil {
+		if multi {
+			m.Infof("No filter on base base measurement, skipping %s", m.cfg.ID)
+			return err
+		}
 		return fmt.Errorf("Error invalid  NIL  filter on measurment %s ", m.cfg.ID)
 	}
 
-	m.FilterCfg = f
+	// Filter is already set on check and init filter
+	// m.FilterCfg = f
+
 	switch m.FilterCfg.FType {
 	case "file":
 		m.Filter = filter.NewFileFilter(m.FilterCfg.FilterName, m.FilterCfg.EnableAlias, m.log)
@@ -209,7 +485,6 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg) error {
 // UpdateFilter reload indexed with filters
 func (m *Measurement) UpdateFilter() (bool, error) {
 	var err error
-	//var newfilterlabels map[string]string
 
 	if m.cfg.GetMode == "value" {
 		return false, fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
@@ -217,13 +492,26 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 
 	//fist update  all indexed--------
 	m.Infof("Re Loading Indexed values")
-	il, err2 := m.loadIndexedLabels()
 
-	if err2 != nil {
-		m.Errorf("Error while trying to reload Indexed Labels for baseOid %s : ERROR: %s", m.cfg.IndexOID, err)
-		return false, err
+	// if its indexed_multiple, we need to update internal filters and create the new metric table on based one
+	if m.cfg.GetMode == "indexed_multiple" {
+		m.UpdateMultiFilter()
+		il, _, err := m.BuildMultiIndexLabels()
+		if err != nil {
+			return false, err
+		}
+		m.AllIndexedLabels = il
+	} else {
+		il, err2 := m.loadIndexedLabels()
+
+		if err2 != nil {
+			m.Errorf("Error while trying to reload Indexed Labels for baseOid %s : ERROR: %s", m.cfg.IndexOID, err)
+			return false, err
+		}
+		m.AllIndexedLabels = il
 	}
-	m.AllIndexedLabels = il
+
+	// Reload measurement indexes
 	if m.Filter == nil {
 		m.Debugf("There is no filter configured in this measurement %s", m.cfg.ID)
 		//check if curindexed different of AllIndexed
@@ -315,7 +603,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 			processed++
 			metr.SetRawData(pdu, now)
 		} else {
-			m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v", pdu.Name, m.cfg.ID)
+			m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v, %v", pdu.Name, m.cfg.ID, m.OidSnmpMap)
 		}
 		return nil
 	}
@@ -401,7 +689,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 				m.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 			}
 		}
-	case "indexed", "indexed_it":
+	case "indexed", "indexed_it", "indexed_mit", "indexed_multiple":
 		for key, val := range m.CurIndexedLabels {
 			parameters := make(map[string]interface{})
 			//copy of the catalog map
@@ -541,7 +829,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		m.Errorf("LOADINDEXEDLABELS - SNMP WALK error: %s", err)
 		return allindex, err
 	}
-	if m.cfg.GetMode != "indexed_it" {
+	if m.cfg.GetMode == "indexed" {
 		for k, v := range allindex {
 			allindex[k] = formatTag(m.log, m.cfg.IndexTagFormat, map[string]string{"IDX1": k, "VAL1": v}, "VAL1")
 		}
@@ -554,38 +842,89 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		allindexOrigin[k] = v
 	}
 
-	//initialize allindex again
-	allindex = make(map[string]string)
-	m.curIdxPos = m.idx2PosInOID
-	err = m.Walk(m.cfg.TagOID, setRawData)
-	if err != nil {
-		m.Errorf("SNMP WALK over IndexOID error: %s", err)
-		return allindex, err
-	}
-
-	//At this point we have Indirect indexes on allindex_origin and values on allindex
-	// Example:
-	// allindexOrigin["1"]="9008"
-	//    key1="1"
-	//    val1="9008"
-	// allindex["9008"]="eth0"
-	//    key2="9008"
-	//    val2="eth0"
-	m.Debugf("ORIGINAL INDEX: %+v", allindexOrigin)
-	m.Debugf("INDIRECT  INDEX : %+v", allindex)
-
-	allindexIt := make(map[string]string)
-	for key1, val1 := range allindexOrigin {
-		if val2, ok := allindex[val1]; ok {
-			allindexIt[key1] = formatTag(m.log, m.cfg.IndexTagFormat, map[string]string{"IDX1": key1, "VAL1": val1, "IDX2": val1, "VAL2": val2}, "VAL2")
-		} else {
-			m.Warnf("There is not valid index : %s on TagOID : %s", val1, m.cfg.TagOID)
+	switch m.cfg.GetMode {
+	case "indexed_it":
+		//initialize allindex again
+		allindex = make(map[string]string)
+		m.curIdxPos = m.idx2PosInOID
+		err = m.Walk(m.cfg.TagOID, setRawData)
+		if err != nil {
+			m.Errorf("SNMP WALK over IndexOID error: %s", err)
+			return allindex, err
 		}
-	}
-	//-----------------------------------
 
-	if len(allindexOrigin) != len(allindexIt) {
-		m.Warnf("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexIt)
+		//At this point we have Indirect indexes on allindex_origin and values on allindex
+		// Example:
+		// allindexOrigin["1"]="9008"
+		//    key1="1"
+		//    val1="9008"
+		// allindex["9008"]="eth0"
+		//    key2="9008"
+		//    val2="eth0"
+		m.Debugf("ORIGINAL INDEX: %+v", allindexOrigin)
+		m.Debugf("INDIRECT  INDEX : %+v", allindex)
+
+		allindexIt := make(map[string]string)
+		for key1, val1 := range allindexOrigin {
+			if val2, ok := allindex[val1]; ok {
+				allindexIt[key1] = formatTag(m.log, m.cfg.IndexTagFormat, map[string]string{"IDX1": key1, "VAL1": val1, "IDX2": val1, "VAL2": val2}, "VAL2")
+			} else {
+				m.Warnf("There is not valid index : %s on TagOID : %s", val1, m.cfg.TagOID)
+			}
+		}
+
+		if len(allindexOrigin) != len(allindexIt) {
+			m.Warnf("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexIt)
+		}
+		return allindexIt, nil
+
+	case "indexed_mit":
+		//Make another copy of origin, we need to mantain always a base origin index
+		allindexRes := make(map[string]string, len(allindexOrigin))
+		for k, v := range allindexOrigin {
+			allindexRes[k] = v
+		}
+
+		// Go over all defined multipletagoid
+		for k, tagcfg := range m.cfg.MultiTagOID {
+			//initialize all index again
+			allindex = make(map[string]string)
+			//Store the last position to use it on allindex
+			m.curIdxPos = len(tagcfg.TagOID)
+			err = m.Walk(tagcfg.TagOID, setRawData)
+			if err != nil {
+				m.Errorf("SNMP WALK over IndexOID error: %s", err)
+				return allindex, err
+			}
+			// Create a base map, we need it to mantain the key1 as the first index, so we can reference it back to as the core index
+			allindexIt := make(map[string]string)
+			// Start logic of match
+			for key1, val1 := range allindexRes {
+				// As we only need the value to keep going on the different tables, we can create a custom check field if the index is not the same as original
+				// It is used on qos to get parent cfg oids
+				check := formatTag(m.log, tagcfg.IndexFormat, map[string]string{"IDX1": key1, "VAL1": val1}, "VAL1")
+				if val2, ok := allindex[check]; ok {
+					//Only apply formatTag based on the last index...
+					if k == len(m.cfg.MultiTagOID)-1 {
+						allindexIt[key1] = formatTag(m.log, m.cfg.IndexTagFormat, map[string]string{"IDX1": key1, "VAL1": val1, "IDX2": val1, "VAL2": val2}, "VAL2")
+						continue
+					}
+					allindexIt[key1] = val2
+				} else {
+					// Set debug due to large logs generated. This case is generic, so a not match can be normal
+					m.Debugf("[%d] - There is not valid index : %s on TagOID : %s", k, val1, tagcfg.TagOID)
+				}
+			}
+			allindexRes = allindexIt
+		}
+
+		if len(allindexOrigin) != len(allindexRes) {
+			m.Warnf("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexRes)
+		}
+
+		return allindexRes, nil
+
+	default:
+		return allindex, fmt.Errorf("Uknown provided getmode %s on measurement %s", m.cfg.GetMode, m.ID)
 	}
-	return allindexIt, nil
 }

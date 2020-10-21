@@ -5,13 +5,15 @@
 * Added Mock SnmpServer and measurements unit tests
 * Added [trim](https://github.com/toni-moreno/snmpcollector/wiki/Component:-SNMP-Metrics#about-octetstringhex-string) functions in octetstring based metrics (#405)
 * added HTTPS support 
+* Added new measurement types: multi-index and indirect multi tag to retrieve complex MIBs like [QoS](https://github.com/toni-moreno/snmpcollector/wiki/Example:-Cisco-QoS)
 
 ### fixes
 * Fixed  #446
 * Fixed  #405
+* Fixed  #398
 
 ### breaking changes
-
+* Measurement TagName property (only retrieved on runtime API) changed from `string` to `[]string`
 
 # v 0.8.1 ( 2020-10-06 ) 
 ### New Features

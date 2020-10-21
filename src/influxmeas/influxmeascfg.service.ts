@@ -40,6 +40,35 @@ export class InfluxMeasService {
             if (influxmeas) {
                 _.forEach(influxmeas,function(value,key){
                     console.log("FOREACH LOOP",value,key);
+                    if (value.GetMode == "indexed_mit") {
+                        if (value.MultiTagOID.length > 0 ) {
+                        value.TagOID = {multi: {}}
+                         for (let t in value.MultiTagOID) {
+                             value.TagOID.multi[t] = value.MultiTagOID[t].TagOID
+                         }
+                        }
+                    }
+                    if (value.GetMode == "indexed_multiple") {
+                        value.IndexOID = {multi: {}}
+                        value.TagOID = {multi: {}}
+                        value.IndexTag = {multi: {}}
+                        value.IndexTagFormat = {multi: {}}
+                        value.IndexAsValue = { multi: {}}
+                        for (let mm of value.MultiIndexCfg) {
+                            value.IndexOID.multi[mm.Label] = mm.IndexOID
+                            if (mm.GetMode == "indexed_mit") {
+                                console.log(mm.GetMode, mm.Label)
+                                for (let t in mm.MultiTagOID) {
+                                    value.TagOID.multi[mm.Label+"["+t+"]"] = mm.MultiTagOID[t].TagOID    
+                                } 
+                            } else {
+                                value.TagOID.multi[mm.Label] = mm.TagOID
+                            }
+                            value.IndexTag.multi[mm.Label] = mm.IndexTag
+                            value.IndexTagFormat.multi[mm.Label] = mm.IndexTagFormat
+                            value.IndexAsValue.multi[mm.Label] = mm.IndexAsValue ? mm.IndexAsValue : false
+                        }
+                    }
                     if(filter_s && filter_s.length > 0 ) {
                         console.log("maching: "+value.ID+ "filter: "+filter_s);
                         var re = new RegExp(filter_s, 'gi');

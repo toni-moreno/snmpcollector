@@ -5,12 +5,12 @@ export const InfluxMeasCfgComponentConfig: any =
       { title: 'ID', name: 'ID' },
       { title: 'Name', name: 'Name' },
       { title: 'GetMode', name: 'GetMode' },
-      { title: 'Index OID', name: 'IndexOID' },
-      { title: 'Tag OID', name: 'TagOID' },
-      { title: 'Index Tag', name: 'IndexTag' },
-      { title: 'Index Tag Format', name: 'IndexTagFormat' },
-      { title: 'Index as Value', name: 'IndexAsValue' },
-      { title: 'Metric Fields', name: 'Fields'}
+      { title: 'Index OID', name: 'IndexOID', transform: 'multi' },
+      { title: 'Tag OID', name: 'TagOID', transform: 'multi' },
+      { title: 'Index Tag', name: 'IndexTag', transform: 'multi' },
+      { title: 'Index Tag Format', name: 'IndexTagFormat', transform: 'multi' },
+      { title: 'Index as Value', name: 'IndexAsValue', transform: 'multi' },
+      { title: 'Metric Fields', name: 'Fields', transform: "metrics"}
     ],
     'slug' : 'measurementcfg'
   }; 

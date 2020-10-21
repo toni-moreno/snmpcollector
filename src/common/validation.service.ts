@@ -2,6 +2,7 @@ export class ValidationService {
     static getValidatorErrorMessage(validatorName: string, validatorValue?: any) {
         let config = {
             'required': 'Required',
+            'notEmpty': 'Required',
             'invalidCreditCard': 'Is invalid credit card number',
             'invalidEmailAddress': 'Invalid email address',
             'invalidPassword': 'Invalid password. Password must be at least 6 characters long, and contain a number.',
@@ -182,6 +183,14 @@ export class ValidationService {
                 return { 'invalidFQDNHost': true };
             }
         }
+    }
+
+    static notEmpty(control) {
+        if (control.value) {
+            console.log("VALUEEE", control.value)
+        }
+        return {'notEmpty': true}
+        
     }
 
 

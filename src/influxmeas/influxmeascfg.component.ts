@@ -108,31 +108,240 @@ export class InfluxMeasCfgComponent {
           value = tmpform[entry.ID];
         }
       }
+
+      console.log(entry.ID)
+      if (entry.ID == "MultiTagOID") {
+        this.influxmeasForm.addControl(entry.ID, entry.defVal);
+        // if it has already values, load them passing it to function - addMultiIndex
+        if (value == tmpform[entry.ID]) {
+          for (let val of value) {
+            let p = this.addMultiTagOID(val)
+            this.influxmeasForm.get("MultiTagOID").push(p)
+
+          }
+        }
+        continue
+      }
+
       //Set different controls:
+      // if MultiIndex, the added control must be an special FormArray, not FormControl and we have to map its values first
+      if (entry.ID == "MultiIndexCfg") {
+        this.influxmeasForm.addControl(entry.ID, entry.defVal);
+        // if it has already values, load them passing it to function - addMultiIndex
+        if (value == tmpform[entry.ID]) {
+          for (let val of value) {
+            let p = this.addMultiIndex(val.GetMode, val)
+            this.influxmeasForm.get("MultiIndexCfg").push(p)
+
+          }
+        }
+        
+        continue
+      }
       this.influxmeasForm.addControl(entry.ID, new FormControl(value, entry.Validators));
     }
   }
 
-  setDynamicFields (field : any, override? : boolean) : void  {
-    //Saves on the array all values to push into formGroup
+  createDynamicFields(field: any, defVal : any = {} ) : any {
     let controlArray : Array<any> = [];
     console.log(field);
     switch (field) {
       case 'indexed_it':
-        controlArray.push({'ID': 'TagOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
+        controlArray.push({'ID': 'TagOID', 'defVal' : defVal["TagOID"] ?  defVal["TagOID"] : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
       case 'indexed':
-        controlArray.push({'ID': 'IndexOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
-        controlArray.push({'ID': 'IndexTag', 'defVal' : '', 'Validators' : Validators.required});
-        controlArray.push({'ID': 'IndexTagFormat', 'defVal' : ''});
-        controlArray.push({'ID': 'IndexAsValue', 'defVal' : 'false', 'Validators' : Validators.required});
+        controlArray.push({'ID': 'IndexOID', 'defVal' : defVal["IndexOID"] ? defVal["IndexOID"] : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
+        controlArray.push({'ID': 'IndexTag', 'defVal' : defVal["IndexTag"] ? defVal["IndexTag"] : '', 'Validators' : Validators.required});
+        controlArray.push({'ID': 'IndexTagFormat', 'defVal' : defVal["IndexTagFormat"] ? defVal["IndexTagFormat"] : ''});
+        controlArray.push({'ID': 'IndexAsValue', 'defVal' : defVal["IndexAsValue"] ? defVal["IndexAsValue"] : "false", 'Validators' : Validators.required});
       break;
+      case 'indexed_mit':
+        controlArray.push({'ID': 'IndexOID', 'defVal' : defVal["IndexOID"] ? defVal["IndexOID"] : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
+        controlArray.push({'ID': 'MultiTagOID', 'defVal' : this.builder.array([]), 'Validators': Validators.compose([ValidationService.notEmpty, Validators.required])});
+        controlArray.push({'ID': 'IndexTag', 'defVal' : defVal["IndexTag"] ? defVal["IndexTag"] : '', 'Validators' : Validators.required});
+        controlArray.push({'ID': 'IndexTagFormat', 'defVal' : defVal["IndexTagFormat"] ? defVal["IndexTagFormat"] : ''});
+        controlArray.push({'ID': 'IndexAsValue', 'defVal' : defVal["IndexAsValue"] ? defVal["IndexAsValue"] : "false", 'Validators' : Validators.required});
+        break
+      case 'indexed_multiple':
+        controlArray.push({'ID': 'MultiIndexResult', 'defVal': defVal["MultiIndexResult"], 'Validators': Validators.required});
+        controlArray.push({'ID': 'MultiIndexCfg', 'defVal' : this.builder.array([])});
       default:
         break;
     }
+    return controlArray
+  }
+
+  setDynamicFields (field : any, override?: boolean) : void  {
+    //Saves on the array all values to push into formGroup
+    let controlArray = this.createDynamicFields(field)
     //Reload the formGroup with new values saved on controlArray
     this.createDynamicForm(controlArray);
   }
 
+  get MultiIndexCfg(): FormArray {
+    return this.influxmeasForm.get("MultiIndexCfg") as FormArray
+  }
+
+  get MultiTagOID(): FormArray {
+    console.log("this.influxmeasform.get(MultiTagOID)", this.influxmeasForm.get("MultiTagOID"))
+    return this.influxmeasForm.get("MultiTagOID") as FormArray
+  }
+
+  MIMultiTagOID(i : string): FormArray {
+    console.log("this.influxmeasform.get(MultiTagOID)", this.influxmeasForm.get("MultiTagOID"))
+    return this.MultiIndexCfg.controls[i].get("MultiTagOID") as FormArray
+  }
+
+
+  addMIMultiTagOID(i: number, fieldArray?) {
+
+      //let p = this.createDynamicFields(getMode, fieldArray)
+      let bb = this.builder.group({})
+
+      // for (let entry of p) {
+      //   bb.addControl(entry.ID, new FormControl(entry.defVal, entry.Validators))
+      // }
+  
+      //Add special fields, label and description:
+      bb.addControl("TagOID", new FormControl(fieldArray ? fieldArray.TagOID : '',Validators.compose([ValidationService.OIDValidator, Validators.required])));
+      bb.addControl("IndexFormat", new FormControl(fieldArray ? fieldArray.IndexFormat : ''));
+      
+      // if (fieldArray) {
+      //   return bb
+      // }
+      console.log()
+      this.influxmeasForm.get("MultiIndexCfg").controls[i].get("MultiTagOID").push(bb)
+  }
+
+  getMIMultiTagOID(i: number) {
+    return this.influxmeasForm.get("MultiIndexCfg").controls[i].get("MultiTagOID")
+  }
+
+
+
+  // MULTI TAG OID
+  addMultiTagOID(fieldArray?) {
+    //let p = this.createDynamicFields(getMode, fieldArray)
+    let bb = this.builder.group({})
+
+    // for (let entry of p) {
+    //   bb.addControl(entry.ID, new FormControl(entry.defVal, entry.Validators))
+    // }
+
+    //Add special fields, label and description:
+    bb.addControl("TagOID", new FormControl(fieldArray ? fieldArray.TagOID : '',Validators.compose([ValidationService.OIDValidator, Validators.required])));
+    bb.addControl("IndexFormat", new FormControl(fieldArray ? fieldArray.IndexFormat : ''));
+    
+    if (fieldArray) {
+      return bb
+    }
+    this.influxmeasForm.get("MultiTagOID").push(bb);
+  }
+
+  removeTagOID(i: number) {
+    this.MultiTagOID.removeAt(i);
+  }
+
+  promoteTagOID(i: number) {
+    let p = this.MultiTagOID.at(i)
+    this.removeTagOID(i)
+    this.MultiTagOID.insert(i - 1, p)
+  }
+
+  demoteTagOID(i: number) {
+    let p = this.MultiTagOID.at(i)
+    this.removeTagOID(i)
+    this.MultiTagOID.insert(i + 1, p)
+  }
+
+  // MULTI INDEX - MULTI TAG OID
+  removeMITagOID(i: number, j: number) {
+    this.getMIMultiTagOID(i).removeAt(j);
+  }
+
+  promoteMITagOID(i: number, j:number) {
+    let p = this.getMIMultiTagOID(i).at(j)
+    this.removeMITagOID(i,j)
+    this.getMIMultiTagOID(i).insert(j - 1, p)
+  }
+
+  demoteMITagOID(i: number, j:number) {
+    let p = this.getMIMultiTagOID(i).at(j)
+    this.removeMITagOID(i,j)
+    this.getMIMultiTagOID(i).insert(j + 1, p)
+  }
+  
+
+
+  addMultiIndex(getMode: string, fieldArray?: any) {
+    console.log("GOT GETMODE", getMode)
+    let p = this.createDynamicFields(getMode, fieldArray)
+    let bb = this.builder.group({})
+
+    for (let entry of p) {
+      if (entry.ID == "MultiTagOID") {
+        bb.addControl(entry.ID, entry.defVal)
+        if (fieldArray) {
+        if (fieldArray.MultiTagOID.length > 0) {
+        for (let fa of fieldArray.MultiTagOID) {
+          let kk = this.builder.group({})
+    
+          //Add special fields, label and description:
+          kk.addControl("TagOID", new FormControl(fa ? fa.TagOID : '',Validators.compose([ValidationService.OIDValidator, Validators.required])));
+          kk.addControl("IndexFormat", new FormControl(fa ? fa.IndexFormat : ''));
+          bb.controls.MultiTagOID.push(kk)
+
+        }
+      }
+    } else {
+        let kk = this.builder.group({})
+        //Add special fields, label and description:
+        kk.addControl("TagOID", new FormControl(fieldArray ? fieldArray.TagOID : '',Validators.compose([ValidationService.OIDValidator, Validators.required])));
+        kk.addControl("IndexFormat", new FormControl(fieldArray ? fieldArray.IndexFormat : ''));
+        bb.controls.MultiTagOID.push(kk)
+      }
+        continue
+      }
+      bb.addControl(entry.ID, new FormControl(entry.defVal, entry.Validators))
+    }
+    //Add special fields, label and description:
+    bb.addControl("GetMode", new FormControl(getMode))
+    bb.addControl("Label", new FormControl(fieldArray ? fieldArray.Label : 'Label', Validators.required));
+    bb.addControl("Description", new FormControl(fieldArray ? fieldArray.Description : 'Description'));
+    bb.addControl("Dependency", new FormControl(fieldArray ? fieldArray.Dependency : ''))
+
+    if (fieldArray) {
+      return bb
+    }
+    console.log(bb)
+    this.influxmeasForm.get("MultiIndexCfg").push(bb);
+  }
+
+  removeMeas(i: number) {
+    this.MultiIndexCfg.removeAt(i);
+  }
+
+  promoteMeas(i: number) {
+    let p = this.MultiIndexCfg.at(i)
+    this.removeMeas(i)
+    this.MultiIndexCfg.insert(i - 1, p)
+  }
+
+  demoteMeas(i: number) {
+    let p = this.MultiIndexCfg.at(i)
+    this.removeMeas(i)
+    this.MultiIndexCfg.insert(i + 1, p)
+  }
+
+  getMultiLabels() {
+    let p = this.MultiIndexCfg.getRawValue()
+    let kk = []
+    for (let k in p) {
+      kk.push({ 'id': k, 'name': k + '|' + p[k].Label })
+    }
+    console.log(kk)
+    return kk
+  }
+ 
 
   onChangeMetricArray(id) {
 
@@ -190,6 +399,40 @@ export class InfluxMeasCfgComponent {
        }
     }
   }
+
+  tableCellParser (data: any, type: string) {
+    if (type === "multi") {
+      var test: any = '<table>';
+      if (data['multi']) {
+      for (var i in data['multi']) {
+          // declare val as value
+          let val = data['multi'][i]
+          // if empty, set up as "--"
+          if (val === ""){
+            val = "--"
+          } 
+          // if boolean, set up as icon
+          if (typeof val === "boolean") {
+            val = (val === true ? '<i class="glyphicon glyphicon-ok"></i>' : '<i class="glyphicon glyphicon-remove"></i>')
+          }
+          test +="<tr class='marg'>"
+          test +="<td><span class=\"badge badge-multi\">"+ i +"</span></td><td>"+ val;
+          test += "</td></tr>";
+      }
+      test += "</table>"
+      return test
+      }
+    }
+    if (type === "metrics") {        
+       test = '<table>'
+        for (var metric in data) {
+            test += '<tr><td style="padding-right: 20px"><i class="padd ' + this.reportMetricStatus[data[metric]['Report']]['icon'] + ' ' + this.reportMetricStatus[data[metric]['Report']]['class'] + ' displayinline"></td><td>'+ data[metric]['ID'] +'</td>'
+        }
+        test += "</table>";
+        return test
+      }
+      return data
+    }
 
   customActions(action : any) {
     switch (action.option) {
