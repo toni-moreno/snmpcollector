@@ -8,24 +8,26 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
+type MeasurementFieldReport struct {
+	ID     string
+	Report int
+}
+
 //MeasurementCfg the measurement configuration
 type MeasurementCfg struct {
-	ID             string `xorm:"'id' unique" binding:"Required"`
-	Name           string `xorm:"name" binding:"Required"`
-	GetMode        string `xorm:"getmode" binding:"In(value,indexed,indexed_it)"` //value ,indexed  (direct tag), indexed_it ( indirect_tag)
-	IndexOID       string `xorm:"indexoid"`                                       //only valid if Indexed (direct or indirect)
-	TagOID         string `xorm:"tagoid"`                                         //only valid if inderecta TAG indexeded
-	IndexTag       string `xorm:"indextag"`
-	IndexTagFormat string `xorm:"indextagformat"`
-	IndexAsValue   bool   `xorm:"'indexasvalue' default 0"`
-	Fields         []struct {
-		ID     string
-		Report int
-	} `xorm:"-"` //Got from MeasurementFieldCfg table
-	FieldMetric   []*SnmpMetricCfg `xorm:"-" json:"-"`
-	EvalMetric    []*SnmpMetricCfg `xorm:"-" json:"-"`
-	OidCondMetric []*SnmpMetricCfg `xorm:"-" json:"-"`
-	Description   string           `xorm:"description"`
+	ID             string                   `xorm:"'id' unique" binding:"Required"`
+	Name           string                   `xorm:"name" binding:"Required"`
+	GetMode        string                   `xorm:"getmode" binding:"In(value,indexed,indexed_it)"` //value ,indexed  (direct tag), indexed_it ( indirect_tag)
+	IndexOID       string                   `xorm:"indexoid"`                                       //only valid if Indexed (direct or indirect)
+	TagOID         string                   `xorm:"tagoid"`                                         //only valid if inderecta TAG indexeded
+	IndexTag       string                   `xorm:"indextag"`
+	IndexTagFormat string                   `xorm:"indextagformat"`
+	IndexAsValue   bool                     `xorm:"'indexasvalue' default 0"`
+	Fields         []MeasurementFieldReport `xorm:"-"` //Got from MeasurementFieldCfg table
+	FieldMetric    []*SnmpMetricCfg         `xorm:"-" json:"-"`
+	EvalMetric     []*SnmpMetricCfg         `xorm:"-" json:"-"`
+	OidCondMetric  []*SnmpMetricCfg         `xorm:"-" json:"-"`
+	Description    string                   `xorm:"description"`
 }
 
 //CheckComputedMetricVars check for computed metrics based on check if variable definition exist
