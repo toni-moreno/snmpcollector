@@ -2,9 +2,10 @@ package filter
 
 import (
 	"fmt"
+
 	"github.com/Knetic/govaluate"
+	"github.com/gosnmp/gosnmp"
 	"github.com/sirupsen/logrus"
-	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 )
 

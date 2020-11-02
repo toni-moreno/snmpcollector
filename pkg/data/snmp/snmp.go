@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gosnmp/gosnmp"
 	"github.com/sirupsen/logrus"
-	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 )
 
@@ -237,10 +237,10 @@ func GetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, Sys
 		}
 		switch pdu.Type {
 		case gosnmp.OctetString: //  like SysDescr
-			value := fmt.Sprintf("%s = %s", oidname, string(pdu.Value.([]byte)))
+			value := fmt.Sprintf("%s = %s", oidname, pdu.Value.(string))
 			tmpDesc = append(tmpDesc, value)
 		case gosnmp.TimeTicks: // like sysUpTime
-			seconds := uint32(pdu.Value.(uint)) / 100
+			seconds := uint32(pdu.Value.(uint32)) / 100
 			value := fmt.Sprintf("%s = %d seconds", oidname, seconds)
 			tmpDesc = append(tmpDesc, value)
 		}
@@ -285,32 +285,32 @@ func GetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, er
 		switch idx {
 		case 0: // SysDescr     .1.3.6.1.2.1.1.1.0
 			if pdu.Type == gosnmp.OctetString {
-				info.SysDescr = string(pdu.Value.([]byte))
+				info.SysDescr = pdu.Value.(string)
 			} else {
 				l.Warnf("Error on getting system %s SysDescr return data of type %v", id, pdu.Type)
 			}
 		case 1: // sysUpTime    .1.3.6.1.2.1.1.3.0
 			if pdu.Type == gosnmp.TimeTicks {
-				seconds := uint32(pdu.Value.(uint)) / 100
+				seconds := uint32(pdu.Value.(uint32)) / 100
 				info.SysUptime = time.Duration(seconds) * time.Second
 			} else {
 				l.Warnf("Error on getting system %s SysDescr return data of type %v", id, pdu.Type)
 			}
 		case 2: // SysContact   .1.3.6.1.2.1.1.4.0
 			if pdu.Type == gosnmp.OctetString {
-				info.SysContact = string(pdu.Value.([]byte))
+				info.SysContact = pdu.Value.(string)
 			} else {
 				l.Warnf("Error on getting system %s SysContact return data of type %v", id, pdu.Type)
 			}
 		case 3: // SysName      .1.3.6.1.2.1.1.5.0
 			if pdu.Type == gosnmp.OctetString {
-				info.SysName = string(pdu.Value.([]byte))
+				info.SysName = pdu.Value.(string)
 			} else {
 				l.Warnf("Error on getting system %s SysName return data of type %v", id, pdu.Type)
 			}
 		case 4: // SysLocation  .1.3.6.1.2.1.1.6.0
 			if pdu.Type == gosnmp.OctetString {
-				info.SysLocation = string(pdu.Value.([]byte))
+				info.SysLocation = pdu.Value.(string)
 			} else {
 				l.Warnf("Error on getting system %s SysLocation return data of type %v", id, pdu.Type)
 			}
@@ -326,30 +326,30 @@ func GetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, er
 // PduVal2str transform PDU data to string
 func PduVal2str(pdu gosnmp.SnmpPDU) string {
 	switch pdu.Type {
-		case gosnmp.Integer:
-			return strconv.FormatInt(PduVal2Int64(pdu), 10)
-		case gosnmp.Counter32:
-			return strconv.FormatInt(PduVal2Int64(pdu), 10)
-		case gosnmp.Gauge32:
-			return strconv.FormatInt(PduVal2Int64(pdu), 10)
-		case gosnmp.TimeTicks:
-			return strconv.FormatInt(PduVal2Int64(pdu), 10)
-		case gosnmp.Counter64:
-			return strconv.FormatInt(PduVal2Int64(pdu), 10)
-		case gosnmp.Uinteger32:
-			return strconv.FormatInt(PduVal2Int64(pdu), 10)
-		case gosnmp.OctetString:
-			return string(pdu.Value.([]byte))
-		case gosnmp.ObjectIdentifier:
-			return PduVal2OID(pdu)
-		case gosnmp.IPAddress:
-			ip, err := PduVal2IPaddr(pdu)
-			if err != nil {
-				mainlog.Errorf("Error on SNMP IPAddress decode on PDU[%#+v] Error: %s\n", pdu, err)
-			}
-			return ip
-		default:
-			return ""
+	case gosnmp.Integer:
+		return strconv.FormatInt(PduVal2Int64(pdu), 10)
+	case gosnmp.Counter32:
+		return strconv.FormatInt(PduVal2Int64(pdu), 10)
+	case gosnmp.Gauge32:
+		return strconv.FormatInt(PduVal2Int64(pdu), 10)
+	case gosnmp.TimeTicks:
+		return strconv.FormatInt(PduVal2Int64(pdu), 10)
+	case gosnmp.Counter64:
+		return strconv.FormatInt(PduVal2Int64(pdu), 10)
+	case gosnmp.Uinteger32:
+		return strconv.FormatInt(PduVal2Int64(pdu), 10)
+	case gosnmp.OctetString:
+		return pdu.Value.(string)
+	case gosnmp.ObjectIdentifier:
+		return PduVal2OID(pdu)
+	case gosnmp.IPAddress:
+		ip, err := PduVal2IPaddr(pdu)
+		if err != nil {
+			mainlog.Errorf("Error on SNMP IPAddress decode on PDU[%#+v] Error: %s\n", pdu, err)
+		}
+		return ip
+	default:
+		return ""
 	}
 }
 
@@ -357,10 +357,10 @@ func PduVal2str(pdu gosnmp.SnmpPDU) string {
 func PduValHexString2Uint(pdu gosnmp.SnmpPDU) (uint64, error) {
 	value := pdu.Value
 	if pdu.Type == gosnmp.OctetString {
-		result, err := strconv.ParseUint(string(value.([]byte)), 16, 64)
+		result, err := strconv.ParseUint(value.(string), 16, 64)
 		return result, err
 	}
-	return 0, fmt.Errorf("The PDU scanned is not and OctecString as expected")
+	return 0, fmt.Errorf("The PDU scanned is not and OctetString as expected")
 }
 
 // PduVal2OID transform PDU data to string
