@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gosnmp/gosnmp"
 	"github.com/sirupsen/logrus"
-	"github.com/soniah/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )

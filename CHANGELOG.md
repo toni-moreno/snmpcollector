@@ -1,6 +1,7 @@
 # v 0.8.2 ( unreleased ) 
 ### New Features
 * Added snmpmetric unit tests
+* Updated to last "gosnmp" v1.28.0 release
 
 ### fixes
 * Fixed  #446
