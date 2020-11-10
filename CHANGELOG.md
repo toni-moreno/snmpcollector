@@ -2,6 +2,7 @@
 ### New Features
 * Added snmpmetric unit tests
 * Updated to last "gosnmp" v1.28.0 release
+* Added Mock SnmpServer and measurements unit tests
 
 ### fixes
 * Fixed  #446
