@@ -218,9 +218,18 @@ func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id 
 		}
 	}
 	log.Infof("WEBUI: Server is running on %s...", listen)
-	err := http.ListenAndServe(listen, m)
-	if err != nil {
-		log.Errorf("Error en starting HTTP server: %s", err)
+
+	switch cfg.Protocol {
+	case "HTTP2", "http2", "https", "HTTPS":
+		err := http.ListenAndServeTLS(listen, cfg.CertFile, cfg.CertKey, m)
+		if err != nil {
+			log.Errorf("Error starting HTTPS server: %s", err)
+		}
+	default:
+		err := http.ListenAndServe(listen, m)
+		if err != nil {
+			log.Errorf("Error starting HTTP server: %s", err)
+		}
 	}
 }
 

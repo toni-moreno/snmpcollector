@@ -42,6 +42,9 @@ type SelfMonConfig struct {
 type HTTPConfig struct {
 	Port          int    `mapstructure:"port"  envconfig:"SNMPCOL_HTTP_PORT"`
 	Listen        string `mapstructure:"listen"  envconfig:"SNMPCOL_HTTP_LISTEN"`
+	Protocol      string `mapstructure:"protocol" envconfig:"SNMPCOL_HTTP_PROTOCOL"`
+	CertKey       string `mapstructure:"cert_key" envconfig:"SNMPCOL_HTTP_CERT_KEY"`
+	CertFile      string `mapstructure:"cert_file" envconfig:"SNMPCOL_HTTP_CERT_FILE"`
 	AdminUser     string `mapstructure:"adminuser" envconfig:"SNMPCOL_HTTP_ADMIN_USER"`
 	AdminPassword string `mapstructure:"adminpassword" envconfig:"SNMPCOL_HTTP_ADMIN_PASSWORD"`
 	CookieID      string `mapstructure:"cookieid" envconfig:"SNMPCOL_HTTP_COOKIE_ID"`
