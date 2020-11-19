@@ -62,7 +62,7 @@ func addDeviceOnline(mode string, id string, dev *config.SnmpDeviceCfg) error {
 		log.Debugf("ERROR  on query device : %s", err)
 		return err
 	}
-	log.Info("Device Ping ok : %#v", sysinfo)
+	log.Infof("Device Ping ok : %#v", sysinfo)
 	// Next updating database
 	switch mode {
 	case "add":

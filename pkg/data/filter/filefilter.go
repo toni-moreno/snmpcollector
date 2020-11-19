@@ -2,11 +2,12 @@ package filter
 
 import (
 	"errors"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 // FileFilter a filter loaded from a Config File placed in confDir (made for influxsnmp tool compatibility)
@@ -99,7 +100,7 @@ func (ff *FileFilter) Update() error {
 			}
 
 		default:
-			ff.log.Warnf("FILEFILTER [%s] wrong number of parameters in file  Lnum: %s num : %s line: %s", ff.FileName, lnum, len(f), line)
+			ff.log.Warnf("FILEFILTER [%s] wrong number of parameters in file  Lnum: %d num : %d line: %s", ff.FileName, lnum, len(f), line)
 		}
 	}
 	return nil
