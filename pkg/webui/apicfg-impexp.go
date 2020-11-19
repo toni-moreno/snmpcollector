@@ -72,7 +72,7 @@ func ImportDataFile(ctx *Context, uf UploadForm) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(file)
 	s := buf.String()
-	log.Debug("FILE DATA: %s", s)
+	log.Debugf("FILE DATA: %s", s)
 	ImportedData := impexp.ExportData{}
 	if err := json.Unmarshal(buf.Bytes(), &ImportedData); err != nil {
 		log.Errorf("Error in data to struct (json-unmarshal) procces: %s", err)

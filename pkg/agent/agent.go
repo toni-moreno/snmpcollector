@@ -337,7 +337,7 @@ func End() (time.Duration, error) {
 func ReloadConf() (time.Duration, error) {
 	start := time.Now()
 	if CheckAndSetReloadProcess() == true {
-		log.Warning("RELOADCONF: There is another reload process running while trying to reload at %s  ", start.String())
+		log.Warnf("RELOADCONF: There is another reload process running while trying to reload at %s  ", start.String())
 		return time.Since(start), fmt.Errorf("There is another reload process running.... please wait until finished ")
 	}
 
