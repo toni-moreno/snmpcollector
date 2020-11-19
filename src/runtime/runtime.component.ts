@@ -155,12 +155,13 @@ export class RuntimeComponent implements OnDestroy {
     filteredData.forEach((item: any) => {
       let flag = false;
       this.columns.forEach((column: any) => {
+        console.log(item)
         if (item[column.name] === null) {
           item[column.name] = '--'
         }
         if (item[column.name].toString().match(this.config.filtering.filterString)) {
           flag = true;
-        }
+        }  
       });
       if (flag) {
         tempArray.push(item);
@@ -285,7 +286,7 @@ export class RuntimeComponent implements OnDestroy {
             //Save it as array of arrays on finalColumns
             if (Object.keys(measKey['MetricTable']['Header']).length !== 0) {
               this.tmpcolumns = [];
-              if (measKey['TagName'] !== "") this.tmpcolumns.push({ title: measKey['TagName'], name: 'Index' });
+              if (measKey['TagName'] !== null) this.tmpcolumns.push({ title: measKey['TagName'], name: 'Index' });
               for (let fieldName in measKey['MetricTable']['Header']) {
                 let fdata = measKey['MetricTable']['Header'][fieldName]
                 let mtype =  measKey['MetricTable']['Header'][fieldName]["Type"]

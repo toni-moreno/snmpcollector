@@ -1,6 +1,7 @@
 package measurement
 
 import (
+	"strings"
 	"time"
 
 	"github.com/influxdata/influxdb/client/v2"
@@ -48,7 +49,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 			k.Valid = true
 		}
 
-	case "indexed", "indexed_it":
+	case "indexed", "indexed_it", "indexed_mit", "indexed_multiple":
 		var t time.Time
 		for idx, vIdx := range m.MetricTable.Row {
 			m.Debugf("generating influx point for indexed %s", idx)
@@ -57,7 +58,20 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 			for kT, vT := range hostTags {
 				Tags[kT] = vT
 			}
-			Tags[m.cfg.IndexTag] = idx
+			//Need to check that the lengt of stags is the same as m.tagName
+			// The split must be only applied on indexed_multiple measurements
+			stags := []string{idx}
+
+			if m.cfg.GetMode == "indexed_multiple" {
+				stags = strings.Split(idx, "|")
+				if len(stags) != len(m.TagName) {
+					m.Errorf("Tags %+v - doesn't match with generated tags %+v. Error in generating point", m.TagName, stags)
+					return metSent, metError, measSent, measError, ptarray
+				}
+			}
+			for k, v := range m.TagName {
+				Tags[v] = stags[k]
+			}
 			m.Debugf("IDX :%+v", vIdx)
 			Fields := make(map[string]interface{})
 			for _, vMtr := range vIdx.Data {

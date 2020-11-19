@@ -188,7 +188,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 		idx.SetVisible(mt.visible)
 		mt.AddRow("0", idx)
 
-	case "indexed", "indexed_it":
+	case "indexed", "indexed_it", "indexed_mit", "indexed_multiple":
 		//for each field an each index (previously initialized)
 		for key, label := range CurIndexedLabels {
 			idx := NewMetricRow()

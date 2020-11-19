@@ -33,12 +33,7 @@ label {
   padding-left: 10px;
 }
 
-input, button {
- // display: block;
-}
-
 select,input {
- //  float: right;
     display: inline;
     width: 320px;
     height: 27px;
@@ -63,7 +58,7 @@ select,input {
   font-weight: 300;
 }*/
 
-input:focus.ng-invalid,select:focus.ng-invalid, textarea:focus.ng-invalid {
+input:focus.ng-invalid,select:focus.ng-invalid, textarea:focus.ng-invalid:not(accordion) {
   box-shadow: 0 0 5px #a94442;
   border: 1px solid #a94442;
   border-left: 5px solid #a94442
@@ -94,7 +89,7 @@ input:focus.ng-valid, select:focus.ng-valid{
   border-left:5px solid #337ab7 !important;
 }
 
-.ng-invalid:not(form)  {
+.ng-invalid:not(form):not(accordion):not(.not-invalid)  {
   border-left: 5px solid #a94442; /* red */
 }
 
@@ -104,7 +99,7 @@ input:focus.ng-valid, select:focus.ng-valid{
   max-height: 70vh;
 }
 
-.ng-valid:not(pagination).ng-valid:not(form) {
+.ng-valid:not(pagination).ng-valid:not(.not-invalid).ng-valid:not(form) {
   border-left: 5px solid #42A948; /* green */
 }
 
@@ -119,4 +114,24 @@ input:focus.ng-valid, select:focus.ng-valid{
 control-messages {
   color: #E82C0C;
   margin: 6px 0;
+}
+
+
+.anim {
+  /* above styles */
+  animation: animation-name .3s ease-out forwards;
+}
+
+@keyframes animation-name {
+ 0% {
+   
+   opacity: 0;
+ }
+ 100% {
+   opacity: 1;
+ }
+}
+
+:host >>> .panel-heading.card-header{
+  background-color: #ffffff !important;
 }

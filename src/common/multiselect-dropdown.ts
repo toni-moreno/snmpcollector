@@ -22,6 +22,7 @@ const MULTISELECT_VALUE_ACCESSOR: any = {
 export interface IMultiSelectOption {
     id: any;
     name: string;
+    badge?: string;
 }
 
 export interface IMultiSelectSettings {
@@ -60,7 +61,11 @@ export class MultiSelectSearchFilter {
     selector: 'ss-multiselect-dropdown',
     providers: [MULTISELECT_VALUE_ACCESSOR],
     styles: [`
-		a { outline: none !important; }
+        a { outline: none !important; }
+        .badge-multi {
+            background-color: #92c0e8;
+            float: right;
+        }
 	`],
     template: `
         <div class="btn-group">
@@ -93,7 +98,8 @@ export class MultiSelectSearchFilter {
                     <a href="javascript:;" role="menuitem" tabindex="-1" (click)="setSelected($event, option)">
                         <input *ngIf="settings.checkedStyle == 'checkboxes'" type="checkbox" [checked]="isSelected(option)" />
                         <span *ngIf="settings.checkedStyle == 'glyphicon'" style="width: 16px;" [ngClass]="isSelected(option) ? ['glyphicon glyphicon-ok' , 'text-success'] : 'glyphicon'"></span>
-                        {{ option.name }}
+                        <span *ngIf="option.badge" style="padding-left: 10px"> | </span> 
+                        {{ option.name }} <span *ngIf="option.badge" class="badge badge-multi"> {{option.badge}} </span>
                     </a>
                 </li>
             </ul>

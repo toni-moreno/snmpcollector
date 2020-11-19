@@ -12,6 +12,17 @@ import { ElapsedSecondsPipe } from '../../../elapsedseconds.pipe';
       display: inline !important;
       padding-left: 5px;
     }
+    :host >>> .padd {
+      padding-right: 20px;
+    }
+    :host >>> .marg td {
+      padding-top: 5px;
+      white-space: nowrap;
+    }
+    :host >>> .badge-multi {
+      background-color: #92c0e8;
+      margin-right: 10px;
+  }
 `]
 })
 export class NgTableComponent {

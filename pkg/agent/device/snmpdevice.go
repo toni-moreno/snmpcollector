@@ -277,28 +277,34 @@ func (d *SnmpDevice) InitDevMeasurements() {
 	}
 
 	/*For each  measurement look for filters and  Add to the measurement with this Filter after it initializes the runtime for the measurement  	*/
-
 	for _, m := range d.Measurements {
 		//check for filters associated with this measurement
 		var mfilter *config.MeasFilterCfg
+		var multi bool
+		// If multi is found, all internal filters are initialized
+		// multi must be marked as special...?
 		for _, f := range d.cfg.MeasFilters {
 			//we search if exist in the filter Database
 			if filter, ok := cfg.MFilters[f]; ok {
-				if filter.IDMeasurementCfg == m.ID {
+				// check and init filters in measurement, applies also in multi
+				if ex, mi := m.CheckInitFilter(filter); ex {
 					mfilter = filter
-					break
+					// as filters can be defined without specific order, multi must be persisted
+					multi = mi || multi
 				}
 			}
 		}
-		if mfilter != nil {
+		// If multi, filters need to be propagated into the internal array and reload all
+		if mfilter != nil || multi {
 			d.Debugf("filters %s found for device  and measurement %s ", mfilter.ID, m.ID)
-			err := m.AddFilter(mfilter)
+			err := m.AddFilter(mfilter, multi)
 			if err != nil {
 				d.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.ID, err)
 			}
 		} else {
 			d.Debugf("no filters found for device on measurement %s", m.ID)
 		}
+		//m.ApplyFilterts...
 		//Initialize internal structs after
 		m.InitBuildRuntime()
 		//Get Data First Time ( useful for counters)

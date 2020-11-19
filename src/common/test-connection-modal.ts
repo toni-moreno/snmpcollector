@@ -278,7 +278,15 @@ export class TestConnectionModal implements OnInit  {
       data => {
           this.selectors[index].Array = [];
           for (let entry of data) {
-            this.selectors[index].Array.push({ 'id': entry.ID, 'name': entry.ID, 'OID': entry.IndexOID});
+            if (entry.MultiIndexCfg != null) {
+              for (let mi of entry.MultiIndexCfg) {
+                if (mi.GetMode === type) {
+                  this.selectors[index].Array.push({ 'id': entry.ID+".."+mi.Label, 'name': entry.ID+".."+mi.Label, 'OID': mi.IndexOID});
+                }
+              }
+            } else {
+              this.selectors[index].Array.push({ 'id': entry.ID, 'name': entry.ID, 'OID': entry.IndexOID});
+            }
           }
       },
       err => console.error(err),

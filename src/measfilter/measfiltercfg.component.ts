@@ -346,6 +346,11 @@ export class MeasFilterCfgComponent {
         for (let entry of data) {
           console.log(entry)
           this.selectmeas.push({ 'id': entry.ID, 'name': entry.ID });
+          if (entry.GetMode == "indexed_multiple") {
+            for (let mi of entry.MultiIndexCfg) {
+              this.selectmeas.push({'id': entry.ID+'..'+mi.Label, 'name': mi.Label, 'badge': "indexed multiple" })
+            }
+          }
         }
 
        },

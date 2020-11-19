@@ -61,7 +61,7 @@
                 <input *ngIf="column.filtering " placeholder="{{column.filtering.placeholder}} " [ngTableFiltering]="column.filtering " class="form-control " style="width: auto; " (tableChanged)="onChangeTable(config) " />
             </td>
         </tr>
-        <tr *ngFor="let row of rows ">
+        <tr *ngFor="let row of rows; index as i ">
             <td *ngIf="editMode==true ">
                 <i [ngClass]="checkItems(row.ID) ? [ 'glyphicon glyphicon-unchecked text-danger'] : [ 'glyphicon glyphicon-check text-success'] " (click)="selectItem(row) "></i>
             </td>

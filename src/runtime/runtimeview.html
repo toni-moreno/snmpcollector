@@ -246,8 +246,12 @@
                                             <dd *ngFor="let metrics of finalColumns[i]"><span *ngIf="metrics.title !== 'Index'">{{metrics.title}}</span></dd>
                                         </dl>
                                     </ng-template>
-                                    <span *ngIf="measurement.TagName.length !== 0 " [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData[i].length}} index</span>
-                                    <span *ngIf="measurement.TagName.length == 0 " [ngClass]="i === measActive ? 'badge' : 'label label-default'"> value </span>
+                                    <ng-container *ngIf="measurement.TagName != null">
+                                        <span *ngIf="measurement.TagName.length !== 0 " [ngClass]="i === measActive ? 'badge' : 'label label-default'">{{finalData[i].length}} index</span>
+                                    </ng-container>
+                                    <ng-container *ngIf="measurement.TagName == null">
+                                        <span [ngClass]="i === measActive ? 'badge' : 'label label-default'"> value </span>
+                                    </ng-container>
                                 </button>
                             </span>
                         </div>
@@ -264,7 +268,13 @@
                             </select>
                         </div>
                         <div class="col-md-3 text-right">
-                            <span class="label label-danger" [tooltip]="filterInfo" style="margin-left: 10px" *ngIf="runtime_dev['Measurements'][measActive].Filter"> Filter applied: {{runtime_dev['Measurements'][measActive].FilterCfg.ID}}</span>
+                            <div class="col-md-12 text-left" style="margin-bottom: 5px">
+                            <span class="label label-info" [tooltip]="multiMeasInfo">Base: {{runtime_dev['Measurements'][measActive].ID}}</span>
+                        </div>
+                        <div class="col-md-12 text-left" style="margin-bottom: 5px">
+
+                            <span class="label label-danger" [tooltip]="filterInfo" style="margin-left: 10px" *ngIf="runtime_dev['Measurements'][measActive].Filter"> - Filter applied: {{runtime_dev['Measurements'][measActive].FilterCfg.ID}}</span>
+
                             <ng-template #filterInfo>
                                 <div *ngFor="let run of runtime_dev['Measurements'][measActive].Filter | objectParser" style="text-align:left !important">
                                     <span class="text-left" style="padding-left: 10px"><b>{{run.key}}</b></span>
@@ -272,6 +282,29 @@
                                 </div>
                             </ng-template>
                         </div>
+
+                        <ng-container class="col-md-3 text-right" *ngIf="runtime_dev['Measurements'][measActive].MultiIndexMeas">
+
+                        <ng-container *ngFor="let multi of runtime_dev['Measurements'][measActive].MultiIndexMeas">
+                            <div  class="col-md-12 text-left" style="margin-bottom: 7px" >
+                                <span>-</span>
+                                <span class="label label-warning" style="margin-left: 10px"> MultiIndexed: {{multi.ID}}</span> 
+                                </div>
+                                <div  class="col-md-12 text-left" style="margin-bottom: 5px" *ngIf="multi.FilterCfg" >
+                                    <span>-</span>
+                                <span class="label label-danger" [tooltip]="filterInfo" style="margin-left: 20px"  *ngIf="multi.Filter">Filter applied: {{multi.FilterCfg.ID}}</span>
+                                <ng-template #filterInfo>
+                                    <div *ngFor="let run of multi.Filter | objectParser" style="text-align:left !important">
+                                        <span class="text-left" style="padding-left: 10px"><b>{{run.key}}</b></span>
+                                        <span class="text-right">{{run.value ? run.value : '--'}}</span>
+                                    </div>
+                                </ng-template>
+                            </div>
+                        </ng-container>
+                            </ng-container>
+                    </div>
+
+
                         <div style="overflow-x: scroll" class="col-md-12">
                             <ng-table [config]="config" [sanitizeCell]="tableCellParser" [tableRole]="tableRole" (tableChanged)="onChangeTable(config)" (viewedItem)="viewItem($event)" (editedItem)="editMeasGroup($event)" (removedItem)="removeItem($event)" [showCustom]="false" [rows]="rows" [columns]="columns" [checkRows]="true">
                             </ng-table>

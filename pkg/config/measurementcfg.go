@@ -3,11 +3,14 @@ package config
 import (
 	"errors"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
+// MeasurementFieldReport defines the report behaviour of each field
 type MeasurementFieldReport struct {
 	ID     string
 	Report int
@@ -15,19 +18,42 @@ type MeasurementFieldReport struct {
 
 //MeasurementCfg the measurement configuration
 type MeasurementCfg struct {
-	ID             string                   `xorm:"'id' unique" binding:"Required"`
-	Name           string                   `xorm:"name" binding:"Required"`
-	GetMode        string                   `xorm:"getmode" binding:"In(value,indexed,indexed_it)"` //value ,indexed  (direct tag), indexed_it ( indirect_tag)
-	IndexOID       string                   `xorm:"indexoid"`                                       //only valid if Indexed (direct or indirect)
-	TagOID         string                   `xorm:"tagoid"`                                         //only valid if inderecta TAG indexeded
-	IndexTag       string                   `xorm:"indextag"`
-	IndexTagFormat string                   `xorm:"indextagformat"`
-	IndexAsValue   bool                     `xorm:"'indexasvalue' default 0"`
-	Fields         []MeasurementFieldReport `xorm:"-"` //Got from MeasurementFieldCfg table
-	FieldMetric    []*SnmpMetricCfg         `xorm:"-" json:"-"`
-	EvalMetric     []*SnmpMetricCfg         `xorm:"-" json:"-"`
-	OidCondMetric  []*SnmpMetricCfg         `xorm:"-" json:"-"`
-	Description    string                   `xorm:"description"`
+	ID                string                   `xorm:"'id' unique" binding:"Required"`
+	Name              string                   `xorm:"name" binding:"Required"`
+	GetMode           string                   `xorm:"getmode" binding:"In(value,indexed,indexed_it,indexed_mit,indexed_multiple)"` //value ,indexed  (direct tag), indexed_it ( indirect_tag)
+	IndexOID          string                   `xorm:"indexoid"`                                                                    //only valid if Indexed (direct or indirect)
+	TagOID            string                   `xorm:"tagoid"`
+	MultiTagOID       []MultipleTagOID         `xorm:"mtagoid"` //only valid if inderecta TAG indexeded
+	IndexTag          string                   `xorm:"indextag"`
+	IndexTagFormat    string                   `xorm:"indextagformat"`
+	IndexAsValue      bool                     `xorm:"'indexasvalue' default 0"`
+	MultiIndexCfg     []MultiIndexCfg          `xorm:"multiindex"`
+	MultiIndexResult  string                   `xorm:"multiindexresult"`
+	MultiIndexVersion string                   `xorm:"multiindexrversion"`
+	Fields            []MeasurementFieldReport `xorm:"-"` //Got from MeasurementFieldCfg table
+	FieldMetric       []*SnmpMetricCfg         `xorm:"-" json:"-"`
+	EvalMetric        []*SnmpMetricCfg         `xorm:"-" json:"-"`
+	OidCondMetric     []*SnmpMetricCfg         `xorm:"-" json:"-"`
+	Description       string                   `xorm:"description"`
+}
+
+// MultipleTagOID defines TagOID to iterate over multiple tables to retrieve tag
+type MultipleTagOID struct {
+	TagOID      string
+	IndexFormat string
+}
+
+// MultiIndexCfg defines an internal measurement that has its own lifecycle
+type MultiIndexCfg struct {
+	Label          string
+	Description    string
+	Dependency     string
+	GetMode        string // indexed | indexed_it | indexed_mit
+	IndexOID       string
+	TagOID         string
+	MultiTagOID    []MultipleTagOID
+	IndexTag       string
+	IndexTagFormat string
 }
 
 //CheckComputedMetricVars check for computed metrics based on check if variable definition exist
@@ -172,23 +198,92 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 	}
 
 	switch mc.GetMode {
-	case "indexed", "indexed_it":
+	case "indexed", "indexed_it", "indexed_mit":
 		if len(mc.IndexOID) == 0 {
 			return errors.New("Indexed measurement with no IndexOID in measurement Config " + mc.ID)
 		}
 		if len(mc.IndexTag) == 0 {
-			return errors.New("Indexed measurement with no IndexTag configuredin measurement " + mc.ID)
+			return errors.New("Indexed measurement with no IndexTag configured in measurement " + mc.ID)
 		}
 		if !strings.HasPrefix(mc.IndexOID, ".") {
-			return errors.New("Bad BaseOid format:" + mc.IndexOID + " in metric Config " + mc.ID)
+			return errors.New("Bad BaseOid format:" + mc.IndexOID + " in measurement Config " + mc.ID)
 		}
 		if mc.GetMode == "indexed_it" {
 			if !strings.HasPrefix(mc.TagOID, ".") {
-				return errors.New("Bad BaseOid format:" + mc.TagOID + "  for  indirect TAG OID in metric Config " + mc.ID)
+				return errors.New("Bad BaseOid format:" + mc.TagOID + "  for  indirect TAG OID in measurement Config " + mc.ID)
+			}
+		}
+		if mc.GetMode == "indexed_mit" {
+			if len(mc.MultiTagOID) == 0 {
+				return errors.New("Multi Tag OID measurement with no TagOID configured in measurement " + mc.ID)
+			}
+			for k, v := range mc.MultiTagOID {
+				if !strings.HasPrefix(v.TagOID, ".") {
+					return errors.New("Bad BaseOid format:" + v.TagOID + "  for multiple indirect TAG OID [" + strconv.Itoa(k) + "] in measurement Config " + mc.ID)
+				}
 			}
 		}
 
 	case "value":
+	case "indexed_multiple":
+		// Force version
+
+		if len(mc.MultiIndexVersion) == 0 {
+			mc.MultiIndexVersion = "1.0"
+		}
+		//store mil labels to compare them, need to be unique between them
+		mil := make(map[string]int)
+		for _, mi := range mc.MultiIndexCfg {
+			if _, ok := mil[mi.Label]; ok {
+				return errors.New("Multi indexes have the same label, " + mi.Label)
+			}
+			mil[mi.Label] = 1
+		}
+		//check oids formats
+		for i, mi := range mc.MultiIndexCfg {
+			if len(mi.Label) == 0 {
+				return errors.New("Label not set in index Config " + mi.Label)
+			}
+			switch mi.GetMode {
+			case "indexed", "indexed_it":
+				if len(mi.IndexOID) == 0 {
+					return errors.New("Multi indexed with no IndexOID in " + strconv.Itoa(i) + "|" + mi.Label)
+				}
+				if len(mi.IndexTag) == 0 {
+					return errors.New("Multi indexed with no IndexTag in " + strconv.Itoa(i) + "|" + mi.Label)
+				}
+				if !strings.HasPrefix(mi.IndexOID, ".") {
+					return errors.New("Bad BaseOid format:" + mi.IndexOID + " in multi indexed " + strconv.Itoa(i) + "|" + mi.Label)
+				}
+				if mi.GetMode == "indexed_it" {
+					if !strings.HasPrefix(mi.TagOID, ".") {
+						return errors.New("Bad BaseOid format:" + mi.TagOID + "  for indirect TAG OID in multi indexed " + strconv.Itoa(i) + "|" + mi.Label)
+					}
+				}
+				if mi.GetMode == "indexed_mit" {
+					if len(mi.MultiTagOID) == 0 {
+						return errors.New("Multi Tag OID measurement with no TagOID configured in measurement " + mi.Label)
+					}
+					for k, v := range mi.MultiTagOID {
+						if !strings.HasPrefix(v.TagOID, ".") {
+							return errors.New("Bad BaseOid format:" + v.TagOID + "  for multiple indirect TAG OID [" + strconv.Itoa(k) + "] in measurement Config " + mi.Label)
+						}
+					}
+				}
+			}
+		}
+
+		// Check that result contains, at least an IDX
+		pattern := `IDX\{[0-9]+\}`
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			fmt.Println(err)
+		}
+		match := re.MatchString(mc.MultiIndexResult)
+		if !match {
+			return fmt.Errorf("Result syntax doesn't no contain any index as reference %s", mc.MultiIndexResult)
+		}
+
 	default:
 		return errors.New("Unknown GetMode" + mc.GetMode + " in measurement Config " + mc.ID)
 	}
@@ -216,7 +311,7 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 	}
 	//check for valid fields ( should be at least one!! Field in indexed measurements and at least one field or ) in
 	switch mc.GetMode {
-	case "indexed", "indexed_it":
+	case "indexed", "indexed_it", "indexed_multiple":
 		if len(mc.FieldMetric) == 0 {
 			return fmt.Errorf("There is no any Field metrics in measurement type \"%s\" Config  %s (should be at least one)", mc.GetMode, mc.ID)
 		}
@@ -413,7 +508,7 @@ func (dbc *DatabaseCfg) AddMeasurementCfg(dev MeasurementCfg) (int64, error) {
 
 /*DelMeasurementCfg for deleting influx databases from ID*/
 func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
-	var affectedfl, affectedmg, affectedft, affectedcf, affected int64
+	var affectedfl, affectedmg, affectedft, affectedcf, affectedftm, affected int64
 	var err error
 
 	session := dbc.x.NewSession()
@@ -437,6 +532,13 @@ func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 		return 0, fmt.Errorf("Error on Update FilterMeasurement on with id: %s, error: %s", id, err)
 	}
 
+	//MultiIndex related filters
+	affectedftm, err = session.Where("id_measurement_cfg like '" + id + "..%'").Cols("id_measurement_cfg").Update(&MeasFilterCfg{})
+	if err != nil {
+		session.Rollback()
+		return 0, fmt.Errorf("Error on Update FilterMeasurement on with id: %s, error: %s", id, err)
+	}
+
 	//CustomFilter Related Dev
 	affectedcf, err = session.Where("related_meas='" + id + "'").Cols("related_meas").Update(&CustomFilterCfg{})
 	if err != nil {
@@ -454,7 +556,7 @@ func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Infof("Deleted Successfully Measurement with ID %s [ %d Measurements Groups Affected / %d Fields Affected / %d Filters Afected / %d Custom Filters Afected ]", id, affectedmg, affectedfl, affectedft, affectedcf)
+	log.Infof("Deleted Successfully Measurement with ID %s [ %d Measurements Groups Affected / %d Fields Affected / %d Filters Afected / %d Custom Filters Afected ]", id, affectedmg, affectedfl, affectedft+affectedftm, affectedcf)
 	dbc.addChanges(affected + affectedmg + affectedfl + affectedft + affectedcf)
 	return affected, nil
 }
@@ -463,6 +565,7 @@ func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int64, error) {
 	var affecteddev, newmf, affected int64
 	var err error
+	//var devices []*MeasurementCfg
 	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
 	// config should be got from database
 	// TODO: filter only metrics in Measurement to test if measurement was well defined
@@ -489,6 +592,14 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 		if err != nil {
 			session.Rollback()
 			return 0, fmt.Errorf("Error Update Measurement id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
+		}
+		// We should change also the reference with multiindex...
+		if dev.GetMode == "indexed_multiple" {
+			// Create the map to check if it differs on some measurement... if the label has renamed, we have no clue what has changed
+			// So, assuming: if it has no renamed, try to rename
+			for _, v := range dev.MultiIndexCfg {
+				affecteddev, err = session.Where("id_measurement_cfg='" + id + ".." + v.Label + "'").Cols("id_measurement_cfg").Update(&MeasFilterCfg{IDMeasurementCfg: dev.ID + ".." + v.Label})
+			}
 		}
 		affecteddev, err = session.Where("related_meas='" + id + "'").Cols("related_meas").Update(&CustomFilterCfg{RelatedMeas: dev.ID})
 		if err != nil {
