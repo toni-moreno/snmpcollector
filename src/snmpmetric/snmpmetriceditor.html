@@ -65,7 +65,7 @@
             <option value="Counter64">(SNMP SMI Type) Counter64 </option>
             <option value="TimeTicks">(SNMP SMI Type) TimeTicks</option>
             <option value="BITS">(SNMP SMI Type) BIT STRING (needs a named-number enumeration in extradata)</option>
-            <option value="OCTETSTRING">(SNMP SMI Type) OCTETSTRING</option>
+            <option value="OCTETSTRING">(SNMP SMI Type) OCTETSTRING (could add trim functions in extradata)</option>
             <option value="OID">(SNMP SMI Type) OBJECT IDENTIFIER</option>
             <option value="IpAddress">(SNMP SMI Type) IpAddress</option>
             <option value="TIMETICKS">(Cooked type) TIMETICKS [Compute TimeTicks to seconds]</option>
@@ -105,7 +105,7 @@
         </div>
       </div>
 
-      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'MULTISTRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' || snmpmetForm.value.DataSrcType == 'BITS'|| snmpmetForm.value.DataSrcType == 'ENUM'|| snmpmetForm.value.DataSrcType == 'BITSCHK' ) ">
+      <div class="form-group" *ngIf="snmpmetForm.controls.ExtraData && (snmpmetForm.value.DataSrcType == 'OCTETSTRING' || snmpmetForm.value.DataSrcType == 'STRINGPARSER' || snmpmetForm.value.DataSrcType == 'MULTISTRINGPARSER' || snmpmetForm.value.DataSrcType == 'STRINGEVAL' || snmpmetForm.value.DataSrcType == 'BITS'|| snmpmetForm.value.DataSrcType == 'ENUM'|| snmpmetForm.value.DataSrcType == 'BITSCHK' ) ">
         <label class="control-label col-sm-2" for="ExtraData">ExtraData</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Extra data for the measurement"></i>
         <div class="col-sm-9">

@@ -159,6 +159,7 @@ export class SnmpMetricCfgComponent {
         controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.required, 'override' : override });
         controlArray.push({'ID': 'IsTag', 'defVal' : 'false', 'Validators' : Validators.required, 'override' : override });
       case 'OCTETSTRING':
+        controlArray.push({'ID': 'ExtraData', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OctecStringExtraDataValidator]), 'override' : override });
       case 'HWADDR':
       case 'IpAddress':
         controlArray.push({'ID': 'BaseOID', 'defVal' : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required]) })

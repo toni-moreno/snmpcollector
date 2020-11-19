@@ -6,6 +6,7 @@ export class ValidationService {
             'invalidEmailAddress': 'Invalid email address',
             'invalidPassword': 'Invalid password. Password must be at least 6 characters long, and contain a number.',
             'invalidOID': 'Invalid OID. OID must start w/ a dot and finish w/o a dot',
+            'invalidOctecStringExtraData': 'Invalid Trim function for octetstring',
             'invalidFloat': 'Invalid number. Must be a float. i.e: 3.2, -4',
             'invalidInteger': 'Invalid number. Must be an integer',
             'invalidExtraTags': 'Invalid format. Must be key=value, separated by commas',
@@ -62,6 +63,20 @@ export class ValidationService {
                 return null;
             } else {
                 return { 'invalidOID': true };
+            }
+        }
+    }
+
+    static OctecStringExtraDataValidator(control) {
+        if (control.value){
+            if (control.value.match(/^trim\(.*\)$/g) ||  
+                control.value.match(/^trimleft\(.*\)$/) || 
+                control.value.match(/^trimright\(.*\)$/) || 
+                control.value.match(/^trimspace$/) || 
+                control.value == "") {
+                return null;
+            } else {
+                return { 'invalidOctecStringExtraData': true };
             }
         }
     }

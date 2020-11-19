@@ -23,6 +23,263 @@ func init() {
 	})
 }
 
+//-------------------------------------------------------------
+// PENDING TEST
+//-------------------------------------------------------------
+// * handle incorrect config data [BaseOID,DataSrcType]
+
+//--------------------------------------------------------------------
+// OCTETSTRING TEST (gosnmp.OctetString 0x04) Pdu Value Type = []uint8
+//---------------------------------------------------------------------
+// Pendint Tests
+//  * Hex-String conversion
+//---------------------------------------------------------------------
+
+func Test_OCTETSTRING_ReadString(t *testing.T) {
+	mc := &config.SnmpMetricCfg{
+		ID:          "test_string",
+		FieldName:   "test_string_field",
+		Description: "",
+		BaseOID:     ".1.3.6.1.4.1.2021.4.3.0",
+		DataSrcType: "OCTETSTRING",
+		GetRate:     false,
+		Scale:       0.0,
+		Shift:       0.0,
+		IsTag:       false,
+		ExtraData:   "",
+		Conversion:  3, // to String
+	}
+
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
+
+	// TEXT: "-my text-"
+	// \t = dec(9)
+	// \n = dec(10)
+	// \r = dec(13)
+	// as []uint8{45,109,121,32,116,101,120,116,45 }
+
+	data := gosnmp.SnmpPDU{
+		Name:  ".1.3.6.1.4.1.2021.4.3.0",
+		Type:  gosnmp.OctetString,
+		Value: []uint8{45, 109, 121, 32, 116, 101, 120, 116, 45},
+	}
+
+	met.SetRawData(data, time.Now())
+
+	switch v := met.CookedValue.(type) {
+	case string:
+		t.Logf("Got string %s", v)
+		expected := "-my text-"
+		if v != expected {
+			t.Errorf("Metric error : got [%v] expected [%s]", v, expected)
+			return
+		}
+		t.Log("OK")
+	default:
+		t.Errorf("Metric conversion error to [%T] type", v)
+	}
+}
+
+func Test_OCTETSTRING_TrimSpace(t *testing.T) {
+	mc := &config.SnmpMetricCfg{
+		ID:          "test_string",
+		FieldName:   "test_string_field",
+		Description: "",
+		BaseOID:     ".1.3.6.1.4.1.2021.4.3.0",
+		DataSrcType: "OCTETSTRING",
+		GetRate:     false,
+		Scale:       0.0,
+		Shift:       0.0,
+		IsTag:       false,
+		ExtraData:   "trimspace",
+		Conversion:  3, // to String
+	}
+
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
+
+	// TEXT: "\n\r\t\t aaxx-my text-aabbxx \t\t\r\n"
+	// \t = dec(9)
+	// \n = dec(10)
+	// \r = dec(13)
+	// as []uint8{10,13,9,9,32,97,97,120,120,45,109,121,32,116,101,120,116,45,97,97,98,98,120,120,32,9,9,13,10 }
+
+	data := gosnmp.SnmpPDU{
+		Name:  ".1.3.6.1.4.1.2021.4.3.0",
+		Type:  gosnmp.OctetString,
+		Value: []uint8{10, 13, 9, 9, 32, 97, 97, 120, 120, 45, 109, 121, 32, 116, 101, 120, 116, 45, 97, 97, 98, 98, 120, 120, 32, 9, 9, 13, 10},
+	}
+
+	met.SetRawData(data, time.Now())
+
+	switch v := met.CookedValue.(type) {
+	case string:
+		t.Logf("Got string %s", v)
+		expected := "aaxx-my text-aabbxx"
+		if v != expected {
+			t.Errorf("Metric error : got [%v] expected [%s]", v, expected)
+			return
+		}
+		t.Log("OK")
+	default:
+		t.Errorf("Metric conversion error to [%T] type", v)
+	}
+}
+
+func Test_OCTETSTRING_Trim(t *testing.T) {
+	mc := &config.SnmpMetricCfg{
+		ID:          "test_string",
+		FieldName:   "test_string_field",
+		Description: "",
+		BaseOID:     ".1.3.6.1.4.1.2021.4.3.0",
+		DataSrcType: "OCTETSTRING",
+		GetRate:     false,
+		Scale:       0.0,
+		Shift:       0.0,
+		IsTag:       false,
+		ExtraData:   "trim('axb ')",
+		Conversion:  3, // to String
+	}
+
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
+
+	// TEXT: " aaxx-my text-aabbxx "
+	// \t = dec(9)
+	// \n = dec(10)
+	// \r = dec(13)
+	// as []uint8{32,97,97,120,120,45,109,121,32,116,101,120,116,45,97,97,98,98,120,120,32 }
+
+	data := gosnmp.SnmpPDU{
+		Name:  ".1.3.6.1.4.1.2021.4.3.0",
+		Type:  gosnmp.OctetString,
+		Value: []uint8{32, 97, 97, 120, 120, 45, 109, 121, 32, 116, 101, 120, 116, 45, 97, 97, 98, 98, 120, 120, 32},
+	}
+
+	met.SetRawData(data, time.Now())
+
+	switch v := met.CookedValue.(type) {
+	case string:
+		t.Logf("Got string %s", v)
+		expected := "-my text-"
+		if v != expected {
+			t.Errorf("Metric error : got [%v] expected [%s]", v, expected)
+			return
+		}
+		t.Log("OK")
+	default:
+		t.Errorf("Metric conversion error to [%T] type", v)
+	}
+}
+
+func Test_OCTETSTRING_TrimLeft(t *testing.T) {
+	mc := &config.SnmpMetricCfg{
+		ID:          "test_string",
+		FieldName:   "test_string_field",
+		Description: "",
+		BaseOID:     ".1.3.6.1.4.1.2021.4.3.0",
+		DataSrcType: "OCTETSTRING",
+		GetRate:     false,
+		Scale:       0.0,
+		Shift:       0.0,
+		IsTag:       false,
+		ExtraData:   "trimleft('axb ')",
+		Conversion:  3, // to String
+	}
+
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
+
+	// TEXT: " aaxx-my text-aabbxx "
+	// \t = dec(9)
+	// \n = dec(10)
+	// \r = dec(13)
+	// as []uint8{32,97,97,120,120,45,109,121,32,116,101,120,116,45,97,97,98,98,120,120,32 }
+
+	data := gosnmp.SnmpPDU{
+		Name:  ".1.3.6.1.4.1.2021.4.3.0",
+		Type:  gosnmp.OctetString,
+		Value: []uint8{32, 97, 97, 120, 120, 45, 109, 121, 32, 116, 101, 120, 116, 45, 97, 97, 98, 98, 120, 120, 32},
+	}
+
+	met.SetRawData(data, time.Now())
+
+	switch v := met.CookedValue.(type) {
+	case string:
+		t.Logf("Got string %s", v)
+		expected := "-my text-aabbxx "
+		if v != expected {
+			t.Errorf("Metric error : got [%v] expected [%s]", v, expected)
+			return
+		}
+		t.Log("OK")
+	default:
+		t.Errorf("Metric conversion error to [%T] type", v)
+	}
+}
+
+func Test_OCTETSTRING_TrimRight(t *testing.T) {
+	mc := &config.SnmpMetricCfg{
+		ID:          "test_string",
+		FieldName:   "test_string_field",
+		Description: "",
+		BaseOID:     ".1.3.6.1.4.1.2021.4.3.0",
+		DataSrcType: "OCTETSTRING",
+		GetRate:     false,
+		Scale:       0.0,
+		Shift:       0.0,
+		IsTag:       false,
+		ExtraData:   "trimright('axb ')",
+		Conversion:  3, // to String
+	}
+
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
+
+	// TEXT: " aaxx-my text-aabbxx "
+	// \t = dec(9)
+	// \n = dec(10)
+	// \r = dec(13)
+	// as []uint8{32,97,97,120,120,45,109,121,32,116,101,120,116,45,97,97,98,98,120,120,32 }
+
+	data := gosnmp.SnmpPDU{
+		Name:  ".1.3.6.1.4.1.2021.4.3.0",
+		Type:  gosnmp.OctetString,
+		Value: []uint8{32, 97, 97, 120, 120, 45, 109, 121, 32, 116, 101, 120, 116, 45, 97, 97, 98, 98, 120, 120, 32},
+	}
+
+	met.SetRawData(data, time.Now())
+
+	switch v := met.CookedValue.(type) {
+	case string:
+		t.Logf("Got string %s", v)
+		expected := " aaxx-my text-"
+		if v != expected {
+			t.Errorf("Metric error : got [%v] expected [%s]", v, expected)
+			return
+		}
+		t.Log("OK")
+	default:
+		t.Errorf("Metric conversion error to [%T] type", v)
+	}
+}
+
 //--------------------------------------------------------------
 // INTEGER TEST (gosnmp.Integer 0x02) Pdu Value Type = int
 //--------------------------------------------------------------
@@ -42,9 +299,11 @@ func Test_Integer32_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Float64
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
@@ -81,9 +340,11 @@ func Test_Integer32_Scale_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Float64
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
@@ -121,9 +382,11 @@ func Test_Integer32_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
@@ -160,9 +423,11 @@ func Test_Integer32_Scale_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
@@ -204,9 +469,11 @@ func Test_Counter32_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Float64
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
@@ -243,9 +510,11 @@ func Test_Counter32_Scale_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Float64
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
@@ -283,9 +552,11 @@ func Test_Counter32_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
@@ -322,9 +593,11 @@ func Test_Counter32_Scale_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
@@ -367,9 +640,11 @@ func Test_COUNTER32_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to float64
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
@@ -418,9 +693,11 @@ func Test_COUNTER32_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to Integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
@@ -469,9 +746,11 @@ func Test_COUNTER32_rate_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
@@ -520,9 +799,11 @@ func Test_COUNTER32_Scale_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
@@ -572,10 +853,11 @@ func Test_COUNTER32_Scale_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to Integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
-
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 	now := time.Now()
 	before := now.Add(-60)
 
@@ -627,9 +909,11 @@ func Test_Counter64_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Float64
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.31.1.1.1.11.8",
@@ -666,9 +950,11 @@ func Test_Counter64_Scale_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Float64
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.31.1.1.1.11.8",
@@ -706,9 +992,11 @@ func Test_Counter64_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.31.1.1.1.11.8",
@@ -745,9 +1033,11 @@ func Test_Counter64_Scale_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.31.1.1.1.11.8",
@@ -790,9 +1080,11 @@ func Test_COUNTER64_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to float64
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
@@ -840,9 +1132,11 @@ func Test_COUNTER64_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to Integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
@@ -891,9 +1185,11 @@ func Test_COUNTER64_rate_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
@@ -948,9 +1244,11 @@ func Test_COUNTER64_Scale_to_FLOAT(t *testing.T) {
 		Conversion:  0, // to Integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
@@ -1000,9 +1298,11 @@ func Test_COUNTER64_Scale_to_INTEGER(t *testing.T) {
 		Conversion:  1, // to Integer
 	}
 
-	met := new(SnmpMetric)
-	met.Init(mc)
-	met.SetLogger(logrus.New())
+	met, err := New(mc, logrus.New())
+	if err != nil {
+		t.Errorf("Error on create Metric :%s", err)
+		return
+	}
 
 	now := time.Now()
 	before := now.Add(-60)
