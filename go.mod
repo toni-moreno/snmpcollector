@@ -14,7 +14,7 @@ require (
 	github.com/go-xorm/xorm v0.7.1
 	github.com/google/go-cmp v0.2.0
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
-	github.com/gosnmp/gosnmp v1.28.0
+	github.com/gosnmp/gosnmp v1.28.1-0.20201116205349-412b15e9428b
 	github.com/influxdata/influxdb v1.7.0
 	github.com/influxdata/platform v0.0.0-20181110005748-2f8893f5d5e3 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
