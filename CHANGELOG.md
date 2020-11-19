@@ -4,6 +4,7 @@
 * Updated to last "gosnmp" v1.28.0 release
 * Added Mock SnmpServer and measurements unit tests
 * Added [trim](https://github.com/toni-moreno/snmpcollector/wiki/Component:-SNMP-Metrics#about-octetstringhex-string) functions in octetstring based metrics (#405)
+* added HTTPS support 
 
 ### fixes
 * Fixed  #446

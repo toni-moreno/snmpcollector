@@ -124,6 +124,18 @@ log_mode = "none"
  # could also be set with SNMPCOL_HTTP_LISTEN  env var
  listen   = ":8090"
  # NOTE: port = 8090 still usable option but DEPRECATED!!
+ 
+ # Protocol could be set as https or https 
+ # could also be set with SNMPCOL_HTTP_PROTOCOL  env var
+ protocol = "http"
+
+ # Cert key  Path to the certificate file (if protocol is set to https)
+ # could also be set with SNMPCOL_HTTP_CERT_FILE  env var
+ cert_file = "/path/to/certificate.pem"
+ 
+ # Cert key  Path to the certificate key file (if protocol is set to https)
+ # could also be set with SNMPCOL_HTTP_CERT_KEY  env var
+ cert_key = "/path/to/certificate.key"
 
  # Admin user to log in the UI
  # could also be set with SNMPCOL_HTTP_ADMIN_USER  env var
