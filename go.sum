@@ -92,6 +92,8 @@ github.com/goreleaser/goreleaser v0.91.1/go.mod h1:r02//RU0qOOAsbJvZ6Igcu34zJeqR
 github.com/goreleaser/nfpm v0.9.7/go.mod h1:F2yzin6cBAL9gb+mSiReuXdsfTrOQwDMsuSpULof+y4=
 github.com/gosnmp/gosnmp v1.28.0 h1:X3NBU6Ghu5BF0QGEF0zzZhlpTWC8mIqd8a85QnLZ5Jg=
 github.com/gosnmp/gosnmp v1.28.0/go.mod h1:pJUhjlccw5++Tz3HcH/WI9SgnQ/trnmfpFUnOtZMw6s=
+github.com/gosnmp/gosnmp v1.28.1-0.20201116205349-412b15e9428b h1:xRAs+ITmvhYhKlMW6Bo2IHvDAd4A5JUrLUFxEpRgA9Q=
+github.com/gosnmp/gosnmp v1.28.1-0.20201116205349-412b15e9428b/go.mod h1:pJUhjlccw5++Tz3HcH/WI9SgnQ/trnmfpFUnOtZMw6s=
 github.com/hashicorp/go-immutable-radix v1.0.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
 github.com/hashicorp/go-msgpack v0.0.0-20150518234257-fa3f63826f7c/go.mod h1:ahLV/dePpqEmjfWmKiqvPkv/twdG7iPBM1vqhUKIvfM=
 github.com/hashicorp/go-uuid v1.0.0/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=

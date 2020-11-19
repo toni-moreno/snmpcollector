@@ -801,7 +801,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		name := "ErrorOnGetIdxValue"
 		switch pdu.Type {
 		case gosnmp.OctetString:
-			name = pdu.Value.(string)
+			name = string(pdu.Value.([]byte))
 			m.Debugf("Got the following OctetString index for [%s/%s]", suffix, name)
 		case gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
 			name = strconv.FormatUint(snmp.PduVal2UInt64(pdu), 10)

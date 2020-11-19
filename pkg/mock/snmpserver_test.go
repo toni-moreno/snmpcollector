@@ -108,6 +108,10 @@ func ExampleServerClientWalk() {
 	}
 
 	for _, v := range results {
+		if v.Type == c.OctetString {
+			fmt.Printf("Result for [%s]:  %+v\n", v.Name, string(v.Value.([]byte)))
+			continue
+		}
 		fmt.Printf("Result for [%s]:  %+v\n", v.Name, v.Value)
 	}
 
