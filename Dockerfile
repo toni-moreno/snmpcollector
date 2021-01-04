@@ -60,7 +60,7 @@ RUN addgroup -S -g $SNMPCOL_GID snmpcol && \
 COPY --from=0 /go/src/github.com/toni-moreno/snmpcollector/bin/snmpcollector ./bin/
 COPY --from=1 /usr/src/app/public ./public
 
-EXPOSE 5090
+EXPOSE 8090
 
 USER snmpcol
 
