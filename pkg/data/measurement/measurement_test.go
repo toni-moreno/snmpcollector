@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/gosnmp/gosnmp"
 	"github.com/sirupsen/logrus"
@@ -87,6 +86,54 @@ func GetOutputInfluxMetrics(m *Measurement) {
 // 3.- SNMP CLIENT SETUP
 // 4.- METRICMAP SETUP
 // 5.- MEASUREMENT CONFIG SETUP
+//
+type MockSNMP struct {
+	Listen string
+	Want   []gosnmp.SnmpPDU
+}
+
+func (m *MockSNMP) Version() gosnmp.SnmpVersion {
+	return gosnmp.Version1
+}
+
+func (m *MockSNMP) Walk() func(rootOid string, walkFn gosnmp.WalkFunc) error {
+	return func(rootOid string, walkFn gosnmp.WalkFunc) error {
+		return nil
+	}
+}
+
+func (m *MockSNMP) BulkWalk() func(rootOid string, walkFn gosnmp.WalkFunc) error {
+	return func(rootOid string, walkFn gosnmp.WalkFunc) error {
+		return nil
+	}
+}
+
+func (m *MockSNMP) Target() string {
+	return "target"
+}
+
+func (m *MockSNMP) Get(oids []string) (result *gosnmp.SnmpPacket, err error) {
+	vars := []gosnmp.SnmpPDU{}
+
+	for _, o := range oids {
+		for _, v := range m.Want {
+			if v.Name == o {
+				vars = append(vars, gosnmp.SnmpPDU{
+					Name:  v.Name,
+					Type:  v.Type,
+					Value: v.Value,
+				})
+			}
+		}
+
+	}
+
+	pkt := gosnmp.SnmpPacket{
+		Variables: vars,
+	}
+
+	return &pkt, nil
+}
 
 func Example_Measurement_GetMode_Value() {
 
@@ -100,7 +147,7 @@ func Example_Measurement_GetMode_Value() {
 
 	// 2.- MOCK SERVER SETUP
 
-	s := &mock.SnmpServer{
+	s := &MockSNMP{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
 			{Name: ".1.1.1", Type: gosnmp.Integer, Value: int(51)},
@@ -114,29 +161,7 @@ func Example_Measurement_GetMode_Value() {
 		},
 	}
 
-	err := s.Start()
-	if err != nil {
-		l.Errorf("error on start snmp mock server: %s", err)
-		return
-	}
-	defer s.Stop()
-
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
-	}
-	err = cli.Connect()
-	if err != nil {
-		l.Fatalf("Connect() err: %v", err)
-	}
-	defer cli.Conn.Close()
 
 	// 4.- METRICMAP SETUP
 
@@ -191,7 +216,7 @@ func Example_Measurement_GetMode_Value() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, s, false)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -215,6 +240,7 @@ func Example_Measurement_GetMode_Value() {
 
 }
 
+/*
 func Example_Measurement_GetMode_Indexed() {
 
 	// 1.- SETUP LOGGER
@@ -3040,3 +3066,4 @@ func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:output ValueType:int64  Value:21
 
 }
+*/
