@@ -3,6 +3,7 @@
 
 ### fixes
 * Fixed invalid field when using MULTISTRINGPARSER and void capture group. Now the value is ommited and it won't be written on InfluxDB
+* Added  /api/rt/agent/shutdown as fast way to reload config when existing external tools to restart the snmpcollector instance (docker --restart=always) by example
 
 ### breaking changes
 

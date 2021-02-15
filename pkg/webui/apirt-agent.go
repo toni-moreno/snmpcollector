@@ -1,6 +1,7 @@
 package webui
 
 import (
+	"os"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ func NewAPIRtAgent(m *macaron.Macaron) error {
 
 	m.Group("/api/rt/agent", func() {
 		m.Get("/reload/", reqSignedIn, AgentReloadConf)
+		m.Get("/shutdown/", reqSignedIn, AgentShutdown)
 		m.Post("/snmpconsole/ping/", reqSignedIn, bind(config.SnmpDeviceCfg{}), PingSNMPDevice)
 		m.Post("/snmpconsole/query/:getmode/:obtype/:data", reqSignedIn, bind(config.SnmpDeviceCfg{}), QuerySNMPDevice)
 		m.Get("/info/version/", RTGetVersion)
@@ -35,6 +37,13 @@ func AgentReloadConf(ctx *Context) {
 		return
 	}
 	ctx.JSON(200, time)
+}
+
+// AgentShutdown xx
+func AgentShutdown(ctx *Context) {
+	log.Info("receiving shutdown")
+	ctx.JSON(200, "Init shutdown....")
+	os.Exit(0)
 }
 
 //PingSNMPDevice xx
