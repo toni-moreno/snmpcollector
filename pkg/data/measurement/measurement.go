@@ -50,15 +50,47 @@ type Measurement struct {
 	FilterCfg        *config.MeasFilterCfg
 	Filter           filter.Filter
 	log              *logrus.Logger
-	snmpClient       *gosnmp.GoSNMP
+	snmpClient       SNMPClient
 	DisableBulk      bool                                `json:"-"`
 	GetData          func() (int64, int64, int64, error) `json:"-"`
 	Walk             func(string, gosnmp.WalkFunc) error `json:"-"`
 	MultiIndexMeas   []*Measurement
 }
 
+type SNMPClient interface {
+	Version() gosnmp.SnmpVersion
+	Walk() func(rootOid string, walkFn gosnmp.WalkFunc) error
+	BulkWalk() func(rootOid string, walkFn gosnmp.WalkFunc) error
+	Target() string
+	Get(oids []string) (result *gosnmp.SnmpPacket, err error)
+}
+
+type GoSNMPConverter struct {
+	s *gosnmp.GoSNMP
+}
+
+func (g *GoSNMPConverter) Version() gosnmp.SnmpVersion {
+	return g.s.Version
+}
+
+func (g *GoSNMPConverter) Walk() func(rootOid string, walkFn gosnmp.WalkFunc) error {
+	return g.s.Walk
+}
+
+func (g *GoSNMPConverter) BulkWalk() func(rootOid string, walkFn gosnmp.WalkFunc) error {
+	return g.s.BulkWalk
+}
+
+func (g *GoSNMPConverter) Target() string {
+	return g.s.Target
+}
+
+func (g *GoSNMPConverter) Get(oids []string) (result *gosnmp.SnmpPacket, err error) {
+	return g.s.Get(oids)
+}
+
 //New  creates object with config , log + goSnmp client
-func New(c *config.MeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool) (*Measurement, error) {
+func New(c *config.MeasurementCfg, l *logrus.Logger, cli SNMPClient, db bool) (*Measurement, error) {
 	m := &Measurement{ID: c.ID, MName: c.Name, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
 	err := m.Init()
 	return m, err
@@ -86,10 +118,10 @@ func (m *Measurement) Init() error {
 
 	// If GetMode is multiindex, we can reuse a simple measurement to init each one and get all funcions...?
 	switch {
-	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
-		m.Walk = m.snmpClient.Walk
+	case m.snmpClient.Version() == gosnmp.Version1 || m.DisableBulk:
+		m.Walk = m.snmpClient.Walk()
 	default:
-		m.Walk = m.snmpClient.BulkWalk
+		m.Walk = m.snmpClient.BulkWalk()
 	}
 
 	if m.cfg.GetMode == "indexed_multiple" {
@@ -356,15 +388,15 @@ func (m *Measurement) LoadMultiIndex() error {
 }
 
 // SetSnmpClient set a GoSNMP client to the Measurement
-func (m *Measurement) SetSnmpClient(cli *gosnmp.GoSNMP) {
+func (m *Measurement) SetSnmpClient(cli SNMPClient) {
 
 	m.snmpClient = cli
 
 	switch {
-	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
-		m.Walk = m.snmpClient.Walk
+	case m.snmpClient.Version() == gosnmp.Version1 || m.DisableBulk:
+		m.Walk = m.snmpClient.Walk()
 	default:
-		m.Walk = m.snmpClient.BulkWalk
+		m.Walk = m.snmpClient.BulkWalk()
 	}
 }
 
@@ -610,7 +642,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 
 	for _, v := range m.cfg.FieldMetric {
 		if err := m.Walk(v.BaseOID, setRawData); err != nil {
-			m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
+			m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target(), v.BaseOID, err)
 			errors += int64(m.MetricTable.Len())
 		}
 	}
@@ -749,7 +781,7 @@ func (m *Measurement) SnmpGetData() (int64, int64, int64, error) {
 		pkt, err := m.snmpClient.Get(m.snmpOids[i:end])
 		if err != nil {
 			m.Debugf("selected OIDS %+v", m.snmpOids[i:end])
-			m.Errorf("SNMP (%s) for OIDs (%d/%d) get error: %s\n", m.snmpClient.Target, i, end, err)
+			m.Errorf("SNMP (%s) for OIDs (%d/%d) get error: %s\n", m.snmpClient.Target(), i, end, err)
 			errs++
 			continue
 		}
