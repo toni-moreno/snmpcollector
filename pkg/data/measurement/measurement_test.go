@@ -3040,3 +3040,136 @@ func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:output ValueType:int64  Value:21
 
 }
+func Example_Measurement_GetMode_Indexed_MULTISTRINGPARSER_SKIPFIELD() {
+
+	// 1.- SETUP LOGGER
+
+	l := logrus.New()
+	//l.Level = logrus.DebugLevel
+
+	mock.SetLogger(l)
+	config.SetLogger(l)
+
+	// 2.- MOCK SERVER SETUP
+
+	s := &mock.SnmpServer{
+		Listen: "127.0.0.1:1161",
+		Want: []gosnmp.SnmpPDU{
+			{Name: ".1.1.1", Type: gosnmp.OctetString, Value: "value1;51"},
+			{Name: ".1.1.2", Type: gosnmp.OctetString, Value: "value2;52"},
+			{Name: ".1.1.3", Type: gosnmp.OctetString, Value: "value3;53"},
+			{Name: ".1.1.4", Type: gosnmp.OctetString, Value: "value4;"}, // input with tag value4 will be ommited
+			{Name: ".1.2.1", Type: gosnmp.OctetString, Value: "eth1"},
+			{Name: ".1.2.2", Type: gosnmp.OctetString, Value: "eth2"},
+			{Name: ".1.2.3", Type: gosnmp.OctetString, Value: "eth3"},
+			{Name: ".1.2.4", Type: gosnmp.OctetString, Value: "eth4"},
+			{Name: ".1.3.1", Type: gosnmp.Integer, Value: int(21)},
+			{Name: ".1.3.2", Type: gosnmp.Integer, Value: int(22)},
+			{Name: ".1.3.3", Type: gosnmp.Integer, Value: int(23)},
+			{Name: ".1.3.4", Type: gosnmp.Integer, Value: int(24)},
+		},
+	}
+
+	err := s.Start()
+	if err != nil {
+		l.Errorf("error on start snmp mock server: %s", err)
+		return
+	}
+	defer s.Stop()
+
+	// 3.- SNMP CLIENT SETUP
+
+	cli := &gosnmp.GoSNMP{
+		Target:    "127.0.0.1",
+		Port:      1161,
+		Version:   gosnmp.Version2c,
+		Community: "test1",
+		Timeout:   5 * time.Second,
+		Retries:   0,
+		Logger:    l,
+	}
+	err = cli.Connect()
+	if err != nil {
+		l.Fatalf("Connect() err: %v", err)
+	}
+	defer cli.Conn.Close()
+
+	// 4.- METRICMAP SETUP
+
+	metrics := map[string]*config.SnmpMetricCfg{
+		"value_input": {
+			ID:          "value_input",
+			FieldName:   "T|myValue|STR,F|input|FP",
+			Description: "",
+			BaseOID:     ".1.1",
+			DataSrcType: "MULTISTRINGPARSER",
+			GetRate:     false,
+			Scale:       0.0,
+			Shift:       0.0,
+			IsTag:       false,
+			ExtraData:   "(.*);(.*)",
+			Conversion:  0,
+		},
+		"value_output": {
+			ID:          "value_output",
+			FieldName:   "output",
+			Description: "",
+			BaseOID:     ".1.3",
+			DataSrcType: "Integer32",
+			GetRate:     false,
+			Scale:       0.0,
+			Shift:       0.0,
+			IsTag:       false,
+			ExtraData:   "",
+			Conversion:  1,
+		},
+	}
+
+	// 5.- MEASUREMENT CONFIG SETUP
+
+	vars := map[string]interface{}{}
+
+	cfg := &config.MeasurementCfg{
+		ID:             "interfaces_data",
+		Name:           "interfaces_data",
+		GetMode:        "indexed",
+		IndexOID:       ".1.2",
+		TagOID:         "",
+		IndexTag:       "portName",
+		IndexTagFormat: "",
+		Fields: []config.MeasurementFieldReport{
+			{ID: "value_input", Report: metric.AlwaysReport},
+			{ID: "value_output", Report: metric.AlwaysReport},
+		},
+	}
+
+	cfg.Init(&metrics, vars)
+
+	// 6.- MEASUREMENT ENGINE SETUP
+
+	m, err := New(cfg, l, cli, false)
+	if err != nil {
+		l.Errorf("Can not create measurement %s", err)
+		return
+	}
+
+	// 7.- PROCESS AND VERIFY
+
+	err = ProcessMeasurementFull(m, vars)
+	if err != nil {
+		l.Errorf("Can not process measurement %s", err)
+		return
+	}
+
+	GetOutputInfluxMetrics(m)
+
+	// Unordered Output:
+	// Measurement:interfaces_data Tags:{ myValue:value2, portName:eth2 } Field:output ValueType:int64  Value:22
+	// Measurement:interfaces_data Tags:{ myValue:value2, portName:eth2 } Field:input ValueType:float64  Value:52
+	// Measurement:interfaces_data Tags:{ myValue:value3, portName:eth3 } Field:input ValueType:float64  Value:53
+	// Measurement:interfaces_data Tags:{ myValue:value3, portName:eth3 } Field:output ValueType:int64  Value:23
+	// Measurement:interfaces_data Tags:{ myValue:value4, portName:eth4 } Field:output ValueType:int64  Value:24
+	// Measurement:interfaces_data Tags:{ myValue:value1, portName:eth1 } Field:input ValueType:float64  Value:51
+	// Measurement:interfaces_data Tags:{ myValue:value1, portName:eth1 } Field:output ValueType:int64  Value:21
+
+}

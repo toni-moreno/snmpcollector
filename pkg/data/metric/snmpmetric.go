@@ -847,6 +847,9 @@ func (s *SnmpMetric) addMultiStringParserValues(tags map[string]string, fields m
 			}
 			tags[i.IName] = i.Value.(string)
 		case "F":
+			if i.Value == nil {
+				continue
+			}
 			fields[i.IName] = i.Value
 		}
 	}

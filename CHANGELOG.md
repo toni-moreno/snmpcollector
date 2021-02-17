@@ -1,4 +1,12 @@
-# v 0.9.0 ( unreleased )
+# v 0.9.1 ( unreleased )
+### New Features
+
+### fixes
+* Fixed invalid field when using MULTISTRINGPARSER and void capture group. Now the value is ommited and it won't be written on InfluxDB
+
+### breaking changes
+
+# v 0.9.0 ( 2021-01-04 )
 ### New Features
 * Added snmpmetric unit tests
 * Updated to last "gosnmp" v1.28.0 release
