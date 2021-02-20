@@ -143,21 +143,26 @@ func (sm *SelfMon) addDataPoint(pt *client.Point) {
 }
 
 // AddDeviceMetrics add data from devices
-func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface{}, devtags map[string]string) {
+func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface{}, devtags, statustags map[string]string) {
 	if !sm.IsInitialized() {
 		return
 	}
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
-
+	//Selfmon tags
 	tagMap := make(map[string]string)
 	for k, v := range sm.TagMap {
 		tagMap[k] = v
 	}
+	//device user configured extra tags (only if inherited)
 	if sm.cfg.InheritDeviceTags {
 		for k, v := range devtags {
 			tagMap[k] = v
 		}
+	}
+	//status tags for device
+	for k, v := range statustags {
+		tagMap[k] = v
 	}
 
 	tagMap["device"] = deviceid

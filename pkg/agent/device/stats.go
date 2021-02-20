@@ -54,8 +54,12 @@ const (
 	BackEndSentStartTime = 19
 	// BackEndSentDuration Time taken in complete the data sent process
 	BackEndSentDuration = 20
+	// DeviceActive  1 if active 0 if not
+	DeviceActive = 21
+	// DeviceConnected 1 if connected 0 if not
+	DeviceConnected = 22
 	// DevStatTypeSize special value to set the last stat position
-	DevStatTypeSize = 21
+	DevStatTypeSize = 23
 )
 
 // DevStat minimal info to show users
@@ -110,6 +114,8 @@ func (s *DevStat) Init(id string, tm map[string]string, l *logrus.Logger) {
 	s.Counters[FilterDuration] = 0.0
 	s.Counters[BackEndSentStartTime] = 0
 	s.Counters[BackEndSentDuration] = 0.0
+	s.Counters[DeviceActive] = 0
+	s.Counters[DeviceConnected] = 0
 }
 
 func (s *DevStat) reset() {
@@ -134,7 +140,35 @@ func (s *DevStat) GetCounter(stat DevStatType) interface{} {
 	return s.Counters[stat]
 }
 
+func (s *DevStat) getStatusFields() map[string]interface{} {
+
+	active := 0
+	connected := 0
+	if s.DeviceActive {
+		active = 1
+	}
+	if s.DeviceConnected {
+		connected = 1
+	}
+
+	fields := map[string]interface{}{
+		/*21*/ "active_value": active,
+		/*22*/ "connected_value": connected,
+	}
+	return fields
+}
+
 func (s *DevStat) getMetricFields() map[string]interface{} {
+
+	active := 0
+	connected := 0
+	if s.DeviceActive {
+		active = 1
+	}
+	if s.DeviceConnected {
+		connected = 1
+	}
+
 	fields := map[string]interface{}{
 		/*0*/ //"snmp_get_queries": s.Counters[SnmpGetQueries],
 		/*1*/ //"snmp_walk_queries": s.Counters[SnmpWalkQueries],
@@ -157,6 +191,8 @@ func (s *DevStat) getMetricFields() map[string]interface{} {
 		/*18*/ "filter_duration": s.Counters[FilterDuration],
 		/*19*/ "backend_sent_start_time": s.Counters[BackEndSentStartTime],
 		/*20*/ "backend_sent_duration": s.Counters[BackEndSentDuration],
+		/*21*/ "active_value": active,
+		/*22*/ "connected_value": connected,
 	}
 	return fields
 }
@@ -177,18 +213,60 @@ func (s *DevStat) ThSafeCopy() *DevStat {
 	for k, v := range s.Counters {
 		st.Counters[k] = v
 	}
+	st.DeviceActive = s.DeviceActive
+	st.DeviceConnected = s.DeviceConnected
 	return st
+}
+
+// SetStatus set status for stats
+func (s *DevStat) SetStatus(active, connected bool) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.DeviceActive = active
+	s.DeviceConnected = connected
+
+}
+
+func (s *DevStat) SetActive(active bool) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.DeviceActive = active
 }
 
 // Send send data to the selfmon device
 func (s *DevStat) Send() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.log.Infof("STATS SNMP GET: snmp polling took [%f seconds] SNMP: Gets [%d] , Processed [%d], Errors [%d]", s.Counters[CycleGatherDuration], s.Counters[SnmpOIDGetAll], s.Counters[SnmpOIDGetProcessed], s.Counters[SnmpOIDGetErrors])
-	s.log.Infof("STATS SNMP FILTER: filter polling took [%f seconds] ", s.Counters[FilterDuration])
-	s.log.Infof("STATS INFLUX: influx send took [%f seconds]", s.Counters[BackEndSentDuration])
+
+	var fields map[string]interface{}
+
+	activeTag := "true"
+	connectedTag := "true"
+	switch {
+	case !s.DeviceActive:
+		activeTag = "false"
+		connectedTag = "false"
+		fields = s.getStatusFields()
+		s.log.Info("STATS SEND NOT ACTIVE")
+	case s.DeviceActive && s.DeviceConnected:
+		activeTag = "true"
+		connectedTag = "true"
+		s.log.Infof("STATS SNMP GET: snmp polling took [%f seconds] SNMP: Gets [%d] , Processed [%d], Errors [%d]", s.Counters[CycleGatherDuration], s.Counters[SnmpOIDGetAll], s.Counters[SnmpOIDGetProcessed], s.Counters[SnmpOIDGetErrors])
+		s.log.Infof("STATS SNMP FILTER: filter polling took [%f seconds] ", s.Counters[FilterDuration])
+		s.log.Infof("STATS INFLUX: influx send took [%f seconds]", s.Counters[BackEndSentDuration])
+		fields = s.getMetricFields()
+	case s.DeviceActive && !s.DeviceConnected:
+		activeTag = "true"
+		connectedTag = "false"
+		s.log.Info("STATS SEND NOT CONNECTED")
+		fields = s.getStatusFields()
+	default:
+		s.log.Error("STATS mode unknown")
+		return
+	}
+
 	if s.selfmon != nil {
-		s.selfmon.AddDeviceMetrics(s.id, s.getMetricFields(), s.TagMap)
+		s.selfmon.AddDeviceMetrics(s.id, fields, s.TagMap, map[string]string{"device_active": activeTag, "device_connected": connectedTag})
 	}
 }
 
