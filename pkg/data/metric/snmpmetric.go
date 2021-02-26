@@ -777,6 +777,20 @@ func (s *SnmpMetric) addSingleTag(mid string, tags map[string]string) int64 {
 	switch v := s.CookedValue.(type) {
 	case string:
 		tag = v
+	case uint32:
+		tag = strconv.FormatUint(uint64(v), 10)
+	case uint64:
+		tag = strconv.FormatUint(v, 10)
+	case int32:
+		tag = strconv.FormatInt(int64(v), 10)
+	case int64:
+		tag = strconv.FormatInt(v, 10)
+	case bool:
+		tag = strconv.FormatBool(v)
+	case float32:
+		tag = strconv.FormatFloat(float64(v), 'f', -1, 64)
+	case float64:
+		tag = strconv.FormatFloat(v, 'f', -1, 64)
 	default:
 		s.log.Debugf("ERROR wrong type %T for ID [%s] from MEASUREMENT[ %s ] when converting to TAG(STRING) won't be reported to the output backend", v, s.cfg.ID, mid)
 		return 1
