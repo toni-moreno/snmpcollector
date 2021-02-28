@@ -142,6 +142,23 @@ func GetDevice(id string) (*device.SnmpDevice, error) {
 	return dev, nil
 }
 
+// GetOutput returns the output  with the given id.
+// Returns an error if there is an ongoing reload.
+func GetOutput(id string) (*output.InfluxDB, error) {
+	var out *output.InfluxDB
+	var ok bool
+	if CheckReloadProcess() == true {
+		log.Warning("There is a reload process running while trying to get device info")
+		return nil, fmt.Errorf("There is a reload process running.... please wait until finished ")
+	}
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if out, ok = influxdb[id]; !ok {
+		return nil, fmt.Errorf("There is not any device with id %s running", id)
+	}
+	return out, nil
+}
+
 // GetDeviceJSONInfo returns the device data in JSON format.
 // Returns an error if there is an ongoing reload.
 func GetDeviceJSONInfo(id string) ([]byte, error) {
@@ -159,8 +176,36 @@ func GetDeviceJSONInfo(id string) ([]byte, error) {
 	return dev.ToJSON()
 }
 
-// GetDevStats returns a map with the basic info of each device.
-func GetDevStats() map[string]*device.DevStat {
+// GetOutputJSONInfo returns the device data in JSON format.
+// Returns an error if there is an ongoing reload.
+func GetOutputJSONInfo(id string) ([]byte, error) {
+	var out *output.InfluxDB
+	var ok bool
+	if CheckReloadProcess() == true {
+		log.Warning("There is a reload process running while trying to get device info")
+		return nil, fmt.Errorf("There is a reload process running.... please wait until finished ")
+	}
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if out, ok = influxdb[id]; !ok {
+		return nil, fmt.Errorf("there is not any device with id %s running", id)
+	}
+	return out.ToJSON()
+}
+
+// GetDeviceStats returns a map with the basic info of each device.
+func GetOutputStats() map[string]*output.InfluxStats {
+	outstats := make(map[string]*output.InfluxStats)
+	mutex.RLock()
+	for k, v := range influxdb {
+		outstats[k] = v.GetBasicStats()
+	}
+	mutex.RUnlock()
+	return outstats
+}
+
+// GetDeviceStats returns a map with the basic info of each device.
+func GetDeviceStats() map[string]*device.DevStat {
 	devstats := make(map[string]*device.DevStat)
 	mutex.RLock()
 	for k, v := range devices {

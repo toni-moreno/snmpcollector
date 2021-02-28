@@ -1,14 +1,15 @@
 package output
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
-	"net/http"
 
-	"github.com/influxdata/influxdb1-client/v2"
+	client "github.com/influxdata/influxdb1-client/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
@@ -25,17 +26,22 @@ func SetLogger(l *logrus.Logger) {
 
 /*InfluxDB database export */
 type InfluxDB struct {
-	cfg         *config.InfluxCfg
-	stats       InfluxStats
+	cfg   *config.InfluxCfg
+	stats InfluxStats  //Runtime Internal statistic
+	Stats *InfluxStats //Public info for thread safe accessing to the data ()
+
 	initialized bool
 	imutex      sync.Mutex
 	started     bool
 	smutex      sync.Mutex
+	statsData   sync.RWMutex
 
-	dummy  bool
-	iChan  chan *client.BatchPoints
-	chExit chan bool
-	client client.Client
+	dummy    bool
+	iChan    chan *client.BatchPoints
+	chExit   chan bool
+	client   client.Client
+	OutInfo  string
+	PingTime time.Duration
 }
 
 // DummyDB a BD struct needed if no database configured
@@ -49,6 +55,38 @@ var DummyDB = &InfluxDB{
 	client:      nil,
 }
 
+func (db *InfluxDB) Action(action string) error {
+	log.Printf("Action Required %s", action)
+	return nil
+}
+
+// ToJSON return a JSON version of the device data
+func (db *InfluxDB) ToJSON() ([]byte, error) {
+
+	db.statsData.RLock()
+	defer db.statsData.RUnlock()
+	result, err := json.MarshalIndent(db, "", "  ")
+	if err != nil {
+		log.Errorf("Error on Get JSON data from device")
+		dummy := []byte{}
+		return dummy, nil
+	}
+	return result, err
+}
+
+// GetBasicStats get basic info for this device
+func (db *InfluxDB) GetBasicStats() *InfluxStats {
+	db.statsData.RLock()
+	defer db.statsData.RUnlock()
+	return db.Stats
+}
+
+// GetBasicStats get basic info for this device
+func (db *InfluxDB) getBasicStats() *InfluxStats {
+	stat := db.stats.ThSafeCopy()
+	return stat
+}
+
 // GetResetStats return outdb stats and reset its counters
 func (db *InfluxDB) GetResetStats() *InfluxStats {
 	if db.dummy == true {
@@ -56,7 +94,8 @@ func (db *InfluxDB) GetResetStats() *InfluxStats {
 		return &InfluxStats{}
 	}
 	log.Debugf("Reseting Influxstats for DB %s", db.cfg.ID)
-	return db.stats.GetResetStats()
+	db.Stats = db.stats.GetResetStats()
+	return db.Stats
 }
 
 //BP create a Batch point influx object
@@ -102,7 +141,7 @@ func Ping(cfg *config.InfluxCfg) (client.Client, time.Duration, string, error) {
 			UserAgent: cfg.UserAgent,
 			Timeout:   time.Duration(cfg.Timeout) * time.Second,
 			TLSConfig: tls,
-			Proxy: http.ProxyFromEnvironment,
+			Proxy:     http.ProxyFromEnvironment,
 		}
 	} else {
 
@@ -112,7 +151,7 @@ func Ping(cfg *config.InfluxCfg) (client.Client, time.Duration, string, error) {
 			Password:  cfg.Password,
 			UserAgent: cfg.UserAgent,
 			Timeout:   time.Duration(cfg.Timeout) * time.Second,
-			Proxy: http.ProxyFromEnvironment,
+			Proxy:     http.ProxyFromEnvironment,
 		}
 	}
 	cli, err := client.NewHTTPClient(conf)
@@ -131,7 +170,7 @@ func (db *InfluxDB) Connect() error {
 		return nil
 	}
 	var err error
-	db.client, _, _, err = Ping(db.cfg)
+	db.client, db.PingTime, db.OutInfo, err = Ping(db.cfg)
 	return err
 }
 
@@ -223,7 +262,6 @@ func (db *InfluxDB) Init() {
 		//if no connection done started = false and it will try to test again later??
 		return
 	}
-
 	log.Infof("Connected to: %s", db.cfg.Host)
 }
 
@@ -299,6 +337,7 @@ func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool
 	elapsedSend := time.Since(startSend)
 
 	bufferPercent = (float32(len(db.iChan)) * 100.0) / float32(db.cfg.BufferSize)
+	log.Infof("Buffer OUTPUT [%s] : %.2f%%", db.cfg.ID, bufferPercent)
 	if err != nil {
 		db.stats.WriteErrUpdate(elapsedSend, bufferPercent)
 		log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
@@ -314,6 +353,9 @@ func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool
 		log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
 		db.stats.WriteOkUpdate(int64(np), int64(nf), elapsedSend, bufferPercent)
 	}
+	// db.statsData.Lock()
+	// db.Stats = db.getBasicStats()
+	// db.statsData.Unlock()
 }
 
 func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
