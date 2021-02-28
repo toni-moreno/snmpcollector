@@ -165,7 +165,7 @@ export class ValidationService {
 
     static extraTags(control) {
         if (control.value){
-            if (control.value.toString().match(/^([\w._:-]+[=][\w._:-]+[,]?){1,}$/g) || control.value.toString() == "") {
+            if (control.value.toString().match(/^([\w._:-]+[=][ \w._:-]+[,]?){1,}$/g) || control.value.toString() == "") {
                 return null;
             } else {
                 return { 'invalidExtraTags': true };
