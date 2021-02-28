@@ -2,6 +2,7 @@ package measurement
 
 import (
 	"fmt"
+	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -195,6 +196,9 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 			switch {
 			case transformation == "STRING":
 				decoded = section
+			case transformation == "MAC":
+				decoded = net.HardwareAddr(section).String()
+				l.Debugf("FormatTag[%s]: MAC : value %s : Decoded %s", format, v, decoded)
 			case strings.HasPrefix(transformation, "DEC2ASCII"):
 				decoded = formatDec2ASCII(section)
 				l.Debugf("FormatTag[%s]: DEC2ASCII : value %s : Decoded %s", format, v, decoded)
