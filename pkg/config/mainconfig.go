@@ -16,16 +16,20 @@ type GeneralConfig struct {
 
 //DatabaseCfg de configuration for the database
 type DatabaseCfg struct {
-	numChanges int64  `mapstructure:"-" `
-	Type       string `mapstructure:"type" envconfig:"SNMPCOL_DATABASE_DRIVER_TYPE"`
-	Host       string `mapstructure:"host" envconfig:"SNMPCOL_DATABASE_SERVER_HOST"`
-	Name       string `mapstructure:"name" envconfig:"SNMPCOL_DATABASE_NAME"`
-	User       string `mapstructure:"user" envconfig:"SNMPCOL_DATABASE_USERNAME"`
-	Password   string `mapstructure:"password" envconfig:"SNMPCOL_DATABASE_PASSWORD"`
-	SQLLogFile string `mapstructure:"sqllogfile" envconfig:"SNMPCOL_DATABASE_SQL_LOG_FILE"`
-	Debug      string `mapstructure:"debug" envconfig:"SNMPCOL_DATABASE_SQL_DEBUG"`
-	LogMode    string `mapstructure:"log_mode" envconfig:"SNMPCOL_DATABASE_LOG_MODE"`
-	x          *xorm.Engine
+	numChanges     int64  `mapstructure:"-" `
+	Type           string `mapstructure:"type" envconfig:"SNMPCOL_DATABASE_DRIVER_TYPE"`
+	Host           string `mapstructure:"host" envconfig:"SNMPCOL_DATABASE_SERVER_HOST"`
+	Name           string `mapstructure:"name" envconfig:"SNMPCOL_DATABASE_NAME"`
+	User           string `mapstructure:"user" envconfig:"SNMPCOL_DATABASE_USERNAME"`
+	Password       string `mapstructure:"password" envconfig:"SNMPCOL_DATABASE_PASSWORD"`
+	SslMode        string `mapstructure:"ssl_mode" envconfig:"SNMPCOL_DATABASE_SSL_MODE"`
+	ClientCertPath string `mapstructure:"client_cert_path" envconfig:"SNMPCOL_DATABASE_CLIENT_CERT_PATH"`
+	ClientKeyPath  string `mapstructure:"client_key_path" envconfig:"SNMPCOL_DATABASE_CLIENT_KEY_PATH"`
+	CaCertPath     string `mapstructure:"ca_cert_path" envconfig:"SNMPCOL_DATABASE_CA_CERT_PATH"`
+	SQLLogFile     string `mapstructure:"sqllogfile" envconfig:"SNMPCOL_DATABASE_SQL_LOG_FILE"`
+	Debug          string `mapstructure:"debug" envconfig:"SNMPCOL_DATABASE_SQL_DEBUG"`
+	LogMode        string `mapstructure:"log_mode" envconfig:"SNMPCOL_DATABASE_LOG_MODE"`
+	x              *xorm.Engine
 }
 
 //SelfMonConfig configuration for self monitoring

@@ -20,6 +20,7 @@ require (
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/lib/pq v1.9.0 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1
