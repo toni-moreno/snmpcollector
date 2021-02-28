@@ -6,8 +6,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"net/http"
 
-	"github.com/influxdata/influxdb/client/v2"
+	"github.com/influxdata/influxdb1-client/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
@@ -101,6 +102,7 @@ func Ping(cfg *config.InfluxCfg) (client.Client, time.Duration, string, error) {
 			UserAgent: cfg.UserAgent,
 			Timeout:   time.Duration(cfg.Timeout) * time.Second,
 			TLSConfig: tls,
+			Proxy: http.ProxyFromEnvironment,
 		}
 	} else {
 
@@ -110,6 +112,7 @@ func Ping(cfg *config.InfluxCfg) (client.Client, time.Duration, string, error) {
 			Password:  cfg.Password,
 			UserAgent: cfg.UserAgent,
 			Timeout:   time.Duration(cfg.Timeout) * time.Second,
+			Proxy: http.ProxyFromEnvironment,
 		}
 	}
 	cli, err := client.NewHTTPClient(conf)
