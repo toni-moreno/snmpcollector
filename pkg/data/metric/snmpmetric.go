@@ -857,40 +857,35 @@ func (s *SnmpMetric) addMultiStringParserValues(tags map[string]string, fields m
 }
 
 // ImportFieldsAndTags Add Fields and tags from the metric and returns number of metric sent and metric errors found
-func (s *SnmpMetric) ImportFieldsAndTags(mid string, fields map[string]interface{}, tags map[string]string) (int64, int64) {
-	var metError int64
-	var metSent int64
+func (s *SnmpMetric) ImportFieldsAndTags(mid string, fields map[string]interface{}, tags map[string]string) int64 {
 	s.log.Debugf("DEBUG METRIC  CONFIG %+v", s.cfg)
 	if s.CookedValue == nil {
 		s.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has no valid data => See Metric Runtime [ %+v ]", s.cfg.ID, mid, tags, s)
-		metError++ //not sure if an tag error should be count as metric
-		return metError, metSent
+		return 1
 	}
 	if s.Valid == false {
 		s.log.Warnf("Warning METRIC ID [%s] from MEASUREMENT[ %s ] with TAGS [%+v] has obsolete data => See Metric Runtime [ %+v ]", s.cfg.ID, mid, tags, s)
-		metError++
-		return metError, metSent
+		return 1
 	}
 	if s.Report == NeverReport {
 		s.log.Debugf("REPORT is FALSE in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
-		return 0, 0
+		return 0
 	}
 
 	switch s.cfg.DataSrcType {
 	case "MULTISTRINGPARSER":
 		er := s.addMultiStringParserValues(tags, fields)
-		metError += er
+		return er
 	default:
 		if s.cfg.IsTag == true {
 			er := s.addSingleTag(mid, tags)
-			metError += er
+			return er
 		} else {
 			er := s.addSingleField(mid, fields)
-			metError += er
+			return er
 		}
 	}
-
-	return metSent, metError
+	return 0
 }
 
 // MarshalJSON return JSON formatted data

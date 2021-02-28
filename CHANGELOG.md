@@ -4,6 +4,7 @@
 ### fixes
 * Fixed invalid field when using MULTISTRINGPARSER and void capture group. Now the value is ommited and it won't be written on InfluxDB
 * Added  /api/rt/agent/shutdown as fast way to reload config when existing external tools to restart the snmpcollector instance (docker --restart=always) by example
+* Improved device stats , Added new tags "device_active", "device_connected" true/false and "active_value/connected_value" as fields with values  0/1, with this new fields/tags we can easily count % devices connected 
 
 ### breaking changes
 

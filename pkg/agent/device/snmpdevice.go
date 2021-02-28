@@ -120,8 +120,6 @@ func (d *SnmpDevice) getBasicStats() *DevStat {
 	stat := d.stats.ThSafeCopy()
 	stat.ReloadLoopsPending = d.ReloadLoopsPending
 	stat.TagMap = d.TagMap
-	stat.DeviceActive = d.DeviceActive
-	stat.DeviceConnected = d.DeviceConnected
 	stat.NumMeasurements = len(d.Measurements)
 	stat.NumMetrics = sum
 	if d.SysInfo != nil {
@@ -367,6 +365,7 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
 
 	d.DeviceActive = d.cfg.Active
+	d.stats.SetStatus(d.DeviceActive, false)
 
 	//Init Device Tags
 
@@ -503,6 +502,7 @@ func (d *SnmpDevice) initSnmpConnectConcurrent(mkey string, debug bool, maxrep u
 	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug, maxrep)
 	if err != nil {
 		d.DeviceConnected = false
+		d.stats.SetStatus(d.DeviceActive, false)
 		d.Errorf("Client connect error to device  error :%s", err)
 		d.snmpClientMap[mkey] = nil
 		return nil, err
@@ -512,6 +512,7 @@ func (d *SnmpDevice) initSnmpConnectConcurrent(mkey string, debug bool, maxrep u
 	d.snmpClientMap[mkey] = client
 	d.SysInfo = sysinfo
 	d.DeviceConnected = true
+	d.stats.SetStatus(d.DeviceActive, true)
 	return client, nil
 }
 
@@ -529,6 +530,7 @@ func (d *SnmpDevice) initSnmpConnectSequential(mkey string, debug bool, maxrep u
 	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug, maxrep)
 	if err != nil {
 		d.DeviceConnected = false
+		d.stats.SetStatus(d.DeviceActive, false)
 		d.Errorf("Client connect error to device  error :%s", err)
 		d.snmpClientMap[mkey] = nil
 		return nil, err
@@ -538,6 +540,7 @@ func (d *SnmpDevice) initSnmpConnectSequential(mkey string, debug bool, maxrep u
 	d.snmpClientMap[mkey] = client
 	d.SysInfo = sysinfo
 	d.DeviceConnected = true
+	d.stats.SetStatus(d.DeviceActive, true)
 	return client, nil
 }
 
@@ -550,6 +553,7 @@ func (d *SnmpDevice) CheckDeviceConnectivity() {
 		//check if no processed SNMP data (when this happens means there is not connectivity with the device )
 		if value == 0 {
 			d.DeviceConnected = false
+			d.stats.SetStatus(d.DeviceActive, false)
 		}
 	} else {
 		d.Warnf("Error in check Processd Stats %#+v ", ProcessedStat)
@@ -600,6 +604,7 @@ func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 		} else {
 			d.Errorf("Error on reset snmp connection  on device %s: disconnecting now...  ", d.cfg.ID)
 			d.DeviceConnected = false
+			d.stats.SetStatus(d.DeviceActive, false)
 		}
 	} else {
 		for _, m := range d.Measurements {
@@ -617,6 +622,7 @@ func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 		if initerrors == len(d.Measurements) {
 			d.Errorf("Error on reset snmp connection all (%d) measurements without valid connection : disconnecting now...  ", initerrors)
 			d.DeviceConnected = false
+			d.stats.SetStatus(d.DeviceActive, false)
 		}
 	}
 }
@@ -628,6 +634,7 @@ func (d *SnmpDevice) gatherAndProcessData(t *time.Ticker, force bool) *time.Tick
 	FORCEINIT:
 		//check if device has active snmp connections and Initialize if not
 		if d.DeviceConnected == false {
+
 			//should release first previouos snmp connections
 			d.releaseClientMap()
 			//try reconnect only once with the "init" connection
@@ -650,6 +657,8 @@ func (d *SnmpDevice) gatherAndProcessData(t *time.Ticker, force bool) *time.Tick
 				}
 				goto FORCEINIT
 			}
+			//send counters when device active and not connected ( no reset needed only status fields/tags are sent)
+			d.stats.Send()
 		} else {
 			//device active and connected
 			d.Infof("Init gather cycle mode Concurrent [ %t ]", d.cfg.ConcurrentGather)
@@ -697,6 +706,8 @@ func (d *SnmpDevice) gatherAndProcessData(t *time.Ticker, force bool) *time.Tick
 			d.stats.Send()
 		}
 	} else {
+		//send stats when device not active ( not reset needed only status fields/tags are sent)
+		d.stats.Send()
 		d.Infof("Gather process is disabled")
 	}
 	//get Ready a copy of the stats to
@@ -785,6 +796,13 @@ func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
 					status := val.Data.(bool)
 					d.rtData.Lock()
 					d.DeviceActive = status
+					//TODO: review if needed some kind of snmp unconnect/reset here
+					if status {
+						d.stats.SetActive(true)
+					} else {
+						d.stats.SetStatus(false, false)
+					}
+
 					d.Infof("device STATUS  ACTIVE  [%t] ", status)
 					d.rtData.Unlock()
 				case "loglevel":

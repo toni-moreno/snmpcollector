@@ -26,8 +26,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 		}
 		Fields := make(map[string]interface{})
 		for _, vMtr := range k.Data {
-			ms, me := vMtr.ImportFieldsAndTags(m.cfg.ID, Fields, Tags)
-			metSent += ms
+			me := vMtr.ImportFieldsAndTags(m.cfg.ID, Fields, Tags)
 			metError += me
 			//check again if metric is valid
 			if vMtr.Valid == true {
@@ -36,6 +35,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 				m.Debugf("SKIPPING TS due to invalid %s metric %s", m.cfg.ID, vMtr.CurTime)
 			}
 		}
+		metSent += int64(len(Fields))
 		m.Debugf("FIELDS:%+v", Fields)
 
 		pt, err := client.NewPoint(m.cfg.Name, Tags, Fields, t)
@@ -75,8 +75,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 			m.Debugf("IDX :%+v", vIdx)
 			Fields := make(map[string]interface{})
 			for _, vMtr := range vIdx.Data {
-				ms, me := vMtr.ImportFieldsAndTags(m.cfg.ID, Fields, Tags)
-				metSent += ms
+				me := vMtr.ImportFieldsAndTags(m.cfg.ID, Fields, Tags)
 				metError += me
 				//check again if metric is valid
 				if vMtr.Valid == true {
@@ -85,6 +84,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 					m.Debugf("SKIPPING TS due to invalid %s metric %s", m.cfg.ID, vMtr.CurTime)
 				}
 			}
+			metSent += int64(len(Fields))
 			//here we can chek Fields names prior to send data
 			m.Debugf("FIELDS:%+v TAGS:%+v", Fields, Tags)
 			pt, err := client.NewPoint(m.cfg.Name, Tags, Fields, t)
