@@ -10,11 +10,17 @@ import (
 	// _ needed to mysql
 	_ "github.com/go-sql-driver/mysql"
 
+	// needed to posgress
+
+	_ "github.com/lib/pq"
+
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 
 	// _ needed to sqlite3
 	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 func (dbc *DatabaseCfg) resetChanges() {
@@ -37,7 +43,7 @@ type DbObjAction struct {
 }
 
 //InitDB initialize de BD configuration
-func (dbc *DatabaseCfg) InitDB() {
+func (dbc *DatabaseCfg) InitDB() error {
 	// Create ORM engine and database
 	var err error
 	var dbtype string
@@ -49,6 +55,26 @@ func (dbc *DatabaseCfg) InitDB() {
 	case "sqlite3":
 		dbtype = "sqlite3"
 		datasource = dataDir + "/" + dbc.Name + ".db"
+
+	case "postgres", "postgresql":
+		dbtype = "postgres"
+		addr, err := utils.SplitHostPortDefault(dbc.Host, "127.0.0.1", "5432")
+		if err != nil {
+			log.Errorf("Invalid host specifier '%s': Err: %s", dbc.Host, err)
+			return err
+		}
+
+		if dbc.Password == "" {
+			dbc.Password = "''"
+		}
+		if dbc.User == "" {
+			dbc.User = "''"
+		}
+		if dbc.SslMode == "" {
+			dbc.SslMode = "disable"
+		}
+		datasource = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", dbc.User, dbc.Password, addr.Host, addr.Port, dbc.Name, dbc.SslMode, dbc.ClientCertPath, dbc.ClientKeyPath, dbc.CaCertPath)
+
 	case "mysql":
 		dbtype = "mysql"
 		protocol := "tcp"
@@ -59,7 +85,7 @@ func (dbc *DatabaseCfg) InitDB() {
 		//datasource = dbc.User + ":" + dbc.Pass + "@" + dbc.Host + "/" + dbc.Name + "?charset=utf8"
 	default:
 		log.Errorf("unknown db  type %s", dbc.Type)
-		return
+		return nil
 	}
 
 	dbc.x, err = xorm.NewEngine(dbtype, datasource)
@@ -133,6 +159,7 @@ func (dbc *DatabaseCfg) InitDB() {
 	if err = dbc.x.Sync(new(OidConditionCfg)); err != nil {
 		log.Fatalf("Fail to sync database OidConditionCfg: %v\n", err)
 	}
+	return nil
 }
 
 // CatalogVar2Map return interface map from variable table
