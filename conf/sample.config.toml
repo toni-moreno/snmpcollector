@@ -41,11 +41,11 @@
 
 [database]
 # type sets the sql backend
-# valid values sqlite3,mysql
+# valid values sqlite3,mysql,postgres
 # could be set also with SNMPCOL_DATABASE_DRIVER_TYPE default sqlite3
  type = "sqlite3"
 
-# these parameters are only for mysql (use mysql_setup.sql before)
+# host the host:port where doing DB connection (apply only to mysql/postgresql)
 # could be set also with SNMPCOL_DATABASE_SERVER_HOST env var default localhost
 # host = 127.0.0.1:3306
 
@@ -61,6 +61,23 @@
 # could also be set with SNMPCOL_DATABASE_NAME  env var
  name = "snmpcollector"
 
+# ssl_mode set ssl in database connection
+# For "postgres", use either "disable", "require" or "verify-full"
+# For "mysql", use either "true", "false", or "skip-verify".
+# could also be set with SNMPCOL_DATABASE_SSL_MODE env var
+# ssl_mode = disable
+
+# client_cert_path path for client cert 
+# could also be set with  SNMPCOL_DATABASE_CLIENT_CERT_PATH env var
+# client_cert_path = /my/path/cert.pem
+
+# client_key_path path for client cert key
+# could also be set with  SNMPCOL_DATABASE_CLIENT_KEY_PATH env var
+# client_key_path = /my/path/cert.key
+
+# ca_cert_path path path for client cert key
+# could also be set with  SNMPCOL_DATABASE_CA_CERT_PATH env var
+# ca_cert_path= /my/path/ca.pem
 
 # Log mode  could be "none/file/console" 
 # if console have been selected all the SQL queries  will be writen into stdout 

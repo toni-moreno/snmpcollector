@@ -1,10 +1,17 @@
-# v 0.9.1 ( unreleased )
+# v 0.10.0 ( unreleased )
 ### New Features
+* added support for PostgreSQL as config database.
+* added option to redirect influxdb HTTP writes over HTTP(S)_PROXY variables.
+* added new MAC trasformation on  IndexTagFormat Definition [transformations](https://github.com/toni-moreno/snmpcollector/wiki/Component:-Measurements#defined-transformations)
+* added support for spaces in tag values.
+* Improved device stats , Added new tags "device_active", "device_connected" true/false and "active_value/connected_value" as fields with values  0/1, with this new fields/tags we can easily count % devices connected 
+* Added  /api/rt/agent/shutdown as fast way to reload config when existing external tools to restart the snmpcollector instance (docker --restart=always) by example.
+* added support to tags converted from int/float/bool types when is_tag is true.
+
 
 ### fixes
 * Fixed invalid field when using MULTISTRINGPARSER and void capture group. Now the value is ommited and it won't be written on InfluxDB
-* Added  /api/rt/agent/shutdown as fast way to reload config when existing external tools to restart the snmpcollector instance (docker --restart=always) by example
-* Improved device stats , Added new tags "device_active", "device_connected" true/false and "active_value/connected_value" as fields with values  0/1, with this new fields/tags we can easily count % devices connected 
+* #383, #463 , #427
 
 ### breaking changes
 
