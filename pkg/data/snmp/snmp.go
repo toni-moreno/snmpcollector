@@ -552,11 +552,19 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 			"NoAuth": gosnmp.NoAuth,
 			"MD5":    gosnmp.MD5,
 			"SHA":    gosnmp.SHA,
+			"SHA224": gosnmp.SHA224,
+			"SHA256": gosnmp.SHA256,
+			"SHA384": gosnmp.SHA384,
+			"SHA512": gosnmp.SHA512,
 		}
 		privpmap := map[string]gosnmp.SnmpV3PrivProtocol{
-			"NoPriv": gosnmp.NoPriv,
-			"DES":    gosnmp.DES,
-			"AES":    gosnmp.AES,
+			"NoPriv":  gosnmp.NoPriv,
+			"DES":     gosnmp.DES,
+			"AES":     gosnmp.AES,
+			"AES192":  gosnmp.AES192,
+			"AES192C": gosnmp.AES192C,
+			"AES256":  gosnmp.AES256,
+			"AES256C": gosnmp.AES256C,
 		}
 		UsmParams := new(gosnmp.UsmSecurityParameters)
 
