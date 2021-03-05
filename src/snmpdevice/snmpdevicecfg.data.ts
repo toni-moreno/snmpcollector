@@ -15,6 +15,7 @@ export const SnmpDeviceCfgComponentConfig: any =
       { title: 'Influx DB', name: 'OutDB' },
       { title: 'Log Level', name: 'LogLevel' },
       { title: 'Disable Snmp Bulk Queries', name: 'DisableBulk' },
+      { title: 'MaxOids for SNMP GET', name: 'MaxOids' },
       { title: 'Timeout', name: 'Timeout' },
       { title: 'Retries', name: 'Retries' },
       { title: 'SNMP Max Repetitions', name: 'MaxRepetitions' },

@@ -157,6 +157,15 @@
         </div>
       </div>
 
+      <div class="form-group" >
+        <label class="control-label col-sm-2" for="MaxOids">Max OIDs</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Active on Collector reboot"></i>
+        <div class="col-sm-9">
+          <input formControlName="MaxOids" id="MaxOids" [ngModel]="snmpdevForm.value.MaxOids" />
+          <control-messages [control]="snmpdevForm.controls.MaxOids"></control-messages>
+        </div>
+      </div>
+
       <div class="form-group" *ngIf="snmpdevForm.value.SnmpVersion != '1' ">
         <label class="control-label col-sm-2" for="DisableBulk">DisableBulk</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Active on Collector reboot"></i>

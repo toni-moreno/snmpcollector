@@ -38,7 +38,7 @@ func (s *SnmpServer) ResponseForPkt(i *gosnmp.SnmpPacket) (*gosnmp.SnmpPacket, e
 	switch i.PDUType {
 	case gosnmp.GetRequest:
 		i.PDUType = gosnmp.GetResponse
-		log.Infof("GET REQUEST")
+		log.Infof("MOCK_SERVER: GET REQUEST")
 		for k, v := range i.Variables {
 			found := false
 			findex := -1
@@ -51,18 +51,18 @@ func (s *SnmpServer) ResponseForPkt(i *gosnmp.SnmpPacket) (*gosnmp.SnmpPacket, e
 			}
 			if found {
 				i.Variables[k] = s.Want[findex]
-				log.Infof("found response value %v for type %x for Name %s", i.Variables[k].Value, i.Variables[k].Type, i.Variables[k].Name)
+				log.Infof("MOCK_SERVER: found response value %v for type %x for Name %s", i.Variables[k].Value, i.Variables[k].Type, i.Variables[k].Name)
 			} else {
-				log.Warnf("not found value for request %d , name %s", k, v.Name)
+				log.Warnf("MOCK_SERVER: not found value for request %d , name %s", k, v.Name)
 			}
 
 		}
 
 	case gosnmp.GetNextRequest:
-		log.Infof("GET NEXT")
+		log.Infof("MOCK_SERVER: GET NEXT")
 		fallthrough
 	case gosnmp.GetBulkRequest:
-		log.Infof("GET BULK")
+		log.Infof("MOCK_SERVER: GET BULK")
 		i.PDUType = gosnmp.GetResponse
 		length := len(i.Variables)
 		queryForOid := i.Variables[length-1].Name
@@ -119,7 +119,7 @@ func (s *SnmpServer) marshalPkt(pkt *gosnmp.SnmpPacket, err error) ([]byte, erro
 		pkt = &gosnmp.SnmpPacket{}
 	}
 	if err != nil {
-		log.Debugf("Will marshal: %v", err)
+		log.Debugf("MOCK_SERVER: Will marshal: %v", err)
 
 		errFill := s.fillErrorPkt(err, pkt)
 		if errFill != nil {
@@ -128,9 +128,9 @@ func (s *SnmpServer) marshalPkt(pkt *gosnmp.SnmpPacket, err error) ([]byte, erro
 
 		return pkt.MarshalMsg()
 	}
-	log.Debugf("Marshall PKT: %+v", pkt)
+	log.Debugf("MOCK_SERVER: Marshall PKT: %+v", pkt)
 	out, err := pkt.MarshalMsg()
-	log.Debugf("Marshall PKT: %+v", out)
+	log.Debugf("MOCK_SERVER: Marshall PKT: %+v", out)
 	return out, err
 }
 
@@ -142,37 +142,37 @@ func (s *SnmpServer) serve(addr net.Addr, buf []byte) {
 	vhandle.Logger = log
 	request, decodeError := vhandle.SnmpDecodePacket(buf)
 	if decodeError != nil {
-		log.Errorf("Error on Decode packet %s", decodeError)
+		log.Errorf("MOCK_SERVER: Error on Decode packet %s", decodeError)
 		return
 	}
 	switch request.Version {
 	case gosnmp.Version1:
-		log.Infof("Got SnmpVersion 1 packet: %+v", request)
+		log.Infof("MOCK_SERVER: Got SnmpVersion 1 packet: %+v", request)
 		response, err = s.marshalPkt(s.ResponseForPkt(request))
 		if err != nil {
-			log.Errorf("Error on decode: %s", err)
+			log.Errorf("MOCK_SERVER: Error on decode: %s", err)
 			return
 		}
 	case gosnmp.Version2c:
-		log.Infof("Got SnmpVersion 2c packet: %+v", request)
+		log.Infof("MOCK_SERVER: Got SnmpVersion 2c packet: %+v", request)
 		response, err = s.marshalPkt(s.ResponseForPkt(request))
 		if err != nil {
-			log.Errorf("Error on decode: %s", err)
+			log.Errorf("MOCK_SERVER: Error on decode: %s", err)
 			return
 		}
 	case gosnmp.Version3:
-		log.Infof("Got SnmpVersion 3 packet: %+v", request)
-		log.Errorf("unsupported v3 protocol on mock test")
+		log.Infof("MOCK_SERVER: Got SnmpVersion 3 packet: %+v", request)
+		log.Errorf("MOCK_SERVER: unsupported v3 protocol on mock test")
 		return
 	default:
-		log.Infof("Unknown SnmpVersion for packet: %v", request)
+		log.Infof("MOCK_SERVER: Unknown SnmpVersion for packet: %v", request)
 	}
 
 	n, err := s.pc.WriteTo(response, addr)
 	if err != nil {
-		log.Errorf("Can not write response %s", err)
+		log.Errorf("MOCK_SERVER: Can not write response %s", err)
 	}
-	log.Infof("OK: sending %d bytes of response", n)
+	log.Infof("MOCK_SERVER: OK: sending %d bytes of response", n)
 }
 
 func (s *SnmpServer) setFinish() {
@@ -189,10 +189,23 @@ func (s *SnmpServer) getFinish() bool {
 
 // Start snmp mock server
 func (s *SnmpServer) Start() error {
+	// SysDescr     .1.3.6.1.2.1.1.1.0
+	// sysUpTime    .1.3.6.1.2.1.1.3.0
+	// SysContact   .1.3.6.1.2.1.1.4.0
+	// SysName      .1.3.6.1.2.1.1.5.0
+	// SysLocation  .1.3.6.1.2.1.1.6.0
+	syspdus := []gosnmp.SnmpPDU{
+		{Name: ".1.3.6.1.2.1.1.1.0", Type: gosnmp.OctetString, Value: "mock server sys description"},
+		{Name: ".1.3.6.1.2.1.1.3.0", Type: gosnmp.TimeTicks, Value: uint32(600000000)},
+		{Name: ".1.3.6.1.2.1.1.4.0", Type: gosnmp.OctetString, Value: "mock server contact"},
+		{Name: ".1.3.6.1.2.1.1.5.0", Type: gosnmp.OctetString, Value: "myserver"},
+		{Name: ".1.3.6.1.2.1.1.6.0", Type: gosnmp.OctetString, Value: "here"},
+	}
+	s.Want = append(s.Want, syspdus...)
 	var err error
 	s.pc, err = net.ListenPacket("udp", s.Listen)
 	if err != nil {
-		log.Errorf("%s", err)
+		log.Errorf("MOCK_SERVER: %s", err)
 		return err
 	}
 	go func() {
@@ -205,12 +218,12 @@ func (s *SnmpServer) Start() error {
 			buf := make([]byte, 4096)
 			n, addr, err := s.pc.ReadFrom(buf)
 			if err != nil {
-				log.Errorf("Error on read data: %s", err)
+				log.Errorf("MOCK_SERVER: Error on read data: %s", err)
 				continue
 			}
-			log.Infof("Read [%d] from %+v", n, addr)
+			log.Infof("MOCK_SERVER: Read [%d] from %+v", n, addr)
 			go s.serve(addr, buf[:n])
-			log.Infof("Next...")
+			log.Infof("MOCK_SERVER: Next...")
 		}
 	}()
 	return nil

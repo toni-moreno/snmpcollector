@@ -19,6 +19,7 @@ export class SnmpDeviceService {
         key == 'Repeat' ||
         key == 'Freq' ||
         key == 'MaxRepetitions'  ||
+        key == 'MaxOids' ||
         key == 'UpdateFltFreq') {
             return parseInt(value);
         }
