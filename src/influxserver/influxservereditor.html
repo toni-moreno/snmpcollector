@@ -189,6 +189,25 @@
         </div>
       </div>
       <div class="form-group">
+        <label class="control-label col-sm-2" for="EnqueueOnWriteError">Enqueue On Write Error</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Enqueue metrics if output write fails when true or discarts data when false "></i>
+        <div class="col-sm-9">
+          <select formControlName="EnqueueOnWriteError" id="EnqueueOnWriteError" [ngModel]="influxserverForm.value.EnqueueOnWriteError">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+          <control-messages [control]="influxserverForm.controls.EnqueueOnWriteError"></control-messages>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="TimeWriteRetry">Time Write Retry (s)</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="time in seconds the output process will wait to retry the sending process after send error"></i>
+        <div class="col-sm-9">
+          <input formControlName="TimeWriteRetry" id="TimeWriteRetry" [ngModel]="influxserverForm.value.TimeWriteRetry"/>
+          <control-messages [control]="influxserverForm.controls.TimeWriteRetry"></control-messages>
+        </div>
+      </div>
+      <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the InfluxDB Server"></i>
         <div class="col-sm-9">

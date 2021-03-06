@@ -11,6 +11,7 @@ import (
 
 	client "github.com/influxdata/influxdb1-client/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
@@ -38,10 +39,11 @@ type InfluxDB struct {
 
 	dummy    bool
 	iChan    chan *client.BatchPoints
-	chExit   chan bool
 	client   client.Client
 	OutInfo  string
 	PingTime time.Duration
+	Node     *bus.Node `json:"-"`
+	Active   bool
 }
 
 // DummyDB a BD struct needed if no database configured
@@ -51,7 +53,6 @@ var DummyDB = &InfluxDB{
 	started:     false,
 	dummy:       true,
 	iChan:       nil,
-	chExit:      nil,
 	client:      nil,
 }
 
@@ -233,11 +234,8 @@ func NewNotInitInfluxDB(c *config.InfluxCfg) *InfluxDB {
 	}
 }
 
-// TimeWriteRetry time wait
-const TimeWriteRetry = 10
-
 //Init initialies runtime info
-func (db *InfluxDB) Init() {
+func (db *InfluxDB) Init(b *bus.Bus) {
 	if db.dummy == true {
 		return
 	}
@@ -247,6 +245,12 @@ func (db *InfluxDB) Init() {
 		return
 	}
 
+	db.Node = bus.NewNode(db.cfg.ID)
+	b.Join(db.Node)
+
+	//begin to send as soon as receiving metrics
+	db.Active = true
+
 	if len(db.cfg.UserAgent) == 0 {
 		db.cfg.UserAgent = "snmpCollector-" + db.cfg.ID
 	}
@@ -255,7 +259,7 @@ func (db *InfluxDB) Init() {
 
 	log.Infof("Connecting to: %s", db.cfg.Host)
 	db.iChan = make(chan *client.BatchPoints, db.cfg.BufferSize)
-	db.chExit = make(chan bool)
+
 	if err := db.Connect(); err != nil {
 		log.Errorln("failed connecting to: ", db.cfg.Host)
 		log.Errorln("error: ", err)
@@ -265,6 +269,17 @@ func (db *InfluxDB) Init() {
 	log.Infof("Connected to: %s", db.cfg.Host)
 }
 
+// AttachToBus add this device to a communition bus
+func (db *InfluxDB) AttachToBus(b *bus.Bus) {
+	db.Node = bus.NewNode(db.cfg.ID)
+	b.Join(db.Node)
+}
+
+// LeaveBus add this device to a communition bus
+func (db *InfluxDB) LeaveBus(b *bus.Bus) {
+	b.Leave(db.Node)
+}
+
 // End release DB connection
 func (db *InfluxDB) End() {
 	if db.dummy == true {
@@ -272,7 +287,6 @@ func (db *InfluxDB) End() {
 	}
 	if db.CheckAndUnSetInitialized() == true {
 		close(db.iChan)
-		close(db.chExit)
 		db.client.Close()
 	}
 }
@@ -284,7 +298,21 @@ func (db *InfluxDB) StopSender() {
 	}
 
 	if db.IsStarted() == true {
-		db.chExit <- true
+		db.Node.SendMsg(&bus.Message{Type: "exit"})
+		return
+	}
+
+	log.Infof("Can not stop Sender [%s] becaouse of it is already stopped", db.cfg.ID)
+}
+
+// StopSender finalize sender goroutines
+func (db *InfluxDB) SetActive(active bool) {
+	if db.dummy == true {
+		return
+	}
+
+	if db.IsStarted() == true {
+		db.Node.SendMsg(&bus.Message{Type: "setactive", Data: active})
 		return
 	}
 
@@ -346,41 +374,30 @@ func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool
 			log.Debug("queing data again...")
 			if len(db.iChan) < db.cfg.BufferSize {
 				db.iChan <- data
-				time.Sleep(TimeWriteRetry * time.Second)
+				time.Sleep(time.Duration(db.cfg.TimeWriteRetry) * time.Second)
 			}
 		}
 	} else {
 		log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
 		db.stats.WriteOkUpdate(int64(np), int64(nf), elapsedSend, bufferPercent)
 	}
-	// db.statsData.Lock()
-	// db.Stats = db.getBasicStats()
-	// db.statsData.Unlock()
+
 }
 
 func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	time.Sleep(5)
+	EnqueueOnWriteError := db.cfg.EnqueueOnWriteError
+
 	log.Infof("beginning Influx Sender thread: [%s]", db.cfg.ID)
 	for {
 		select {
-		case <-db.chExit:
-			//need to flush all data
-
-			chanlen := len(db.iChan) // get number of entries in the batchpoint channel
-			log.Infof("Flushing %d batchpoints of data in OutDB %s ", chanlen, db.cfg.ID)
-			for i := 0; i < chanlen; i++ {
-				//flush them
-				data := <-db.iChan
-				//this process only will work if backend is  running ok elsewhere points will be lost
-				db.sendBatchPoint(data, false)
-			}
-
-			log.Infof("EXIT from Influx sender process for device [%s] ", db.cfg.ID)
-			db.SetStartedAs(false)
-			return
 		case data := <-db.iChan:
+			if !db.Active {
+				log.Warn("skip send: Output not active")
+				continue
+			}
 			if data == nil {
 				log.Warn("null influx input")
 				continue
@@ -390,8 +407,32 @@ func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
 				continue
 			}
 
-			db.sendBatchPoint(data, true)
+			db.sendBatchPoint(data, EnqueueOnWriteError)
+		case val := <-db.Node.Read:
+			log.Infof("Received Message...%s: %+v", val.Type, val.Data)
+			switch val.Type {
+			case "setactive":
+				db.Active = val.Data.(bool)
+			case "enqueue_policy_change":
+				EnqueueOnWriteError = val.Data.(bool)
+			case "exit":
+				log.Infof("invoked Force Exit")
+				//need to flush all data
 
+				chanlen := len(db.iChan) // get number of entries in the batchpoint channel
+				log.Infof("Flushing %d batchpoints of data in OutDB %s ", chanlen, db.cfg.ID)
+				for i := 0; i < chanlen; i++ {
+					//flush them
+					data := <-db.iChan
+					//this process only will work if backend is  running ok elsewhere points will be lost
+					db.sendBatchPoint(data, false)
+				}
+
+				log.Infof("EXIT from Influx sender process for device [%s] ", db.cfg.ID)
+				db.SetStartedAs(false)
+				return
+
+			}
 		}
 	}
 }

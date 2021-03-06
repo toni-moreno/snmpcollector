@@ -47,7 +47,8 @@ func GetRInfo() *RInfo {
 
 var (
 	// Bus is the messaging system used to send messages to the devices
-	Bus = bus.NewBus()
+	DevBus = bus.NewBus()
+	OutBus = bus.NewBus()
 
 	// MainConfig contains the global configuration
 	MainConfig config.Config
@@ -233,7 +234,7 @@ func ReleaseInfluxOut(idb map[string]*output.InfluxDB) {
 
 // DeviceProcessStop stops all device polling goroutines
 func DeviceProcessStop() {
-	Bus.Broadcast(&bus.Message{Type: "exit"})
+	DevBus.Broadcast(&bus.Message{Type: "exit"})
 }
 
 // DeviceProcessStart starts all device polling goroutines
@@ -257,7 +258,8 @@ func ReleaseDevices() {
 }
 
 func init() {
-	go Bus.Start()
+	go DevBus.Start()
+	go OutBus.Start()
 }
 
 func initSelfMonitoring(idb map[string]*output.InfluxDB) {
@@ -267,7 +269,7 @@ func initSelfMonitoring(idb map[string]*output.InfluxDB) {
 	if MainConfig.Selfmon.Enabled {
 		if val, ok := idb["default"]; ok {
 			//only executed if a "default" influxdb exist
-			val.Init()
+			val.Init(OutBus)
 			val.StartSender(&senderWg)
 
 			selfmonProc.Init()
@@ -302,7 +304,7 @@ func DeleteDeviceInRuntime(id string) error {
 	if dev, ok := devices[id]; ok {
 		dev.StopGather()
 		log.Debugf("Bus retuned from the exit message to the ID device %s", id)
-		dev.LeaveBus(Bus)
+		dev.LeaveBus(DevBus)
 		dev.End()
 		mutex.Lock()
 		delete(devices, id)
@@ -317,13 +319,13 @@ func DeleteDeviceInRuntime(id string) error {
 func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 	// Initialize each SNMP device and put pointer to the global map devices
 	dev := device.New(cfg)
-	dev.AttachToBus(Bus)
+	dev.AttachToBus(DevBus)
 	dev.InitCatalogVar(DBConfig.VarCatalog)
 	dev.SetSelfMonitoring(selfmonProc)
 
 	// send a db map to initialize each one its own db if needed
 	outdb, _ := dev.GetOutSenderFromMap(influxdb)
-	outdb.Init()
+	outdb.Init(OutBus)
 	outdb.StartSender(&senderWg)
 
 	mutex.Lock()
