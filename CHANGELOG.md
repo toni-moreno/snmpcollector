@@ -1,4 +1,4 @@
-# v 0.10.0 ( unreleased )
+# v 0.10.0 ( 2021-03-06 )
 ### New Features
 * added support for PostgreSQL as config database.
 * added option to redirect influxdb HTTP writes over HTTP(S)_PROXY variables.
@@ -8,6 +8,7 @@
 * Added  /api/rt/agent/shutdown as fast way to reload config when existing external tools to restart the snmpcollector instance (docker --restart=always) by example.
 * added support to tags converted from int/float/bool types when is_tag is true.
 * Added support for SNMPv3  AES192,AES192C,AES256,AES256C Privacy Protocols and SHA224,SHA256,SHA384,SHA512 Auth protocols.
+* updated compiler platform to golang 1.16 
 
 
 
