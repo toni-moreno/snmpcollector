@@ -47,7 +47,8 @@ func GetRInfo() *RInfo {
 
 var (
 	// Bus is the messaging system used to send messages to the devices
-	Bus = bus.NewBus()
+	DevBus = bus.NewBus()
+	OutBus = bus.NewBus()
 
 	// MainConfig contains the global configuration
 	MainConfig config.Config
@@ -142,6 +143,23 @@ func GetDevice(id string) (*device.SnmpDevice, error) {
 	return dev, nil
 }
 
+// GetOutput returns the output  with the given id.
+// Returns an error if there is an ongoing reload.
+func GetOutput(id string) (*output.InfluxDB, error) {
+	var out *output.InfluxDB
+	var ok bool
+	if CheckReloadProcess() == true {
+		log.Warning("There is a reload process running while trying to get device info")
+		return nil, fmt.Errorf("There is a reload process running.... please wait until finished ")
+	}
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if out, ok = influxdb[id]; !ok {
+		return nil, fmt.Errorf("There is not any device with id %s running", id)
+	}
+	return out, nil
+}
+
 // GetDeviceJSONInfo returns the device data in JSON format.
 // Returns an error if there is an ongoing reload.
 func GetDeviceJSONInfo(id string) ([]byte, error) {
@@ -159,8 +177,36 @@ func GetDeviceJSONInfo(id string) ([]byte, error) {
 	return dev.ToJSON()
 }
 
-// GetDevStats returns a map with the basic info of each device.
-func GetDevStats() map[string]*device.DevStat {
+// GetOutputJSONInfo returns the device data in JSON format.
+// Returns an error if there is an ongoing reload.
+func GetOutputJSONInfo(id string) ([]byte, error) {
+	var out *output.InfluxDB
+	var ok bool
+	if CheckReloadProcess() == true {
+		log.Warning("There is a reload process running while trying to get device info")
+		return nil, fmt.Errorf("There is a reload process running.... please wait until finished ")
+	}
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if out, ok = influxdb[id]; !ok {
+		return nil, fmt.Errorf("there is not any device with id %s running", id)
+	}
+	return out.ToJSON()
+}
+
+// GetDeviceStats returns a map with the basic info of each device.
+func GetOutputStats() map[string]*output.InfluxStats {
+	outstats := make(map[string]*output.InfluxStats)
+	mutex.RLock()
+	for k, v := range influxdb {
+		outstats[k] = v.GetBasicStats()
+	}
+	mutex.RUnlock()
+	return outstats
+}
+
+// GetDeviceStats returns a map with the basic info of each device.
+func GetDeviceStats() map[string]*device.DevStat {
 	devstats := make(map[string]*device.DevStat)
 	mutex.RLock()
 	for k, v := range devices {
@@ -188,7 +234,7 @@ func ReleaseInfluxOut(idb map[string]*output.InfluxDB) {
 
 // DeviceProcessStop stops all device polling goroutines
 func DeviceProcessStop() {
-	Bus.Broadcast(&bus.Message{Type: "exit"})
+	DevBus.Broadcast(&bus.Message{Type: "exit"})
 }
 
 // DeviceProcessStart starts all device polling goroutines
@@ -212,7 +258,8 @@ func ReleaseDevices() {
 }
 
 func init() {
-	go Bus.Start()
+	go DevBus.Start()
+	go OutBus.Start()
 }
 
 func initSelfMonitoring(idb map[string]*output.InfluxDB) {
@@ -222,7 +269,7 @@ func initSelfMonitoring(idb map[string]*output.InfluxDB) {
 	if MainConfig.Selfmon.Enabled {
 		if val, ok := idb["default"]; ok {
 			//only executed if a "default" influxdb exist
-			val.Init()
+			val.Init(OutBus)
 			val.StartSender(&senderWg)
 
 			selfmonProc.Init()
@@ -257,7 +304,7 @@ func DeleteDeviceInRuntime(id string) error {
 	if dev, ok := devices[id]; ok {
 		dev.StopGather()
 		log.Debugf("Bus retuned from the exit message to the ID device %s", id)
-		dev.LeaveBus(Bus)
+		dev.LeaveBus(DevBus)
 		dev.End()
 		mutex.Lock()
 		delete(devices, id)
@@ -272,13 +319,13 @@ func DeleteDeviceInRuntime(id string) error {
 func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 	// Initialize each SNMP device and put pointer to the global map devices
 	dev := device.New(cfg)
-	dev.AttachToBus(Bus)
+	dev.AttachToBus(DevBus)
 	dev.InitCatalogVar(DBConfig.VarCatalog)
 	dev.SetSelfMonitoring(selfmonProc)
 
 	// send a db map to initialize each one its own db if needed
 	outdb, _ := dev.GetOutSenderFromMap(influxdb)
-	outdb.Init()
+	outdb.Init(OutBus)
 	outdb.StartSender(&senderWg)
 
 	mutex.Lock()

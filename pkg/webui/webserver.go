@@ -202,6 +202,8 @@ func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id 
 
 	NewAPIRtDevice(m)
 
+	NewAPIRtOutput(m)
+
 	//Begin server
 
 	var listen string

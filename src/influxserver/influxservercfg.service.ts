@@ -13,10 +13,12 @@ export class InfluxServerService {
     parseJSON(key,value) {
         if ( key == 'Port'  ||
         key == 'Timeout' ||
+        key == 'TimeWriteRetry' ||
         key == 'BufferSize' ) {
           return parseInt(value);
         }
         if ( key == 'EnableSSL' ||
+        key == 'EnqueueOnWriteError' ||
         key == 'InsecureSkipVerify') return ( value === "true" || value === true);
         return value;
     }

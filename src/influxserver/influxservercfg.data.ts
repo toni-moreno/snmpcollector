@@ -12,7 +12,9 @@ export const InfluxServerCfgComponentConfig: any =
       { title: 'Precision', name: 'Precision' },
       { title: 'Timeout', name: 'Timeout' },
       { title: 'Buffer Size', name: 'BufferSize' },
-      { title: 'User Agent', name: 'UserAgent' }
+      { title: 'User Agent', name: 'UserAgent' },
+      { title: 'Enqueue On Write Error', name: 'EnqueueOnWriteError'},
+      { title: 'Time Write Retry(s)', name: 'TimeWriteRetry'},
     ],
     'slug' : 'influxcfg'
   }; 

@@ -28,6 +28,25 @@ type InfluxStats struct {
 	mutex             sync.Mutex
 }
 
+// ThSafeCopy get a new object with public data copied in thread safe way
+func (is *InfluxStats) ThSafeCopy() *InfluxStats {
+	is.mutex.Lock()
+	defer is.mutex.Unlock()
+	st := &InfluxStats{
+		FieldSent:         is.FieldSent,
+		FieldSentMax:      is.FieldSentMax,
+		PSent:             is.PSent,
+		PSentMax:          is.PSentMax,
+		WriteSent:         is.WriteSent,
+		WriteErrors:       is.WriteErrors,
+		WriteTime:         is.WriteTime,
+		WriteTimeMax:      is.WriteTimeMax,
+		BufferPercentUsed: is.BufferPercentUsed,
+	}
+
+	return st
+}
+
 // GetResetStats get stats for this InfluxStats Output
 func (is *InfluxStats) GetResetStats() *InfluxStats {
 	is.mutex.Lock()

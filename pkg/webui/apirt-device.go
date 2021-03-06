@@ -186,7 +186,7 @@ func RTGetInfo(ctx *Context) {
 
 		//get only one device info
 	} else {
-		devstats := agent.GetDevStats()
+		devstats := agent.GetDeviceStats()
 		ctx.JSON(200, &devstats)
 	}
 	return
