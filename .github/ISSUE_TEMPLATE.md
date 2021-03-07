@@ -4,6 +4,17 @@ Read before posting:
 - Please review Documentation https://github.com/toni-moreno/snmpcollector/wiki before creating a new issue.
 - Checkout How to troubleshoot issue the troubleshoot guide: https://github.com/toni-moreno/snmpcollector/wiki/Troubleshooting
 
+For faster fixes and/or improvements would be nice if we can work with a simulation snapshot, plese follow this commands and attach the `sim_data_<DATE>_#<issue>.tar.gz` file to the issue.
+
+```
+# git clone https://github.com/etingof/snmpsim.git`
+# cd snmpsim
+# sudo python3 setup.py install
+# mkdir sim_data
+# snmpsim-record-commands --protocol-version 2c --community <your_comunity> --agent-udpv4-endpoint=<your_device>:161 --output-file=./sim_data/device_data
+# tar zcvf sim_data_<DATE>_#<issue>.tar.gz sim_data
+```
+
 Please prefix your title with [Bug] or [Feature request].
 
 Please include this information:
