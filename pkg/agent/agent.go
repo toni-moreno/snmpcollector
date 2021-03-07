@@ -221,6 +221,7 @@ func StopInfluxOut(idb map[string]*output.InfluxDB) {
 	for k, v := range idb {
 		log.Infof("Stopping Influxdb out %s", k)
 		v.StopSender()
+		v.LeaveBus(OutBus)
 	}
 }
 

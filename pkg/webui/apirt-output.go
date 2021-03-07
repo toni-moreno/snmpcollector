@@ -15,7 +15,7 @@ func NewAPIRtOutput(m *macaron.Macaron) error {
 	m.Group("/api/rt/output", func() {
 		m.Get("/info/", reqSignedIn, RTGetOutputInfo)
 		m.Get("/info/:id", reqSignedIn, RTGetOutputInfo)
-		m.Get("/buffer/:id/:action", reqSignedIn, RTOutputBufferReset)
+		m.Get("/buffer/:id/:action", reqSignedIn, RTOutputBufferAction)
 	})
 
 	return nil
@@ -26,7 +26,7 @@ func NewAPIRtOutput(m *macaron.Macaron) error {
 /****************/
 
 // RTOutputBufferReset runtime send reset
-func RTOutputBufferReset(ctx *Context) {
+func RTOutputBufferAction(ctx *Context) {
 	id := ctx.Params(":id")
 	action := ctx.Params(":action")
 	log.Infof("activating runtime on device %s", id)
