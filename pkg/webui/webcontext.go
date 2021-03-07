@@ -3,6 +3,7 @@ package webui
 import (
 	"fmt"
 
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 	"gopkg.in/macaron.v1"
 )
 
@@ -46,6 +47,27 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 
 }
 
+func initContextWithBasicAuth(ctx *Context) bool {
+
+	header := ctx.Req.Header.Get("Authorization")
+	if header == "" {
+		return false
+	}
+
+	username, password, err := utils.DecodeBasicAuthHeader(header)
+	if err != nil {
+		ctx.JSON(401, fmt.Errorf("Invalid Basic Auth Header: %s", err))
+		return true
+	}
+
+	if username == confHTTP.AdminUser && password == confHTTP.AdminPassword {
+		log.Println("BASIC Auth: Admin login OK")
+		ctx.SignedInUser = username
+		ctx.IsSignedIn = true
+	}
+	return true
+}
+
 // GetContextHandler get context handler
 func GetContextHandler() macaron.Handler {
 	return func(c *macaron.Context) {
@@ -61,7 +83,12 @@ func GetContextHandler() macaron.Handler {
 		// then init session and look for userId in session
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
-		if initContextWithUserSessionCookie(ctx) {
+		switch {
+		case initContextWithBasicAuth(ctx):
+		case initContextWithUserSessionCookie(ctx):
+			//case initContextWithAuthProxy(remoteCache, ctx, orgId):
+			//case initContextWithToken(ats, ctx, orgId):
+			//case initContextWithAnonymousUser(ctx):
 
 		}
 
