@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/influxdata/influxdb1-client/v2"
+	client "github.com/influxdata/influxdb1-client/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
@@ -25,8 +25,8 @@ func SetLogger(l *logrus.Logger) {
 //SelfMon configuration for self monitoring
 type SelfMon struct {
 	cfg                 *config.SelfMonConfig
-	Influx              *output.InfluxDB
-	OutDBs              map[string]*output.InfluxDB //needed to get statistics
+	Influx              *output.SinkDB
+	OutDBs              map[string]*output.SinkDB //needed to get statistics
 	runtimeStatsRunning bool
 	TagMap              map[string]string
 	bps                 *client.BatchPoints
@@ -54,7 +54,7 @@ func (sm *SelfMon) Init() {
 		log.Info("Self monitoring thread  already Initialized (skipping Initialization)")
 		return
 	}
-	sm.OutDBs = make(map[string]*output.InfluxDB)
+	sm.OutDBs = make(map[string]*output.SinkDB)
 
 	//Init extra tags
 	if len(sm.cfg.ExtraTags) > 0 {
@@ -88,7 +88,7 @@ func (sm *SelfMon) Init() {
 }
 
 // SetOutDB set the output devices for query its statistics
-func (sm *SelfMon) SetOutDB(odb map[string]*output.InfluxDB) {
+func (sm *SelfMon) SetOutDB(odb map[string]*output.SinkDB) {
 	sm.OutDBs = odb
 }
 
@@ -118,7 +118,7 @@ func (sm *SelfMon) IsInitialized() bool {
 }
 
 // SetOutput set out data
-func (sm *SelfMon) SetOutput(val *output.InfluxDB) {
+func (sm *SelfMon) SetOutput(val *output.SinkDB) {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
 	sm.Influx = val

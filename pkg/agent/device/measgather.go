@@ -14,7 +14,7 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 		wg.Add(1)
 		go func(m *measurement.Measurement) {
 			defer wg.Done()
-			bpts, _ := d.Influx.BP()
+			bpts, _ := d.OutDB.BP()
 			d.Debugf("-------Processing measurement : %s", m.ID)
 
 			nGets, nProcs, nErrs, _ := m.GetData()
@@ -24,18 +24,18 @@ func (d *SnmpDevice) measConcurrentGatherAndSend() {
 			m.ComputeEvaluatedMetrics(d.VarMap)
 
 			//prepare batchpoint
-			metSent, metError, measSent, measError, points := m.GetInfluxPoint(d.TagMap)
+			metSent, metError, measSent, measError, points := m.GetOutDBPoint(d.TagMap)
 			d.stats.AddMeasStats(metSent, metError, measSent, measError)
-			startInfluxStats := time.Now()
+			startOutDBStats := time.Now()
 			if bpts != nil {
 				(*bpts).AddPoints(points)
 				//send data
-				d.Influx.Send(bpts)
+				d.OutDB.Send(bpts)
 			} else {
 				d.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
 			}
-			elapsedInfluxStats := time.Since(startInfluxStats)
-			d.stats.AddSentDuration(startInfluxStats, elapsedInfluxStats)
+			elapsedOutDBStats := time.Since(startOutDBStats)
+			d.stats.AddSentDuration(startOutDBStats, elapsedOutDBStats)
 
 		}(m)
 	}
@@ -48,7 +48,7 @@ func (d *SnmpDevice) measSeqGatherAndSend() {
 	var tnGets int64
 	var tnProc int64
 	var tnErrors int64
-	bpts, _ := d.Influx.BP()
+	bpts, _ := d.OutDB.BP()
 	startSnmpStats := time.Now()
 	for _, m := range d.Measurements {
 
@@ -63,7 +63,7 @@ func (d *SnmpDevice) measSeqGatherAndSend() {
 		m.ComputeEvaluatedMetrics(d.VarMap)
 
 		//prepare batchpoint
-		metSent, metError, measSent, measError, points := m.GetInfluxPoint(d.TagMap)
+		metSent, metError, measSent, measError, points := m.GetOutDBPoint(d.TagMap)
 		d.stats.AddMeasStats(metSent, metError, measSent, measError)
 		if bpts != nil {
 			(*bpts).AddPoints(points)
@@ -75,17 +75,17 @@ func (d *SnmpDevice) measSeqGatherAndSend() {
 	d.stats.SetGatherDuration(startSnmpStats, elapsedSnmpStats)
 	/*************************
 	 *
-	 * Send data to InfluxDB process
+	 * Send data to OutDBDB process
 	 *
 	 ***************************/
 
-	startInfluxStats := time.Now()
+	startOutDBStats := time.Now()
 	if bpts != nil {
-		d.Influx.Send(bpts)
+		d.OutDB.Send(bpts)
 	} else {
 		d.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
 	}
-	elapsedInfluxStats := time.Since(startInfluxStats)
-	d.stats.AddSentDuration(startInfluxStats, elapsedInfluxStats)
+	elapsedOutDBStats := time.Since(startOutDBStats)
+	d.stats.AddSentDuration(startOutDBStats, elapsedOutDBStats)
 
 }

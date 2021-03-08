@@ -64,10 +64,10 @@ func OrderMapByKey(m map[string]string) string {
 	return buffer.String()
 }
 
-func GetOutputInfluxMetrics(m *Measurement) {
+func GetOutputOutDBMetrics(m *Measurement) {
 	m.Infof("GOT MEAS --> %+v", m)
 
-	metSent, metError, measSent, measError, ptarray := m.GetInfluxPoint(map[string]string{})
+	metSent, metError, measSent, measError, ptarray := m.GetOutDBPoint(map[string]string{})
 
 	m.Infof("METRIC SENT[%d],METRIC ERROR[%d],MEAS SENT[%d], MEAS ERROR[%d]", metSent, metError, measSent, measError)
 
@@ -207,7 +207,7 @@ func Example_Measurement_GetMode_Value() {
 
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	//Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:52
@@ -336,7 +336,7 @@ func Example_Measurement_GetMode_Indexed() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:input ValueType:int64  Value:51
@@ -475,7 +475,7 @@ func Example_Measurement_GetMode_Indexed_Indirect() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:input ValueType:int64  Value:51
@@ -644,7 +644,7 @@ func Example_Measurement_GetMode_Indexed_Multi_Indirect() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:input ValueType:int64  Value:51
@@ -812,7 +812,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portAlias:myPort2, portDesc:Not defined, portName:Not defined } Field:input ValueType:int64  Value:52
@@ -974,7 +974,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndexDIM2() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1133,7 +1133,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1287,7 +1287,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1446,7 +1446,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLSTRING() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1605,7 +1605,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1770,7 +1770,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT_COMPL
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ ifType:5, portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1935,7 +1935,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_C
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ ifType:5, portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -2156,7 +2156,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ cmInfo:3, cmName:NonLocal, ifName:FastEthernet0/0, policyDirection:1, policyMapName:CPP } Field:cbQosCMPrePolicyByte64 ValueType:int64  Value:69858
@@ -2400,7 +2400,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ cmName:ICMP, ifName:FastEthernet0/0, matchStmtName:CLASS_BACKUP, policyDirection:2, policyMapName:LAN_Out } Field:cbQosMatchPrePolicyPkt64	 ValueType:int64  Value:8
@@ -2552,7 +2552,7 @@ func Example_Measurement_value_STRINGEVAL() {
 
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:52
@@ -2695,7 +2695,7 @@ func Example_Measurement_Indexed_STRINGEVAL() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth2 } Field:input ValueType:int64  Value:52
@@ -2852,7 +2852,7 @@ func Example_Measurement_Indexed_Indirect_STRINGEVAL() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth2 } Field:input ValueType:int64  Value:52
@@ -3023,7 +3023,7 @@ func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth2 } Field:input ValueType:int64  Value:52
@@ -3161,7 +3161,7 @@ func Example_Measurement_GetMode_Indexed_MULTISTRINGPARSER_SKIPFIELD() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputOutDBMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ myValue:value2, portName:eth2 } Field:output ValueType:int64  Value:22

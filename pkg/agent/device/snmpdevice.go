@@ -51,10 +51,9 @@ type SnmpDevice struct {
 	//Variable map
 	VarMap map[string]interface{}
 
-	//SNMP and Influx Clients config
-	//snmpClient *gosnmp.GoSNMP
+	//SNMP Clients config
 	snmpClientMap map[string]*gosnmp.GoSNMP
-	Influx        *output.InfluxDB `json:"-"`
+	OutDB         *output.SinkDB `json:"-"`
 	//LastError     time.Time
 	//Runtime stats
 	stats DevStat  //Runtime Internal statistic
@@ -145,21 +144,21 @@ func (d *SnmpDevice) decReloadLoopsPending() {
 }
 
 // GetOutSenderFromMap to get info about the sender will use
-func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*output.InfluxDB) (*output.InfluxDB, error) {
+func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*output.SinkDB) (*output.SinkDB, error) {
 	if len(d.cfg.OutDB) == 0 {
 		d.Warnf("No OutDB configured on the device")
 	}
 	var ok bool
 	name := d.cfg.OutDB
-	if d.Influx, ok = influxdb[name]; !ok {
+	if d.OutDB, ok = influxdb[name]; !ok {
 		//we assume there is always a default db
-		if d.Influx, ok = influxdb["default"]; !ok {
+		if d.OutDB, ok = influxdb["default"]; !ok {
 			//but
 			return nil, fmt.Errorf("No influx config for snmp device: %s", d.cfg.ID)
 		}
 	}
 
-	return d.Influx, nil
+	return d.OutDB, nil
 }
 
 // ForceGather send message to force a data gather execution

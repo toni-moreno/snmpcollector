@@ -4,11 +4,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/influxdata/influxdb1-client/v2"
+	client "github.com/influxdata/influxdb1-client/v2"
 )
 
-//GetInfluxPoint get points from measuremnetsl
-func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, int64, int64, []*client.Point) {
+//GetOutDBPoint get points from measuremnetsl
+func (m *Measurement) GetOutDBPoint(hostTags map[string]string) (int64, int64, int64, int64, []*client.Point) {
 	var metSent int64
 	var metError int64
 	var measSent int64

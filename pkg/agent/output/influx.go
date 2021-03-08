@@ -25,8 +25,8 @@ func SetLogger(l *logrus.Logger) {
 	log = l
 }
 
-/*InfluxDB database export */
-type InfluxDB struct {
+/*SinkDB database export */
+type SinkDB struct {
 	cfg   *config.InfluxCfg
 	stats InfluxStats  //Runtime Internal statistic
 	Stats *InfluxStats //Public info for thread safe accessing to the data ()
@@ -47,7 +47,7 @@ type InfluxDB struct {
 }
 
 // DummyDB a BD struct needed if no database configured
-var DummyDB = &InfluxDB{
+var DummyDB = &SinkDB{
 	cfg:         nil,
 	initialized: false,
 	started:     false,
@@ -57,7 +57,7 @@ var DummyDB = &InfluxDB{
 }
 
 // Action  set an antion to the output sender
-func (db *InfluxDB) Action(action string) error {
+func (db *SinkDB) Action(action string) error {
 	if db.dummy == true {
 		return nil
 	}
@@ -68,7 +68,7 @@ func (db *InfluxDB) Action(action string) error {
 	switch action {
 	case "active":
 		db.Node.SendMsg(&bus.Message{Type: "setactive", Data: true})
-	case "deactve":
+	case "deactive":
 		db.Node.SendMsg(&bus.Message{Type: "setactive", Data: false})
 	case "enqueue":
 		db.Node.SendMsg(&bus.Message{Type: "enqueue_policy_change", Data: true})
@@ -82,7 +82,7 @@ func (db *InfluxDB) Action(action string) error {
 }
 
 // ToJSON return a JSON version of the device data
-func (db *InfluxDB) ToJSON() ([]byte, error) {
+func (db *SinkDB) ToJSON() ([]byte, error) {
 
 	db.statsData.RLock()
 	defer db.statsData.RUnlock()
@@ -96,20 +96,20 @@ func (db *InfluxDB) ToJSON() ([]byte, error) {
 }
 
 // GetBasicStats get basic info for this device
-func (db *InfluxDB) GetBasicStats() *InfluxStats {
+func (db *SinkDB) GetBasicStats() *InfluxStats {
 	db.statsData.RLock()
 	defer db.statsData.RUnlock()
 	return db.Stats
 }
 
 // GetBasicStats get basic info for this device
-func (db *InfluxDB) getBasicStats() *InfluxStats {
+func (db *SinkDB) getBasicStats() *InfluxStats {
 	stat := db.stats.ThSafeCopy()
 	return stat
 }
 
 // GetResetStats return outdb stats and reset its counters
-func (db *InfluxDB) GetResetStats() *InfluxStats {
+func (db *SinkDB) GetResetStats() *InfluxStats {
 	if db.dummy == true {
 		log.Debug("Reseting Influxstats for DUMMY DB ")
 		return &InfluxStats{}
@@ -120,7 +120,7 @@ func (db *InfluxDB) GetResetStats() *InfluxStats {
 }
 
 //BP create a Batch point influx object
-func (db *InfluxDB) BP() (*client.BatchPoints, error) {
+func (db *SinkDB) BP() (*client.BatchPoints, error) {
 	if db.dummy == true {
 		bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
 			Database:        "dbdummy",
@@ -145,7 +145,7 @@ func (db *InfluxDB) BP() (*client.BatchPoints, error) {
 	return &bp, err
 }
 
-// Ping InfluxDB Server
+// Ping SinkDB Server
 func Ping(cfg *config.InfluxCfg) (client.Client, time.Duration, string, error) {
 
 	var conf client.HTTPConfig
@@ -186,7 +186,7 @@ func Ping(cfg *config.InfluxCfg) (client.Client, time.Duration, string, error) {
 }
 
 //Connect to influxdb
-func (db *InfluxDB) Connect() error {
+func (db *SinkDB) Connect() error {
 	if db.dummy == true {
 		return nil
 	}
@@ -196,7 +196,7 @@ func (db *InfluxDB) Connect() error {
 }
 
 // CheckAndSetStarted check if this thread is already working and set if not
-func (db *InfluxDB) CheckAndSetStarted() bool {
+func (db *SinkDB) CheckAndSetStarted() bool {
 	db.smutex.Lock()
 	defer db.smutex.Unlock()
 	retval := db.started
@@ -205,7 +205,7 @@ func (db *InfluxDB) CheckAndSetStarted() bool {
 }
 
 // CheckAndUnSetStarted check if this thread is already working and unset if not
-func (db *InfluxDB) CheckAndUnSetStarted() bool {
+func (db *SinkDB) CheckAndUnSetStarted() bool {
 	db.smutex.Lock()
 	defer db.smutex.Unlock()
 	retval := db.started
@@ -214,21 +214,21 @@ func (db *InfluxDB) CheckAndUnSetStarted() bool {
 }
 
 // IsStarted check if this thread is already working
-func (db *InfluxDB) IsStarted() bool {
+func (db *SinkDB) IsStarted() bool {
 	db.smutex.Lock()
 	defer db.smutex.Unlock()
 	return db.started
 }
 
 // SetStartedAs change started state
-func (db *InfluxDB) SetStartedAs(st bool) {
+func (db *SinkDB) SetStartedAs(st bool) {
 	db.smutex.Lock()
 	defer db.smutex.Unlock()
 	db.started = st
 }
 
 // CheckAndSetInitialized check if this thread is already working and set if not
-func (db *InfluxDB) CheckAndSetInitialized() bool {
+func (db *SinkDB) CheckAndSetInitialized() bool {
 	db.imutex.Lock()
 	defer db.imutex.Unlock()
 	retval := db.initialized
@@ -237,7 +237,7 @@ func (db *InfluxDB) CheckAndSetInitialized() bool {
 }
 
 // CheckAndUnSetInitialized check if this thread is already working and set if not
-func (db *InfluxDB) CheckAndUnSetInitialized() bool {
+func (db *SinkDB) CheckAndUnSetInitialized() bool {
 	db.imutex.Lock()
 	defer db.imutex.Unlock()
 	retval := db.initialized
@@ -245,9 +245,9 @@ func (db *InfluxDB) CheckAndUnSetInitialized() bool {
 	return retval
 }
 
-// NewNotInitInfluxDB Create Object in memory but not initialized until ready connection needed
-func NewNotInitInfluxDB(c *config.InfluxCfg) *InfluxDB {
-	return &InfluxDB{
+// NewNotInitSinkDB Create Object in memory but not initialized until ready connection needed
+func NewNotInitSinkDB(c *config.InfluxCfg) *SinkDB {
+	return &SinkDB{
 		cfg:     c,
 		dummy:   false,
 		started: false,
@@ -255,7 +255,7 @@ func NewNotInitInfluxDB(c *config.InfluxCfg) *InfluxDB {
 }
 
 //Init initialies runtime info
-func (db *InfluxDB) Init(b *bus.Bus) {
+func (db *SinkDB) Init(b *bus.Bus) {
 	if db.dummy == true {
 		return
 	}
@@ -290,18 +290,18 @@ func (db *InfluxDB) Init(b *bus.Bus) {
 }
 
 // AttachToBus add this device to a communition bus
-func (db *InfluxDB) AttachToBus(b *bus.Bus) {
+func (db *SinkDB) AttachToBus(b *bus.Bus) {
 	db.Node = bus.NewNode(db.cfg.ID)
 	b.Join(db.Node)
 }
 
 // LeaveBus add this device to a communition bus
-func (db *InfluxDB) LeaveBus(b *bus.Bus) {
+func (db *SinkDB) LeaveBus(b *bus.Bus) {
 	b.Leave(db.Node)
 }
 
 // End release DB connection
-func (db *InfluxDB) End() {
+func (db *SinkDB) End() {
 	if db.dummy == true {
 		return
 	}
@@ -312,7 +312,7 @@ func (db *InfluxDB) End() {
 }
 
 // StopSender finalize sender goroutines
-func (db *InfluxDB) StopSender() {
+func (db *SinkDB) StopSender() {
 	if db.dummy == true {
 		return
 	}
@@ -326,7 +326,7 @@ func (db *InfluxDB) StopSender() {
 }
 
 //Send send data
-func (db *InfluxDB) Send(bps *client.BatchPoints) {
+func (db *SinkDB) Send(bps *client.BatchPoints) {
 	if db.dummy == true {
 		return
 	}
@@ -334,12 +334,12 @@ func (db *InfluxDB) Send(bps *client.BatchPoints) {
 }
 
 //Hostname get hostname
-func (db *InfluxDB) Hostname() string {
+func (db *SinkDB) Hostname() string {
 	return strings.Split(db.cfg.Host, ":")[0]
 }
 
 // StartSender begins sender loop
-func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
+func (db *SinkDB) StartSender(wg *sync.WaitGroup) {
 	if db.dummy == true {
 		return
 	}
@@ -351,7 +351,7 @@ func (db *InfluxDB) StartSender(wg *sync.WaitGroup) {
 	go db.startSenderGo(rand.Int(), wg)
 }
 
-func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool) {
+func (db *SinkDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool) {
 	var bufferPercent float32
 	//number points
 	np := len((*data).Points())
@@ -390,12 +390,12 @@ func (db *InfluxDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool
 
 }
 
-func (db *InfluxDB) resetBuffer(length int) {
+func (db *SinkDB) resetBuffer(length int) {
 	//PENDING: review db.iChan concurrency
 	db.iChan = make(chan *client.BatchPoints, length)
 }
 
-func (db *InfluxDB) flushBuffer() {
+func (db *SinkDB) flushBuffer() {
 	chanlen := len(db.iChan) // get number of entries in the batchpoint channel
 	log.Infof("Flushing %d batchpoints of data in OutDB %s ", chanlen, db.cfg.ID)
 	for i := 0; i < chanlen; i++ {
@@ -406,7 +406,7 @@ func (db *InfluxDB) flushBuffer() {
 	}
 }
 
-func (db *InfluxDB) startSenderGo(r int, wg *sync.WaitGroup) {
+func (db *SinkDB) startSenderGo(r int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	time.Sleep(5)
