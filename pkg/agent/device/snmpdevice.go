@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gosnmp/gosnmp"
 	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
@@ -52,8 +51,7 @@ type SnmpDevice struct {
 	VarMap map[string]interface{}
 
 	//SNMP and Influx Clients config
-	//snmpClient *gosnmp.GoSNMP
-	snmpClientMap map[string]*gosnmp.GoSNMP
+	snmpClientMap map[string]*snmp.Client
 	Influx        *output.InfluxDB `json:"-"`
 	//LastError     time.Time
 	//Runtime stats
@@ -73,8 +71,8 @@ type SnmpDevice struct {
 	isStopped chan bool `json:"-"`
 
 	CurLogLevel     string
-	Gather          func()                                                              `json:"-"`
-	InitSnmpConnect func(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) `json:"-"`
+	Gather          func()                                                            `json:"-"`
+	InitSnmpConnect func(mkey string, debug bool, maxrep uint8) (*snmp.Client, error) `json:"-"`
 }
 
 // New create and Initialice a device Object
@@ -264,7 +262,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 					continue
 				}
 				//creating a new measurement runtime object and asigning to array
-				imeas, err := measurement.New(mVal, d.log, c, d.cfg.DisableBulk)
+				imeas, err := measurement.New(mVal, d.log, c)
 				if err != nil {
 					d.Errorf("Error on measurement initialization  Error: %s", err)
 					continue
@@ -376,7 +374,7 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 
 	d.Freq = d.cfg.Freq
 
-	d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
+	d.snmpClientMap = make(map[string]*snmp.Client)
 
 	var val string
 
@@ -477,7 +475,7 @@ func (d *SnmpDevice) LeaveBus(b *bus.Bus) {
 func (d *SnmpDevice) End() {
 	d.Node.Close()
 	for _, val := range d.snmpClientMap {
-		snmp.Release(val)
+		val.Release()
 	}
 	//release files
 	//os.Close(d.log.Out)
@@ -490,16 +488,16 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 }
 
 // initSnmpConnectConcurrent does the  SNMP client connection and retrieve system info
-func (d *SnmpDevice) initSnmpConnectConcurrent(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
+func (d *SnmpDevice) initSnmpConnectConcurrent(mkey string, debug bool, maxrep uint8) (*snmp.Client, error) {
 	//this will never happen if previously snmpClientMap has been released
 	if val, ok := d.snmpClientMap[mkey]; ok {
 		if val != nil {
 			d.Infof("Releasing SNMP connection for measurement %s", mkey)
-			snmp.Release(val)
+			val.Release()
 		}
 	}
 	d.Infof("Beginning SNMP connection for measurement %s", mkey)
-	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug, maxrep)
+	client, err := snmp.New(d.cfg, d.log, mkey, debug, maxrep)
 	if err != nil {
 		d.DeviceConnected = false
 		d.stats.SetStatus(d.DeviceActive, false)
@@ -510,14 +508,14 @@ func (d *SnmpDevice) initSnmpConnectConcurrent(mkey string, debug bool, maxrep u
 
 	d.Infof("SNMP connection stablished Successfully for device  and measurement %s", mkey)
 	d.snmpClientMap[mkey] = client
-	d.SysInfo = sysinfo
+	d.SysInfo = client.Info
 	d.DeviceConnected = true
 	d.stats.SetStatus(d.DeviceActive, true)
 	return client, nil
 }
 
 // initSnmpConnectConcurrent does the  SNMP client connection and retrieve system info
-func (d *SnmpDevice) initSnmpConnectSequential(mkey string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, error) {
+func (d *SnmpDevice) initSnmpConnectSequential(mkey string, debug bool, maxrep uint8) (*snmp.Client, error) {
 	//in sequential this
 	if val, ok := d.snmpClientMap["init"]; ok {
 		if val != nil {
@@ -527,7 +525,7 @@ func (d *SnmpDevice) initSnmpConnectSequential(mkey string, debug bool, maxrep u
 		}
 	}
 	d.Infof("Beginning SNMP connection Sequential")
-	client, sysinfo, err := snmp.GetClient(d.cfg, d.log, mkey, debug, maxrep)
+	client, err := snmp.New(d.cfg, d.log, mkey, debug, maxrep)
 	if err != nil {
 		d.DeviceConnected = false
 		d.stats.SetStatus(d.DeviceActive, false)
@@ -538,7 +536,7 @@ func (d *SnmpDevice) initSnmpConnectSequential(mkey string, debug bool, maxrep u
 
 	d.Infof("SNMP connection stablished Successfully for device  and measurement %s", mkey)
 	d.snmpClientMap[mkey] = client
-	d.SysInfo = sysinfo
+	d.SysInfo = client.Info
 	d.DeviceConnected = true
 	d.stats.SetStatus(d.DeviceActive, true)
 	return client, nil
@@ -564,7 +562,7 @@ func (d *SnmpDevice) snmpRelease() {
 	for _, v := range d.snmpClientMap {
 		if v != nil {
 			d.Infof("Releasing snmp connection for %s", "init")
-			snmp.Release(v)
+			v.Release()
 		}
 	}
 }
@@ -575,19 +573,19 @@ func (d *SnmpDevice) releaseClientMap() {
 		if val, ok := d.snmpClientMap["init"]; ok {
 			if val != nil {
 				d.Infof("Releasing snmp connection for %s", "init")
-				snmp.Release(val)
+				val.Release()
 			}
 		}
 	} else {
 		for k, val := range d.snmpClientMap {
 			if val != nil {
 				d.Infof("Releasing snmp connection for %s", k)
-				snmp.Release(val)
+				val.Release()
 			}
 		}
 	}
 	//begin reset process
-	d.snmpClientMap = make(map[string]*gosnmp.GoSNMP)
+	d.snmpClientMap = make(map[string]*snmp.Client)
 }
 
 func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {

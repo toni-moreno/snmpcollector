@@ -50,16 +50,14 @@ type Measurement struct {
 	FilterCfg        *config.MeasFilterCfg
 	Filter           filter.Filter
 	log              *logrus.Logger
-	snmpClient       *gosnmp.GoSNMP
-	DisableBulk      bool                                `json:"-"`
+	snmpClient       *snmp.Client
 	GetData          func() (int64, int64, int64, error) `json:"-"`
-	Walk             func(string, gosnmp.WalkFunc) error `json:"-"`
 	MultiIndexMeas   []*Measurement
 }
 
 //New  creates object with config , log + goSnmp client
-func New(c *config.MeasurementCfg, l *logrus.Logger, cli *gosnmp.GoSNMP, db bool) (*Measurement, error) {
-	m := &Measurement{ID: c.ID, MName: c.Name, cfg: c, log: l, snmpClient: cli, DisableBulk: db}
+func New(c *config.MeasurementCfg, l *logrus.Logger, cli *snmp.Client) (*Measurement, error) {
+	m := &Measurement{ID: c.ID, MName: c.Name, cfg: c, log: l, snmpClient: cli}
 	err := m.Init()
 	return m, err
 }
@@ -82,14 +80,6 @@ func (m *Measurement) Init() error {
 		m.GetData = m.SnmpGetData
 	default:
 		m.GetData = m.SnmpWalkData
-	}
-
-	// If GetMode is multiindex, we can reuse a simple measurement to init each one and get all funcions...?
-	switch {
-	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
-		m.Walk = m.snmpClient.Walk
-	default:
-		m.Walk = m.snmpClient.BulkWalk
 	}
 
 	if m.cfg.GetMode == "indexed_multiple" {
@@ -158,7 +148,7 @@ func (m *Measurement) InitMultiIndex() error {
 		}
 
 		//create entirely new measurement based on provided CFG
-		mm, err := New(&mcfg, m.log, m.snmpClient, m.DisableBulk)
+		mm, err := New(&mcfg, m.log, m.snmpClient)
 		if err != nil {
 			return err
 		}
@@ -356,16 +346,8 @@ func (m *Measurement) LoadMultiIndex() error {
 }
 
 // SetSnmpClient set a GoSNMP client to the Measurement
-func (m *Measurement) SetSnmpClient(cli *gosnmp.GoSNMP) {
-
+func (m *Measurement) SetSnmpClient(cli *snmp.Client) {
 	m.snmpClient = cli
-
-	switch {
-	case m.snmpClient.Version == gosnmp.Version1 || m.DisableBulk:
-		m.Walk = m.snmpClient.Walk
-	default:
-		m.Walk = m.snmpClient.BulkWalk
-	}
 }
 
 // GetMode Returns mode info
@@ -448,13 +430,13 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool) error {
 
 		if cond.IsMultiple {
 			m.Filter = filter.NewOidMultipleFilter(cond.OIDCond, m.log)
-			err = m.Filter.Init(m.Walk, dbc)
+			err = m.Filter.Init(m.snmpClient.Walk, dbc)
 			if err != nil {
 				return fmt.Errorf("Error invalid Multiple Condition Filter : %s", err)
 			}
 		} else {
 			m.Filter = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, m.log)
-			err = m.Filter.Init(m.Walk)
+			err = m.Filter.Init(m.snmpClient.Walk)
 			if err != nil {
 				return fmt.Errorf("Error invalid OID condition Filter : %s", err)
 			}
@@ -609,8 +591,8 @@ func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 	}
 
 	for _, v := range m.cfg.FieldMetric {
-		if err := m.Walk(v.BaseOID, setRawData); err != nil {
-			m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target, v.BaseOID, err)
+		if err := m.snmpClient.Walk(v.BaseOID, setRawData); err != nil {
+			m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target(), v.BaseOID, err)
 			errors += int64(m.MetricTable.Len())
 		}
 	}
@@ -631,7 +613,7 @@ func (m *Measurement) ComputeOidConditionalMetrics() {
 			evalkey := m.cfg.ID + "." + v.ID
 			if metr, ok := m.OidSnmpMap[evalkey]; ok {
 				m.Debugf("OK OidCondition  metric found %s Eval KEY", evalkey)
-				metr.Compute(m.Walk, dbc)
+				metr.Compute(m.snmpClient.Walk, dbc)
 			} else {
 				m.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 			}
@@ -735,44 +717,33 @@ GetSnmpData GetSNMP Data
 func (m *Measurement) SnmpGetData() (int64, int64, int64, error) {
 
 	now := time.Now()
-	var sent int64
-	var errs int64
-	l := len(m.snmpOids)
-	for i := 0; i < l; i += snmp.MaxOids {
-		end := i + snmp.MaxOids
-		if end > l {
-			end = len(m.snmpOids)
-		}
-		m.Debugf("Getting snmp data from %d to %d", i, end)
-		//	log.Printf("DEBUG oids:%+v", m.snmpOids)
-		//	log.Printf("DEBUG oidmap:%+v", m.OidSnmpMap)
-		pkt, err := m.snmpClient.Get(m.snmpOids[i:end])
-		if err != nil {
-			m.Debugf("selected OIDS %+v", m.snmpOids[i:end])
-			m.Errorf("SNMP (%s) for OIDs (%d/%d) get error: %s\n", m.snmpClient.Target, i, end, err)
-			errs++
-			continue
-		}
+	var gathered int64
+	var processed int64
+	var errors int64
 
-		for _, pdu := range pkt.Variables {
-			m.Debugf("DEBUG pdu [%+v] || Value type %T [%x] ", pdu, pdu.Value, pdu.Type)
-			if pdu.Value == nil {
-				errs++
-				continue
-			}
-			oid := pdu.Name
-			val := pdu.Value
-			if metr, ok := m.OidSnmpMap[oid]; ok {
-				m.Debugf("OK measurement %s SNMP result OID: %s MetricFound: %+v ", m.cfg.ID, oid, val)
-				sent++
-				metr.SetRawData(pdu, now)
-			} else {
-				m.Errorf("OID %s Not Found in measurement %s", oid, m.cfg.ID)
-			}
+	setRawData := func(pdu gosnmp.SnmpPDU) error {
+
+		m.Debugf("DEBUG pdu [%+v] || Value type %T [%x]", pdu, pdu.Value, pdu.Type)
+		gathered++
+		if pdu.Value == nil {
+			m.Warnf("no value retured by pdu :%+v", pdu)
+			errors++
+			return nil //if error return the bulk process will stop
 		}
+		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
+			m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
+			processed++
+			metr.SetRawData(pdu, now)
+		} else {
+			m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v, %v", pdu.Name, m.cfg.ID, m.OidSnmpMap)
+		}
+		return nil
 	}
 
-	return int64(l), sent, errs, nil
+	//never will be error
+	m.snmpClient.Get(m.snmpOids, setRawData)
+
+	return gathered, processed, errors, nil
 }
 
 func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
@@ -824,7 +795,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 	}
 	//needed to get data for different indexes
 	m.curIdxPos = m.idxPosInOID
-	err := m.Walk(m.cfg.IndexOID, setRawData)
+	err := m.snmpClient.Walk(m.cfg.IndexOID, setRawData)
 	if err != nil {
 		m.Errorf("LOADINDEXEDLABELS - SNMP WALK error: %s", err)
 		return allindex, err
@@ -847,7 +818,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		//initialize allindex again
 		allindex = make(map[string]string)
 		m.curIdxPos = m.idx2PosInOID
-		err = m.Walk(m.cfg.TagOID, setRawData)
+		err = m.snmpClient.Walk(m.cfg.TagOID, setRawData)
 		if err != nil {
 			m.Errorf("SNMP WALK over IndexOID error: %s", err)
 			return allindex, err
@@ -891,7 +862,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 			allindex = make(map[string]string)
 			//Store the last position to use it on allindex
 			m.curIdxPos = len(tagcfg.TagOID)
-			err = m.Walk(tagcfg.TagOID, setRawData)
+			err = m.snmpClient.Walk(tagcfg.TagOID, setRawData)
 			if err != nil {
 				m.Errorf("SNMP WALK over IndexOID error: %s", err)
 				return allindex, err

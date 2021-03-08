@@ -25,6 +25,7 @@ type SnmpDeviceCfg struct {
 	//snmp workarround for some devices
 	DisableBulk    bool  `xorm:"'disablebulk' default 0"`
 	MaxRepetitions uint8 `xorm:"'maxrepetitions' default 50" binding:"Default(50);IntegerNotZero"`
+	MaxOids        int   `xorm:"'maxoids' default 60"`
 	//snmp runtime config
 	Freq             int  `xorm:"'freq' default 60" binding:"Default(60);IntegerNotZero"`
 	UpdateFltFreq    int  `xorm:"'update_flt_freq' default 60" binding:"Default(60);UIntegerAndLessOne"`

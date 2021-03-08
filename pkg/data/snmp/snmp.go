@@ -294,7 +294,7 @@ func GetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, er
 				seconds := uint32(pdu.Value.(uint32)) / 100
 				info.SysUptime = time.Duration(seconds) * time.Second
 			} else {
-				l.Warnf("Error on getting system %s SysDescr return data of type %v", id, pdu.Type)
+				l.Warnf("Error on getting system %s SysUptime return data of type %v", id, pdu.Type)
 			}
 		case 2: // SysContact   .1.3.6.1.2.1.1.4.0
 			if pdu.Type == gosnmp.OctetString {
@@ -485,11 +485,6 @@ func PduVal2IPaddr(pdu gosnmp.SnmpPDU) (string, error) {
 	}
 
 }
-
-// MaxOids const
-const (
-	MaxOids = 60
-)
 
 // Release release the GoSNMP object
 func Release(client *gosnmp.GoSNMP) {

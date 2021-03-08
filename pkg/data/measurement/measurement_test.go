@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/gosnmp/gosnmp"
 	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"github.com/toni-moreno/snmpcollector/pkg/mock"
 )
 
@@ -122,21 +122,21 @@ func Example_Measurement_GetMode_Value() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
+	}
 
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
-	}
-	err = cli.Connect()
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
-		l.Fatalf("Connect() err: %v", err)
+		l.Fatalf("New() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -191,7 +191,7 @@ func Example_Measurement_GetMode_Value() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -213,6 +213,212 @@ func Example_Measurement_GetMode_Value() {
 	//Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:52
 	//Measurement:test_name Tags:{} Field:metric_1_name ValueType:int64  Value:51
 
+}
+
+func Example_Measurement_GetMode_Value_MaxOID_2() {
+
+	// 1.- SETUP LOGGER
+
+	l := logrus.New()
+	//l.Level = logrus.DebugLevel
+
+	mock.SetLogger(l)
+	config.SetLogger(l)
+
+	// 2.- MOCK SERVER SETUP
+
+	s := &mock.SnmpServer{
+		Listen: "127.0.0.1:1161",
+		Want: []gosnmp.SnmpPDU{
+			{Name: ".1.1.1", Type: gosnmp.Integer, Value: int(1)},
+			{Name: ".1.1.2", Type: gosnmp.Integer, Value: int(2)},
+			{Name: ".1.1.3", Type: gosnmp.Integer, Value: int(3)},
+			{Name: ".1.1.4", Type: gosnmp.Integer, Value: int(4)},
+			{Name: ".1.1.5", Type: gosnmp.Integer, Value: int(5)},
+			{Name: ".1.1.6", Type: gosnmp.Integer, Value: int(6)},
+			{Name: ".1.1.7", Type: gosnmp.Integer, Value: int(7)},
+			{Name: ".1.1.8", Type: gosnmp.Integer, Value: int(8)},
+			{Name: ".1.1.9", Type: gosnmp.Integer, Value: int(9)},
+			{Name: ".1.1.10", Type: gosnmp.Integer, Value: int(10)},
+			{Name: ".1.1.11", Type: gosnmp.Integer, Value: int(11)},
+			{Name: ".1.1.12", Type: gosnmp.Integer, Value: int(12)},
+		},
+	}
+
+	err := s.Start()
+	if err != nil {
+		l.Errorf("error on start snmp mock server: %s", err)
+		return
+	}
+	defer s.Stop()
+
+	// 3.- SNMP CLIENT SETUP
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
+		MaxOids:     2,
+	}
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
+	if err != nil {
+		l.Fatalf("New() err: %v", err)
+	}
+	defer cli.Release()
+
+	// 4.- METRICMAP SETUP
+
+	metrics := map[string]*config.SnmpMetricCfg{
+		"metric_1": {
+			ID:          "metric_1",
+			FieldName:   "metric_1_name",
+			Description: "",
+			BaseOID:     ".1.1.1",
+			DataSrcType: "Integer32",
+			GetRate:     false,
+			Scale:       0.0,
+			Shift:       0.0,
+			IsTag:       false,
+			ExtraData:   "",
+			Conversion:  1,
+		},
+		"metric_2": {
+			ID:          "metric_2",
+			FieldName:   "metric_2_name",
+			Description: "",
+			BaseOID:     ".1.1.2",
+			DataSrcType: "Integer32",
+			GetRate:     false,
+			Scale:       0.0,
+			Shift:       0.0,
+			IsTag:       false,
+			ExtraData:   "",
+			Conversion:  1,
+		},
+		"metric_3": {
+			ID:          "metric_3",
+			FieldName:   "metric_3_name",
+			Description: "",
+			BaseOID:     ".1.1.3",
+			DataSrcType: "Integer32",
+			GetRate:     false,
+			Scale:       0.0,
+			Shift:       0.0,
+			IsTag:       false,
+			ExtraData:   "",
+			Conversion:  1,
+		},
+		"metric_4": {
+			ID:          "metric_4",
+			FieldName:   "metric_4_name",
+			Description: "",
+			BaseOID:     ".1.1.4",
+			DataSrcType: "Integer32",
+			GetRate:     false,
+			Scale:       0.0,
+			Shift:       0.0,
+			IsTag:       false,
+			ExtraData:   "",
+			Conversion:  1,
+		},
+		"metric_5": {
+			ID:          "metric_5",
+			FieldName:   "metric_5_name",
+			Description: "",
+			BaseOID:     ".1.1.5",
+			DataSrcType: "Integer32",
+			GetRate:     false,
+			Scale:       0.0,
+			Shift:       0.0,
+			IsTag:       false,
+			ExtraData:   "",
+			Conversion:  1,
+		},
+		"metric_6": {
+			ID:          "metric_6",
+			FieldName:   "metric_6_name",
+			Description: "",
+			BaseOID:     ".1.1.6",
+			DataSrcType: "Integer32",
+			GetRate:     false,
+			Scale:       0.0,
+			Shift:       0.0,
+			IsTag:       false,
+			ExtraData:   "",
+			Conversion:  1,
+		},
+		"metric_7": {
+			ID:          "metric_7",
+			FieldName:   "metric_7_name",
+			Description: "",
+			BaseOID:     ".1.1.7",
+			DataSrcType: "Integer32",
+			GetRate:     false,
+			Scale:       0.0,
+			Shift:       0.0,
+			IsTag:       false,
+			ExtraData:   "",
+			Conversion:  1,
+		},
+	}
+
+	// 5.- MEASUREMENT CONFIG SETUP
+
+	vars := map[string]interface{}{}
+
+	cfg := &config.MeasurementCfg{
+		ID:             "test_id",
+		Name:           "test_name",
+		GetMode:        "value",
+		IndexOID:       "",
+		TagOID:         "",
+		IndexTag:       "",
+		IndexTagFormat: "",
+		Fields: []config.MeasurementFieldReport{
+			{ID: "metric_1", Report: metric.AlwaysReport},
+			{ID: "metric_2", Report: metric.AlwaysReport},
+			{ID: "metric_3", Report: metric.AlwaysReport},
+			{ID: "metric_4", Report: metric.AlwaysReport},
+			{ID: "metric_5", Report: metric.AlwaysReport},
+			{ID: "metric_6", Report: metric.AlwaysReport},
+			{ID: "metric_7", Report: metric.AlwaysReport},
+		},
+	}
+
+	cfg.Init(&metrics, vars)
+
+	// 6.- MEASUREMENT ENGINE SETUP
+
+	m, err := New(cfg, l, cli)
+	if err != nil {
+		l.Errorf("Can not create measurement %s", err)
+		return
+
+	}
+
+	// 7.- PROCESS AND VERIFY
+
+	err = ProcessMeasurementFull(m, vars)
+	if err != nil {
+		l.Errorf("Can not process measurement %s", err)
+		return
+
+	}
+
+	GetOutputInfluxMetrics(m)
+
+	// Unordered Output:
+	//Measurement:test_name Tags:{} Field:metric_1_name ValueType:int64  Value:1
+	//Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:2
+	//Measurement:test_name Tags:{} Field:metric_3_name ValueType:int64  Value:3
+	//Measurement:test_name Tags:{} Field:metric_4_name ValueType:int64  Value:4
+	//Measurement:test_name Tags:{} Field:metric_5_name ValueType:int64  Value:5
+	//Measurement:test_name Tags:{} Field:metric_6_name ValueType:int64  Value:6
+	//Measurement:test_name Tags:{} Field:metric_7_name ValueType:int64  Value:7
 }
 
 func Example_Measurement_GetMode_Indexed() {
@@ -253,21 +459,21 @@ func Example_Measurement_GetMode_Indexed() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -322,7 +528,7 @@ func Example_Measurement_GetMode_Indexed() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -393,20 +599,22 @@ func Example_Measurement_GetMode_Indexed_Indirect() {
 
 	// 3.- SNMP CLIENT SETUP
 
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	// 3.- SNMP CLIENT SETUP
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -461,7 +669,7 @@ func Example_Measurement_GetMode_Indexed_Indirect() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -549,20 +757,21 @@ func Example_Measurement_GetMode_Indexed_Multi_Indirect() {
 
 	// 3.- SNMP CLIENT SETUP
 
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -629,8 +838,7 @@ func Example_Measurement_GetMode_Indexed_Multi_Indirect() {
 	cfg.Init(&metrics, vars)
 
 	// 6.- MEASUREMENT ENGINE SETUP
-
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -706,21 +914,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -798,7 +1006,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -876,21 +1084,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndexDIM2() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -960,7 +1168,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndexDIM2() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -1034,21 +1242,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -1119,7 +1327,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -1188,21 +1396,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -1273,7 +1481,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -1347,21 +1555,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLSTRING() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -1432,7 +1640,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLSTRING() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -1506,21 +1714,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -1591,7 +1799,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -1663,21 +1871,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT_COMPL
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -1756,7 +1964,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT_COMPL
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -1828,21 +2036,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_C
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -1921,7 +2129,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_C
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -2022,21 +2230,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -2142,7 +2350,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -2262,21 +2470,21 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -2386,7 +2594,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -2447,21 +2655,21 @@ func Example_Measurement_value_STRINGEVAL() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -2537,7 +2745,7 @@ func Example_Measurement_value_STRINGEVAL() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -2598,21 +2806,21 @@ func Example_Measurement_Indexed_STRINGEVAL() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -2681,7 +2889,7 @@ func Example_Measurement_Indexed_STRINGEVAL() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -2755,21 +2963,21 @@ func Example_Measurement_Indexed_Indirect_STRINGEVAL() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -2838,7 +3046,7 @@ func Example_Measurement_Indexed_Indirect_STRINGEVAL() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -2923,21 +3131,21 @@ func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -3009,7 +3217,7 @@ func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
@@ -3078,21 +3286,21 @@ func Example_Measurement_GetMode_Indexed_MULTISTRINGPARSER_SKIPFIELD() {
 	defer s.Stop()
 
 	// 3.- SNMP CLIENT SETUP
-
-	cli := &gosnmp.GoSNMP{
-		Target:    "127.0.0.1",
-		Port:      1161,
-		Version:   gosnmp.Version2c,
-		Community: "test1",
-		Timeout:   5 * time.Second,
-		Retries:   0,
-		Logger:    l,
+	dcfg := &config.SnmpDeviceCfg{
+		ID:          "test",
+		Host:        "127.0.0.1",
+		Port:        1161,
+		SnmpVersion: "2c",
+		Community:   "test1",
+		Timeout:     5,
+		Retries:     0,
 	}
-	err = cli.Connect()
+
+	cli, err := snmp.New(dcfg, l, "test", false, 64)
 	if err != nil {
 		l.Fatalf("Connect() err: %v", err)
 	}
-	defer cli.Conn.Close()
+	defer cli.Release()
 
 	// 4.- METRICMAP SETUP
 
@@ -3147,7 +3355,7 @@ func Example_Measurement_GetMode_Indexed_MULTISTRINGPARSER_SKIPFIELD() {
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
-	m, err := New(cfg, l, cli, false)
+	m, err := New(cfg, l, cli)
 	if err != nil {
 		l.Errorf("Can not create measurement %s", err)
 		return
