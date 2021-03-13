@@ -475,6 +475,10 @@ func (dbc *DatabaseCfg) AddMeasurementCfg(dev MeasurementCfg) (int64, error) {
 	}
 	// initialize data persistence
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	affected, err = session.Insert(dev)
@@ -512,6 +516,10 @@ func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 	var err error
 
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 	// deleting references in MeasurementFieldCfg
 	affectedfl, err = session.Where("id_measurement_cfg='" + id + "'").Delete(&MeasurementFieldCfg{})
@@ -578,6 +586,10 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 	}
 	// initialize data persistence
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	if id != dev.ID { //ID has been changed

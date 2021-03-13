@@ -63,6 +63,10 @@ func (dbc *DatabaseCfg) AddInfluxCfg(dev InfluxCfg) (int64, error) {
 	var err error
 	var affected int64
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	affected, err = session.Insert(dev)
@@ -86,6 +90,10 @@ func (dbc *DatabaseCfg) DelInfluxCfg(id string) (int64, error) {
 	var err error
 
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 	// deleting references in SnmpDevCfg
 
@@ -115,6 +123,10 @@ func (dbc *DatabaseCfg) UpdateInfluxCfg(id string, dev InfluxCfg) (int64, error)
 	var affecteddev, affected int64
 	var err error
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 	if id != dev.ID { //ID has been changed
 		affecteddev, err = session.Where("outdb='" + id + "'").Cols("outdb").Update(&SnmpDeviceCfg{OutDB: dev.ID})

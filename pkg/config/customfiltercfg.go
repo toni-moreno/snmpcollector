@@ -83,6 +83,10 @@ func (dbc *DatabaseCfg) AddCustomFilterCfg(dev CustomFilterCfg) (int64, error) {
 	// create CustomFilterCfg to check if any configuration issue found before persist to database.
 	// initialize data persistence
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	affected, err = session.Insert(dev)
@@ -121,6 +125,10 @@ func (dbc *DatabaseCfg) DelCustomFilterCfg(id string) (int64, error) {
 	var err error
 
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 	// deleting references in Measurements
 
@@ -158,6 +166,10 @@ func (dbc *DatabaseCfg) UpdateCustomFilterCfg(id string, dev CustomFilterCfg) (i
 	// create CustomFilterCfg to check if any configuration issue found before persist to database.
 	// initialize data persistence
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	if id != dev.ID { //ID has been changed so we need to update Related MeasurementCfg
