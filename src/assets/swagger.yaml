@@ -1,0 +1,349 @@
+basePath: /api
+definitions:
+  Duration:
+    description: |-
+      A Duration represents the elapsed time between two instants
+      as an int64 nanosecond count. The representation limits the
+      largest representable duration to approximately 290 years.
+    format: int64
+    type: integer
+    x-go-package: time
+  EasyPDU:
+    description: EasyPDU enable user interface Info for OID data
+    properties:
+      Name:
+        type: string
+      Type:
+        type: string
+      Value:
+        type: object
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/data/snmp
+  RInfo:
+    properties:
+      Branch:
+        type: string
+      BuildStamp:
+        type: string
+      Commit:
+        type: string
+      InstanceID:
+        type: string
+      Version:
+        type: string
+    title: RInfo contains the agent's release and version information.
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/agent
+  SnmpDeviceCfg:
+    description: SnmpDeviceCfg contains all snmp related device definitions
+    properties:
+      Active:
+        type: boolean
+      Community:
+        type: string
+      ConcurrentGather:
+        type: boolean
+      Description:
+        type: string
+      DeviceTagName:
+        description: influx tags
+        type: string
+      DeviceTagValue:
+        type: string
+      DeviceVars:
+        items:
+          type: string
+        type: array
+      DisableBulk:
+        description: snmp workarround for some devices
+        type: boolean
+      ExtraTags:
+        items:
+          type: string
+        type: array
+      Freq:
+        description: snmp runtime config
+        format: int64
+        type: integer
+      Host:
+        description: snmp connection config
+        type: string
+      ID:
+        type: string
+      LogFile:
+        type: string
+      LogLevel:
+        type: string
+      MaxOids:
+        format: int64
+        type: integer
+      MaxRepetitions:
+        format: uint8
+        type: integer
+      MeasFilters:
+        items:
+          type: string
+        type: array
+      MeasurementGroups:
+        description: Filters for measurements
+        items:
+          type: string
+        type: array
+      OutDB:
+        type: string
+      Port:
+        format: int64
+        type: integer
+      Repeat:
+        format: int64
+        type: integer
+      Retries:
+        format: int64
+        type: integer
+      SnmpDebug:
+        type: boolean
+      SnmpVersion:
+        description: snmp auth  config
+        type: string
+      SystemOIDs:
+        items:
+          type: string
+        type: array
+      Timeout:
+        format: int64
+        type: integer
+      UpdateFltFreq:
+        format: int64
+        type: integer
+      V3AuthPass:
+        type: string
+      V3AuthProt:
+        type: string
+      V3AuthUser:
+        type: string
+      V3ContextEngineID:
+        type: string
+      V3ContextName:
+        type: string
+      V3PrivPass:
+        type: string
+      V3PrivProt:
+        type: string
+      V3SecLevel:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  SnmpQueryResponse:
+    description: SnmpQueryResponse response for queries in the UI
+    properties:
+      DeviceCfg:
+        $ref: '#/definitions/SnmpDeviceCfg'
+      PingInfo:
+        $ref: '#/definitions/SysInfo'
+      QueryResult:
+        items:
+          $ref: '#/definitions/EasyPDU'
+        type: array
+      TimeTaken:
+        format: double
+        type: number
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/webui
+  SysInfo:
+    description: SysInfo Info basic information for any SNMP based MIB-2 System
+    properties:
+      SysContact:
+        type: string
+      SysDescr:
+        type: string
+      SysLocation:
+        type: string
+      SysName:
+        type: string
+      SysUptime:
+        $ref: '#/definitions/Duration'
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/data/snmp
+info:
+  contact:
+    email: toni.moreno@gmail.com
+    name: Toni Moreno
+    url: http://snmpcollector.io
+  description: |-
+    Documentation of SnmpCollector API, runtime, and config operations.
+
+    Schemes:
+    http
+    https
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT7
+  title: SnmpCollector
+  version: 1.0.0
+paths:
+  /rt/agent/info/version:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        This will show all available pets by default.
+        You can get the pets that are out of stock
+      operationId: RTGetVersion
+      produces:
+      - application/json
+      responses:
+        "200":
+          $ref: '#/responses/idOfInfoResp'
+      schemes:
+      - http
+      - https
+      summary: Reload Configuration
+      tags:
+      - Runtime_Agent
+  /rt/agent/reload:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        This will show all available pets by default.
+        You can get the pets that are out of stock
+      operationId: AgentReloadConf
+      produces:
+      - application/json
+      responses:
+        "200":
+          $ref: '#/responses/idOfDurationResp'
+        "405":
+          $ref: '#/responses/idOfStringResp'
+      schemes:
+      - http
+      - https
+      summary: Reload Configuration
+      tags:
+      - Runtime_Agent
+  /rt/agent/shutdown:
+    get:
+      description: |-
+        This will show all available pets by default.
+        You can get the pets that are out of stock
+      operationId: AgentShutdown
+      responses:
+        "200":
+          $ref: '#/responses/idOfStringResp'
+      schemes:
+      - http
+      - https
+      summary: Exit from the process without
+      tags:
+      - Runtime_Agent
+  /rt/agent/snmpconsole/ping:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        This will return Basic system Info from
+        You can get the pets that are out of stock
+      operationId: idOfDeviceCfg
+      parameters:
+      - description: SnmpDevice Config parameters
+        in: body
+        name: Body
+        schema:
+          $ref: '#/definitions/SnmpDeviceCfg'
+      produces:
+      - application/json
+      responses:
+        "200":
+          $ref: '#/responses/idOfSnmpSysInfoResp'
+        "400":
+          $ref: '#/responses/idOfStringResp'
+      schemes:
+      - http
+      - https
+      summary: Ping device with Device Info
+      tags:
+      - Runtime_SNMP_Console
+  /rt/agent/snmpconsole/query/{getmode}/{obtype}/{data}:
+    post:
+      description: |-
+        This will return Basic system Info from
+        You can get the pets that are out of stock
+
+        Consumes:
+        application/json
+
+        Produces:
+        application/json
+
+        Schemes: http, https
+
+        Security:
+        basic
+      operationId: QuerySNMPDevice
+      parameters:
+      - description: SNMP Get type
+        enum:
+        - get
+        - walk
+        in: query
+        name: getmode
+        required: true
+        schema:
+          type: string
+      - description: type of object in (snmpmetric,snmpmeasurement,...)
+        enum:
+        - snmpmetric
+        - snmpmeasurement
+        in: query
+        name: obtype
+        required: true
+        type: string
+      - description: id for the objecttype to qyery (snmpmetric,snmpmeasurement,...)
+        in: query
+        name: data
+        required: true
+        type: string
+      - description: device to query
+        in: body
+        name: idOfDeviceCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpDeviceCfg'
+      responses:
+        "200":
+          description: snmp responses
+          schema:
+            $ref: '#/definitions/SnmpQueryResponse'
+        "400":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Run a SNMP Query for a device
+      tags:
+      - Runtime_SNMP_Console
+responses:
+  idOfDurationResp:
+    description: ""
+    schema:
+      $ref: '#/definitions/Duration'
+  idOfInfoResp:
+    description: ""
+    schema:
+      $ref: '#/definitions/RInfo'
+  idOfSnmpQueryResp:
+    description: ""
+    schema:
+      $ref: '#/definitions/SnmpQueryResponse'
+  idOfSnmpSysInfoResp:
+    description: ""
+    schema:
+      $ref: '#/definitions/SysInfo'
+  idOfStringResp:
+    description: ""
+security:
+- basicAuth:
+  - '[]'
+securityDefinitions:
+  basicAuth:
+    type: basic
+swagger: "2.0"

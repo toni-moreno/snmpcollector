@@ -30,6 +30,27 @@ func NewAPIRtAgent(m *macaron.Macaron) error {
 
 // AgentReloadConf xx
 func AgentReloadConf(ctx *Context) {
+	// swagger:route GET /rt/agent/reload Runtime_Agent AgentReloadConf
+	//
+	// Reload Configuration
+	//
+	// This will show all available pets by default.
+	// You can get the pets that are out of stock
+	//
+	//     Consumes:
+	//     - application/json
+	//
+	//     Produces:
+	//     - application/json
+	//
+	//     Schemes: http, https
+	//
+	//     Security:
+	//       basic
+	//
+	//     Responses:
+	//       200: idOfDurationResp
+	//       405: idOfStringResp
 	log.Info("trying to reload configuration for all devices")
 	time, err := agent.ReloadConf()
 	if err != nil {
@@ -41,6 +62,20 @@ func AgentReloadConf(ctx *Context) {
 
 // AgentShutdown xx
 func AgentShutdown(ctx *Context) {
+	// swagger:route GET /rt/agent/shutdown Runtime_Agent AgentShutdown
+	//
+	// Exit from the process without
+	//
+	// This will show all available pets by default.
+	// You can get the pets that are out of stock
+	//
+	//     Schemes: http, https
+	//
+	//     Security:
+	//      - basic
+	//
+	//     Responses:
+	//       200: idOfStringResp
 	log.Info("receiving shutdown")
 	ctx.JSON(200, "Init shutdown....")
 	os.Exit(0)
@@ -48,6 +83,28 @@ func AgentShutdown(ctx *Context) {
 
 //PingSNMPDevice xx
 func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
+	// swagger:route POST /rt/agent/snmpconsole/ping Runtime_SNMP_Console idOfDeviceCfg
+	//
+	// Ping device with Device Info
+	//
+	// This will return Basic system Info from
+	// You can get the pets that are out of stock
+	//
+	//     Consumes:
+	//     - application/json
+	//
+	//     Produces:
+	//     - application/json
+	//
+	//     Schemes: http, https
+	//
+	//     Security:
+	//       - basic
+	//
+	//     Responses:
+	//       200: idOfSnmpSysInfoResp
+	//       400: idOfStringResp
+	//
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
 	_, sysinfo, err := snmp.GetClient(&cfg, log, "ping", false, 0)
@@ -60,8 +117,71 @@ func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	}
 }
 
+// SnmpQueryResponse response for queries in the UI
+// swagger:response idOfSnmpQueryResp
+type SnmpQueryResponse struct {
+	DeviceCfg   *config.SnmpDeviceCfg
+	TimeTaken   float64
+	PingInfo    *snmp.SysInfo
+	QueryResult []snmp.EasyPDU
+}
+
 // QuerySNMPDevice xx
 func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
+	// swagger:operation POST /rt/agent/snmpconsole/query/{getmode}/{obtype}/{data} Runtime_SNMP_Console QuerySNMPDevice
+	//
+	// Run a SNMP Query for a device
+	//
+	// This will return Basic system Info from
+	// You can get the pets that are out of stock
+	//
+	// 	Consumes:
+	//  - application/json
+	//
+	// 	Produces:
+	//  - application/json
+	//
+	//  Schemes: http, https
+	//
+	//  Security:
+	//  - basic
+	//---
+	// parameters:
+	// - name: getmode
+	//   in: query
+	//   description: SNMP Get type
+	//   required: true
+	//   schema:
+	//      type: string
+	//   enum: [get,walk]
+	// - name: obtype
+	//   in: query
+	//   description: type of object in (snmpmetric,snmpmeasurement,...)
+	//   required: true
+	//   type: string
+	//   enum: [snmpmetric,snmpmeasurement]
+	// - name: data
+	//   in: query
+	//   description: id for the objecttype to qyery (snmpmetric,snmpmeasurement,...)
+	//   required: true
+	//   type: string
+	// - name: idOfDeviceCfg
+	//   in: body
+	//   description: device to query
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/SnmpDeviceCfg"
+	//
+	// responses:
+	//   '200':
+	//     description: snmp responses
+	//     schema:
+	//       "$ref": "#/definitions/SnmpQueryResponse"
+	//   '400':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+
 	getmode := ctx.Params(":getmode")
 	obtype := ctx.Params(":obtype")
 	data := strings.TrimSpace(ctx.Params(":data"))
@@ -89,12 +209,7 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 		return
 	}
 	log.Debugf("OK on query device ")
-	snmpdata := struct {
-		DeviceCfg   *config.SnmpDeviceCfg
-		TimeTaken   float64
-		PingInfo    *snmp.SysInfo
-		QueryResult []snmp.EasyPDU
-	}{
+	snmpdata := SnmpQueryResponse{
 		&cfg,
 		elapsed.Seconds(),
 		info,
@@ -105,6 +220,26 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 
 //RTGetVersion xx
 func RTGetVersion(ctx *Context) {
+	// swagger:route GET /rt/agent/info/version Runtime_Agent RTGetVersion
+	//
+	// Reload Configuration
+	//
+	// This will show all available pets by default.
+	// You can get the pets that are out of stock
+	//
+	//     Consumes:
+	//     - application/json
+	//
+	//     Produces:
+	//     - application/json
+	//
+	//     Schemes: http, https
+	//
+	//     Security:
+	//       none
+	//
+	//     Responses:
+	//       200: idOfInfoResp
 	info := agent.GetRInfo()
 	ctx.JSON(200, &info)
 }
