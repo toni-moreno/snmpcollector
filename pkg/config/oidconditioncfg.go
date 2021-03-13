@@ -156,6 +156,10 @@ func (dbc *DatabaseCfg) AddOidConditionCfg(dev OidConditionCfg) (int64, error) {
 	// create OidConditionCfg to check if any configuration issue found before persist to database.
 	// initialize data persistence
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	affected, err = session.Insert(dev)
@@ -179,6 +183,10 @@ func (dbc *DatabaseCfg) DelOidConditionCfg(id string) (int64, error) {
 	var err error
 
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 	// deleting references filter_name on Measurement Filters
 	affecteddev, err = session.Where("filter_name='" + id + "'").Cols("filter_name").Update(&MeasFilterCfg{})
@@ -220,6 +228,10 @@ func (dbc *DatabaseCfg) UpdateOidConditionCfg(id string, dev OidConditionCfg) (i
 	// create OidConditionCfg to check if any configuration issue found before persist to database.
 	// initialize data persistence
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	if id != dev.ID { //ID has been changed

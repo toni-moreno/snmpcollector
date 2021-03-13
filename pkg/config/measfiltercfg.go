@@ -63,6 +63,10 @@ func (dbc *DatabaseCfg) AddMeasFilterCfg(dev MeasFilterCfg) (int64, error) {
 	var err error
 	var affected int64
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	affected, err = session.Insert(dev)
@@ -87,6 +91,10 @@ func (dbc *DatabaseCfg) DelMeasFilterCfg(id string) (int64, error) {
 	var err error
 
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 	// deleting references in SnmpDeviceCfg
 	affectedfl, err = session.Where("id_filter='" + id + "'").Delete(&SnmpDevFilters{})
@@ -115,6 +123,10 @@ func (dbc *DatabaseCfg) UpdateMeasFilterCfg(id string, dev MeasFilterCfg) (int64
 	var affecteddev, newmf, affected int64
 	var err error
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	if id != dev.ID { //ID has been changed only need change id's in snsmpdev

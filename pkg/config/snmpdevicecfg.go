@@ -97,6 +97,10 @@ func (dbc *DatabaseCfg) AddSnmpDeviceCfg(dev SnmpDeviceCfg) (int64, error) {
 	var err error
 	var affected, newmg, newft int64
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	affected, err = session.Insert(dev)
@@ -144,6 +148,10 @@ func (dbc *DatabaseCfg) DelSnmpDeviceCfg(id string) (int64, error) {
 	var err error
 
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 	//first deleting references in SnmpDevMGroups SnmpDevFilters
 	// Measurement Groups
@@ -185,6 +193,10 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 	var deletemg, newmg, deleteft, newft, affectedcf, affected int64
 	var err error
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 	//Deleting first all relations
 	deletemg, err = session.Where("id_snmpdev='" + id + "'").Delete(&SnmpDevMGroups{})

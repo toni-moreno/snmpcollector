@@ -77,6 +77,10 @@ func (dbc *DatabaseCfg) AddMGroupsCfg(dev MGroupsCfg) (int64, error) {
 	var err error
 	var affected, newmf int64
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	affected, err = session.Insert(dev)
@@ -113,6 +117,10 @@ func (dbc *DatabaseCfg) DelMGroupsCfg(id string) (int64, error) {
 	var err error
 
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 	// deleting references in Measurements tables
 	affecteddev, err = session.Where("id_mgroup_cfg='" + id + "'").Delete(&MGroupsMeasurements{})
@@ -148,6 +156,10 @@ func (dbc *DatabaseCfg) UpdateMGroupsCfg(id string, dev MGroupsCfg) (int64, erro
 	var affecteddev, newmg, affected int64
 	var err error
 	session := dbc.x.NewSession()
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0, err
+	}
 	defer session.Close()
 
 	if id != dev.ID { //ID has been changed
