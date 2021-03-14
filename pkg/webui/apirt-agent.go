@@ -83,28 +83,31 @@ func AgentShutdown(ctx *Context) {
 
 //PingSNMPDevice xx
 func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
-	// swagger:route POST /rt/agent/snmpconsole/ping Runtime_SNMP_Console idOfDeviceCfg
+	// swagger:operation POST /rt/agent/snmpconsole/ping Runtime_SNMP_Console PingSNMPDevice
 	//
 	// Ping device with Device Info
 	//
-	// This will return Basic system Info from
-	// You can get the pets that are out of stock
+	// This call will return Basic system Info from SNMP device
 	//
-	//     Consumes:
-	//     - application/json
+	//---
+	// parameters:
+	// - name: SnmpDeviceCfg
+	//   in: body
+	//   description: device to query
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/SnmpDeviceCfg"
 	//
-	//     Produces:
-	//     - application/json
-	//
-	//     Schemes: http, https
-	//
-	//     Security:
-	//       - basic
-	//
-	//     Responses:
-	//       200: idOfSnmpSysInfoResp
-	//       400: idOfStringResp
-	//
+	// responses:
+	//   '200':
+	//     description: snmp responses
+	//     schema:
+	//       "$ref": "#/definitions/SnmpQueryResponse"
+	//   '400':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
 	_, sysinfo, err := snmp.GetClient(&cfg, log, "ping", false, 0)
@@ -118,7 +121,7 @@ func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 }
 
 // SnmpQueryResponse response for queries in the UI
-// swagger:response idOfSnmpQueryResp
+// swagger:model SnmpQueryResponse
 type SnmpQueryResponse struct {
 	DeviceCfg   *config.SnmpDeviceCfg
 	TimeTaken   float64
@@ -135,37 +138,26 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	// This will return Basic system Info from
 	// You can get the pets that are out of stock
 	//
-	// 	Consumes:
-	//  - application/json
-	//
-	// 	Produces:
-	//  - application/json
-	//
-	//  Schemes: http, https
-	//
-	//  Security:
-	//  - basic
 	//---
 	// parameters:
 	// - name: getmode
-	//   in: query
+	//   in: path
 	//   description: SNMP Get type
 	//   required: true
-	//   schema:
-	//      type: string
+	//   type: string
 	//   enum: [get,walk]
 	// - name: obtype
-	//   in: query
+	//   in: path
 	//   description: type of object in (snmpmetric,snmpmeasurement,...)
 	//   required: true
 	//   type: string
 	//   enum: [snmpmetric,snmpmeasurement]
 	// - name: data
-	//   in: query
+	//   in: path
 	//   description: id for the objecttype to qyery (snmpmetric,snmpmeasurement,...)
 	//   required: true
 	//   type: string
-	// - name: idOfDeviceCfg
+	// - name: SnmpDeviceCfg
 	//   in: body
 	//   description: device to query
 	//   required: true
@@ -218,28 +210,22 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	ctx.JSON(200, snmpdata)
 }
 
-//RTGetVersion xx
+// RTGetVersion xx
 func RTGetVersion(ctx *Context) {
-	// swagger:route GET /rt/agent/info/version Runtime_Agent RTGetVersion
+	// swagger:operation GET /rt/agent/info/version Runtime_Agent RTGetVersion
 	//
-	// Reload Configuration
+	// Get Agent Version
 	//
-	// This will show all available pets by default.
-	// You can get the pets that are out of stock
+	// This will response About version , release , commit , compilation day
+	//---
+	// security: []
 	//
-	//     Consumes:
-	//     - application/json
-	//
-	//     Produces:
-	//     - application/json
-	//
-	//     Schemes: http, https
-	//
-	//     Security:
-	//       none
-	//
-	//     Responses:
-	//       200: idOfInfoResp
+	// responses:
+	//   '200':
+	//     description: Agent Version Info
+	//     schema:
+	//      "$ref": "#/definitions/RInfo"
+
 	info := agent.GetRInfo()
 	ctx.JSON(200, &info)
 }

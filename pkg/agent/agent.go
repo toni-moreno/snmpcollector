@@ -24,7 +24,8 @@ var (
 	BuildStamp string
 )
 
-// RInfo contains the agent's release and version information.
+// RInfo contains the agent release and version information.
+// swagger:model RInfo
 type RInfo struct {
 	InstanceID string
 	Version    string

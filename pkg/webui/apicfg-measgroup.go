@@ -14,10 +14,10 @@ func NewAPICfgMeasGroup(m *macaron.Macaron) error {
 
 	m.Group("/api/cfg/measgroup", func() {
 		m.Get("/", reqSignedIn, GetMeasGroup)
+		m.Get("/:id", reqSignedIn, GetMeasGroupByID)
 		m.Post("/", reqSignedIn, bind(config.MGroupsCfg{}), AddMeasGroup)
 		m.Put("/:id", reqSignedIn, bind(config.MGroupsCfg{}), UpdateMeasGroup)
 		m.Delete("/:id", reqSignedIn, DeleteMeasGroup)
-		m.Get("/:id", reqSignedIn, GetMeasGroupByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetMeasGroupsAffectOnDel)
 	})
 
@@ -26,6 +26,21 @@ func NewAPICfgMeasGroup(m *macaron.Macaron) error {
 
 // GetMeasGroup Return measurements groups list to frontend
 func GetMeasGroup(ctx *Context) {
+	// swagger:operation GET /cfg/measgroup  Config_MeasurementGroup GetMeasGroup
+	//
+	// Get All measurement groups info
+	//
+	// Get All measurement groups config info as an array
+	//---
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/responses/idOfArrayMeasGroupResp"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	cfgarray, err := agent.MainConfig.Database.GetMGroupsCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
@@ -36,8 +51,64 @@ func GetMeasGroup(ctx *Context) {
 	log.Debugf("Getting Meas Group %+v", &cfgarray)
 }
 
+//GetMeasGroupByID --pending--
+func GetMeasGroupByID(ctx *Context) {
+	// swagger:operation GET /cfg/measgroup Config_MeasurementGroup GetMeasGroupByID
+	//
+	// Get All measurement groups info
+	//
+	// Get All measurement groups config by ID
+	//---
+	// parameters:
+	// - name: id
+	//   in: path
+	//   description: Measurement Group ID to get
+	//   required: true
+	//   type: string
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/definitions/MGroupsCfg"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+	id := ctx.Params(":id")
+	dev, err := agent.MainConfig.Database.GetMGroupsCfgByID(id)
+	if err != nil {
+		log.Warningf("Error on get Measurement Group for device %s  , error: %s", id, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, &dev)
+	}
+}
+
 // AddMeasGroup Insert new measurement groups to de internal BBDD --pending--
 func AddMeasGroup(ctx *Context, dev config.MGroupsCfg) {
+	// swagger:operation POST /cfg/measgroup Config_MeasurementGroup AddMeasGroup
+	//
+	// Add new measgroup from data
+	//
+	// Add MeasGroup from POSTED data
+	//---
+	// parameters:
+	// - name: MeasGroupCfg
+	//   in: body
+	//   description: Metric to add
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/MGroupsCfg"
+	//
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/definitions/MGroupsCfg"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	log.Printf("ADDING Measurement Group %+v", dev)
 	affected, err := agent.MainConfig.Database.AddMGroupsCfg(dev)
 	if err != nil {
@@ -51,6 +122,34 @@ func AddMeasGroup(ctx *Context, dev config.MGroupsCfg) {
 
 // UpdateMeasGroup --pending--
 func UpdateMeasGroup(ctx *Context, dev config.MGroupsCfg) {
+	// swagger:operation PUT /cfg/measgroup Config_MeasurementGroup UpdateMeasGroup
+	//
+	// Add new measgroup from data
+	//
+	// Add MeasGroup from POSTED data
+	//---
+	// parameters:
+	// - name: id
+	//   in: path
+	//   description: Measurement Group ID to update
+	//   required: true
+	//   type: string
+	// - name: MeasGroupCfg
+	//   in: body
+	//   description: Metric to add
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/MGroupsCfg"
+	//
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/definitions/MGroupsCfg"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
 	affected, err := agent.MainConfig.Database.UpdateMGroupsCfg(id, dev)
@@ -65,6 +164,28 @@ func UpdateMeasGroup(ctx *Context, dev config.MGroupsCfg) {
 
 //DeleteMeasGroup --pending--
 func DeleteMeasGroup(ctx *Context) {
+	// swagger:operation DELETE /cfg/measgroup Config_MeasurementGroup DeleteMeasGroup
+	//
+	// Delete new measgroup
+	//
+	// Delete MeasGroup from POSTED data
+	//---
+	// parameters:
+	// - name: id
+	//   in: path
+	//   description: Measurement Group ID to delete
+	//   required: true
+	//   type: string
+	//
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
 	affected, err := agent.MainConfig.Database.DelMGroupsCfg(id)
@@ -73,18 +194,6 @@ func DeleteMeasGroup(ctx *Context) {
 		ctx.JSON(404, err.Error())
 	} else {
 		ctx.JSON(200, "deleted")
-	}
-}
-
-//GetMeasGroupByID --pending--
-func GetMeasGroupByID(ctx *Context) {
-	id := ctx.Params(":id")
-	dev, err := agent.MainConfig.Database.GetMGroupsCfgByID(id)
-	if err != nil {
-		log.Warningf("Error on get Measurement Group for device %s  , error: %s", id, err)
-		ctx.JSON(404, err.Error())
-	} else {
-		ctx.JSON(200, &dev)
 	}
 }
 

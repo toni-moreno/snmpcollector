@@ -3,7 +3,7 @@ package docs
 import (
 	"time"
 
-	"github.com/toni-moreno/snmpcollector/pkg/agent"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"github.com/toni-moreno/snmpcollector/pkg/webui"
@@ -29,21 +29,38 @@ type rtAgentDurationResponseWrapper struct {
 	Body time.Duration
 }
 
-// swagger:response idOfInfoResp
-type rtAgentInfoResponseWrapper struct {
+// swagger:response idOfDeviceStatResp
+type rtAgentDeviceStatResponseWrapper struct {
 	// in:body
-	Body agent.RInfo
+	Body map[string]*device.DevStat
 }
 
-// swagger:response idOfSnmpQueryResp
-type rtAgentSnmpQueryResponseWrapper struct {
+// swagger:response idOfArrayDeviceStatResp
+type rtAgentWUIDeviceStatResponseWrapper struct {
 	// in:body
-	Body webui.SnmpQueryResponse
+	Body []*webui.DeviceStatMap
 }
 
-// swagger:parameters idOfDeviceCfg
-type rtAgentSnmpDeviceCfgParamsWrapper struct {
-	// SnmpDevice Config parameters
+// swagger:response idOfArrayMetricResp
+type rtCfgArrayMetricResponseWrapper struct {
 	// in:body
-	Body config.SnmpDeviceCfg
+	Body []*config.SnmpMetricCfg
+}
+
+// swagger:response idOfArrayMeasGroupResp
+type rtCfgArrayMeasGroupResponseWrapper struct {
+	// in:body
+	Body []*config.MGroupsCfg
+}
+
+// swagger:response idOfArrayMeasResp
+type rtCfgArrayMeasResponseWrapper struct {
+	// in:body
+	Body []*config.MeasurementCfg
+}
+
+// swagger:response idOfCheckOnDelResp
+type rtCfgCheckOnDelResponseWrapper struct {
+	// in:body
+	Body []*config.DbObjAction
 }

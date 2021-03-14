@@ -14,10 +14,10 @@ func NewAPICfgSnmpMetric(m *macaron.Macaron) error {
 
 	m.Group("/api/cfg/metric", func() {
 		m.Get("/", reqSignedIn, GetMetrics)
+		m.Get("/:id", reqSignedIn, GetMetricByID)
 		m.Post("/", reqSignedIn, bind(config.SnmpMetricCfg{}), AddMetric)
 		m.Put("/:id", reqSignedIn, bind(config.SnmpMetricCfg{}), UpdateMetric)
 		m.Delete("/:id", reqSignedIn, DeleteMetric)
-		m.Get("/:id", reqSignedIn, GetMetricByID)
 		m.Get("/checkondel/:id", reqSignedIn, GetMetricsAffectOnDel)
 		m.Post("/convmodes", reqSignedIn, bind(config.SnmpMetricCfg{}), GetConversionModes)
 	})
@@ -27,6 +27,21 @@ func NewAPICfgSnmpMetric(m *macaron.Macaron) error {
 
 // GetMetrics Return metrics list to frontend
 func GetMetrics(ctx *Context) {
+	// swagger:operation GET /cfg/metric  Config_Metric GetMetrics
+	//
+	// Get All metrics info
+	//
+	// Get All metric config info as an array
+	//---
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/responses/idOfArrayMetricResp"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	cfgarray, err := agent.MainConfig.Database.GetSnmpMetricCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
@@ -37,8 +52,64 @@ func GetMetrics(ctx *Context) {
 	log.Debugf("Getting Metrics %+v", &cfgarray)
 }
 
+//GetMetricByID --pending--
+func GetMetricByID(ctx *Context) {
+	// swagger:operation GET /cfg/metric/{id}  Config_Metric GetMetricByID
+	//
+	// Get Metric Info by ID
+	//
+	// Get Complete config info for de selected ID
+	//---
+	// parameters:
+	// - name: id
+	//   in: path
+	//   description: Metric ID to get
+	//   required: true
+	//   type: string
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/definitions/SnmpMetricCfg"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+	id := ctx.Params(":id")
+	dev, err := agent.MainConfig.Database.GetSnmpMetricCfgByID(id)
+	if err != nil {
+		log.Warningf("Error on get Metric  for device %s  , error: %s", id, err)
+		ctx.JSON(404, err.Error())
+	} else {
+		ctx.JSON(200, &dev)
+	}
+}
+
 // AddMetric Insert new metric to de internal BBDD --pending--
 func AddMetric(ctx *Context, dev config.SnmpMetricCfg) {
+	// swagger:operation POST /cfg/metric  Config_Metric AddMetric
+	//
+	// Add new metric from data
+	//
+	// Add Metric from POSTED data
+	//---
+	// parameters:
+	// - name: SnmpMetricCfg
+	//   in: body
+	//   description: Metric to add
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/SnmpMetricCfg"
+	//
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/definitions/SnmpMetricCfg"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	log.Printf("ADDING Metric %+v", dev)
 	affected, err := agent.MainConfig.Database.AddSnmpMetricCfg(dev)
 	if err != nil {
@@ -52,6 +123,34 @@ func AddMetric(ctx *Context, dev config.SnmpMetricCfg) {
 
 // UpdateMetric --pending--
 func UpdateMetric(ctx *Context, dev config.SnmpMetricCfg) {
+	// swagger:operation PUT /cfg/metric/{id}  Config_Metric UpdateMetric
+	//
+	// Update new metric from data
+	//
+	// Update Metric from POSTED data
+	//---
+	// parameters:
+	// - name: id
+	//   in: path
+	//   description: Metric ID to update
+	//   required: true
+	//   type: string
+	// - name: SnmpMetricCfg
+	//   in: body
+	//   description: Metric to add
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/SnmpMetricCfg"
+	//
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/definitions/SnmpMetricCfg"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	id := ctx.Params(":id")
 	log.Debugf("Tying to update: %+v", dev)
 	affected, err := agent.MainConfig.Database.UpdateSnmpMetricCfg(id, dev)
@@ -66,6 +165,27 @@ func UpdateMetric(ctx *Context, dev config.SnmpMetricCfg) {
 
 //DeleteMetric --pending--
 func DeleteMetric(ctx *Context) {
+	// swagger:operation DETELE /cfg/metric/{id}  Config_Metric DeleteMetric
+	//
+	// Get Metric Info by ID
+	//
+	// Get Complete config info for de selected ID
+	//---
+	// parameters:
+	// - name: id
+	//   in: path
+	//   description: Metric ID to delete
+	//   required: true
+	//   type: string
+	// responses:
+	//   '200':
+	//     description: "OK"
+	//     schema:
+	//       "$ref": "#/definitions/SnmpMetricCfg"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	id := ctx.Params(":id")
 	log.Debugf("Tying to delete: %+v", id)
 	affected, err := agent.MainConfig.Database.DelSnmpMetricCfg(id)
@@ -77,20 +197,29 @@ func DeleteMetric(ctx *Context) {
 	}
 }
 
-//GetMetricByID --pending--
-func GetMetricByID(ctx *Context) {
-	id := ctx.Params(":id")
-	dev, err := agent.MainConfig.Database.GetSnmpMetricCfgByID(id)
-	if err != nil {
-		log.Warningf("Error on get Metric  for device %s  , error: %s", id, err)
-		ctx.JSON(404, err.Error())
-	} else {
-		ctx.JSON(200, &dev)
-	}
-}
-
 //GetMetricsAffectOnDel --pending--
 func GetMetricsAffectOnDel(ctx *Context) {
+	// swagger:operation GET /cfg/metric/checkondel/{id} Config_Metric GetMetricsAffectOnDel
+	//
+	// Get all existing Objects affected when deleted the device.
+	//
+	//---
+	// parameters:
+	// - name: id
+	//   in: path
+	//   description: The device ID to check
+	//   required: true
+	//   type: string
+	//
+	// responses:
+	//   '200':
+	//     description: snmp responses
+	//     schema:
+	//       "$ref": "#/responses/idOfCheckOnDelResp"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	id := ctx.Params(":id")
 	obarray, err := agent.MainConfig.Database.GetSnmpMetricCfgAffectOnDel(id)
 	if err != nil {
@@ -108,6 +237,7 @@ type ConversionItem struct {
 }
 
 // ConversionItems array with all items and default/suggested value for this metric
+// swagger:model ConversionItems
 type ConversionItems struct {
 	Default int
 	Items   []ConversionItem
@@ -115,6 +245,28 @@ type ConversionItems struct {
 
 // GetConversionModes Return conversion modes from datasource Type
 func GetConversionModes(ctx *Context, dev config.SnmpMetricCfg) {
+	// swagger:operation GET /cfg/metric/convmodes Config_Metric GetConversionModes
+	//
+	// Get suggested conversion modes from datasource Type
+	//
+	//---
+	// parameters:
+	// - name: SnmpMetricCfg
+	//   in: body
+	//   description: Metric witch would like to query for conversion modes
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/SnmpMetricCfg"
+	//
+	// responses:
+	//   '200':
+	//     description: snmp responses
+	//     schema:
+	//       "$ref": "#/definitions/ConversionItems"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
 	var citem []ConversionItem
 	cfgarray, def, err := dev.GetValidConversions()
 	if err != nil {
