@@ -45,6 +45,8 @@ type SnmpDeviceCfg struct {
 	//Filters for measurements
 	MeasurementGroups []string `xorm:"-"`
 	MeasFilters       []string `xorm:"-"`
+	//Federated SNMPC
+	Location string `xorm:"'location' default 'Collector1'"`
 }
 
 // InfluxCfg is the main configuration for any InfluxDB TSDB
@@ -131,6 +133,17 @@ type SnmpDevMGroups struct {
 	IDMGroupCfg string `xorm:"id_mgroup_cfg"`
 }
 
+// SnmpDevMGroups Mgroups defined on each SnmpDevice
+type PollerLocationCfg struct {
+	ID          string `xorm:"'id' unique" binding:"Required"`
+	Location    string `xorm:"location"`
+	Instance_ID string `xorm:"instance_id"`
+	Active      bool   `xorm:"active"`
+	Hostname    string `xorm:"hostname"`
+	IP          string `xorm:"ip"`
+	Description string `xorm:"description"`
+}
+
 // DBConfig read from DB
 type DBConfig struct {
 	Metrics      map[string]*SnmpMetricCfg
@@ -138,6 +151,7 @@ type DBConfig struct {
 	MFilters     map[string]*MeasFilterCfg
 	GetGroups    map[string]*MGroupsCfg
 	SnmpDevice   map[string]*SnmpDeviceCfg
+	Location     map[string]*PollerLocationCfg
 	Influxdb     map[string]*InfluxCfg
 	VarCatalog   map[string]interface{}
 }

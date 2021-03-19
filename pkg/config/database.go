@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -43,7 +44,7 @@ type DbObjAction struct {
 }
 
 //InitDB initialize de BD configuration
-func (dbc *DatabaseCfg) InitDB() error {
+func (dbc *DatabaseCfg) InitDB(cfg *GeneralConfig) error {
 	// Create ORM engine and database
 	var err error
 	var dbtype string
@@ -159,6 +160,103 @@ func (dbc *DatabaseCfg) InitDB() error {
 	if err = dbc.x.Sync(new(OidConditionCfg)); err != nil {
 		log.Fatalf("Fail to sync database OidConditionCfg: %v\n", err)
 	}
+	if err = dbc.x.Sync(new(PollerLocationCfg)); err != nil {
+		log.Fatalf("Fail to sync database PollerLocationCfg: %v\n", err)
+	}
+	//Lookup if PollerLocation if got Instance_ID else create one
+	var locationsFound []*PollerLocationCfg
+	if err = dbc.x.Where("Instance_ID = '" + cfg.InstanceID + "'").Find(&locationsFound); err != nil {
+		log.Fatalf("There were an error when looking for %s in PollerLocationCfg. Error: %+v", cfg.InstanceID, err)
+	} else {
+		if len(locationsFound) == 0 {
+			//Create Location
+
+			//Get Hostname
+			hostname, err := os.Hostname()
+			if err != nil {
+				hostname = cfg.InstanceID
+			}
+			//Get external IP
+			ip := getExternalIp()
+			//Get Location or assign InstanceID
+			loc := cfg.Location
+			if len(loc) == 0 {
+				loc = cfg.InstanceID
+			}
+
+			var location = PollerLocationCfg{
+				ID:          cfg.InstanceID,
+				Location:    loc,
+				Instance_ID: cfg.InstanceID,
+				Active:      true,
+				Hostname:    hostname,
+				IP:          ip.String(),
+				Description: cfg.Description,
+			}
+
+			var affected int64
+			session := dbc.x.NewSession()
+			defer session.Close()
+			affected, err = session.Insert(&location)
+			if err != nil {
+				log.Fatalf("There were an error when creating default PollerLocationCfg Error: %+v", err)
+				session.Rollback()
+			} else {
+				log.Infof("PollerLocationCfg created succefully. %+v", affected)
+			}
+		} else {
+			log.Debug("Instance_ID founded on PollerLocationCfg. Checking if any param was changed")
+			for _, instance := range locationsFound {
+				log.Debugf("--> %+v\n", instance)
+			}
+			//Check if instance params was changed
+			instance := locationsFound[0]
+			hasChanges := false
+			//IP
+			if instance.IP != getExternalIp().String() {
+				instance.IP = getExternalIp().String()
+				hasChanges = true
+			}
+			//Description
+			if instance.Description != cfg.Description {
+				instance.Description = cfg.Description
+				hasChanges = true
+			}
+			//Hostname
+			hostname, err := os.Hostname()
+			if err != nil {
+				hostname = cfg.InstanceID
+			}
+			if instance.Hostname != hostname {
+				instance.Description = hostname
+				hasChanges = true
+			}
+			//Location
+			loc := cfg.Location
+			if len(loc) == 0 {
+				loc = cfg.InstanceID
+			}
+			if instance.Location != loc {
+				instance.Location = loc
+				hasChanges = true
+			}
+
+			if hasChanges {
+				log.Debug("Updating with newer values...")
+				var affected int64
+				session := dbc.x.NewSession()
+				defer session.Close()
+				//affected, err := session.ID(instance.ID).AllCols().Update()
+				affected, err = session.Where("Instance_ID ='" + instance.Instance_ID + "'").AllCols().Update(instance)
+				if err != nil {
+					log.Fatalf("There were an error when updating PollerLocationCfg Error: %+v", err)
+					session.Rollback()
+				} else {
+					log.Infof("PollerLocationCfg updated succefully. %+v", affected)
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -189,7 +287,7 @@ func CatalogVar2Map(cv map[string]*VarCatalogCfg) map[string]interface{} {
 }
 
 //LoadDbConfig get data from database
-func (dbc *DatabaseCfg) LoadDbConfig(cfg *DBConfig) {
+func (dbc *DatabaseCfg) LoadDbConfig(cfg *DBConfig, Location string) {
 	var err error
 	//Load Global Variables
 	VarCatalog := make(map[string]*VarCatalogCfg)
@@ -232,10 +330,23 @@ func (dbc *DatabaseCfg) LoadDbConfig(cfg *DBConfig) {
 	}
 
 	//Device
-
-	cfg.SnmpDevice, err = dbc.GetSnmpDeviceCfgMap("")
+	//Parameters inside GetSnmpDeviceCfgMap are filter to get devices. All devices who match with location will be returned
+	cfg.SnmpDevice, err = dbc.GetSnmpDeviceCfgMap("location = '" + Location + "'")
 	if err != nil {
 		log.Warningf("Some errors on get SnmpDeviceConf :%v", err)
 	}
 	dbc.resetChanges()
+}
+
+//Utils
+func getExternalIp() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
 }

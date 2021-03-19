@@ -6,12 +6,14 @@ import (
 
 // GeneralConfig has miscellaneous configuration options
 type GeneralConfig struct {
-	InstanceID string `mapstructure:"instanceID" envconfig:"SNMPCOL_GENERAL_INSTANCE_ID"`
-	LogDir     string `mapstructure:"logdir" envconfig:"SNMPCOL_GENERAL_LOG_DIR"`
-	HomeDir    string `mapstructure:"homedir" envconfig:"SNMPCOL_GENERAL_HOME_DIR"`
-	DataDir    string `mapstructure:"datadir" envconfig:"SNMPCOL_GENERAL_DATA_DIR" `
-	LogLevel   string `mapstructure:"loglevel" envconfig:"SNMPCOL_GENERAL_LOG_LEVEL"`
-	LogMode    string `mapstructure:"log_mode" envconfig:"SNMPCOL_GENERAL_LOG_MODE"`
+	InstanceID  string `mapstructure:"instanceID" envconfig:"SNMPCOL_GENERAL_INSTANCE_ID"`
+	LogDir      string `mapstructure:"logdir" envconfig:"SNMPCOL_GENERAL_LOG_DIR"`
+	HomeDir     string `mapstructure:"homedir" envconfig:"SNMPCOL_GENERAL_HOME_DIR"`
+	DataDir     string `mapstructure:"datadir" envconfig:"SNMPCOL_GENERAL_DATA_DIR" `
+	LogLevel    string `mapstructure:"loglevel" envconfig:"SNMPCOL_GENERAL_LOG_LEVEL"`
+	LogMode     string `mapstructure:"log_mode" envconfig:"SNMPCOL_GENERAL_LOG_MODE"`
+	Location    string `mapstructure:"location" envconfig:"SNMPCOL_GENERAL_LOCATION"`
+	Description string `mapstructure:"description" envconfig:"SNMPCOL_GENERAL_DESCRIPTION"`
 }
 
 //DatabaseCfg de configuration for the database

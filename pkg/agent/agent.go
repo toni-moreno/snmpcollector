@@ -289,7 +289,7 @@ func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 
 // LoadConf loads the DB conf and initializes the device metric config.
 func LoadConf() {
-	MainConfig.Database.LoadDbConfig(&DBConfig)
+	MainConfig.Database.LoadDbConfig(&DBConfig, MainConfig.General.Location)
 	influxdb = PrepareInfluxDBs()
 
 	// begin self monitoring process if needed, before all goroutines

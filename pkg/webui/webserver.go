@@ -180,6 +180,8 @@ func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id 
 
 	NewAPICfgVarCatalog(m)
 
+	NewAPICfgPollerLocation(m)
+
 	NewAPICfgOidCondition(m)
 
 	NewAPICfgSnmpMetric(m)
