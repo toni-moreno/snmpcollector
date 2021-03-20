@@ -38,9 +38,12 @@ func NewAPIRtDevice(m *macaron.Macaron) error {
 // RTSnmpSetMaxRep runtime set max repeticions
 func RTSnmpSetMaxRep(ctx *Context) {
 	// swagger:operation GET /rt/device/snmpmaxrep/{id}/{maxrep} Runtime_Devices RTSnmpSetMaxRep
-	//
-	// Set SNMP Maxrepetitions for a device
 	//---
+	// summary: Set SNMP Maxrepetitions for a device
+	// description: Set SNMP Maxrepetitions for a device
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -78,9 +81,12 @@ func RTSnmpSetMaxRep(ctx *Context) {
 // RTForceFltUpdate xx
 func RTForceFltUpdate(ctx *Context) {
 	// swagger:operation GET /rt/device/filter/forcefltupdate/{id} Runtime_Devices RTForceFltUpdate
-	//
-	// Force Updating filters on device
 	//---
+	// summary: Force Updating filters
+	// description: Force Updating filters on device in next gathering period
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -96,6 +102,7 @@ func RTForceFltUpdate(ctx *Context) {
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	d, err := agent.GetDevice(id)
 	if err != nil {
@@ -110,9 +117,12 @@ func RTForceFltUpdate(ctx *Context) {
 // RTGetLogFileDev get file dev
 func RTGetLogFileDev(ctx *Context) {
 	// swagger:operation GET /rt/device/log/getdevicelog/{id} Runtime_Devices RTGetLogFileDev
-	//
-	// Force Updating filters on device
 	//---
+	// summary: Download Device Log
+	// description: Download Log File for device specified by ID
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -141,9 +151,12 @@ func RTGetLogFileDev(ctx *Context) {
 //RTSetLogLevelDev xx
 func RTSetLogLevelDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/log/setloglevel/{id}/{level} Runtime_Devices RTSetLogLevelDev
-	//
-	// Set SNMP Maxrepetitions for a device
 	//---
+	// summary: Set SNMP Maxrepetitions for a device
+	// description: Set SNMP Maxrepetitions for a device
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -165,6 +178,7 @@ func RTSetLogLevelDev(ctx *Context) {
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	level := ctx.Params(":level")
 	dev, err := agent.GetDevice(id)
@@ -181,9 +195,12 @@ func RTSetLogLevelDev(ctx *Context) {
 // RTSnmpReset runtime send reset
 func RTSnmpReset(ctx *Context) {
 	// swagger:operation GET /rt/device/snmpreset/{id}/{mode} Runtime_Devices RTSnmpReset
-	//
-	// Send SNMP Reset for the selected device
 	//---
+	// summary: Reset all SNMP connections currently stablished with remote device
+	// description: Reset all SNMP connections currently stablished with remote device
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -205,6 +222,7 @@ func RTSnmpReset(ctx *Context) {
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	mode := ctx.Params(":mode")
 	log.Infof("activating runtime on device %s", id)
@@ -221,9 +239,12 @@ func RTSnmpReset(ctx *Context) {
 // RTForceGather force gather
 func RTForceGather(ctx *Context) {
 	// swagger:operation GET /rt/device/forcegather/{id} Runtime_Devices RTForceGather
-	//
-	// Launch a complete cicle of gathering data, even though device was not active
 	//---
+	// summary: Launch a complete cicle of gathering data, even though device was not active
+	// description: Launch a complete cicle of gathering data, even though device was not active
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -239,6 +260,7 @@ func RTForceGather(ctx *Context) {
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	log.Infof("activating runtime on device %s", id)
 	dev, err := agent.GetDevice(id)
@@ -254,9 +276,12 @@ func RTForceGather(ctx *Context) {
 //RTActivateDev xx
 func RTActivateDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/status/activate/{id} Runtime_Devices RTActivateDev
-	//
-	// Activate Device
 	//---
+	// summary: Activate Device
+	// description: Activate Device
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -286,9 +311,12 @@ func RTActivateDev(ctx *Context) {
 //RTDeactivateDev xx
 func RTDeactivateDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/status/deactivate/{id} Runtime_Devices RTDeactivateDev
-	//
-	// Deactivate Device
 	//---
+	// summary: Deactivate Device
+	// description: Deactivate Device
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -319,9 +347,12 @@ func RTDeactivateDev(ctx *Context) {
 //RTActSnmpDebugDev xx
 func RTActSnmpDebugDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/debug/activate/{id} Runtime_Devices RTActSnmpDebugDev
-	//
-	// Activate SNMP Debugging (generate snmp packet tracing in one extra log file)
 	//---
+	// summary: Activate SNMP Debugging
+	// description: Activate SNMP Debugging (generate snmp packet tracing in one extra log file)
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -337,6 +368,7 @@ func RTActSnmpDebugDev(ctx *Context) {
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	dev, err := agent.GetDevice(id)
 	if err != nil {
@@ -351,9 +383,12 @@ func RTActSnmpDebugDev(ctx *Context) {
 //RTDeactSnmpDebugDev xx
 func RTDeactSnmpDebugDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/debug/deactivate/{id} Runtime_Devices RTDeactSnmpDebugDev
-	//
-	// Deactivate SNMP Debugging (stop snmp packet tracing in the extra log file)
 	//---
+	// summary: Deactivate SNMP Debugging
+	// description: Deactivate SNMP Debugging (stop snmp packet tracing in the extra log file)
+	// tags:
+	// - "Runtime Device"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -369,6 +404,7 @@ func RTDeactSnmpDebugDev(ctx *Context) {
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	dev, err := agent.GetDevice(id)
 	if err != nil {
@@ -383,9 +419,12 @@ func RTDeactSnmpDebugDev(ctx *Context) {
 //RTGetInfo xx
 func RTGetInfo(ctx *Context) {
 	// swagger:operation GET /rt/device/info Runtime_Devices RTGetInfo
-	//
-	// Deactivate SNMP Debugging (stop snmp packet tracing in the extra log file)
 	//---
+	// summary: Get Device Status info
+	// description: Get Device Status info
+	// tags:
+	// - "Runtime Device"
+	//
 	// responses:
 	//   '200':
 	//     description: "OK"
@@ -395,6 +434,7 @@ func RTGetInfo(ctx *Context) {
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	if len(id) > 0 {
 		json, err := agent.GetDeviceJSONInfo(id)

@@ -39,11 +39,12 @@ type DeviceStatMap struct {
 // GetSNMPDevices Return snmpdevice list to frontend
 func GetSNMPDevices(ctx *Context) {
 	// swagger:operation GET /cfg/snmpdevice  Config_Device GetSNMPDevices
-	//
-	// Get All devices info
-	//
-	// Get All Devices config info as an array of config and boolean if working in runtime.
 	//---
+	// summary: Get All devices info from DB and Runtime
+	// description: Get All Devices config info as an array of config and boolean if working in runtime.
+	// tags:
+	// - "Devices Config"
+	//
 	// responses:
 	//   '200':
 	//     description: "OK"
@@ -53,6 +54,7 @@ func GetSNMPDevices(ctx *Context) {
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	devcfgarray, err := agent.MainConfig.Database.GetSnmpDeviceCfgArray("")
 	if err != nil {
 		ctx.JSON(404, err.Error())
@@ -72,11 +74,12 @@ func GetSNMPDevices(ctx *Context) {
 //GetSNMPDeviceByID --pending--
 func GetSNMPDeviceByID(ctx *Context) {
 	// swagger:operation GET /cfg/snmpdevice/{id}  Config_Device GetSNMPDeviceByID
-	//
-	// Get Device Info
-	//
-	// Get Complete config info for de selected ID
 	//---
+	// summary: Get devices config from DB
+	// description: Get Devicesconfig info from DB specified by ID
+	// tags:
+	// - "Devices Config"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -93,6 +96,7 @@ func GetSNMPDeviceByID(ctx *Context) {
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	dev, err := agent.MainConfig.Database.GetSnmpDeviceCfgByID(id)
 	if err != nil {
@@ -138,20 +142,50 @@ func addDeviceOnline(mode string, id string, dev *config.SnmpDeviceCfg) error {
 
 // AddSNMPDevice Insert new snmpdevice to de internal BBDD --pending--
 func AddSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
-	// swagger:operation POST /cfg/snmpdevice/{mode} Config_Device AddSNMPDevice
-	//
-	// Add a new SnmpDevice into de config database and/or in runtime.
-	//
-	// This query will add a new SNMP Device
-	//
+	// swagger:operation POST /cfg/snmpdevice Config_Device AddSNMPDevice1
 	//---
+	// summary: Add a new Device into de config database and/or in runtime.
+	// description: Add a new Device into de config database and/or in runtime.
+	// tags:
+	// - "Devices Config"
+	//
+	// parameters:
+	// - name: SnmpDeviceCfg
+	//   in: body
+	//   description: device to add
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/SnmpDeviceCfg"
+	//
+	// responses:
+	//   '200':
+	//     description: Added Device config
+	//     schema:
+	//       "$ref": "#/definitions/SnmpDeviceCfg"
+	//   '404':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+
+	// swagger:operation POST /cfg/snmpdevice/{mode} Config_Device AddSNMPDevice2
+	//---
+	// summary: Add a new Device into de config database and/or in runtime.
+	// description: |
+	//   Add a new  existing Device into de config database with specified ID and/or reload new config in runtime.
+	//   Modes:
+	//    - "config": Only  in config database (equivalent to delete without mode parameter)
+	//    - "runtime":  Only e in active and running devices (runtime) WARN: this config will be lost on next reload.
+	//    - "full": in both on database and also in runtime devices.
+	// tags:
+	// - "Devices Config"
+	//
 	// parameters:
 	// - name: mode
 	//   in: path
-	//   description: SNMP Get type
+	//   description: Adition mode
 	//   required: true
 	//   type: string
-	//   enum: [runtime,full]
+	//   enum: [runtime,full,config]
 	//
 	// - name: SnmpDeviceCfg
 	//   in: body
@@ -162,13 +196,14 @@ func AddSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	//
 	// responses:
 	//   '200':
-	//     description: snmp responses
+	//     description: Added Device config
 	//     schema:
 	//       "$ref": "#/definitions/SnmpDeviceCfg"
 	//   '404':
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	mode := ctx.Params(":mode")
 	log.Printf("ADDING DEVICE %+v mode(%s)", dev, mode)
 	switch mode {
@@ -204,13 +239,12 @@ func AddSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 // UpdateSNMPDevice --pending--
 func UpdateSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	// swagger:operation PUT /cfg/snmpdevice/{id} Config_Device UpdateSNMPDevice1
-	//
-	// Update an existing SnmpDevice into de config database
-	//
-	// This query will add a new SNMP Device
-	// You can get the pets that are out of stock
-	//
 	//---
+	// summary: Update an existing Device into de config database
+	// description: Update an existing Device into de config database with specified ID
+	// tags:
+	// - "Devices Config"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -227,7 +261,7 @@ func UpdateSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	//
 	// responses:
 	//   '200':
-	//     description: snmp responses
+	//     description: Device Config
 	//     schema:
 	//       "$ref": "#/definitions/SnmpDeviceCfg"
 	//   '404':
@@ -236,13 +270,18 @@ func UpdateSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	//       "$ref": "#/responses/idOfStringResp"
 
 	// swagger:operation PUT /cfg/snmpdevice/{id}/{mode} Config_Device UpdateSNMPDevice2
-	//
-	// Update an existing SnmpDevice into de config database and/or reload new config in runtime.
-	//
-	// This query will add a new SNMP Device
-	// You can get the pets that are out of stock
-	//
 	//---
+	// summary: Update an existing Device into de config database and/or reload new config in runtime.
+	// description: |
+	//   Update an existing Device into de config database with specified ID and/or reload new config in runtime.
+	//   Modes:
+	//    - "config": Only update in config database (equivalent to delete without mode parameter)
+	//    - "runtime":  Only update in active and running devices (runtime) WARN: this config will be lost on next reload.
+	//    - "full": Update on database and also in runtime
+	//
+	// tags:
+	// - "Devices Config"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -254,7 +293,7 @@ func UpdateSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	//   description: SNMP Get type
 	//   required: true
 	//   type: string
-	//   enum: [runtime,full]
+	//   enum: [runtime,full,config]
 	//
 	// - name: SnmpDeviceCfg
 	//   in: body
@@ -265,13 +304,14 @@ func UpdateSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 	//
 	// responses:
 	//   '200':
-	//     description: snmp responses
+	//     description: Device Config
 	//     schema:
 	//       "$ref": "#/definitions/SnmpDeviceCfg"
 	//   '404':
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	mode := ctx.Params(":mode")
 	log.Printf("UPDATING DEVICE %s in mode(%s)", id, mode)
@@ -323,13 +363,12 @@ func UpdateSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 //DeleteSNMPDevice --pending--
 func DeleteSNMPDevice(ctx *Context) {
 	// swagger:operation DELETE /cfg/snmpdevice/{id} Config_Device DeleteSNMPDevice1
-	//
-	// Delete an existing SnmpDevice into de config database
-	//
-	// This query will add a new SNMP Device
-	// You can get the pets that are out of stock
-	//
 	//---
+	// summary: Delete existing Device into de config database
+	// description: Delete an existing Device into de config database with specified ID
+	// tags:
+	// - "Devices Config"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -339,7 +378,7 @@ func DeleteSNMPDevice(ctx *Context) {
 	//
 	// responses:
 	//   '200':
-	//     description: snmp responses
+	//     description: OK Response
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
 	//   '404':
@@ -349,12 +388,18 @@ func DeleteSNMPDevice(ctx *Context) {
 	//
 
 	// swagger:operation DELETE /cfg/snmpdevice/{id}/{mode} Config_Device DeleteSNMPDevice2
-	//
-	// Delete an existing SnmpDevice into de config database and runtime or also in runtime
-	//
-	// This query will delete a SNMP Device
-	//
 	//---
+	// summary: Delete an existing Device into de config database and/or reload new config in runtime.
+	// description: |
+	//   Delete an existing Device into de config database with specified ID and/or reload new config in runtime.
+	//   Modes:
+	//    - "config": Only update in config database (equivalent to delete without mode parameter)
+	//    - "runtime":  Only update in active and running devices (runtime) WARN: this config will be lost on next reload.
+	//    - "full": Update on database and also in runtime
+	//
+	// tags:
+	// - "Devices Config"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -370,13 +415,14 @@ func DeleteSNMPDevice(ctx *Context) {
 	//
 	// responses:
 	//   '200':
-	//     description: snmp responses
+	//     description: OK response
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
 	//   '404':
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	mode := ctx.Params(":mode")
 	log.Printf("DELETING DEVICE %s in mode(%s)", id, mode)
@@ -414,10 +460,12 @@ func DeleteSNMPDevice(ctx *Context) {
 //GetSNMPDevicesAffectOnDel --pending--
 func GetSNMPDevicesAffectOnDel(ctx *Context) {
 	// swagger:operation GET /cfg/snmpdevice/checkondel/{id} Config_Device GetSNMPDevicesAffectOnDel
-	//
-	// Get all existing Objects affected when deleted the device.
-	//
 	//---
+	// summary: Get List for affected Objects on delete ID
+	// description: Get List for affected Objects if deleting the  Device with ID
+	// tags:
+	// - "Devices Config"
+	//
 	// parameters:
 	// - name: id
 	//   in: path
@@ -427,13 +475,14 @@ func GetSNMPDevicesAffectOnDel(ctx *Context) {
 	//
 	// responses:
 	//   '200':
-	//     description: snmp responses
+	//     description: List for Affected Items
 	//     schema:
 	//       "$ref": "#/responses/idOfCheckOnDelResp"
 	//   '404':
 	//     description: unexpected error
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
+
 	id := ctx.Params(":id")
 	obarray, err := agent.MainConfig.Database.GeSnmpDeviceCfgAffectOnDel(id)
 	if err != nil {

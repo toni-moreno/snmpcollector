@@ -30,27 +30,22 @@ func NewAPIRtAgent(m *macaron.Macaron) error {
 
 // AgentReloadConf xx
 func AgentReloadConf(ctx *Context) {
-	// swagger:route GET /rt/agent/reload Runtime_Agent AgentReloadConf
-	//
-	// Reload Configuration
-	//
-	// This will show all available pets by default.
-	// You can get the pets that are out of stock
-	//
-	//     Consumes:
-	//     - application/json
-	//
-	//     Produces:
-	//     - application/json
-	//
-	//     Schemes: http, https
-	//
-	//     Security:
-	//       basic
-	//
-	//     Responses:
-	//       200: idOfDurationResp
-	//       405: idOfStringResp
+	// swagger:operation GET /rt/agent/reload Runtime_Agent AgentReloadConf
+	//---
+	// summary: Reload Configuration and restart devices
+	// description: Reload Configuration and restart devices
+	// tags:
+	// - "Runtime Agent"
+	// responses:
+	//   '200':
+	//     description: Reload Duration in miliseconds
+	//     schema:
+	//       "$ref": "#/responses/idOfDurationResp"
+	//   '405':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+
 	log.Info("trying to reload configuration for all devices")
 	time, err := agent.ReloadConf()
 	if err != nil {
@@ -62,20 +57,19 @@ func AgentReloadConf(ctx *Context) {
 
 // AgentShutdown xx
 func AgentShutdown(ctx *Context) {
-	// swagger:route GET /rt/agent/shutdown Runtime_Agent AgentShutdown
+	// swagger:operation GET /rt/agent/shutdown Runtime_Agent AgentShutdown
+	//---
+	// summary: Finalices inmediately the process
+	// description: shutdown the process , (usefull only with some external restart tools )
+	// tags:
+	// - "Runtime Agent"
 	//
-	// Exit from the process without
-	//
-	// This will show all available pets by default.
-	// You can get the pets that are out of stock
-	//
-	//     Schemes: http, https
-	//
-	//     Security:
-	//      - basic
-	//
-	//     Responses:
-	//       200: idOfStringResp
+	// responses:
+	//   '200':
+	//     description: Reload Duration in miliseconds
+	//     schema:
+	//       "$ref": "#/responses/idOfDurationResp"
+
 	log.Info("receiving shutdown")
 	ctx.JSON(200, "Init shutdown....")
 	os.Exit(0)
@@ -84,12 +78,13 @@ func AgentShutdown(ctx *Context) {
 //PingSNMPDevice xx
 func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	// swagger:operation POST /rt/agent/snmpconsole/ping Runtime_SNMP_Console PingSNMPDevice
-	//
-	// Ping device with Device Info
-	//
-	// This call will return Basic system Info from SNMP device
-	//
 	//---
+	// summary:  Connectivity test to the device
+	// description: |
+	//    Check connectivity by test snmp connection and  will return Basic system Info from SNMP device
+	// tags:
+	// - "SNMP Console Tool"
+	//
 	// parameters:
 	// - name: SnmpDeviceCfg
 	//   in: body
@@ -132,13 +127,13 @@ type SnmpQueryResponse struct {
 // QuerySNMPDevice xx
 func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	// swagger:operation POST /rt/agent/snmpconsole/query/{getmode}/{obtype}/{data} Runtime_SNMP_Console QuerySNMPDevice
-	//
-	// Run a SNMP Query for a device
-	//
-	// This will return Basic system Info from
-	// You can get the pets that are out of stock
-	//
 	//---
+	// summary:  Run a SNMP Query for a device
+	// description: |
+	//    Check connectivity by test snmp connection with Device configuration and  will return Basic system Info for the remote SNMP device
+	// tags:
+	// - "SNMP Console Tool"
+	//
 	// parameters:
 	// - name: getmode
 	//   in: path
@@ -213,11 +208,12 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 // RTGetVersion xx
 func RTGetVersion(ctx *Context) {
 	// swagger:operation GET /rt/agent/info/version Runtime_Agent RTGetVersion
-	//
-	// Get Agent Version
-	//
-	// This will response About version , release , commit , compilation day
 	//---
+	// summary: Get Agent Version
+	// description: Get Agent Version, release , commit , compilation day
+	// tags:
+	// - "Runtime Agent"
+	//
 	// security: []
 	//
 	// responses:
