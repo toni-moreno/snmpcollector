@@ -11,9 +11,10 @@ For faster fixes and/or improvements would be nice if we can work with a simulat
 # cd snmpsim
 # sudo python3 setup.py install
 # mkdir sim_data
-# snmpsim-record-commands --protocol-version 2c --community <your_comunity> --agent-udpv4-endpoint=<your_device>:161 --output-file=./sim_data/device_data
+# snmpsim-record-commands --use-getbulk --getbulk-repetitions 50 --protocol-version 2c --community <your_comunity> --agent-udpv4-endpoint=<your_device>:161 --output-file=./sim_data/device_data
 # tar zcvf sim_data_<DATE>_#<issue>.tar.gz sim_data
 ```
+NOTE: this command could take some time, please be patient
 
 Please prefix your title with [Bug] or [Feature request].
 
