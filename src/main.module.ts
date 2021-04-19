@@ -62,11 +62,13 @@ import { CustomPipesModule } from './common/custom-pipe-module';
 
 import { BlockUIComponent } from './common/blockui/blockui-component';
 import { SpinnerComponent } from './common/spinner';
-
+//swagger
+import { SwaggerUiComponent} from './swagger-ui/swagger-ui.component';
 
 @NgModule({
   bootstrap: [App],
   declarations: [
+    SwaggerUiComponent,
     PasswordToggleDirective,
     ObjectParserPipe,
     //ElapsedSecondsPipe,

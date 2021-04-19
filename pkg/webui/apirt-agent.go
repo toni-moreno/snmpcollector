@@ -30,6 +30,22 @@ func NewAPIRtAgent(m *macaron.Macaron) error {
 
 // AgentReloadConf xx
 func AgentReloadConf(ctx *Context) {
+	// swagger:operation GET /rt/agent/reload Runtime_Agent AgentReloadConf
+	//---
+	// summary: Reload Configuration and restart devices
+	// description: Reload Configuration and restart devices
+	// tags:
+	// - "Runtime Agent"
+	// responses:
+	//   '200':
+	//     description: Reload Duration in miliseconds
+	//     schema:
+	//       "$ref": "#/responses/idOfDurationResp"
+	//   '405':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+
 	log.Info("trying to reload configuration for all devices")
 	time, err := agent.ReloadConf()
 	if err != nil {
@@ -41,6 +57,19 @@ func AgentReloadConf(ctx *Context) {
 
 // AgentShutdown xx
 func AgentShutdown(ctx *Context) {
+	// swagger:operation GET /rt/agent/shutdown Runtime_Agent AgentShutdown
+	//---
+	// summary: Finalices inmediately the process
+	// description: shutdown the process , (usefull only with some external restart tools )
+	// tags:
+	// - "Runtime Agent"
+	//
+	// responses:
+	//   '200':
+	//     description: Reload Duration in miliseconds
+	//     schema:
+	//       "$ref": "#/responses/idOfDurationResp"
+
 	log.Info("receiving shutdown")
 	ctx.JSON(200, "Init shutdown....")
 	os.Exit(0)
@@ -48,6 +77,32 @@ func AgentShutdown(ctx *Context) {
 
 //PingSNMPDevice xx
 func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
+	// swagger:operation POST /rt/agent/snmpconsole/ping Runtime_SNMP_Console PingSNMPDevice
+	//---
+	// summary:  Connectivity test to the device
+	// description: |
+	//    Check connectivity by test snmp connection and  will return Basic system Info from SNMP device
+	// tags:
+	// - "SNMP Console Tool"
+	//
+	// parameters:
+	// - name: SnmpDeviceCfg
+	//   in: body
+	//   description: device to query
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/SnmpDeviceCfg"
+	//
+	// responses:
+	//   '200':
+	//     description: snmp responses
+	//     schema:
+	//       "$ref": "#/definitions/SnmpQueryResponse"
+	//   '400':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
 	_, sysinfo, err := snmp.GetClient(&cfg, log, "ping", false, 0)
@@ -60,8 +115,60 @@ func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	}
 }
 
+// SnmpQueryResponse response for queries in the UI
+// swagger:model SnmpQueryResponse
+type SnmpQueryResponse struct {
+	DeviceCfg   *config.SnmpDeviceCfg
+	TimeTaken   float64
+	PingInfo    *snmp.SysInfo
+	QueryResult []snmp.EasyPDU
+}
+
 // QuerySNMPDevice xx
 func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
+	// swagger:operation POST /rt/agent/snmpconsole/query/{getmode}/{obtype}/{data} Runtime_SNMP_Console QuerySNMPDevice
+	//---
+	// summary:  Run a SNMP Query for a device
+	// description: |
+	//    Check connectivity by test snmp connection with Device configuration and  will return Basic system Info for the remote SNMP device
+	// tags:
+	// - "SNMP Console Tool"
+	//
+	// parameters:
+	// - name: getmode
+	//   in: path
+	//   description: SNMP Get type
+	//   required: true
+	//   type: string
+	//   enum: [get,walk]
+	// - name: obtype
+	//   in: path
+	//   description: type of object in (snmpmetric,snmpmeasurement,...)
+	//   required: true
+	//   type: string
+	//   enum: [snmpmetric,snmpmeasurement]
+	// - name: data
+	//   in: path
+	//   description: id for the objecttype to qyery (snmpmetric,snmpmeasurement,...)
+	//   required: true
+	//   type: string
+	// - name: SnmpDeviceCfg
+	//   in: body
+	//   description: device to query
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/SnmpDeviceCfg"
+	//
+	// responses:
+	//   '200':
+	//     description: snmp responses
+	//     schema:
+	//       "$ref": "#/definitions/SnmpQueryResponse"
+	//   '400':
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/responses/idOfStringResp"
+
 	getmode := ctx.Params(":getmode")
 	obtype := ctx.Params(":obtype")
 	data := strings.TrimSpace(ctx.Params(":data"))
@@ -89,12 +196,7 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 		return
 	}
 	log.Debugf("OK on query device ")
-	snmpdata := struct {
-		DeviceCfg   *config.SnmpDeviceCfg
-		TimeTaken   float64
-		PingInfo    *snmp.SysInfo
-		QueryResult []snmp.EasyPDU
-	}{
+	snmpdata := SnmpQueryResponse{
 		&cfg,
 		elapsed.Seconds(),
 		info,
@@ -103,8 +205,23 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	ctx.JSON(200, snmpdata)
 }
 
-//RTGetVersion xx
+// RTGetVersion xx
 func RTGetVersion(ctx *Context) {
+	// swagger:operation GET /rt/agent/info/version Runtime_Agent RTGetVersion
+	//---
+	// summary: Get Agent Version
+	// description: Get Agent Version, release , commit , compilation day
+	// tags:
+	// - "Runtime Agent"
+	//
+	// security: []
+	//
+	// responses:
+	//   '200':
+	//     description: Agent Version Info
+	//     schema:
+	//      "$ref": "#/definitions/RInfo"
+
 	info := agent.GetRInfo()
 	ctx.JSON(200, &info)
 }

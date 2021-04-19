@@ -1,0 +1,2331 @@
+basePath: /api
+definitions:
+  ConversionItem:
+    description: Conversion Item for selection
+    properties:
+      ID:
+        format: int64
+        type: integer
+      Value:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/webui
+  ConversionItems:
+    description: ConversionItems array with all items and default/suggested value
+      for this metric
+    properties:
+      Default:
+        format: int64
+        type: integer
+      Items:
+        items:
+          $ref: '#/definitions/ConversionItem'
+        type: array
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/webui
+  ConversionMode:
+    format: int64
+    type: integer
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  CustomFilterCfg:
+    description: CustomFilterCfg table with user custom choosed indexes
+    properties:
+      Description:
+        type: string
+      ID:
+        type: string
+      Items:
+        items:
+          properties:
+            Alias:
+              type: string
+            TagID:
+              type: string
+          type: object
+        type: array
+      RelatedDev:
+        type: string
+      RelatedMeas:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  DbObjAction:
+    description: DbObjAction measurement groups to assign to devices
+    properties:
+      Action:
+        type: string
+      ObID:
+        type: string
+      Type:
+        type: string
+      TypeDesc:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  DevStat:
+    description: DevStat minimal info to show users
+    properties:
+      Counters:
+        description: Counter Statistics
+        items:
+          type: object
+        type: array
+      DeviceActive:
+        type: boolean
+      DeviceConnected:
+        type: boolean
+      NumMeasurements:
+        description: extra measurement statistics
+        format: int64
+        type: integer
+      NumMetrics:
+        format: int64
+        type: integer
+      ReloadLoopsPending:
+        description: device state
+        format: int64
+        type: integer
+      SysDescription:
+        type: string
+      TagMap:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/agent/device
+  DeviceStatMap:
+    description: DeviceStatMap
+    properties:
+      Active:
+        type: boolean
+      Community:
+        type: string
+      ConcurrentGather:
+        type: boolean
+      Description:
+        type: string
+      DeviceTagName:
+        description: influx tags
+        type: string
+      DeviceTagValue:
+        type: string
+      DeviceVars:
+        items:
+          type: string
+        type: array
+      DisableBulk:
+        description: snmp workarround for some devices
+        type: boolean
+      ExtraTags:
+        items:
+          type: string
+        type: array
+      Freq:
+        description: snmp runtime config
+        format: int64
+        type: integer
+      Host:
+        description: snmp connection config
+        type: string
+      ID:
+        type: string
+      IsRuntime:
+        type: boolean
+      LogFile:
+        type: string
+      LogLevel:
+        type: string
+      MaxOids:
+        format: int64
+        type: integer
+      MaxRepetitions:
+        format: uint8
+        type: integer
+      MeasFilters:
+        items:
+          type: string
+        type: array
+      MeasurementGroups:
+        description: Filters for measurements
+        items:
+          type: string
+        type: array
+      OutDB:
+        type: string
+      Port:
+        format: int64
+        type: integer
+      Repeat:
+        format: int64
+        type: integer
+      Retries:
+        format: int64
+        type: integer
+      SnmpDebug:
+        type: boolean
+      SnmpVersion:
+        description: snmp auth  config
+        type: string
+      SystemOIDs:
+        items:
+          type: string
+        type: array
+      Timeout:
+        format: int64
+        type: integer
+      UpdateFltFreq:
+        format: int64
+        type: integer
+      V3AuthPass:
+        type: string
+      V3AuthProt:
+        type: string
+      V3AuthUser:
+        type: string
+      V3ContextEngineID:
+        type: string
+      V3ContextName:
+        type: string
+      V3PrivPass:
+        type: string
+      V3PrivProt:
+        type: string
+      V3SecLevel:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/webui
+  Duration:
+    description: |-
+      A Duration represents the elapsed time between two instants
+      as an int64 nanosecond count. The representation limits the
+      largest representable duration to approximately 290 years.
+    format: int64
+    type: integer
+    x-go-package: time
+  EasyPDU:
+    description: EasyPDU enable user interface Info for OID data
+    properties:
+      Name:
+        type: string
+      Type:
+        type: string
+      Value:
+        type: object
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/data/snmp
+  InfluxCfg:
+    description: InfluxCfg is the main configuration for any InfluxDB TSDB
+    properties:
+      BufferSize:
+        format: int64
+        type: integer
+      DB:
+        type: string
+      Description:
+        type: string
+      EnableSSL:
+        type: boolean
+      Host:
+        type: string
+      ID:
+        type: string
+      InsecureSkipVerify:
+        type: boolean
+      Password:
+        type: string
+      Port:
+        format: int64
+        type: integer
+      Precision:
+        type: string
+      Retention:
+        type: string
+      SSLCA:
+        type: string
+      SSLCert:
+        type: string
+      SSLKey:
+        type: string
+      Timeout:
+        format: int64
+        type: integer
+      User:
+        type: string
+      UserAgent:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  MGroupsCfg:
+    description: MGroupsCfg measurement groups to assign to devices
+    properties:
+      Description:
+        type: string
+      ID:
+        type: string
+      Measurements:
+        items:
+          type: string
+        type: array
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  MeasFilterCfg:
+    description: MeasFilterCfg the filter configuration
+    properties:
+      Description:
+        type: string
+      EnableAlias:
+        type: boolean
+      FType:
+        type: string
+      FilterName:
+        type: string
+      ID:
+        type: string
+      IDMeasurementCfg:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  MeasurementCfg:
+    description: MeasurementCfg the measurement configuration
+    properties:
+      Description:
+        type: string
+      Fields:
+        items:
+          $ref: '#/definitions/MeasurementFieldReport'
+        type: array
+      GetMode:
+        type: string
+      ID:
+        type: string
+      IndexAsValue:
+        type: boolean
+      IndexOID:
+        type: string
+      IndexTag:
+        type: string
+      IndexTagFormat:
+        type: string
+      MultiIndexCfg:
+        items:
+          $ref: '#/definitions/MultiIndexCfg'
+        type: array
+      MultiIndexResult:
+        type: string
+      MultiIndexVersion:
+        type: string
+      MultiTagOID:
+        items:
+          $ref: '#/definitions/MultipleTagOID'
+        type: array
+      Name:
+        type: string
+      TagOID:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  MeasurementFieldReport:
+    description: MeasurementFieldReport defines the report behaviour of each field
+    properties:
+      ID:
+        type: string
+      Report:
+        format: int64
+        type: integer
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  MultiIndexCfg:
+    description: MultiIndexCfg defines an internal measurement that has its own lifecycle
+    properties:
+      Dependency:
+        type: string
+      Description:
+        type: string
+      GetMode:
+        type: string
+      IndexOID:
+        type: string
+      IndexTag:
+        type: string
+      IndexTagFormat:
+        type: string
+      Label:
+        type: string
+      MultiTagOID:
+        items:
+          $ref: '#/definitions/MultipleTagOID'
+        type: array
+      TagOID:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  MultipleTagOID:
+    description: MultipleTagOID defines TagOID to iterate over multiple tables to
+      retrieve tag
+    properties:
+      IndexFormat:
+        type: string
+      TagOID:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  OidConditionCfg:
+    description: OidConditionCfg condition config for filters and metrics
+    properties:
+      CondType:
+        type: string
+      CondValue:
+        type: string
+      Description:
+        type: string
+      ID:
+        type: string
+      IsMultiple:
+        type: boolean
+      OIDCond:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  RInfo:
+    properties:
+      Branch:
+        description: Branch is the git branch
+        type: string
+      BuildStamp:
+        description: BuildStamp is the build timestamp
+        type: string
+      Commit:
+        description: Commit is the git commit sha1
+        type: string
+      InstanceID:
+        description: InstanceID the unique name identificator for this agent
+        type: string
+      Version:
+        description: Version is the app X.Y.Z version
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/agent
+  SnmpDeviceCfg:
+    description: SnmpDeviceCfg contains all snmp related device definitions
+    properties:
+      Active:
+        type: boolean
+      Community:
+        type: string
+      ConcurrentGather:
+        type: boolean
+      Description:
+        type: string
+      DeviceTagName:
+        description: influx tags
+        type: string
+      DeviceTagValue:
+        type: string
+      DeviceVars:
+        items:
+          type: string
+        type: array
+      DisableBulk:
+        description: snmp workarround for some devices
+        type: boolean
+      ExtraTags:
+        items:
+          type: string
+        type: array
+      Freq:
+        description: snmp runtime config
+        format: int64
+        type: integer
+      Host:
+        description: snmp connection config
+        type: string
+      ID:
+        type: string
+      LogFile:
+        type: string
+      LogLevel:
+        type: string
+      MaxOids:
+        format: int64
+        type: integer
+      MaxRepetitions:
+        format: uint8
+        type: integer
+      MeasFilters:
+        items:
+          type: string
+        type: array
+      MeasurementGroups:
+        description: Filters for measurements
+        items:
+          type: string
+        type: array
+      OutDB:
+        type: string
+      Port:
+        format: int64
+        type: integer
+      Repeat:
+        format: int64
+        type: integer
+      Retries:
+        format: int64
+        type: integer
+      SnmpDebug:
+        type: boolean
+      SnmpVersion:
+        description: snmp auth  config
+        type: string
+      SystemOIDs:
+        items:
+          type: string
+        type: array
+      Timeout:
+        format: int64
+        type: integer
+      UpdateFltFreq:
+        format: int64
+        type: integer
+      V3AuthPass:
+        type: string
+      V3AuthProt:
+        type: string
+      V3AuthUser:
+        type: string
+      V3ContextEngineID:
+        type: string
+      V3ContextName:
+        type: string
+      V3PrivPass:
+        type: string
+      V3PrivProt:
+        type: string
+      V3SecLevel:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  SnmpMetricCfg:
+    description: SnmpMetricCfg Metric config
+    properties:
+      BaseOID:
+        type: string
+      Conversion:
+        $ref: '#/definitions/ConversionMode'
+      DataSrcType:
+        type: string
+      Description:
+        type: string
+      ExtraData:
+        type: string
+      FieldName:
+        type: string
+      GetRate:
+        type: boolean
+      ID:
+        type: string
+      IsTag:
+        type: boolean
+      Scale:
+        format: double
+        type: number
+      Shift:
+        format: double
+        type: number
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+  SnmpQueryResponse:
+    description: SnmpQueryResponse response for queries in the UI
+    properties:
+      DeviceCfg:
+        $ref: '#/definitions/SnmpDeviceCfg'
+      PingInfo:
+        $ref: '#/definitions/SysInfo'
+      QueryResult:
+        items:
+          $ref: '#/definitions/EasyPDU'
+        type: array
+      TimeTaken:
+        format: double
+        type: number
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/webui
+  SysInfo:
+    description: SysInfo Info basic information for any SNMP based MIB-2 System
+    properties:
+      SysContact:
+        type: string
+      SysDescr:
+        type: string
+      SysLocation:
+        type: string
+      SysName:
+        type: string
+      SysUptime:
+        $ref: '#/definitions/Duration'
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/data/snmp
+  VarCatalogCfg:
+    description: VarCatalogCfg is the main configuration for any InfluxDB TSDB
+    properties:
+      Description:
+        type: string
+      ID:
+        description: Variable Name unique
+        type: string
+      Type:
+        type: string
+      Value:
+        type: string
+    type: object
+    x-go-package: github.com/toni-moreno/snmpcollector/pkg/config
+info:
+  contact:
+    email: toni.moreno@gmail.com
+    name: Toni Moreno
+    url: http://snmpcollector.io
+  description: Documentation of SnmpCollector API, runtime, and config operations.
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  title: SnmpCollector
+  version: 1.0.0
+paths:
+  /cfg/customfilter:
+    get:
+      description: Get All Custom Filters config info as an array
+      operationId: GetCustomFilter
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfArrayCustomFilterCfgResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get All Custom Filters info
+      tags:
+      - CustomFilter Config
+    post:
+      description: Add  CustomFilter with body Filter data
+      operationId: AddCustomFilter
+      parameters:
+      - description: Custom Filter to add
+        in: body
+        name: CustomFilterCfg
+        required: true
+        schema:
+          $ref: '#/definitions/CustomFilterCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CustomFilterCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add CustomFilter
+      tags:
+      - CustomFilter Config
+  /cfg/customfilter/{id}:
+    delete:
+      description: Delete  CustomFilter with defined id
+      operationId: DeleteCustomFilter
+      parameters:
+      - description: Measurement Group ID to delete
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Delete CustomFilter
+      tags:
+      - CustomFilter Config
+    get:
+      description: Get CustomFilter Info for this ID
+      operationId: GetCustomFilterByID
+      parameters:
+      - description: CustomFilter to get
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CustomFilterCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get CustomFilter Info for this ID
+      tags:
+      - CustomFilter Config
+    put:
+      description: Update  CustomFilter with defined config data
+      operationId: UpdateCustomFilter
+      parameters:
+      - description: Custom Filter ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Metric to add
+        in: body
+        name: CustomFilterCfg
+        required: true
+        schema:
+          $ref: '#/definitions/CustomFilterCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CustomFilterCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update CustomFilter
+      tags:
+      - CustomFilter Config
+  /cfg/customfilter/checkondel/{id}:
+    get:
+      description: Delete  CustomFilter with defined id
+      operationId: GetCustomFiltersAffectOnDel
+      parameters:
+      - description: The measurement Group ID to check
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Object Array
+          schema:
+            $ref: '#/responses/idOfCheckOnDelResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get all Strng CustomFilter
+      tags:
+      - CustomFilter Config
+  /cfg/influxservers:
+    get:
+      description: Get All Influx Servers config Items as an array from DB
+      operationId: GetInfluxServer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfArrayInfluxCfgResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get All Influx Servers Config Items from DB
+      tags:
+      - Influx Servers Config
+    post:
+      description: Add InfluxServer from Data
+      operationId: AddInfluxServer
+      parameters:
+      - description: InfluxConfig to add
+        in: body
+        name: InfluxCfg
+        required: true
+        schema:
+          $ref: '#/definitions/InfluxCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/InfluxCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add new Influx Server Config
+      tags:
+      - Influx Servers Config
+  /cfg/influxservers/{id}:
+    delete:
+      description: Delete Influx Server on DB with specified ID
+      operationId: DeleteInfluxServer
+      parameters:
+      - description: Measurement Group ID to delete
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Delete Influx Server Config on DB
+      tags:
+      - Influx Servers Config
+    get:
+      description: Get InfluxServers config info by ID from DB
+      operationId: GetInfluxServerByID
+      parameters:
+      - description: InfluxServer to get
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/InfluxCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get InfluxServer Config from DB
+      tags:
+      - Influx Servers Config
+    put:
+      description: Update InfluxServer from Data with specified ID
+      operationId: UpdateInfluxServer
+      parameters:
+      - description: Influx Config ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Metric to add
+        in: body
+        name: InfluxCfg
+        required: true
+        schema:
+          $ref: '#/definitions/InfluxCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/InfluxCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update Influx Server Config
+      tags:
+      - Influx Servers Config
+  /cfg/influxservers/checkondel/{id}:
+    get:
+      description: Get all existing Objects affected when deleted the InfluxServer.
+      operationId: GetInfluxAffectOnDel
+      parameters:
+      - description: The measurement Group ID to check
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Object Array
+          schema:
+            $ref: '#/responses/idOfCheckOnDelResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Check affected sources.
+      tags:
+      - Influx Servers Config
+  /cfg/influxservers/ping:
+    post:
+      description: Performs a Test Connection to the InfluxServer With specified Config
+        in the Body
+      operationId: PingInfluxServer
+      parameters:
+      - description: InfluxConfig to ping
+        in: body
+        name: InfluxCfg
+        required: true
+        schema:
+          $ref: '#/definitions/InfluxCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/InfluxCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Connection Test (Ping) to the Influx Server
+      tags:
+      - Influx Servers Config
+  /cfg/measfilters:
+    get:
+      description: Get All measurement filter config from DB
+      operationId: GetMeasFilter
+      responses:
+        "200":
+          description: Measurement Filter Array
+          schema:
+            $ref: '#/responses/idOfArrayMeasFilterResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get Measurement Filters from DB
+      tags:
+      - Measurement Filters Config
+    post:
+      description: Add  Measurement Filter config to the DB
+      operationId: AddMeasFilter
+      parameters:
+      - description: Measurement Filter to add
+        in: body
+        name: MeasFilterCfg
+        required: true
+        schema:
+          $ref: '#/definitions/MeasFilterCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MeasFilterCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add Measurement Filter config to DB
+      tags:
+      - Measurement Filters Config
+  /cfg/measfilters/{id}:
+    delete:
+      description: Delete  Measurement Filter with defined id
+      operationId: DeleteMeasFilter
+      parameters:
+      - description: Measurement Filter ID to delete
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Delete Measurement Filter
+      tags:
+      - Measurement Filters Config
+    get:
+      description: Get measurement filter config from  DB with specified ID
+      operationId: GetMeasFilterByID
+      parameters:
+      - description: The measurement Filter ID to retrieve
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Measurement Filter Array
+          schema:
+            $ref: '#/definitions/MeasFilterCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get Measurement Filter from DB
+      tags:
+      - Measurement Filters Config
+    put:
+      description: Update Measurement Filter  config with defined config data on the
+        config DB
+      operationId: UpdateMeasFilter
+      parameters:
+      - description: Measurement Filter ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Metric to add
+        in: body
+        name: MeasFilterCfg
+        required: true
+        schema:
+          $ref: '#/definitions/MeasFilterCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MeasFilterCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update Measurement Filter on the config DB
+      tags:
+      - Measurement Filters Config
+  /cfg/measfilters/checkondel/{id}:
+    get:
+      description: Get List for affected Objects if deleting the measurement filter
+        with ID
+      operationId: GetMeasFiltersAffectOnDel
+      parameters:
+      - description: The measurement Filter ID to check
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Object Array
+          schema:
+            $ref: '#/responses/idOfCheckOnDelResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get List for affected Objects on delete ID
+      tags:
+      - Measurement Filters Config
+  /cfg/measgroup:
+    get:
+      description: Get All measurement groups config info as an array from DB
+      operationId: GetMeasGroup
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfArrayMeasGroupResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get measurement groups from DB
+      tags:
+      - Measurement Groups Config
+    post:
+      description: Add new measurement group to the Configuration DB
+      operationId: AddMeasGroup
+      parameters:
+      - description: Metric to add
+        in: body
+        name: MeasGroupCfg
+        required: true
+        schema:
+          $ref: '#/definitions/MGroupsCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MGroupsCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add new measurement group to DB
+      tags:
+      - Measurement Groups Config
+  /cfg/measgroup/{id}:
+    delete:
+      description: Delete existing measurement group specified by ID to the Configuration
+        DB
+      operationId: DeleteMeasGroup
+      parameters:
+      - description: Measurement Group ID to delete
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Delete existing measurement group into the DB
+      tags:
+      - Measurement Groups Config
+    get:
+      description: Get measurement group config from DB with specified ID
+      operationId: GetMeasGroupByID
+      parameters:
+      - description: Measurement Group ID to get
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MGroupsCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get measurement group from DB
+      tags:
+      - Measurement Groups Config
+    put:
+      description: Update existing measurement group specified by ID to the Configuration
+        DB
+      operationId: UpdateMeasGroup
+      parameters:
+      - description: Measurement Group ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Metric to add
+        in: body
+        name: MeasGroupCfg
+        required: true
+        schema:
+          $ref: '#/definitions/MGroupsCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MGroupsCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update existing measurement group into the DB
+      tags:
+      - Measurement Groups Config
+  /cfg/measurement:
+    get:
+      description: Get All Configured Measurements from DB
+      operationId: GetMeas
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfArrayMeasResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get All Configured Measurements from DB
+      tags:
+      - Measurements Config
+    post:
+      description: Add new Measurements config into DB
+      operationId: AddMeas
+      parameters:
+      - description: Measurement to add
+        in: body
+        name: MeasurementCfg
+        required: true
+        schema:
+          $ref: '#/definitions/MeasurementCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MeasurementCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add new Measurement Config into DB
+      tags:
+      - Measurements Config
+  /cfg/measurement/{id}:
+    get:
+      description: Get Configured Measurements from DB with specified ID
+      operationId: GetMeasByID
+      parameters:
+      - description: Measurement ID to get
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MeasurementCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get Measurement Config from DB
+      tags:
+      - Measurements Config
+    put:
+      description: Update existing Measurements config into DB with specified ID
+      operationId: UpdateMeas
+      parameters:
+      - description: Measurement ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Metric to add
+        in: body
+        name: MeasurementCfg
+        required: true
+        schema:
+          $ref: '#/definitions/MeasurementCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MeasurementCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update existing Measurement Config into DB
+      tags:
+      - Measurements Config
+  /cfg/measurement/checkondel/{id}:
+    get:
+      description: Get all existing Objects affected when deleted the measurement.
+      operationId: GetMeasAffectOnDel
+      parameters:
+      - description: The measurement ID to check
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Object Array
+          schema:
+            $ref: '#/responses/idOfCheckOnDelResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get List for affected Objects on delete ID
+      tags:
+      - Measurements Config
+  /cfg/measurement/type/{type}:
+    get:
+      description: Get Configured Measurements from DB with specified type
+      operationId: GetMeasByType
+      parameters:
+      - description: Measurement type to query
+        in: path
+        name: type
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfArrayMeasResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get Measurement Config by type from DB
+      tags:
+      - Measurements Config
+  /cfg/metric:
+    get:
+      description: Get All Metrics config from DB
+      operationId: GetMetrics
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfArrayMetricResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get all Metrics Config from DB
+      tags:
+      - Metrics Config
+    post:
+      description: Add Metric config into DB with posted data
+      operationId: AddMetric
+      parameters:
+      - description: Metric to add
+        in: body
+        name: SnmpMetricCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpMetricCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SnmpMetricCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add Metric Config into DB
+      tags:
+      - Metrics Config
+  /cfg/metric/{id}:
+    get:
+      description: Get Metric config from DB for specified ID
+      operationId: GetMetricByID
+      parameters:
+      - description: Metric ID to get
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SnmpMetricCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get Metric Config from DB
+      tags:
+      - Metrics Config
+    put:
+      description: Update existing metric into DB from specified ID
+      operationId: UpdateMetric
+      parameters:
+      - description: Metric ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Metric to add
+        in: body
+        name: SnmpMetricCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpMetricCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SnmpMetricCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update existing metric into DB
+      tags:
+      - Metrics Config
+  /cfg/metric/checkondel/{id}:
+    get:
+      description: Get List for affected Objects if deleting the  Metric with selected
+        ID
+      operationId: GetMetricsAffectOnDel
+      parameters:
+      - description: The metric ID to check
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Object Array
+          schema:
+            $ref: '#/responses/idOfCheckOnDelResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get List for affected Objects on delete ID
+      tags:
+      - Metrics Config
+  /cfg/metric/convmodes:
+    get:
+      description: Get suggested conversion modes from datasource Type
+      operationId: GetConversionModes
+      parameters:
+      - description: Metric witch would like to query for conversion modes
+        in: body
+        name: SnmpMetricCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpMetricCfg'
+      responses:
+        "200":
+          description: Conversion Modes
+          schema:
+            $ref: '#/definitions/ConversionItems'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get Info about conversion modes
+      tags:
+      - Metrics Config
+  /cfg/oidcondition:
+    get:
+      description: Get All OID Conditions config from DB
+      operationId: GetOidConditions
+      responses:
+        "200":
+          description: OID Condition Config Array
+          schema:
+            $ref: '#/responses/idOfArrayOidCondResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get all OID condition config from DB
+      tags:
+      - OID Conditions Config
+    post:
+      description: Add new  OID Condition Config from DB with specified ID
+      operationId: AddOidCondition
+      parameters:
+      - description: OidConditionCfg to add
+        in: body
+        name: OidConditionCfg
+        required: true
+        schema:
+          $ref: '#/definitions/OidConditionCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/OidConditionCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add new OID Condition Config to DB
+      tags:
+      - OID Conditions Config
+  /cfg/oidcondition/{id}:
+    delete:
+      description: Delete Existing OID Condition Config from DB with specified ID
+      operationId: DeleteOidCondition
+      parameters:
+      - description: OID condition ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Delete Existing OID Condition Config to DB
+      tags:
+      - OID Conditions Config
+    get:
+      description: Get OID Condition config from DB with specified ID
+      operationId: GetOidConditionByID
+      parameters:
+      - description: OID condition ID to get
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OID Condition Config
+          schema:
+            $ref: '#/definitions/OidConditionCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get OID condition config from DB
+      tags:
+      - OID Conditions Config
+    put:
+      description: Update Existing OID Condition Config from DB with specified ID
+      operationId: UpdateOidCondition
+      parameters:
+      - description: OID condition ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated OidCondition Config data
+        in: body
+        name: OidConditionCfg
+        required: true
+        schema:
+          $ref: '#/definitions/OidConditionCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/OidConditionCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update Existing OID Condition Config to DB
+      tags:
+      - OID Conditions Config
+  /cfg/oidcondition/checkondel/{id}:
+    get:
+      description: Get all existing Objects affected when deleted this OID Condition
+      operationId: GetOidConditionAffectOnDel
+      parameters:
+      - description: The measurement ID to check
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Object Array
+          schema:
+            $ref: '#/responses/idOfCheckOnDelResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get List for affected Objects on delete ID
+      tags:
+      - OID Conditions Config
+  /cfg/snmpdevice:
+    get:
+      description: Get All Devices config info as an array of config and boolean if
+        working in runtime.
+      operationId: GetSNMPDevices
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfArrayDeviceStatResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get All devices info from DB and Runtime
+      tags:
+      - Devices Config
+    post:
+      description: Add a new Device into de config database and/or in runtime.
+      operationId: AddSNMPDevice1
+      parameters:
+      - description: device to add
+        in: body
+        name: SnmpDeviceCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpDeviceCfg'
+      responses:
+        "200":
+          description: Added Device config
+          schema:
+            $ref: '#/definitions/SnmpDeviceCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add a new Device into de config database and/or in runtime.
+      tags:
+      - Devices Config
+  /cfg/snmpdevice/{id}:
+    delete:
+      description: Delete an existing Device into de config database with specified
+        ID
+      operationId: DeleteSNMPDevice1
+      parameters:
+      - description: The device ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK Response
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Delete existing Device into de config database
+      tags:
+      - Devices Config
+    get:
+      description: Get Devicesconfig info from DB specified by ID
+      operationId: GetSNMPDeviceByID
+      parameters:
+      - description: Device ID to get data
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SnmpDeviceCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get devices config from DB
+      tags:
+      - Devices Config
+    put:
+      description: Update an existing Device into de config database with specified
+        ID
+      operationId: UpdateSNMPDevice1
+      parameters:
+      - description: The device ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: device to add
+        in: body
+        name: SnmpDeviceCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpDeviceCfg'
+      responses:
+        "200":
+          description: Device Config
+          schema:
+            $ref: '#/definitions/SnmpDeviceCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update an existing Device into de config database
+      tags:
+      - Devices Config
+  /cfg/snmpdevice/{id}/{mode}:
+    delete:
+      description: |
+        Delete an existing Device into de config database with specified ID and/or reload new config in runtime.
+        Modes:
+         - "config": Only update in config database (equivalent to delete without mode parameter)
+         - "runtime":  Only update in active and running devices (runtime) WARN: this config will be lost on next reload.
+         - "full": Update on database and also in runtime
+      operationId: DeleteSNMPDevice2
+      parameters:
+      - description: The device ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SNMP Get type
+        enum:
+        - runtime
+        - full
+        in: path
+        name: mode
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK response
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Delete an existing Device into de config database and/or reload new
+        config in runtime.
+      tags:
+      - Devices Config
+    put:
+      description: |
+        Update an existing Device into de config database with specified ID and/or reload new config in runtime.
+        Modes:
+         - "config": Only update in config database (equivalent to delete without mode parameter)
+         - "runtime":  Only update in active and running devices (runtime) WARN: this config will be lost on next reload.
+         - "full": Update on database and also in runtime
+      operationId: UpdateSNMPDevice2
+      parameters:
+      - description: The device ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: SNMP Get type
+        enum:
+        - runtime
+        - full
+        - config
+        in: path
+        name: mode
+        required: true
+        type: string
+      - description: device to add
+        in: body
+        name: SnmpDeviceCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpDeviceCfg'
+      responses:
+        "200":
+          description: Device Config
+          schema:
+            $ref: '#/definitions/SnmpDeviceCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update an existing Device into de config database and/or reload new
+        config in runtime.
+      tags:
+      - Devices Config
+  /cfg/snmpdevice/{mode}:
+    post:
+      description: |
+        Add a new  existing Device into de config database with specified ID and/or reload new config in runtime.
+        Modes:
+         - "config": Only  in config database (equivalent to delete without mode parameter)
+         - "runtime":  Only e in active and running devices (runtime) WARN: this config will be lost on next reload.
+         - "full": in both on database and also in runtime devices.
+      operationId: AddSNMPDevice2
+      parameters:
+      - description: Adition mode
+        enum:
+        - runtime
+        - full
+        - config
+        in: path
+        name: mode
+        required: true
+        type: string
+      - description: device to add
+        in: body
+        name: SnmpDeviceCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpDeviceCfg'
+      responses:
+        "200":
+          description: Added Device config
+          schema:
+            $ref: '#/definitions/SnmpDeviceCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add a new Device into de config database and/or in runtime.
+      tags:
+      - Devices Config
+  /cfg/snmpdevice/checkondel/{id}:
+    get:
+      description: Get List for affected Objects if deleting the  Device with ID
+      operationId: GetSNMPDevicesAffectOnDel
+      parameters:
+      - description: The device ID to check
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: List for Affected Items
+          schema:
+            $ref: '#/responses/idOfCheckOnDelResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get List for affected Objects on delete ID
+      tags:
+      - Devices Config
+  /cfg/varcatalog:
+    get:
+      description: Get All variables in catalog DB
+      operationId: GetVarCatalog
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfArrayVarCatResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get All variables in catalog DB
+      tags:
+      - Variable Catalog Config
+    post:
+      description: Add new  Global Variable into the DB Catalog
+      operationId: AddVarCatalog
+      parameters:
+      - description: Variable catalog to add
+        in: body
+        name: VarCatalogCfg
+        required: true
+        schema:
+          $ref: '#/definitions/VarCatalogCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/VarCatalogCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Add new Global Variable into the DB Catalog
+      tags:
+      - Variable Catalog Config
+  /cfg/varcatalog/{id}:
+    get:
+      description: Get all Variable Catalog config from DB for specified ID
+      operationId: GetVarCatalogByID
+      parameters:
+      - description: Variable Catalog ID to get
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/VarCatalogCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get all Variable Catalog Config from DB
+      tags:
+      - Variable Catalog Config
+    put:
+      description: Update existing variable into the  DB catalog
+      operationId: UpdateVarCatalog
+      parameters:
+      - description: Variable Catalog ID to update
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Metric to add
+        in: body
+        name: VarCatalogCfg
+        required: true
+        schema:
+          $ref: '#/definitions/VarCatalogCfg'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/VarCatalogCfg'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Update existing variable into the  DB catalog
+      tags:
+      - Variable Catalog Config
+  /cfg/varcatalog/checkondel/{id}:
+    get:
+      description: Get List for affected Objects if deleting the  Variable with selected
+        ID
+      operationId: GetVarCatalogAffectOnDel
+      parameters:
+      - description: The variable catalog ID to check
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Object Array
+          schema:
+            $ref: '#/responses/idOfCheckOnDelResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get List for affected Objects on delete ID
+      tags:
+      - Variable Catalog Config
+  /rt/agent/info/version:
+    get:
+      description: Get Agent Version, release , commit , compilation day
+      operationId: RTGetVersion
+      responses:
+        "200":
+          description: Agent Version Info
+          schema:
+            $ref: '#/definitions/RInfo'
+      security: []
+      summary: Get Agent Version
+      tags:
+      - Runtime Agent
+  /rt/agent/reload:
+    get:
+      description: Reload Configuration and restart devices
+      operationId: AgentReloadConf
+      responses:
+        "200":
+          description: Reload Duration in miliseconds
+          schema:
+            $ref: '#/responses/idOfDurationResp'
+        "405":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Reload Configuration and restart devices
+      tags:
+      - Runtime Agent
+  /rt/agent/shutdown:
+    get:
+      description: shutdown the process , (usefull only with some external restart
+        tools )
+      operationId: AgentShutdown
+      responses:
+        "200":
+          description: Reload Duration in miliseconds
+          schema:
+            $ref: '#/responses/idOfDurationResp'
+      summary: Finalices inmediately the process
+      tags:
+      - Runtime Agent
+  /rt/agent/snmpconsole/ping:
+    post:
+      description: |
+        Check connectivity by test snmp connection and  will return Basic system Info from SNMP device
+      operationId: PingSNMPDevice
+      parameters:
+      - description: device to query
+        in: body
+        name: SnmpDeviceCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpDeviceCfg'
+      responses:
+        "200":
+          description: snmp responses
+          schema:
+            $ref: '#/definitions/SnmpQueryResponse'
+        "400":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Connectivity test to the device
+      tags:
+      - SNMP Console Tool
+  /rt/agent/snmpconsole/query/{getmode}/{obtype}/{data}:
+    post:
+      description: |
+        Check connectivity by test snmp connection with Device configuration and  will return Basic system Info for the remote SNMP device
+      operationId: QuerySNMPDevice
+      parameters:
+      - description: SNMP Get type
+        enum:
+        - get
+        - walk
+        in: path
+        name: getmode
+        required: true
+        type: string
+      - description: type of object in (snmpmetric,snmpmeasurement,...)
+        enum:
+        - snmpmetric
+        - snmpmeasurement
+        in: path
+        name: obtype
+        required: true
+        type: string
+      - description: id for the objecttype to qyery (snmpmetric,snmpmeasurement,...)
+        in: path
+        name: data
+        required: true
+        type: string
+      - description: device to query
+        in: body
+        name: SnmpDeviceCfg
+        required: true
+        schema:
+          $ref: '#/definitions/SnmpDeviceCfg'
+      responses:
+        "200":
+          description: snmp responses
+          schema:
+            $ref: '#/definitions/SnmpQueryResponse'
+        "400":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Run a SNMP Query for a device
+      tags:
+      - SNMP Console Tool
+  /rt/device/debug/activate/{id}:
+    put:
+      description: Activate SNMP Debugging (generate snmp packet tracing in one extra
+        log file)
+      operationId: RTActSnmpDebugDev
+      parameters:
+      - description: Device ID to reset
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Activate SNMP Debugging
+      tags:
+      - Runtime Device
+  /rt/device/debug/deactivate/{id}:
+    put:
+      description: Deactivate SNMP Debugging (stop snmp packet tracing in the extra
+        log file)
+      operationId: RTDeactSnmpDebugDev
+      parameters:
+      - description: Device ID to reset
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Deactivate SNMP Debugging
+      tags:
+      - Runtime Device
+  /rt/device/filter/forcefltupdate/{id}:
+    get:
+      description: Force Updating filters on device in next gathering period
+      operationId: RTForceFltUpdate
+      parameters:
+      - description: Device ID to force
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Force Updating filters
+      tags:
+      - Runtime Device
+  /rt/device/forcegather/{id}:
+    get:
+      description: Launch a complete cicle of gathering data, even though device was
+        not active
+      operationId: RTForceGather
+      parameters:
+      - description: Device ID to reset
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Launch a complete cicle of gathering data, even though device was not
+        active
+      tags:
+      - Runtime Device
+  /rt/device/info:
+    get:
+      description: Get Device Status info
+      operationId: RTGetInfo
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfDeviceStatResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Get Device Status info
+      tags:
+      - Runtime Device
+  /rt/device/log/getdevicelog/{id}:
+    get:
+      description: Download Log File for device specified by ID
+      operationId: RTGetLogFileDev
+      parameters:
+      - description: Device ID to force
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              description: the value is `attachment; filename="{id}.log"`
+              type: string
+          schema:
+            type: file
+      summary: Download Device Log
+      tags:
+      - Runtime Device
+  /rt/device/log/setloglevel/{id}/{level}:
+    put:
+      description: Set SNMP Maxrepetitions for a device
+      operationId: RTSetLogLevelDev
+      parameters:
+      - description: Device ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Level
+        enum:
+        - error
+        - warn
+        - info
+        - debug
+        - trace
+        in: path
+        name: level
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Set SNMP Maxrepetitions for a device
+      tags:
+      - Runtime Device
+  /rt/device/snmpmaxrep/{id}/{maxrep}:
+    get:
+      description: Set SNMP Maxrepetitions for a device
+      operationId: RTSnmpSetMaxRep
+      parameters:
+      - description: Device ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: num of max repetitions
+        in: path
+        name: maxrep
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Set SNMP Maxrepetitions for a device
+      tags:
+      - Runtime Device
+  /rt/device/snmpreset/{id}/{mode}:
+    get:
+      description: Reset all SNMP connections currently stablished with remote device
+      operationId: RTSnmpReset
+      parameters:
+      - description: Device ID to reset
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: you can reset in hard or soft mode.
+        enum:
+        - hard
+        - soft
+        in: path
+        name: mode
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Reset all SNMP connections currently stablished with remote device
+      tags:
+      - Runtime Device
+  /rt/device/status/activate/{id}:
+    put:
+      description: Activate Device
+      operationId: RTActivateDev
+      parameters:
+      - description: Device ID to reset
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Activate Device
+      tags:
+      - Runtime Device
+  /rt/device/status/deactivate/{id}:
+    put:
+      description: Deactivate Device
+      operationId: RTDeactivateDev
+      parameters:
+      - description: Device ID to reset
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/responses/idOfStringResp'
+        "404":
+          description: unexpected error
+          schema:
+            $ref: '#/responses/idOfStringResp'
+      summary: Deactivate Device
+      tags:
+      - Runtime Device
+responses:
+  idOfArrayCustomFilterCfgResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/CustomFilterCfg'
+      type: array
+  idOfArrayDeviceStatResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/DeviceStatMap'
+      type: array
+  idOfArrayInfluxCfgResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/InfluxCfg'
+      type: array
+  idOfArrayMeasFilterResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/MeasFilterCfg'
+      type: array
+  idOfArrayMeasGroupResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/MGroupsCfg'
+      type: array
+  idOfArrayMeasResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/MeasurementCfg'
+      type: array
+  idOfArrayMetricResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/SnmpMetricCfg'
+      type: array
+  idOfArrayOidCondResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/OidConditionCfg'
+      type: array
+  idOfArrayVarCatResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/VarCatalogCfg'
+      type: array
+  idOfCheckOnDelResp:
+    description: ""
+    schema:
+      items:
+        $ref: '#/definitions/DbObjAction'
+      type: array
+  idOfDeviceStatResp:
+    description: ""
+    schema:
+      additionalProperties:
+        $ref: '#/definitions/DevStat'
+      type: object
+  idOfDurationResp:
+    description: ""
+    schema:
+      $ref: '#/definitions/Duration'
+  idOfSnmpSysInfoResp:
+    description: ""
+    schema:
+      $ref: '#/definitions/SysInfo'
+  idOfStringResp:
+    description: ""
+schemes:
+- http
+- https
+security:
+- basicAuth: []
+securityDefinitions:
+  basicAuth:
+    type: basic
+swagger: "2.0"

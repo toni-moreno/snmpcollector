@@ -16,7 +16,8 @@ type MeasurementFieldReport struct {
 	Report int
 }
 
-//MeasurementCfg the measurement configuration
+// MeasurementCfg the measurement configuration
+// swagger:model MeasurementCfg
 type MeasurementCfg struct {
 	ID                string                   `xorm:"'id' unique" binding:"Required"`
 	Name              string                   `xorm:"name" binding:"Required"`
