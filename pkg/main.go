@@ -224,7 +224,7 @@ func main() {
 
 	}()
 
-	agent.MainConfig.Database.InitDB()
+	agent.MainConfig.Database.InitDB(&agent.MainConfig.General)
 	measurement.SetDB(&agent.MainConfig.Database)
 	impexp.SetDB(&agent.MainConfig.Database)
 

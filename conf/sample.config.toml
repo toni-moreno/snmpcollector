@@ -8,6 +8,8 @@
  # more than one running on the same server, this ID will be shown in the WebUI.
  # could be set also with SNMPCOL_GENERAL_INSTANCE_ID env var
  instanceID = "WAN Communicactions"
+ location = "my_location"
+ description = "SNMP Instance running at localhost"
 
  # datadir set the directory where the data will be placed , also sqlite db if set as db engine
  # if not set the default datadir will be placed in the configuration directory
