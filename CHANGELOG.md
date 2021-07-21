@@ -1,3 +1,13 @@
+# v 0.11.0 ( unreleased )
+### New Features
+
+
+### Fixes
+
+* Fix blocking API requests
+
+### breaking changes
+
 # v 0.10.0 ( 2021-03-06 )
 ### New Features
 * added support for PostgreSQL as config database.

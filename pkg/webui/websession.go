@@ -2,7 +2,6 @@ package webui
 
 import (
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/go-macaron/session"
@@ -18,7 +17,6 @@ var sessionManager *session.Manager
 var sessionOptions *session.Options
 var startSessionGC func()
 var getSessionCount func() int
-var mutex sync.Mutex
 
 func init() {
 	startSessionGC = func() {
@@ -70,11 +68,9 @@ func Sessioner(options session.Options) macaron.Handler {
 	time.AfterFunc(time.Duration(rndSeconds)*time.Second, startSessionGC)
 
 	return func(ctx *Context) {
-		mutex.Lock()
-		defer mutex.Unlock()
 		ctx.Next()
 
-		if err = ctx.Session.Release(); err != nil {
+		if err := ctx.Session.Release(); err != nil {
 			panic("session(release): " + err.Error())
 		}
 	}
