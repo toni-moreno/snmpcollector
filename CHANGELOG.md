@@ -5,6 +5,7 @@
 ### Fixes
 
 * Fix blocking API requests
+* fix #495
 
 ### breaking changes
 
