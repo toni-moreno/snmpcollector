@@ -10,7 +10,7 @@ type SnmpDeviceCfg struct {
 	Retries    int      `xorm:"retries"`
 	Timeout    int      `xorm:"timeout"`
 	Repeat     int      `xorm:"repeat"`
-	Active     bool     `xorm:"'active' default 1"`
+	Active     bool     `xorm:"'active' default 'true'"`
 	//snmp auth  config
 	SnmpVersion       string `xorm:"snmpversion" binding:"Required;In(1,2c,3)"`
 	Community         string `xorm:"community"`
