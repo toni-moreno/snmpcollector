@@ -20,11 +20,14 @@
       "styles": [
         "styles.css",
         "css/simple-sidebar.css",
-        "../node_modules/bootstrap/dist/css/bootstrap.min.css"
+        "../node_modules/bootstrap/dist/css/bootstrap.min.css",
+        "../node_modules/swagger-ui-dist/swagger-ui.css"
       ],
       "scripts": [
         "../node_modules/lodash/lodash.js",
-        "../node_modules/file-saver/FileSaver.js"
+        "../node_modules/file-saver/FileSaver.js",
+        "../node_modules/swagger-ui-dist/swagger-ui-bundle.js",
+        "../node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {

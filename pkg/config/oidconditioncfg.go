@@ -11,6 +11,7 @@ import (
 )
 
 // OidConditionCfg condition config for filters and metrics
+// swagger:model OidConditionCfg
 type OidConditionCfg struct {
 	ID          string `xorm:"'id' unique" binding:"Required"`
 	IsMultiple  bool   `xorm:"is_multiple"`
