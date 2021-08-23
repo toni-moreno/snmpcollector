@@ -1,11 +1,15 @@
-# v 0.11.0 ( unreleased )
+# v 0.10.1 ( unreleased )
+
 ### New Features
 
+* Added swagger api doc
 
 ### Fixes
 
 * Fix blocking API requests
 * fix #495
+* security fix for CVE-2020-12666
+* security fix for CVE-2021-23337
 
 ### breaking changes
 
