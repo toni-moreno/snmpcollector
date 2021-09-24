@@ -61,7 +61,6 @@ func (c *Client) Target() string {
 
 // SetSnmpClient set a GoSNMP client to the Measurement
 func (c *Client) Get(oids []string, f gosnmp.WalkFunc) error {
-
 	l := len(oids)
 	c.log.Infof("LEN %d : %+v | client : %+v", l, oids, c)
 

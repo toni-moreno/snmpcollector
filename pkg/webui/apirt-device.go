@@ -10,8 +10,7 @@ import (
 
 // NewAPIRtDevice Runtime Device REST API creator
 func NewAPIRtDevice(m *macaron.Macaron) error {
-
-	//bind := binding.Bind
+	// bind := binding.Bind
 
 	m.Group("/api/rt/device", func() {
 		m.Get("/info/", reqSignedIn, RTGetInfo)
@@ -148,7 +147,7 @@ func RTGetLogFileDev(ctx *Context) {
 	ctx.ServeFile(d.GetLogFilePath())
 }
 
-//RTSetLogLevelDev xx
+// RTSetLogLevelDev xx
 func RTSetLogLevelDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/log/setloglevel/{id}/{level} Runtime_Devices RTSetLogLevelDev
 	//---
@@ -189,7 +188,6 @@ func RTSetLogLevelDev(ctx *Context) {
 	log.Infof("set runtime log level from device id %s : %s", id, level)
 	dev.RTSetLogLevel(level)
 	ctx.JSON(200, "OK")
-
 }
 
 // RTSnmpReset runtime send reset
@@ -273,7 +271,7 @@ func RTForceGather(ctx *Context) {
 	ctx.JSON(200, "OK")
 }
 
-//RTActivateDev xx
+// RTActivateDev xx
 func RTActivateDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/status/activate/{id} Runtime_Devices RTActivateDev
 	//---
@@ -308,7 +306,7 @@ func RTActivateDev(ctx *Context) {
 	ctx.JSON(200, "OK")
 }
 
-//RTDeactivateDev xx
+// RTDeactivateDev xx
 func RTDeactivateDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/status/deactivate/{id} Runtime_Devices RTDeactivateDev
 	//---
@@ -341,10 +339,9 @@ func RTDeactivateDev(ctx *Context) {
 	log.Infof("deactivating runtime on device  %s", id)
 	dev.RTActivate(false)
 	ctx.JSON(200, "OK")
-
 }
 
-//RTActSnmpDebugDev xx
+// RTActSnmpDebugDev xx
 func RTActSnmpDebugDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/debug/activate/{id} Runtime_Devices RTActSnmpDebugDev
 	//---
@@ -380,7 +377,7 @@ func RTActSnmpDebugDev(ctx *Context) {
 	ctx.JSON(200, "OK")
 }
 
-//RTDeactSnmpDebugDev xx
+// RTDeactSnmpDebugDev xx
 func RTDeactSnmpDebugDev(ctx *Context) {
 	// swagger:operation PUT /rt/device/debug/deactivate/{id} Runtime_Devices RTDeactSnmpDebugDev
 	//---
@@ -416,7 +413,7 @@ func RTDeactSnmpDebugDev(ctx *Context) {
 	ctx.JSON(200, "OK")
 }
 
-//RTGetInfo xx
+// RTGetInfo xx
 func RTGetInfo(ctx *Context) {
 	// swagger:operation GET /rt/device/info Runtime_Devices RTGetInfo
 	//---
@@ -446,7 +443,7 @@ func RTGetInfo(ctx *Context) {
 		log.Infof("get runtime data from id %s", id)
 		ctx.RawAsJSON(200, json)
 
-		//get only one device info
+		// get only one device info
 	} else {
 		devstats := agent.GetDevStats()
 		ctx.JSON(200, &devstats)

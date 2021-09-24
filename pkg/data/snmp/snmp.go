@@ -40,7 +40,7 @@ type SysInfo struct {
 // PduVal2BoolArray get boolean value from PDU
 func PduVal2BoolArray(pdu gosnmp.SnmpPDU) []bool {
 	data := pdu.Value.([]byte)
-	//mainlog.Errorf("PduVal2BoolArray: %+v\n", data)
+	// mainlog.Errorf("PduVal2BoolArray: %+v\n", data)
 	barray := make([]bool, len(data)*8)
 	cnt := 0
 	for _, d := range data {
@@ -148,7 +148,6 @@ func PduType2Str(pdutype gosnmp.Asn1BER) string {
 	default:
 		return "--"
 	}
-
 }
 
 // EasyPDU enable user interface Info for OID data
@@ -175,7 +174,7 @@ func Query(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error) {
 		setRawData := func(pdu gosnmp.SnmpPDU) error {
 			if pdu.Value == nil {
 				mainlog.Warnf("no value retured by pdu :%+v", pdu)
-				return nil //if error return the bulk process will stop
+				return nil // if error return the bulk process will stop
 			}
 			result = append(result, EasyPDU{Name: pdu.Name, Type: PduType2Str(pdu.Type), Value: PduVal2Cooked(pdu)})
 			return nil
@@ -196,9 +195,9 @@ func Query(client *gosnmp.GoSNMP, mode string, oid string) ([]EasyPDU, error) {
 
 // GetAlternateSysInfo got system basic info from a snmp client when sysinfo should be take from specified OID's
 func GetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, SystemOIDs []string) (SysInfo, error) {
-	//Get System Info from Alternate SystemOIDs
+	// Get System Info from Alternate SystemOIDs
 	sysOids := []string{}
-	sysOidsiMap := make(map[string]string) //inverse map to get Key name from OID
+	sysOidsiMap := make(map[string]string) // inverse map to get Key name from OID
 
 	info := SysInfo{SysDescr: "", SysUptime: time.Duration(0), SysContact: "", SysName: "", SysLocation: ""}
 
@@ -206,7 +205,7 @@ func GetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, Sys
 		s := strings.Split(v, "=")
 		if len(s) == 2 {
 			key, value := s[0], s[1]
-			//add initial dot to the OID if it has not.
+			// add initial dot to the OID if it has not.
 			if strings.HasPrefix(value, ".") == false {
 				value = "." + value
 			}
@@ -218,7 +217,6 @@ func GetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, Sys
 	}
 
 	pkt, err := client.Get(sysOids)
-
 	if err != nil {
 		l.Errorf("Error on getting initial basic system, Info to device %s: %s", id, err)
 		return info, err
@@ -247,7 +245,7 @@ func GetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, Sys
 	}
 	info.SysDescr = strings.Join(tmpDesc[:], " | ")
 
-	//sometimes (authenticacion error on v3) client.get doesn't return error but the connection is not still available
+	// sometimes (authenticacion error on v3) client.get doesn't return error but the connection is not still available
 	if len(info.SysDescr) == 0 {
 		return info, fmt.Errorf("Some Error happened while getting alternate system info for device %s", id)
 	}
@@ -256,7 +254,7 @@ func GetAlternateSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger, Sys
 
 // GetSysInfo got system basic info from a snmp client
 func GetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, error) {
-	//Get Basic System Info
+	// Get Basic System Info
 	// SysDescr     .1.3.6.1.2.1.1.1.0
 	// sysUpTime    .1.3.6.1.2.1.1.3.0
 	// SysContact   .1.3.6.1.2.1.1.4.0
@@ -267,11 +265,11 @@ func GetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, er
 		".1.3.6.1.2.1.1.3.0",
 		".1.3.6.1.2.1.1.4.0",
 		".1.3.6.1.2.1.1.5.0",
-		".1.3.6.1.2.1.1.6.0"}
+		".1.3.6.1.2.1.1.6.0",
+	}
 
 	info := SysInfo{SysDescr: "", SysUptime: time.Duration(0), SysContact: "", SysName: "", SysLocation: ""}
 	pkt, err := client.Get(sysOids)
-
 	if err != nil {
 		l.Errorf("Error on getting initial basic system, Info to device %s: %s", id, err)
 		return info, err
@@ -316,7 +314,7 @@ func GetSysInfo(id string, client *gosnmp.GoSNMP, l *logrus.Logger) (SysInfo, er
 			}
 		}
 	}
-	//sometimes (authenticacion error on v3) client.get doesn't return error but the connection is not still available
+	// sometimes (authenticacion error on v3) client.get doesn't return error but the connection is not still available
 	if len(info.SysDescr) == 0 && info.SysUptime == 0 {
 		return info, fmt.Errorf("Some Error happened while getting system info for device %s", id)
 	}
@@ -376,7 +374,7 @@ func PduVal2OID(pdu gosnmp.SnmpPDU) string {
 func PduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 	value := pdu.Value
 	var val int64
-	//revisar esta asignación
+	// revisar esta asignación
 	switch value := value.(type) { // shadow
 	case int:
 		val = int64(value)
@@ -414,7 +412,7 @@ func PduVal2Int64(pdu gosnmp.SnmpPDU) int64 {
 func PduVal2UInt64(pdu gosnmp.SnmpPDU) uint64 {
 	value := pdu.Value
 	var val uint64
-	//revisar esta asignación
+	// revisar esta asignación
 	switch value := value.(type) { // shadow
 	case int:
 		val = uint64(value)
@@ -483,7 +481,6 @@ func PduVal2IPaddr(pdu gosnmp.SnmpPDU) (string, error) {
 	default:
 		return "", fmt.Errorf("invalid type (%T) for ipaddr conversion", value)
 	}
-
 }
 
 // Release release the GoSNMP object
@@ -509,7 +506,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 		l.Warnf("Lookup for %s host has more than one IP: %v => Finally used first IP %s", s.Host, hostIPs, hostIPs[0])
 	}
 	if maxrep == 0 {
-		//if not specified use the config value
+		// if not specified use the config value
 		maxrep = s.MaxRepetitions
 	}
 	switch s.SnmpVersion {
@@ -523,7 +520,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 			Retries:   s.Retries,
 		}
 	case "2c":
-		//validate community
+		// validate community
 		if len(s.Community) < 1 {
 			l.Errorf("Error no community found %s in host %s", s.Community, s.Host)
 			return nil, nil, ers.New("Error on snmp community")
@@ -582,14 +579,14 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 				return nil, nil, ers.New("Error on snmp v3 AuthPass")
 			}
 
-			//validate correct s.authuser
+			// validate correct s.authuser
 
 			if val, ok := authpmap[s.V3AuthProt]; !ok {
 				l.Errorf("Error in Auth Protocol %v | %v  in host %s", s.V3AuthProt, val, s.Host)
 				return nil, nil, ers.New("Error on snmp v3 AuthProt")
 			}
 
-			//validate s.authpass s.authprot
+			// validate s.authpass s.authprot
 			UsmParams = &gosnmp.UsmSecurityParameters{
 				UserName:                 s.V3AuthUser,
 				AuthenticationProtocol:   authpmap[s.V3AuthProt],
@@ -597,7 +594,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 				PrivacyProtocol:          gosnmp.NoPriv,
 			}
 		case "AuthPriv":
-			//validate s.authpass s.authprot
+			// validate s.authpass s.authprot
 
 			if len(s.V3AuthPass) < 1 {
 				l.Errorf("Error password not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
@@ -609,7 +606,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 				return nil, nil, ers.New("Error on snmp v3 AuthProt")
 			}
 
-			//validate s.privpass s.privprot
+			// validate s.privpass s.privprot
 
 			if len(s.V3PrivPass) < 1 {
 				l.Errorf("Error privPass not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
@@ -659,7 +656,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 	if debug {
 		client.Logger = GetDebugLogger(s.ID + "_" + meas)
 	}
-	//first connect
+	// first connect
 	err = client.Connect()
 	if err != nil {
 		l.Errorf("error on first connect %s", err)
@@ -667,7 +664,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 	}
 	l.Infof("First SNMP connection to host  %s stablished with MaxRepetitions set to %d", s.Host, maxrep)
 
-	//first snmp query
+	// first snmp query
 
 	if len(s.SystemOIDs) > 0 && len(s.SystemOIDs[0]) > 0 && s.SystemOIDs[0] != "null" {
 		l.Infof("Detected alternate %d SystemOID's ", len(s.SystemOIDs))
@@ -680,7 +677,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 		l.Infof("Got basic system info %#v ", si)
 		return client, &si, err
 	}
-	//For most devices System Description could be got with MIB-2::System base OID's
+	// For most devices System Description could be got with MIB-2::System base OID's
 	si, err := GetSysInfo(s.ID, client, l)
 	if err != nil {
 		l.Errorf("error on get System Info %s", err)

@@ -21,7 +21,6 @@ type UploadForm struct {
 
 // NewAPICfgImportExport Import/Export REST API creator
 func NewAPICfgImportExport(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	m.Group("/api/cfg/export", func() {
@@ -144,7 +143,6 @@ func generateFile(ctx *Context, exp *impexp.ExportData) {
 
 // ExportObjectToFile export Object to file
 func ExportObjectToFile(ctx *Context, info impexp.ExportInfo) {
-
 	id := ctx.Params(":id")
 	objtype := ctx.Params(":objtype")
 	exp := impexp.NewExport(&info)

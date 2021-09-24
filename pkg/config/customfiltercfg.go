@@ -43,7 +43,7 @@ func (dbc *DatabaseCfg) GetCustomFilterCfgMap(filter string) (map[string]*Custom
 func (dbc *DatabaseCfg) GetCustomFilterCfgArray(filter string) ([]*CustomFilterCfg, error) {
 	var err error
 	var filters []*CustomFilterCfg
-	//Get Only data for selected metrics
+	// Get Only data for selected metrics
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&filters); err != nil {
 			log.Warnf("Fail to get CustomFilterCfg  data filteter with %s : %v\n", filter, err)
@@ -61,7 +61,7 @@ func (dbc *DatabaseCfg) GetCustomFilterCfgArray(filter string) ([]*CustomFilterC
 			log.Warnf("Fail to get CustomFilterItems  data filtered with ID %s : %v\n", vf.ID, err)
 			continue
 		}
-		//log.Debugf("ITEM ( %s ) %+v", vf.ID, item)
+		// log.Debugf("ITEM ( %s ) %+v", vf.ID, item)
 		for _, vi := range item {
 			i := struct {
 				TagID string
@@ -100,7 +100,7 @@ func (dbc *DatabaseCfg) AddCustomFilterCfg(dev CustomFilterCfg) (int64, error) {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Addig new filter config inputs with id on add MeasurementFieldCfg with id: %s, error: %s", dev.ID, err)
 	}
-	//inserting new ones
+	// inserting new ones
 	for _, v := range dev.Items {
 		affected, err = session.Insert(&CustomFilterItems{CustomID: dev.ID, TagID: v.TagID, Alias: v.Alias})
 		if err != nil {
@@ -109,7 +109,7 @@ func (dbc *DatabaseCfg) AddCustomFilterCfg(dev CustomFilterCfg) (int64, error) {
 		}
 	}
 
-	//no other relation
+	// no other relation
 	err = session.Commit()
 	if err != nil {
 		return 0, err
@@ -172,7 +172,7 @@ func (dbc *DatabaseCfg) UpdateCustomFilterCfg(id string, dev CustomFilterCfg) (i
 	}
 	defer session.Close()
 
-	if id != dev.ID { //ID has been changed so we need to update Related MeasurementCfg
+	if id != dev.ID { // ID has been changed so we need to update Related MeasurementCfg
 		affecteddev, err = session.Where("filter_name='" + id + "'").Cols("filter_name").Update(&MeasFilterCfg{FilterName: dev.ID})
 		if err != nil {
 			session.Rollback()
@@ -185,7 +185,7 @@ func (dbc *DatabaseCfg) UpdateCustomFilterCfg(id string, dev CustomFilterCfg) (i
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Addig new filter config inputs with id on add MeasurementFieldCfg with id: %s, error: %s", dev.ID, err)
 	}
-	//inserting new ones
+	// inserting new ones
 	for _, v := range dev.Items {
 		affected, err = session.Insert(&CustomFilterItems{CustomID: dev.ID, TagID: v.TagID, Alias: v.Alias})
 		if err != nil {
@@ -198,7 +198,7 @@ func (dbc *DatabaseCfg) UpdateCustomFilterCfg(id string, dev CustomFilterCfg) (i
 		session.Rollback()
 		return 0, err
 	}
-	//no other relation
+	// no other relation
 	err = session.Commit()
 	if err != nil {
 		return 0, err
@@ -224,7 +224,6 @@ func (dbc *DatabaseCfg) GetCustomFilterCfgAffectOnDel(id string) ([]*DbObjAction
 			ObID:     val.ID,
 			Action:   "Change Measurement filter to other custom or delete them",
 		})
-
 	}
 	return obj, nil
 }

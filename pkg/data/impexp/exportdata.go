@@ -2,7 +2,6 @@ package impexp
 
 import (
 	"fmt"
-
 	"time"
 
 	"github.com/Knetic/govaluate"
@@ -13,8 +12,8 @@ import (
 
 var (
 	log     *logrus.Logger
-	confDir string              //Needed to get File Filters data
-	dbc     *config.DatabaseCfg //Needed to get Custom Filter  data
+	confDir string              // Needed to get File Filters data
+	dbc     *config.DatabaseCfg // Needed to get Custom Filter  data
 )
 
 // SetConfDir  enable load File Filters from anywhere in the our FS.
@@ -45,9 +44,9 @@ type ExportInfo struct {
 
 // EIOptions export/import options
 type EIOptions struct {
-	Recursive   bool   //Export Option
-	AutoRename  bool   //Import Option
-	AlternateID string //Import Option
+	Recursive   bool   // Export Option
+	AutoRename  bool   // Import Option
+	AlternateID string // Import Option
 }
 
 // ExportObject Base type for any object to export
@@ -63,7 +62,7 @@ type ExportObject struct {
 type ExportData struct {
 	Info       *ExportInfo
 	Objects    []*ExportObject
-	tmpObjects []*ExportObject //only for temporal use
+	tmpObjects []*ExportObject // only for temporal use
 }
 
 // NewExport ExportData type creator
@@ -100,7 +99,7 @@ func (e *ExportData) PrependObject(obj *ExportObject) {
 
 // UpdateTmpObject update temporaty object
 func (e *ExportData) UpdateTmpObject() {
-	//we need remove duplicated objects on the auxiliar array
+	// we need remove duplicated objects on the auxiliar array
 	objectList := []*ExportObject{}
 	for i := 0; i < len(e.tmpObjects); i++ {
 		v := e.tmpObjects[i]
@@ -114,10 +113,9 @@ func (e *ExportData) UpdateTmpObject() {
 
 // Export  exports data
 func (e *ExportData) Export(ObjType string, id string, recursive bool, level int) error {
-
 	switch ObjType {
 	case "snmpdevicecfg":
-		//contains sensible data
+		// contains sensible data
 		v, err := dbc.GetSnmpDeviceCfgByID(id)
 		if err != nil {
 			return err
@@ -134,7 +132,7 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool, level int
 		}
 		e.Export("influxcfg", v.OutDB, recursive, level+1)
 	case "influxcfg":
-		//contains sensible probable
+		// contains sensible probable
 		v, err := dbc.GetInfluxCfgByID(id)
 		if err != nil {
 			return err
@@ -183,7 +181,7 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool, level int
 				if err != nil {
 					return fmt.Errorf("Error on initializing , evaluation : %s (subcondition %s): ERROR : %s", v.OIDCond, par, err)
 				}
-				//TODO review if this should be a recursive export better than prepend
+				// TODO review if this should be a recursive export better than prepend
 				e.PrependObject(&ExportObject{ObjectTypeID: "oidconditioncfg", ObjectID: par, ObjectCfg: oidcond})
 			}
 		}
@@ -216,7 +214,7 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool, level int
 		if err != nil {
 			return err
 		}
-		//now we can get Used Vars
+		// now we can get Used Vars
 		vara, err := v.GetExternalVars()
 		if err != nil {
 			log.Warnf("There is some problem while trying to get variables used in this measurement: %s", err)

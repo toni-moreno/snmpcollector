@@ -1,16 +1,15 @@
 package webui
 
 import (
+	"crypto/md5"
 	"fmt"
 	"io"
+	"net/http"
+	"os"
 
 	"github.com/go-macaron/binding"
 	"github.com/go-macaron/session"
 	"github.com/go-macaron/toolbox"
-
-	"crypto/md5"
-	"net/http"
-	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
@@ -46,7 +45,7 @@ func SetLogger(l *logrus.Logger) {
 	log = l
 }
 
-//UserLogin for login purposes
+// UserLogin for login purposes
 type UserLogin struct {
 	UserName string `form:"username" binding:"Required"`
 	Password string `form:"password" binding:"Required"`
@@ -74,7 +73,7 @@ func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id 
 	var f io.Writer
 
 	if logMode == "file" {
-		f, _ = os.OpenFile(logDir+"/http_access.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+		f, _ = os.OpenFile(logDir+"/http_access.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o644)
 	} else {
 		f = os.Stdout
 	}
@@ -99,8 +98,8 @@ func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id 
 			Expires: func() string { return "max-age=0" },
 		}))
 
-	//Cookie should be unique for each snmpcollector instance ,
-	//if cockie_id is not set it takes the instanceID value to generate a unique array with as a md5sum
+	// Cookie should be unique for each snmpcollector instance ,
+	// if cockie_id is not set it takes the instanceID value to generate a unique array with as a md5sum
 
 	cookie = confHTTP.CookieID
 
@@ -202,7 +201,7 @@ func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id 
 
 	NewAPIRtDevice(m)
 
-	//Begin server
+	// Begin server
 
 	var listen string
 
@@ -238,7 +237,7 @@ func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id 
 /****************/
 
 func myLoginHandler(ctx *Context, user UserLogin) {
-	//fmt.Printf("USER LOGIN: USER: +%#v (Config: %#v)", user, confHTTP)
+	// fmt.Printf("USER LOGIN: USER: +%#v (Config: %#v)", user, confHTTP)
 	if user.UserName == confHTTP.AdminUser && user.Password == confHTTP.AdminPassword {
 		ctx.SignedInUser = user.UserName
 		ctx.IsSignedIn = true
@@ -254,5 +253,5 @@ func myLoginHandler(ctx *Context, user UserLogin) {
 func myLogoutHandler(ctx *Context) {
 	log.Printf("USER LOGOUT: USER: +%#v ", ctx.SignedInUser)
 	ctx.Session.Destory(ctx)
-	//ctx.Redirect("/login")
+	// ctx.Redirect("/login")
 }

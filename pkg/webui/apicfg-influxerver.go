@@ -12,7 +12,6 @@ import (
 
 // NewAPICfgInfluxServer InfluxServer API REST creator
 func NewAPICfgInfluxServer(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	m.Group("/api/cfg/influxservers", func() {
@@ -56,7 +55,7 @@ func GetInfluxServer(ctx *Context) {
 	log.Debugf("Getting DEVICEs %+v", &cfgarray)
 }
 
-//GetInfluxServerByID --pending--
+// GetInfluxServerByID --pending--
 func GetInfluxServerByID(ctx *Context) {
 	// swagger:operation GET /cfg/influxservers/{id}  Config_InfluxServers GetInfluxServerByID
 	//---
@@ -122,7 +121,7 @@ func AddInfluxServer(ctx *Context, dev config.InfluxCfg) {
 		log.Warningf("Error on insert new Backend %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return data  or affected
+		// TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
 	}
 }
@@ -164,12 +163,12 @@ func UpdateInfluxServer(ctx *Context, dev config.InfluxCfg) {
 	if err != nil {
 		log.Warningf("Error on update Influx db %s  , affected : %+v , error: %s", dev.ID, affected, err)
 	} else {
-		//TODO: review if needed return device data
+		// TODO: review if needed return device data
 		ctx.JSON(200, &dev)
 	}
 }
 
-//DeleteInfluxServer --pending--
+// DeleteInfluxServer --pending--
 func DeleteInfluxServer(ctx *Context) {
 	// swagger:operation DELETE /cfg/influxservers/{id} Config_InfluxServers DeleteInfluxServer
 	//---
@@ -205,7 +204,7 @@ func DeleteInfluxServer(ctx *Context) {
 	}
 }
 
-//GetInfluxAffectOnDel --pending--
+// GetInfluxAffectOnDel --pending--
 func GetInfluxAffectOnDel(ctx *Context) {
 	// swagger:operation GET /cfg/influxservers/checkondel/{id} Config_InfluxServers GetInfluxAffectOnDel
 	//---
@@ -240,7 +239,7 @@ func GetInfluxAffectOnDel(ctx *Context) {
 	}
 }
 
-//PingInfluxServer Return ping result
+// PingInfluxServer Return ping result
 func PingInfluxServer(ctx *Context, cfg config.InfluxCfg) {
 	// swagger:operation POST /cfg/influxservers/ping Config_InfluxServers PingInfluxServer
 	//---

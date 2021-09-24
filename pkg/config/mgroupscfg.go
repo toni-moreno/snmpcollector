@@ -43,7 +43,7 @@ func (dbc *DatabaseCfg) GetMGroupsCfgMap(filter string) (map[string]*MGroupsCfg,
 func (dbc *DatabaseCfg) GetMGroupsCfgArray(filter string) ([]*MGroupsCfg, error) {
 	var err error
 	var devices []*MGroupsCfg
-	//Get Only data for selected metrics
+	// Get Only data for selected metrics
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&devices); err != nil {
 			log.Warnf("Fail to get MGroupsCfg  data filteter with %s : %v\n", filter, err)
@@ -56,7 +56,7 @@ func (dbc *DatabaseCfg) GetMGroupsCfgArray(filter string) ([]*MGroupsCfg, error)
 		}
 	}
 
-	//Load measurement for each groups
+	// Load measurement for each groups
 	var mgroupsmeas []*MGroupsMeasurements
 	if err = dbc.x.Find(&mgroupsmeas); err != nil {
 		log.Warnf("Fail to get MGroup Measurements relationship  data: %v\n", err)
@@ -88,7 +88,7 @@ func (dbc *DatabaseCfg) AddMGroupsCfg(dev MGroupsCfg) (int64, error) {
 		session.Rollback()
 		return 0, err
 	}
-	//Measurement Fields
+	// Measurement Fields
 	for _, meas := range dev.Measurements {
 
 		mstruct := MGroupsMeasurements{
@@ -101,7 +101,7 @@ func (dbc *DatabaseCfg) AddMGroupsCfg(dev MGroupsCfg) (int64, error) {
 			return 0, err
 		}
 	}
-	//no other relation
+	// no other relation
 	err = session.Commit()
 	if err != nil {
 		return 0, err
@@ -129,7 +129,7 @@ func (dbc *DatabaseCfg) DelMGroupsCfg(id string) (int64, error) {
 		return 0, fmt.Errorf("Error on Delete Metric with id on delete MeasurementFieldCfg with id: %s, error: %s", id, err)
 	}
 
-	//deleting all references in devices (snmpdevfilters)
+	// deleting all references in devices (snmpdevfilters)
 	affecteddev, err = session.Where("id_mgroup_cfg='" + id + "'").Delete(&SnmpDevMGroups{})
 	if err != nil {
 		session.Rollback()
@@ -162,7 +162,7 @@ func (dbc *DatabaseCfg) UpdateMGroupsCfg(id string, dev MGroupsCfg) (int64, erro
 	}
 	defer session.Close()
 
-	if id != dev.ID { //ID has been changed
+	if id != dev.ID { // ID has been changed
 		affecteddev, err = session.Where("id_mgroup_cfg='" + id + "'").Cols("id_mgroup_cfg").Update(&SnmpDevMGroups{IDMGroupCfg: dev.ID})
 		if err != nil {
 			session.Rollback()
@@ -170,13 +170,13 @@ func (dbc *DatabaseCfg) UpdateMGroupsCfg(id string, dev MGroupsCfg) (int64, erro
 		}
 		log.Infof("Updated Measurement Group Config to %d devices ", affecteddev)
 	}
-	//Remove all measurements in group.
+	// Remove all measurements in group.
 	_, err = session.Where("id_mgroup_cfg='" + id + "'").Delete(&MGroupsMeasurements{})
 	if err != nil {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Delete Metric with id on delete MeasurementFieldCfg with id: %s, error: %s", id, err)
 	}
-	//adding again
+	// adding again
 	for _, meas := range dev.Measurements {
 
 		mstruct := MGroupsMeasurements{
@@ -221,7 +221,6 @@ func (dbc *DatabaseCfg) GetMGroupsCfgAffectOnDel(id string) ([]*DbObjAction, err
 			ObID:     val.IDSnmpDev,
 			Action:   "Delete SNMPDevice from Measurement Group relation",
 		})
-
 	}
 	return obj, nil
 }

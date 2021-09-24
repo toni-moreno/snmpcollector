@@ -4,7 +4,7 @@ package filter
 type Filter interface {
 	Init(arg ...interface{}) error
 	Update() error
-	//construct the final index array from all index and filters
+	// construct the final index array from all index and filters
 	MapLabels(map[string]string) map[string]string
 	Count() int
 }

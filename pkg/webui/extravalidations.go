@@ -24,7 +24,7 @@ func init() {
 			return true, errs
 		},
 	})
-	//UIntegerAndLessOne
+	// UIntegerAndLessOne
 	binding.AddRule(&binding.Rule{
 		IsMatch: func(rule string) bool {
 			return strings.HasPrefix(rule, "UIntegerAndLessOne")
@@ -41,5 +41,4 @@ func init() {
 			return true, errs
 		},
 	})
-
 }

@@ -4,15 +4,15 @@ package config
 // swagger:model SnmpDeviceCfg
 type SnmpDeviceCfg struct {
 	ID string `xorm:"'id' unique" binding:"Required"`
-	//snmp connection config
+	// snmp connection config
 	Host       string   `xorm:"host" binding:"Required;AlphaDashDot"`
 	Port       int      `xorm:"port" binding:"Required"`
-	SystemOIDs []string `xorm:"systemoids"` //for non MIB-2 based devices
+	SystemOIDs []string `xorm:"systemoids"` // for non MIB-2 based devices
 	Retries    int      `xorm:"retries"`
 	Timeout    int      `xorm:"timeout"`
 	Repeat     int      `xorm:"repeat"`
 	Active     bool     `xorm:"'active' default 'true'"`
-	//snmp auth  config
+	// snmp auth  config
 	SnmpVersion       string `xorm:"snmpversion" binding:"Required;In(1,2c,3)"`
 	Community         string `xorm:"community"`
 	V3SecLevel        string `xorm:"v3seclevel"`
@@ -23,11 +23,11 @@ type SnmpDeviceCfg struct {
 	V3PrivProt        string `xorm:"v3privprot"`
 	V3ContextEngineID string `xorm:"v3contextengineid"`
 	V3ContextName     string `xorm:"v3contextname"`
-	//snmp workarround for some devices
+	// snmp workarround for some devices
 	DisableBulk    bool  `xorm:"'disablebulk' default 0"`
 	MaxRepetitions uint8 `xorm:"'maxrepetitions' default 50" binding:"Default(50);IntegerNotZero"`
 	MaxOids        int   `xorm:"'maxoids' default 60"`
-	//snmp runtime config
+	// snmp runtime config
 	Freq             int  `xorm:"'freq' default 60" binding:"Default(60);IntegerNotZero"`
 	UpdateFltFreq    int  `xorm:"'update_flt_freq' default 60" binding:"Default(60);UIntegerAndLessOne"`
 	ConcurrentGather bool `xorm:"'concurrent_gather' default 1"`
@@ -37,13 +37,13 @@ type SnmpDeviceCfg struct {
 	LogFile  string `xorm:"logfile"`
 
 	SnmpDebug bool `xorm:"'snmpdebug' default 0"`
-	//influx tags
+	// influx tags
 	DeviceTagName  string   `xorm:"devicetagname" binding:"Default(hostname)"`
 	DeviceTagValue string   `xorm:"devicetagvalue" binding:"Default(id)"`
 	ExtraTags      []string `xorm:"extra-tags"`
 	DeviceVars     []string `xorm:"devicevars"`
 	Description    string   `xorm:"description"`
-	//Filters for measurements
+	// Filters for measurements
 	MeasurementGroups []string `xorm:"-"`
 	MeasFilters       []string `xorm:"-"`
 }
@@ -58,7 +58,7 @@ type InfluxCfg struct {
 	User               string `xorm:"user" binding:"Required"`
 	Password           string `xorm:"password" binding:"Required"`
 	Retention          string `xorm:"'retention' default 'autogen'" binding:"Required"`
-	Precision          string `xorm:"'precision' default 's'" binding:"Default(s);OmitEmpty;In(h,m,s,ms,u,ns)"` //posible values [h,m,s,ms,u,ns] default seconds for the nature of data
+	Precision          string `xorm:"'precision' default 's'" binding:"Default(s);OmitEmpty;In(h,m,s,ms,u,ns)"` // posible values [h,m,s,ms,u,ns] default seconds for the nature of data
 	Timeout            int    `xorm:"'timeout' default 30" binding:"Default(30);IntegerNotZero"`
 	UserAgent          string `xorm:"useragent" binding:"Default(snmpcollector)"`
 	EnableSSL          bool   `xorm:"enable_ssl"`
@@ -75,13 +75,13 @@ type InfluxCfg struct {
 type MeasFilterCfg struct {
 	ID               string `xorm:"'id' unique" binding:"Required"`
 	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
-	FType            string `xorm:"filter_type" binding:"Required"` //file/OIDCondition/CustomFilter
+	FType            string `xorm:"filter_type" binding:"Required"` // file/OIDCondition/CustomFilter
 	FilterName       string `xorm:"filter_name" binding:"Required"` // valid identificator for the filter depending on the type
-	EnableAlias      bool   `xorm:"enable_alias"`                   //only valid if file/Custom
+	EnableAlias      bool   `xorm:"enable_alias"`                   // only valid if file/Custom
 	Description      string `xorm:"description"`
 }
 
-//MeasurementFieldCfg the metrics contained on each measurement (to initialize on the fieldMetric array)
+// MeasurementFieldCfg the metrics contained on each measurement (to initialize on the fieldMetric array)
 type MeasurementFieldCfg struct {
 	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
 	IDMetricCfg      string `xorm:"id_metric_cfg"`
@@ -110,13 +110,13 @@ type CustomFilterCfg struct {
 	} `xorm:"-"`
 }
 
-//SnmpDevFilters filters to use with indexed measurement
+// SnmpDevFilters filters to use with indexed measurement
 type SnmpDevFilters struct {
 	IDSnmpDev string `xorm:"id_snmpdev"`
 	IDFilter  string `xorm:"id_filter"`
 }
 
-//MGroupsCfg measurement groups to assign to devices
+// MGroupsCfg measurement groups to assign to devices
 // swagger:model MGroupsCfg
 type MGroupsCfg struct {
 	ID           string   `xorm:"'id' unique" binding:"Required"`
@@ -124,7 +124,7 @@ type MGroupsCfg struct {
 	Description  string   `xorm:"description"`
 }
 
-//MGroupsMeasurements measurements contained on each Measurement Group
+// MGroupsMeasurements measurements contained on each Measurement Group
 type MGroupsMeasurements struct {
 	IDMGroupCfg      string `xorm:"id_mgroup_cfg"`
 	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
@@ -154,16 +154,16 @@ InitMetricsCfg this function does 2 things
 */
 // InitMetricsCfg xx
 func InitMetricsCfg(cfg *DBConfig) error {
-	//TODO:
+	// TODO:
 	// - check duplicates OID's => warning messages
-	//Initialize references to SnmpMetricGfg into InfluxMeasurementCfg
+	// Initialize references to SnmpMetricGfg into InfluxMeasurementCfg
 	log.Debug("--------------------Initializing Config metrics-------------------")
 	log.Debug("Initializing SNMPMetricconfig...")
 	for mKey, mVal := range cfg.Metrics {
 		err := mVal.Init()
 		if err != nil {
 			log.Warnln("Error in Metric config:", err)
-			//if some error int the format the metric is deleted from the config
+			// if some error int the format the metric is deleted from the config
 			delete(cfg.Metrics, mKey)
 		}
 	}
@@ -172,7 +172,7 @@ func InitMetricsCfg(cfg *DBConfig) error {
 		err := mVal.Init(&cfg.Metrics, cfg.VarCatalog)
 		if err != nil {
 			log.Warnln("Error in Measurement config:", err)
-			//if some error int the format the metric is deleted from the config
+			// if some error int the format the metric is deleted from the config
 			delete(cfg.Metrics, mKey)
 		}
 
@@ -182,4 +182,4 @@ func InitMetricsCfg(cfg *DBConfig) error {
 	return nil
 }
 
-//var DBConfig SQLConfig
+// var DBConfig SQLConfig

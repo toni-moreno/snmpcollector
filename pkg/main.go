@@ -3,17 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"os/signal"
+	"path/filepath"
+	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strconv"
-	"time"
 
 	"github.com/kelseyhightower/envconfig"
 
@@ -50,14 +49,14 @@ func writePIDFile() {
 	}
 
 	// Ensure the required directory structure exists.
-	err := os.MkdirAll(filepath.Dir(pidFile), 0700)
+	err := os.MkdirAll(filepath.Dir(pidFile), 0o700)
 	if err != nil {
 		log.Fatal(3, "Failed to verify pid directory", err)
 	}
 
 	// Retrieve the PID and write it.
 	pid := strconv.Itoa(os.Getpid())
-	if err := ioutil.WriteFile(pidFile, []byte(pid), 0644); err != nil {
+	if err := ioutil.WriteFile(pidFile, []byte(pid), 0o644); err != nil {
 		log.Fatal(3, "Failed to write pidfile", err)
 	}
 }
@@ -79,13 +78,12 @@ func flags() *flag.FlagSet {
 		})
 		fmt.Fprintf(os.Stderr, "\nAll settings can be set in config file: %s\n", configFile)
 		os.Exit(1)
-
 	}
 	return &f
 }
 
 func init() {
-	//Log format
+	// Log format
 	customFormatter := new(logrus.TextFormatter)
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	log.Formatter = customFormatter
@@ -135,16 +133,15 @@ func init() {
 
 	log.Infof("Main agent Logging will be written to %s ", cfg.General.LogMode)
 	if cfg.General.LogMode == "console" {
-		//default if not set
+		// default if not set
 		log.Out = os.Stdout
-
 	} else {
 		if len(cfg.General.LogDir) > 0 {
 			logDir = cfg.General.LogDir
 		}
-		os.Mkdir(logDir, 0755)
-		//Log output
-		f, _ := os.OpenFile(logDir+"/snmpcollector.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+		os.Mkdir(logDir, 0o755)
+		// Log output
+		f, _ := os.OpenFile(logDir+"/snmpcollector.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o644)
 		log.Out = f
 	}
 
@@ -158,23 +155,23 @@ func init() {
 	if len(cfg.General.HomeDir) > 0 {
 		homeDir = cfg.General.HomeDir
 	}
-	//check if exist public dir in home
+	// check if exist public dir in home
 	if _, err := os.Stat(filepath.Join(homeDir, "public")); err != nil {
 		log.Warnf("There is no public (www) directory on [%s] directory", homeDir)
 		if len(homeDir) == 0 {
 			homeDir = appdir
 		}
 	}
-	//needed to create SQLDB when SQLite and debug log
+	// needed to create SQLDB when SQLite and debug log
 	config.SetLogger(log)
 	config.SetDirs(dataDir, logDir, confDir)
-	//needed to log all snmp console related commands
+	// needed to log all snmp console related commands
 	snmp.SetLogger(log)
 	snmp.SetLogDir(logDir)
 
 	output.SetLogger(log)
 	selfmon.SetLogger(log)
-	//devices needs access to all db loaded data
+	// devices needs access to all db loaded data
 	device.SetDBConfig(&agent.DBConfig)
 	device.SetLogDir(logDir)
 
@@ -193,12 +190,11 @@ func init() {
 }
 
 func main() {
-
 	defer func() {
-		//errorLog.Close()
+		// errorLog.Close()
 	}()
 	writePIDFile()
-	//Init BD config
+	// Init BD config
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGABRT, syscall.SIGINT)
 	go func() {
@@ -218,10 +214,8 @@ func main() {
 					log.Infof("Received HUP signal: Trigger a ordered reload (could take some time -- usually Max gathering time form all nodes --)")
 					agent.ReloadConf()
 				}
-
 			}
 		}
-
 	}()
 
 	agent.MainConfig.Database.InitDB()
@@ -231,5 +225,4 @@ func main() {
 	agent.Start()
 
 	webui.WebServer(filepath.Join(homeDir, "public"), httpListen, &agent.MainConfig.HTTP, agent.MainConfig.General.InstanceID)
-
 }

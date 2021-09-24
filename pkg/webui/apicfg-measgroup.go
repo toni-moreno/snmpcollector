@@ -9,7 +9,6 @@ import (
 
 // NewAPICfgMeasGroup MeasGroup API REST creator
 func NewAPICfgMeasGroup(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	m.Group("/api/cfg/measgroup", func() {
@@ -53,7 +52,7 @@ func GetMeasGroup(ctx *Context) {
 	log.Debugf("Getting Meas Group %+v", &cfgarray)
 }
 
-//GetMeasGroupByID --pending--
+// GetMeasGroupByID --pending--
 func GetMeasGroupByID(ctx *Context) {
 	// swagger:operation GET /cfg/measgroup/{id} Config_MeasurementGroup GetMeasGroupByID
 	//---
@@ -121,7 +120,7 @@ func AddMeasGroup(ctx *Context, dev config.MGroupsCfg) {
 		log.Warningf("Error on insert Measurement Group %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return data  or affected
+		// TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
 	}
 }
@@ -165,12 +164,12 @@ func UpdateMeasGroup(ctx *Context, dev config.MGroupsCfg) {
 		log.Warningf("Error on update Measurement Group %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return device data
+		// TODO: review if needed return device data
 		ctx.JSON(200, &dev)
 	}
 }
 
-//DeleteMeasGroup --pending--
+// DeleteMeasGroup --pending--
 func DeleteMeasGroup(ctx *Context) {
 	// swagger:operation DELETE /cfg/measgroup/{id} Config_MeasurementGroup DeleteMeasGroup
 	//---
@@ -207,7 +206,7 @@ func DeleteMeasGroup(ctx *Context) {
 	}
 }
 
-//GetMeasGroupsAffectOnDel --pending--
+// GetMeasGroupsAffectOnDel --pending--
 func GetMeasGroupsAffectOnDel(ctx *Context) {
 	// swagger:operation GET /cfg/measurement/checkondel/{id} Config_MeasurementGroup GetMeasGroupsAffectOnDel
 	//---

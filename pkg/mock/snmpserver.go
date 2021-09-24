@@ -12,9 +12,7 @@ import (
 	"github.com/gosnmp/gosnmp"
 )
 
-var (
-	log *logrus.Logger
-)
+var log *logrus.Logger
 
 // SetLogger xx
 func SetLogger(l *logrus.Logger) {
@@ -71,30 +69,30 @@ func (s *SnmpServer) ResponseForPkt(i *gosnmp.SnmpPacket) (*gosnmp.SnmpPacket, e
 			for _, vw := range s.Want {
 				if strings.HasPrefix(vw.Name, v.Name) {
 					result = append(result, vw)
-
 				}
 			}
 		}
 		result = append(result, gosnmp.SnmpPDU{Name: queryForOid, Type: gosnmp.EndOfMibView, Value: nil})
 		i.Variables = result
 	case gosnmp.SetRequest:
-		//return t.serveSetRequest(response)
+		// return t.serveSetRequest(response)
 		i.PDUType = gosnmp.GetResponse
 	case gosnmp.Trap, gosnmp.SNMPv2Trap, gosnmp.InformRequest:
-		//return t.serveTrap(response)
+		// return t.serveTrap(response)
 	default:
 		return nil, errors.WithStack(ErrUnsupportedOperation)
 	}
 
 	return i, nil
-
 }
 
-var ErrUnsupportedProtoVersion = errors.New("ErrUnsupportedProtoVersion")
-var ErrNoSNMPInstance = errors.New("ErrNoSNMPInstance")
-var ErrUnsupportedOperation = errors.New("ErrUnsupportedOperation")
-var ErrNoPermission = errors.New("ErrNoPermission")
-var ErrUnsupportedPacketData = errors.New("ErrUnsupportedPacketData")
+var (
+	ErrUnsupportedProtoVersion = errors.New("ErrUnsupportedProtoVersion")
+	ErrNoSNMPInstance          = errors.New("ErrNoSNMPInstance")
+	ErrUnsupportedOperation    = errors.New("ErrUnsupportedOperation")
+	ErrNoPermission            = errors.New("ErrNoPermission")
+	ErrUnsupportedPacketData   = errors.New("ErrUnsupportedPacketData")
+)
 
 func (s *SnmpServer) fillErrorPkt(err error, io *gosnmp.SnmpPacket) error {
 	io.PDUType = gosnmp.GetResponse
@@ -135,7 +133,6 @@ func (s *SnmpServer) marshalPkt(pkt *gosnmp.SnmpPacket, err error) ([]byte, erro
 }
 
 func (s *SnmpServer) serve(addr net.Addr, buf []byte) {
-
 	var response []byte
 	var err error
 	vhandle := gosnmp.GoSNMP{}
@@ -209,7 +206,6 @@ func (s *SnmpServer) Start() error {
 		return err
 	}
 	go func() {
-
 		for {
 			if s.getFinish() {
 				return
@@ -232,6 +228,6 @@ func (s *SnmpServer) Start() error {
 // Stop mock server
 func (s *SnmpServer) Stop() error {
 	s.setFinish()
-	//s.quit <- true
+	// s.quit <- true
 	return s.pc.Close()
 }

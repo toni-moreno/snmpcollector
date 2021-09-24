@@ -3,12 +3,12 @@ package output
 import (
 	"fmt"
 	"math/rand"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
-	"net/http"
 
-	"github.com/influxdata/influxdb1-client/v2"
+	client "github.com/influxdata/influxdb1-client/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"

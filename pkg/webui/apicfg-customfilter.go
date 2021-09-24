@@ -9,7 +9,6 @@ import (
 
 // NewAPICfgCustomFilter CustomFilter REST API creator
 func NewAPICfgCustomFilter(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	m.Group("/api/cfg/customfilter", func() {
@@ -53,7 +52,7 @@ func GetCustomFilter(ctx *Context) {
 	log.Debugf("Getting Measurement Filter %+v", &cfgarray)
 }
 
-//GetCustomFilterByID --pending--
+// GetCustomFilterByID --pending--
 func GetCustomFilterByID(ctx *Context) {
 	// swagger:operation GET /cfg/customfilter/{id} Config_CustomFilter GetCustomFilterByID
 	//---
@@ -121,7 +120,7 @@ func AddCustomFilter(ctx *Context, dev config.CustomFilterCfg) {
 		log.Warningf("Error on insert Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return data  or affected
+		// TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
 	}
 }
@@ -165,12 +164,12 @@ func UpdateCustomFilter(ctx *Context, dev config.CustomFilterCfg) {
 		log.Warningf("Error on update Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return device data
+		// TODO: review if needed return device data
 		ctx.JSON(200, &dev)
 	}
 }
 
-//DeleteCustomFilter --pending--
+// DeleteCustomFilter --pending--
 func DeleteCustomFilter(ctx *Context) {
 	// swagger:operation DELETE /cfg/customfilter/{id} Config_CustomFilter DeleteCustomFilter
 	//---
@@ -207,7 +206,7 @@ func DeleteCustomFilter(ctx *Context) {
 	}
 }
 
-//GetCustomFiltersAffectOnDel --pending--
+// GetCustomFiltersAffectOnDel --pending--
 func GetCustomFiltersAffectOnDel(ctx *Context) {
 	// swagger:operation GET /cfg/customfilter/checkondel/{id} Config_CustomFilter GetCustomFiltersAffectOnDel
 	//---

@@ -14,7 +14,7 @@ type GeneralConfig struct {
 	LogMode    string `mapstructure:"log_mode" envconfig:"SNMPCOL_GENERAL_LOG_MODE"`
 }
 
-//DatabaseCfg de configuration for the database
+// DatabaseCfg de configuration for the database
 type DatabaseCfg struct {
 	numChanges     int64  `mapstructure:"-" `
 	Type           string `mapstructure:"type" envconfig:"SNMPCOL_DATABASE_DRIVER_TYPE"`
@@ -32,7 +32,7 @@ type DatabaseCfg struct {
 	x              *xorm.Engine
 }
 
-//SelfMonConfig configuration for self monitoring
+// SelfMonConfig configuration for self monitoring
 type SelfMonConfig struct {
 	Enabled           bool     `mapstructure:"enabled" envconfig:"SNMPCOL_SELFMON_ENABLED"`
 	Freq              int      `mapstructure:"freq" envconfig:"SNMPCOL_SELFMON_FREQ"`
@@ -41,7 +41,7 @@ type SelfMonConfig struct {
 	ExtraTags         []string `mapstructure:"extratags" envconfig:"SNMPCOL_SELFMON_EXTRATAGS"`
 }
 
-//HTTPConfig has webserver config options
+// HTTPConfig has webserver config options
 // Port should be deprecated from version >= 0.8.1
 type HTTPConfig struct {
 	Port          int    `mapstructure:"port"  envconfig:"SNMPCOL_HTTP_PORT"`
@@ -54,7 +54,7 @@ type HTTPConfig struct {
 	CookieID      string `mapstructure:"cookieid" envconfig:"SNMPCOL_HTTP_COOKIE_ID"`
 }
 
-//Config Main Configuration struct
+// Config Main Configuration struct
 type Config struct {
 	General  GeneralConfig `mapstructure:"general"`
 	Database DatabaseCfg   `mapstructure:"database"`
@@ -62,4 +62,4 @@ type Config struct {
 	HTTP     HTTPConfig    `mapstructure:"http"`
 }
 
-//var MainConfig Config
+// var MainConfig Config

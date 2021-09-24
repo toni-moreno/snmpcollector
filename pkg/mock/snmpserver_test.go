@@ -52,8 +52,8 @@ func ExampleServerClientGet() {
 	}
 
 	// Output:
-	//Result for [.1.3.6.1.2.1.1.4.0]:  55
-	//Result for [.1.3.6.1.2.1.1.7.0]:  56
+	// Result for [.1.3.6.1.2.1.1.4.0]:  55
+	// Result for [.1.3.6.1.2.1.1.7.0]:  56
 }
 
 func ExampleServerClientWalk() {
@@ -116,10 +116,10 @@ func ExampleServerClientWalk() {
 	}
 
 	// Output:
-	//Result for [.1.2.1]:  eth0
-	//Result for [.1.2.2]:  eth1
-	//Result for [.1.2.3]:  eth2
-	//Result for [.1.2.4]:  eth3
+	// Result for [.1.2.1]:  eth0
+	// Result for [.1.2.2]:  eth1
+	// Result for [.1.2.3]:  eth2
+	// Result for [.1.2.4]:  eth3
 }
 
 func ExampleServerClientBulkWalk() {
@@ -178,8 +178,8 @@ func ExampleServerClientBulkWalk() {
 	}
 
 	// Output:
-	//Result for [.1.1.1]:  51
-	//Result for [.1.1.2]:  52
-	//Result for [.1.1.3]:  53
-	//Result for [.1.1.4]:  54
+	// Result for [.1.1.1]:  51
+	// Result for [.1.1.2]:  52
+	// Result for [.1.1.3]:  53
+	// Result for [.1.1.4]:  54
 }

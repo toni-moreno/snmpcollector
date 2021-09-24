@@ -227,7 +227,7 @@ func initSelfMonitoring(idb map[string]*output.InfluxDB) {
 
 	if MainConfig.Selfmon.Enabled {
 		if val, ok := idb["default"]; ok {
-			//only executed if a "default" influxdb exist
+			// only executed if a "default" influxdb exist
 			val.Init()
 			val.StartSender(&senderWg)
 
@@ -236,7 +236,7 @@ func initSelfMonitoring(idb map[string]*output.InfluxDB) {
 			selfmonProc.SetOutput(val)
 
 			log.Printf("SELFMON enabled %+v", MainConfig.Selfmon)
-			//Begin the statistic reporting
+			// Begin the statistic reporting
 			selfmonProc.StartGather(&gatherWg)
 		} else {
 			MainConfig.Selfmon.Enabled = false
@@ -255,7 +255,6 @@ func IsDeviceInRuntime(id string) bool {
 		return true
 	}
 	return false
-
 }
 
 // DeleteDeviceInRuntime removes the device `id` from the runtime array.
@@ -311,7 +310,6 @@ func Start() {
 
 // End stops all devices polling.
 func End() (time.Duration, error) {
-
 	start := time.Now()
 	log.Infof("END: begin device Gather processes stop... at %s", start.String())
 	// stop all device processes
@@ -327,8 +325,8 @@ func End() (time.Duration, error) {
 	log.Info("END: releasing Selfmonitoring Resources")
 	selfmonProc.End()
 	log.Info("END: begin sender processes stop...")
-	//log.Info("DEBUG Gather WAIT %+v", GatherWg)
-	//log.Info("DEBUG SENDER WAIT %+v", senderWg)
+	// log.Info("DEBUG Gather WAIT %+v", GatherWg)
+	// log.Info("DEBUG SENDER WAIT %+v", senderWg)
 	// stop all Output Emitter
 	StopInfluxOut(influxdb)
 	log.Info("END: waiting for all Sender goroutines stop..")

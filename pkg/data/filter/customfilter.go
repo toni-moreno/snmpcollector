@@ -49,10 +49,9 @@ func (cf *CustomFilter) MapLabels(AllIndexedLabels map[string]string) map[string
 					// map[kl]vf (alias to key of the label
 					curIndexedLabels[kl] = vf
 				} else {
-					//map[kl]vl (original name)
+					// map[kl]vl (original name)
 					curIndexedLabels[kl] = vl
 				}
-
 			}
 		}
 	}

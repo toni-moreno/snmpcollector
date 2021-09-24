@@ -7,11 +7,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	log *logrus.Logger
-)
+var log *logrus.Logger
 
-//mutex for devices m
+// mutex for devices m
 
 // SetLogger set log output
 func SetLogger(l *logrus.Logger) {
@@ -88,7 +86,7 @@ func (b *Bus) Leave(leaving *Node) error {
 		return errors.New("Could not find provided member for removal")
 	}
 	b.nodes = append(b.nodes[:nodeIndex], b.nodes[nodeIndex+1:]...)
-	//leaving.close <- true
+	// leaving.close <- true
 
 	return nil
 }
@@ -100,7 +98,6 @@ func (b *Bus) Stop() {
 
 // Start checks for some message in the broadcast queue pending to send
 func (b *Bus) Start() {
-
 	for {
 		select {
 		case received := <-b.in:

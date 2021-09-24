@@ -30,11 +30,12 @@ func (dbc *DatabaseCfg) resetChanges() {
 func (dbc *DatabaseCfg) addChanges(n int64) {
 	atomic.AddInt64(&dbc.numChanges, n)
 }
+
 func (dbc *DatabaseCfg) getChanges() int64 {
 	return atomic.LoadInt64(&dbc.numChanges)
 }
 
-//DbObjAction measurement groups to assign to devices
+// DbObjAction measurement groups to assign to devices
 type DbObjAction struct {
 	Type     string
 	TypeDesc string
@@ -42,7 +43,7 @@ type DbObjAction struct {
 	Action   string
 }
 
-//InitDB initialize de BD configuration
+// InitDB initialize de BD configuration
 func (dbc *DatabaseCfg) InitDB() error {
 	// Create ORM engine and database
 	var err error
@@ -82,7 +83,7 @@ func (dbc *DatabaseCfg) InitDB() error {
 			protocol = "unix"
 		}
 		datasource = fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8", dbc.User, dbc.Password, protocol, dbc.Host, dbc.Name)
-		//datasource = dbc.User + ":" + dbc.Pass + "@" + dbc.Host + "/" + dbc.Name + "?charset=utf8"
+		// datasource = dbc.User + ":" + dbc.Pass + "@" + dbc.Host + "/" + dbc.Name + "?charset=utf8"
 	default:
 		log.Errorf("unknown db  type %s", dbc.Type)
 		return nil
@@ -97,7 +98,6 @@ func (dbc *DatabaseCfg) InitDB() error {
 		log.Infof("Enabled SQL logging into: %s", dbc.LogMode)
 		dbc.x.ShowSQL(true)
 		if dbc.LogMode == "console" {
-
 			dbc.x.SetLogger(xorm.NewSimpleLogger(os.Stdout))
 		} else {
 			filename := "sql.log"
@@ -188,10 +188,10 @@ func CatalogVar2Map(cv map[string]*VarCatalogCfg) map[string]interface{} {
 	return m
 }
 
-//LoadDbConfig get data from database
+// LoadDbConfig get data from database
 func (dbc *DatabaseCfg) LoadDbConfig(cfg *DBConfig) {
 	var err error
-	//Load Global Variables
+	// Load Global Variables
 	VarCatalog := make(map[string]*VarCatalogCfg)
 	VarCatalog, err = dbc.GetVarCatalogCfgMap("")
 	if err != nil {
@@ -200,38 +200,38 @@ func (dbc *DatabaseCfg) LoadDbConfig(cfg *DBConfig) {
 	cfg.VarCatalog = make(map[string]interface{}, len(VarCatalog))
 	cfg.VarCatalog = CatalogVar2Map(VarCatalog)
 
-	//Load Influxdb databases
+	// Load Influxdb databases
 	cfg.Influxdb, err = dbc.GetInfluxCfgMap("")
 	if err != nil {
 		log.Warningf("Some errors on get Influx db's :%v", err)
 	}
 
-	//Load metrics
+	// Load metrics
 	cfg.Metrics, err = dbc.GetSnmpMetricCfgMap("")
 	if err != nil {
 		log.Warningf("Some errors on get Metrics  :%v", err)
 	}
 
-	//Load Measurements
+	// Load Measurements
 	cfg.Measurements, err = dbc.GetMeasurementCfgMap("")
 	if err != nil {
 		log.Warningf("Some errors on get Measurements  :%v", err)
 	}
 
-	//Load Measurement Filters
+	// Load Measurement Filters
 	cfg.MFilters, err = dbc.GetMeasFilterCfgMap("")
 	if err != nil {
 		log.Warningf("Some errors on get Measurement Filters  :%v", err)
 	}
 
-	//Load measourement Groups
+	// Load measourement Groups
 
 	cfg.GetGroups, err = dbc.GetMGroupsCfgMap("")
 	if err != nil {
 		log.Warningf("Some errors on get Measurements Groups  :%v", err)
 	}
 
-	//Device
+	// Device
 
 	cfg.SnmpDevice, err = dbc.GetSnmpDeviceCfgMap("")
 	if err != nil {

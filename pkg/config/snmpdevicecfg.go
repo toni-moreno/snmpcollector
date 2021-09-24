@@ -43,7 +43,7 @@ func (dbc *DatabaseCfg) GetSnmpDeviceCfgMap(filter string) (map[string]*SnmpDevi
 func (dbc *DatabaseCfg) GetSnmpDeviceCfgArray(filter string) ([]*SnmpDeviceCfg, error) {
 	var err error
 	var devices []*SnmpDeviceCfg
-	//Get Only data for selected devices
+	// Get Only data for selected devices
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&devices); err != nil {
 			log.Warnf("Fail to get SnmpDevicesCfg  data filteter with %s : %v\n", filter, err)
@@ -56,15 +56,15 @@ func (dbc *DatabaseCfg) GetSnmpDeviceCfgArray(filter string) ([]*SnmpDeviceCfg, 
 		}
 	}
 
-	//Asign Groups to devices.
+	// Asign Groups to devices.
 	var snmpdevmgroups []*SnmpDevMGroups
 	if err = dbc.x.Find(&snmpdevmgroups); err != nil {
 		log.Warnf("Fail to get SnmpDevices and Measurement groups relationship data: %v\n", err)
 		return devices, err
 	}
 
-	//Load Measurements and metrics relationship
-	//We assign field metric ID to each measurement
+	// Load Measurements and metrics relationship
+	// We assign field metric ID to each measurement
 	for _, mVal := range devices {
 		for _, mg := range snmpdevmgroups {
 			if mg.IDSnmpDev == mVal.ID {
@@ -73,15 +73,15 @@ func (dbc *DatabaseCfg) GetSnmpDeviceCfgArray(filter string) ([]*SnmpDeviceCfg, 
 		}
 	}
 
-	//Asign Filters to devices.
+	// Asign Filters to devices.
 	var snmpdevfilters []*SnmpDevFilters
 	if err = dbc.x.Find(&snmpdevfilters); err != nil {
 		log.Warnf("Fail to get SnmpDevices and Filter relationship data: %v\n", err)
 		return devices, err
 	}
 
-	//Load Measurements and metrics relationship
-	//We assign field metric ID to each measurement
+	// Load Measurements and metrics relationship
+	// We assign field metric ID to each measurement
 	for _, mVal := range devices {
 		for _, mf := range snmpdevfilters {
 			if mf.IDSnmpDev == mVal.ID {
@@ -108,7 +108,7 @@ func (dbc *DatabaseCfg) AddSnmpDeviceCfg(dev SnmpDeviceCfg) (int64, error) {
 		session.Rollback()
 		return 0, err
 	}
-	//Measurement Groups
+	// Measurement Groups
 	for _, mg := range dev.MeasurementGroups {
 
 		mgstruct := SnmpDevMGroups{
@@ -121,7 +121,7 @@ func (dbc *DatabaseCfg) AddSnmpDeviceCfg(dev SnmpDeviceCfg) (int64, error) {
 			return 0, err
 		}
 	}
-	//Filters
+	// Filters
 	for _, mf := range dev.MeasFilters {
 		mfstruct := SnmpDevFilters{
 			IDSnmpDev: dev.ID,
@@ -153,20 +153,20 @@ func (dbc *DatabaseCfg) DelSnmpDeviceCfg(id string) (int64, error) {
 		return 0, err
 	}
 	defer session.Close()
-	//first deleting references in SnmpDevMGroups SnmpDevFilters
+	// first deleting references in SnmpDevMGroups SnmpDevFilters
 	// Measurement Groups
 	affectedmg, err = session.Where("id_snmpdev='" + id + "'").Delete(&SnmpDevMGroups{})
 	if err != nil {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Delete Device with id on delete SnmpDevMGroups with id: %s, error: %s", id, err)
 	}
-	//Filters{}
+	// Filters{}
 	affectedft, err = session.Where("id_snmpdev='" + id + "'").Delete(&SnmpDevFilters{})
 	if err != nil {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Delete Device with id on delete SnmpDevFilters with id: %s, error: %s", id, err)
 	}
-	//CustomFilter Reladed Dev
+	// CustomFilter Reladed Dev
 	affectedcf, err = session.Where("related_dev='" + id + "'").Cols("related_dev").Update(&CustomFilterCfg{})
 	if err != nil {
 		session.Rollback()
@@ -198,13 +198,13 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 		return 0, err
 	}
 	defer session.Close()
-	//Deleting first all relations
+	// Deleting first all relations
 	deletemg, err = session.Where("id_snmpdev='" + id + "'").Delete(&SnmpDevMGroups{})
 	if err != nil {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Delete Device with id on delete SnmpDevMGroups with id: %s, error: %s", id, err)
 	}
-	//Filters{}
+	// Filters{}
 	deleteft, err = session.Where("id_snmpdev='" + id + "'").Delete(&SnmpDevFilters{})
 	if err != nil {
 		session.Rollback()
@@ -217,7 +217,7 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 		return 0, fmt.Errorf("Error Update SnmpDevice id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 	}
 
-	//Measurement Groups
+	// Measurement Groups
 	for _, mg := range dev.MeasurementGroups {
 		mgstruct := SnmpDevMGroups{
 			IDSnmpDev:   dev.ID,
@@ -225,7 +225,7 @@ func (dbc *DatabaseCfg) UpdateSnmpDeviceCfg(id string, dev SnmpDeviceCfg) (int64
 		}
 		newmg, err = session.Insert(&mgstruct)
 	}
-	//Filters
+	// Filters
 	for _, mf := range dev.MeasFilters {
 		mfstruct := SnmpDevFilters{
 			IDSnmpDev: dev.ID,

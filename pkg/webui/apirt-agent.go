@@ -14,7 +14,6 @@ import (
 
 // NewAPIRtAgent Runtime Agent REST API creator
 func NewAPIRtAgent(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	m.Group("/api/rt/agent", func() {
@@ -75,7 +74,7 @@ func AgentShutdown(ctx *Context) {
 	os.Exit(0)
 }
 
-//PingSNMPDevice xx
+// PingSNMPDevice xx
 func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	// swagger:operation POST /rt/agent/snmpconsole/ping Runtime_SNMP_Console PingSNMPDevice
 	//---

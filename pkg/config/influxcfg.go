@@ -43,7 +43,7 @@ func (dbc *DatabaseCfg) GetInfluxCfgMap(filter string) (map[string]*InfluxCfg, e
 func (dbc *DatabaseCfg) GetInfluxCfgArray(filter string) ([]*InfluxCfg, error) {
 	var err error
 	var devices []*InfluxCfg
-	//Get Only data for selected devices
+	// Get Only data for selected devices
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&devices); err != nil {
 			log.Warnf("Fail to get InfluxCfg  data filteter with %s : %v\n", filter, err)
@@ -74,7 +74,7 @@ func (dbc *DatabaseCfg) AddInfluxCfg(dev InfluxCfg) (int64, error) {
 		session.Rollback()
 		return 0, err
 	}
-	//no other relation
+	// no other relation
 	err = session.Commit()
 	if err != nil {
 		return 0, err
@@ -128,7 +128,7 @@ func (dbc *DatabaseCfg) UpdateInfluxCfg(id string, dev InfluxCfg) (int64, error)
 		return 0, err
 	}
 	defer session.Close()
-	if id != dev.ID { //ID has been changed
+	if id != dev.ID { // ID has been changed
 		affecteddev, err = session.Where("outdb='" + id + "'").Cols("outdb").Update(&SnmpDeviceCfg{OutDB: dev.ID})
 		if err != nil {
 			session.Rollback()
@@ -168,7 +168,6 @@ func (dbc *DatabaseCfg) GetInfluxCfgAffectOnDel(id string) ([]*DbObjAction, erro
 			ObID:     val.ID,
 			Action:   "Reset InfluxDB Server from SNMPDevice to 'default' InfluxDB Server",
 		})
-
 	}
 	return obj, nil
 }

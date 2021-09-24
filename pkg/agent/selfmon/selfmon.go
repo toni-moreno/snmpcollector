@@ -7,37 +7,35 @@ import (
 	"sync"
 	"time"
 
-	"github.com/influxdata/influxdb1-client/v2"
+	client "github.com/influxdata/influxdb1-client/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 )
 
-var (
-	log *logrus.Logger
-)
+var log *logrus.Logger
 
 // SetLogger set log output
 func SetLogger(l *logrus.Logger) {
 	log = l
 }
 
-//SelfMon configuration for self monitoring
+// SelfMon configuration for self monitoring
 type SelfMon struct {
 	cfg                 *config.SelfMonConfig
 	Influx              *output.InfluxDB
-	OutDBs              map[string]*output.InfluxDB //needed to get statistics
+	OutDBs              map[string]*output.InfluxDB // needed to get statistics
 	runtimeStatsRunning bool
 	TagMap              map[string]string
 	bps                 *client.BatchPoints
 	chExit              chan bool
 	mutex               sync.Mutex
-	RtMeasName          string //devices measurement name
-	GvmMeasName         string //Self agent GoVirtualMachine measurement name
-	OutMeasName         string //Output DB's measurement name
+	RtMeasName          string // devices measurement name
+	GvmMeasName         string // Self agent GoVirtualMachine measurement name
+	OutMeasName         string // Output DB's measurement name
 	initialized         bool
 	imutex              sync.Mutex
-	//memory for GVM data colletion
+	// memory for GVM data colletion
 	lastSampleTime time.Time
 	lastPauseNs    uint64
 	lastNumGc      uint32
@@ -56,7 +54,7 @@ func (sm *SelfMon) Init() {
 	}
 	sm.OutDBs = make(map[string]*output.InfluxDB)
 
-	//Init extra tags
+	// Init extra tags
 	if len(sm.cfg.ExtraTags) > 0 {
 		sm.TagMap = make(map[string]string)
 		for _, tag := range sm.cfg.ExtraTags {
@@ -84,7 +82,6 @@ func (sm *SelfMon) Init() {
 	}
 
 	sm.chExit = make(chan bool)
-
 }
 
 // SetOutDB set the output devices for query its statistics
@@ -122,7 +119,7 @@ func (sm *SelfMon) SetOutput(val *output.InfluxDB) {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
 	sm.Influx = val
-	//Creating a bachpoint to begin writing data
+	// Creating a bachpoint to begin writing data
 	sm.bps, _ = sm.Influx.BP()
 }
 
@@ -130,7 +127,7 @@ func (sm *SelfMon) sendData() {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
 	sm.Influx.Send(sm.bps)
-	//BatchPoint Init again
+	// BatchPoint Init again
 	sm.bps, _ = sm.Influx.BP()
 }
 
@@ -149,18 +146,18 @@ func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface
 	}
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
-	//Selfmon tags
+	// Selfmon tags
 	tagMap := make(map[string]string)
 	for k, v := range sm.TagMap {
 		tagMap[k] = v
 	}
-	//device user configured extra tags (only if inherited)
+	// device user configured extra tags (only if inherited)
 	if sm.cfg.InheritDeviceTags {
 		for k, v := range devtags {
 			tagMap[k] = v
 		}
 	}
-	//status tags for device
+	// status tags for device
 	for k, v := range statustags {
 		tagMap[k] = v
 	}
@@ -211,7 +208,6 @@ func (sm *SelfMon) StopGather() {
 }
 
 func (sm *SelfMon) getOutDBStats() {
-
 	now := time.Now()
 
 	for dbname, db := range sm.OutDBs {
@@ -250,14 +246,12 @@ func (sm *SelfMon) getOutDBStats() {
 			return
 		}
 
-		//add data to the batchpoint
+		// add data to the batchpoint
 		sm.addDataPoint(pt)
 	}
-
 }
 
 func (sm *SelfMon) getRuntimeStats() {
-
 	nsInMs := float64(time.Millisecond)
 	memStats := &runtime.MemStats{}
 	runtime.ReadMemStats(memStats)
@@ -273,22 +267,22 @@ func (sm *SelfMon) getRuntimeStats() {
 	fields["mem.frees"] = float64(memStats.Frees)
 	fields["mem.sys"] = float64(memStats.Sys)
 
-	//HEAP
+	// HEAP
 
-	fields["mem.heapAlloc"] = float64(memStats.HeapAlloc)       //HeapAlloc is bytes of allocated heap objects.
+	fields["mem.heapAlloc"] = float64(memStats.HeapAlloc)       // HeapAlloc is bytes of allocated heap objects.
 	fields["mem.heapSys"] = float64(memStats.HeapSys)           // HeapSys is bytes of heap memory obtained from the OS.
 	fields["mem.heapIdle"] = float64(memStats.HeapIdle)         // HeapIdle is bytes in idle (unused) spans.
 	fields["mem.heapInUse"] = float64(memStats.HeapInuse)       // HeapInuse is bytes in in-use spans.
 	fields["mem.heapReleased"] = float64(memStats.HeapReleased) // HeapReleased is bytes of physical memory returned to the OS.
 	fields["mem.heapObjects"] = float64(memStats.HeapReleased)  // HeapObjects is the number of allocated heap objects.
 
-	//STACK/MSPAN/MCACHE
+	// STACK/MSPAN/MCACHE
 
 	fields["mem.stackInuse"] = float64(memStats.StackInuse)   // StackInuse is bytes in stack spans.
 	fields["mem.mSpanInuse"] = float64(memStats.MSpanInuse)   // MSpanInuse is bytes of allocated mspan structures.
 	fields["mem.mCacheInuse"] = float64(memStats.MCacheInuse) // MCacheInuse is bytes of allocated mcache structures.
 
-	//Pause Count
+	// Pause Count
 	fields["gc.total_pause_ns"] = float64(memStats.PauseTotalNs) / nsInMs
 
 	if sm.lastPauseNs > 0 {
@@ -300,7 +294,7 @@ func (sm *SelfMon) getRuntimeStats() {
 	}
 	sm.lastPauseNs = memStats.PauseTotalNs
 
-	//GC Count
+	// GC Count
 	countGc := int(memStats.NumGC - sm.lastNumGc)
 	if sm.lastNumGc > 0 {
 		diff := float64(countGc)
@@ -322,9 +316,8 @@ func (sm *SelfMon) getRuntimeStats() {
 		return
 	}
 
-	//add data to the batchpoint
+	// add data to the batchpoint
 	sm.addDataPoint(pt)
-
 }
 
 func (sm *SelfMon) reportStats(wg *sync.WaitGroup) {
@@ -335,18 +328,18 @@ func (sm *SelfMon) reportStats(wg *sync.WaitGroup) {
 	s := time.Tick(time.Duration(sm.cfg.Freq) * time.Second)
 	sm.lastSampleTime = time.Now()
 	for {
-		//Get BVM stats
+		// Get BVM stats
 		sm.getRuntimeStats()
 		//
 		sm.getOutDBStats()
-		//BatchPoint Send
+		// BatchPoint Send
 		sm.sendData()
 
 	LOOP:
 		for {
 			select {
 			case <-s:
-				//log.Infof("SELFMON: breaking LOOP  ")
+				// log.Infof("SELFMON: breaking LOOP  ")
 				break LOOP
 			case <-sm.chExit:
 				log.Infof("SELFMON: EXIT from SelfMonitoring Gather process ")
@@ -355,5 +348,4 @@ func (sm *SelfMon) reportStats(wg *sync.WaitGroup) {
 			}
 		}
 	}
-
 }

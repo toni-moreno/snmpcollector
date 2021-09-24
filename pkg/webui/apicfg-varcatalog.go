@@ -9,7 +9,6 @@ import (
 
 // NewAPICfgVarCatalog VarCatalog API REST creator
 func NewAPICfgVarCatalog(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	m.Group("/api/cfg/varcatalog", func() {
@@ -53,7 +52,7 @@ func GetVarCatalog(ctx *Context) {
 	log.Debugf("Getting Gloval Variable s %+v", &cfgarray)
 }
 
-//GetVarCatalogByID --pending--
+// GetVarCatalogByID --pending--
 func GetVarCatalogByID(ctx *Context) {
 	// swagger:operation GET /cfg/varcatalog/{id}  Config_VarCat GetVarCatalogByID
 	//---
@@ -121,7 +120,7 @@ func AddVarCatalog(ctx *Context, dev config.VarCatalogCfg) {
 		log.Warningf("Error on insert new Global Variable %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return data  or affected
+		// TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
 	}
 }
@@ -164,7 +163,7 @@ func UpdateVarCatalog(ctx *Context, dev config.VarCatalogCfg) {
 	if err != nil {
 		log.Warningf("Error on update Global Variable %s  , affected : %+v , error: %s", dev.ID, affected, err)
 	} else {
-		//TODO: review if needed return device data
+		// TODO: review if needed return device data
 		ctx.JSON(200, &dev)
 	}
 }
@@ -205,7 +204,7 @@ func DeleteVarCatalog(ctx *Context) {
 	}
 }
 
-//GetVarCatalogAffectOnDel --pending--
+// GetVarCatalogAffectOnDel --pending--
 func GetVarCatalogAffectOnDel(ctx *Context) {
 	// swagger:operation GET /cfg/varcatalog/checkondel/{id} Config_VarCat GetVarCatalogAffectOnDel
 	//---
