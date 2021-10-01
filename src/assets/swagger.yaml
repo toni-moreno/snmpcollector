@@ -582,13 +582,13 @@ info:
   contact:
     email: toni.moreno@gmail.com
     name: Toni Moreno
-    url: http://snmpcollector.io
+    url: http://snmpcollector.org
   description: Documentation of SnmpCollector API, runtime, and config operations.
   license:
     name: MIT
     url: http://opensource.org/licenses/MIT
   title: SnmpCollector
-  version: 1.0.0
+  version: 0.10.1 
 paths:
   /cfg/customfilter:
     get:

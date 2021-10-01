@@ -115,7 +115,7 @@ import { SwaggerUiComponent} from './swagger-ui/swagger-ui.component';
     TabsModule.forRoot(),
     BsDropdownModule.forRoot(),
     Ng2TableModule,
-    RouterModule.forRoot(AppRoutes)
+    RouterModule.forRoot(AppRoutes,{ useHash: true })
   ],
   providers: [
     WindowRef,
@@ -123,6 +123,7 @@ import { SwaggerUiComponent} from './swagger-ui/swagger-ui.component';
     ValidationService,
     BlockUIService
   ],
-  entryComponents: [BlockUIComponent]
+  entryComponents: [BlockUIComponent],
+  exports: [SwaggerUiComponent]
 })
 export class AppModule {}
