@@ -1,7 +1,6 @@
 package config
 
 // SnmpDeviceCfg contains all snmp related device definitions
-// swagger:model SnmpDeviceCfg
 type SnmpDeviceCfg struct {
 	ID string `xorm:"'id' unique" binding:"Required"`
 	//snmp connection config
@@ -49,7 +48,6 @@ type SnmpDeviceCfg struct {
 }
 
 // InfluxCfg is the main configuration for any InfluxDB TSDB
-// swagger:model InfluxCfg
 type InfluxCfg struct {
 	ID                 string `xorm:"'id' unique" binding:"Required"`
 	Host               string `xorm:"host" binding:"Required"`
@@ -70,8 +68,7 @@ type InfluxCfg struct {
 	Description        string `xorm:"description"`
 }
 
-// MeasFilterCfg the filter configuration
-// swagger:model MeasFilterCfg
+//MeasFilterCfg the filter configuration
 type MeasFilterCfg struct {
 	ID               string `xorm:"'id' unique" binding:"Required"`
 	IDMeasurementCfg string `xorm:"id_measurement_cfg"`
@@ -98,7 +95,6 @@ type CustomFilterItems struct {
 }
 
 // CustomFilterCfg table with user custom choosed indexes
-// swagger:model CustomFilterCfg
 type CustomFilterCfg struct {
 	ID          string `xorm:"'id' unique" binding:"Required"`
 	Description string `xorm:"description"`
@@ -117,7 +113,6 @@ type SnmpDevFilters struct {
 }
 
 //MGroupsCfg measurement groups to assign to devices
-// swagger:model MGroupsCfg
 type MGroupsCfg struct {
 	ID           string   `xorm:"'id' unique" binding:"Required"`
 	Measurements []string `xorm:"-"`

@@ -55,8 +55,7 @@ func (c ConversionMode) GetString() string {
 	return ""
 }
 
-// SnmpMetricCfg Metric config
-// swagger:model SnmpMetricCfg
+//SnmpMetricCfg Metric config
 type SnmpMetricCfg struct {
 	ID          string         `xorm:"'id' unique" binding:"Required"` //name of the key in the config array
 	FieldName   string         `xorm:"field_name" binding:"Required"`

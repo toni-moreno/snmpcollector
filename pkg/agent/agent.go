@@ -24,18 +24,12 @@ var (
 	BuildStamp string
 )
 
-// swagger:model RInfo
-// RInfo contains the agent release and version information.
+// RInfo contains the agent's release and version information.
 type RInfo struct {
-	// InstanceID the unique name identificator for this agent
 	InstanceID string
-	// Version is the app X.Y.Z version
-	Version string
-	// Commit is the git commit sha1
-	Commit string
-	// Branch is the git branch
-	Branch string
-	// BuildStamp is the build timestamp
+	Version    string
+	Commit     string
+	Branch     string
 	BuildStamp string
 }
 

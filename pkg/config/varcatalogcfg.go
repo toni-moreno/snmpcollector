@@ -6,7 +6,6 @@ import (
 )
 
 // VarCatalogCfg is the main configuration for any InfluxDB TSDB
-// swagger:model VarCatalogCfg
 type VarCatalogCfg struct {
 	// Variable Name unique
 	ID          string `xorm:"'id' unique" binding:"Required"`

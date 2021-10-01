@@ -49,7 +49,6 @@
     "ngx-bootstrap": "1.9.3",
     "reflect-metadata": "~0.1.8",
     "rxjs": "5.4.3",
-    "swagger-ui-dist": "^3.45.0",
     "ts-helpers": "^1.1.1",
     "zone.js": "0.8.17"
   },
