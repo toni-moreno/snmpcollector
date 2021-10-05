@@ -5,9 +5,9 @@
 //     Schemes: http, https
 //
 //     BasePath: /api
-//     Version: 1.0.0
-//	   License: MIT http://opensource.org/licenses/MIT
-//     Contact: Toni Moreno<toni.moreno@gmail.com> http://snmpcollector.io
+//     Version: 0.10.1
+//     License: MIT http://opensource.org/licenses/MIT
+//     Contact: Toni Moreno<toni.moreno@gmail.com> http://snmpcollector.org
 //     Security:
 //     - basic
 //

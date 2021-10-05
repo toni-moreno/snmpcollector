@@ -3,9 +3,11 @@
 ### New Features
 
 * Added swagger api doc
+* Now SNMPCollector URL's use hash(#) for all UI accesses ie: `http(s)://my_snmpcollector_engine/#/home`
 
 ### Fixes
 
+* Fix #499
 * Fix blocking API requests
 * fix #495
 * security fix for CVE-2020-12666
