@@ -7,6 +7,7 @@ import { MeasGroupService } from '../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
 import { VarCatalogService } from '../varcatalog/varcatalogcfg.service';
 import { ValidationService } from '../common/validation.service';
+import { PollerLocationService } from '../pollerlocations/pollerlocations.service';
 import { Observable } from 'rxjs/Rx';
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 import { BlockUIService } from '../common/blockui/blockui-service';
@@ -30,7 +31,7 @@ declare var _:any;
 
 @Component({
   selector: 'snmpdevs',
-  providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService, VarCatalogService,BlockUIService],
+  providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService, PollerLocationService, VarCatalogService, BlockUIService],
   templateUrl: './snmpdeviceeditor.html',
   styleUrls: ['../css/component-styles.css']
 })
@@ -60,11 +61,13 @@ export class SnmpDeviceCfgComponent {
   measfilters: Array<any>;
   measgroups: Array<any>;
   varcatalogs: Array<any>;
+  pollerlocations: Array<any>;
   filteroptions: any;
   selectgroups: IMultiSelectOption[] = [];
   selectfilters: IMultiSelectOption[] = [];
   selectinfluxservers: IMultiSelectOption[] = [];
   selectvarcatalogs: IMultiSelectOption[] = [];
+  selectpollerlocations: IMultiSelectOption[] = [];
   private mySettingsInflux: IMultiSelectSettings = {
       singleSelect: true,
   };
@@ -98,7 +101,16 @@ export class SnmpDeviceCfgComponent {
   selectedVars: Array<any> = [];
   public extraActions: any = ExtraActions;
 
-  constructor(public snmpDeviceService: SnmpDeviceService, public varCatalogService: VarCatalogService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService,  public exportServiceCfg : ExportServiceCfg, builder: FormBuilder, private _blocker: BlockUIService) {
+  constructor(
+    public snmpDeviceService: SnmpDeviceService,
+    public varCatalogService: VarCatalogService,
+    public influxserverDeviceService: InfluxServerService,
+    public measgroupsDeviceService: MeasGroupService,
+    public measfiltersDeviceService: MeasFilterService,
+    public pollerlocationsService: PollerLocationService,
+    public exportServiceCfg: ExportServiceCfg,
+    builder: FormBuilder, private _blocker: BlockUIService
+  ) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -132,7 +144,8 @@ export class SnmpDeviceCfgComponent {
       Freq: [this.snmpdevForm ? this.snmpdevForm.value.Freq : 60, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
       UpdateFltFreq: [this.snmpdevForm ? this.snmpdevForm.value.UpdateFltFreq : 60, Validators.compose([Validators.required, ValidationService.uintegerAndLessOneValidator])],
       ConcurrentGather: [this.snmpdevForm ? this.snmpdevForm.value.ConcurrentGather : 'true', Validators.required],
-      OutDB: [this.snmpdevForm ? this.snmpdevForm.value.OutDB :  '', Validators.required],
+      Location: [this.snmpdevForm ? this.snmpdevForm.value.Location : '', Validators.required],
+      OutDB: [this.snmpdevForm ? this.snmpdevForm.value.OutDB : '', Validators.required],
       LogLevel: [this.snmpdevForm ? this.snmpdevForm.value.LogLevel : 'info', Validators.required],
       SnmpDebug: [this.snmpdevForm ? this.snmpdevForm.value.SnmpDebug : 'false', Validators.required],
       DeviceTagName: [this.snmpdevForm ? this.snmpdevForm.value.DeviceTagName : '', Validators.required],
@@ -200,6 +213,8 @@ export class SnmpDeviceCfgComponent {
       case '2c':
       controlArray.push({'ID': 'Community', 'defVal' : 'public', 'Validators' : Validators.required });
       break;
+      case 'Location':
+        controlArray.push({ 'ID': 'Location', 'defVal': '', 'Validators': Validators.required });
       default: //Gauge32
       controlArray.push({'ID': 'SnmpVersion', 'defVal' : '2c', 'Validators' : Validators.required });
       controlArray.push({'ID': 'Community', 'defVal' : 'public', 'Validators' : Validators.required });
@@ -383,6 +398,7 @@ export class SnmpDeviceCfgComponent {
     this.getMeasGroupsforDevices();
     this.getMeasFiltersforDevices();
     this.getVarCatalogsforDevices();
+    this.getLocationsforDevices();
     this.editmode = "create";
   }
 
@@ -393,6 +409,7 @@ export class SnmpDeviceCfgComponent {
     this.getMeasGroupsforDevices();
     this.getMeasFiltersforDevices();
     this.getVarCatalogsforDevices();
+    this.getLocationsforDevices();
 
     this.snmpDeviceService.getDevicesById(id)
       .subscribe(data => {
@@ -607,6 +624,22 @@ updateAllSelectedItems(mySelectedArray,field,value, append?) {
       },
       err => console.error(err),
       () => console.log('DONE')
+      );
+  }
+
+
+  getLocationsforDevices() {
+    this.pollerlocationsService.getPollerLocation(null)
+      .subscribe(
+        data => {
+          this.pollerlocations = data
+          this.selectpollerlocations = [];
+          for (let entry of data) {
+            this.selectpollerlocations.push({ 'id': entry.ID, 'name': entry.Instance_ID + ' - ' + entry.Location + ' (' + entry.IP + ')'});
+          }
+        },
+        err => console.error(err),
+        () => console.log('DONE')
       );
   }
 }

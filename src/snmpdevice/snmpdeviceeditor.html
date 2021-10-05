@@ -320,6 +320,16 @@
           <control-messages [control]="snmpdevForm.controls.ConcurrentGather"></control-messages>
         </div>
       </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Location">Location</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Select the location (SNMP instance) where the device will be served"></i>
+        <div class="col-sm-9">
+          <div>
+            <ss-multiselect-dropdown [options]="selectpollerlocations" [texts]="myTexts" [settings]="mySettingsInflux" [(ngModel)]="snmpdevForm.value.Location" [ngModelOptions]="{standalone: true}" (ngModelChange)="onChangevarsArray($event,test)"></ss-multiselect-dropdown>
+            <control-messages [control]="snmpdevForm.controls.Location"></control-messages>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="well well-sm">
       <span class="editsection">
