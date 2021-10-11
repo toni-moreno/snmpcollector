@@ -139,7 +139,7 @@ func (s *SnmpServer) serve(addr net.Addr, buf []byte) {
 	var response []byte
 	var err error
 	vhandle := gosnmp.GoSNMP{}
-	vhandle.Logger = log
+	vhandle.Logger = gosnmp.NewLogger(log)
 	request, decodeError := vhandle.SnmpDecodePacket(buf)
 	if decodeError != nil {
 		log.Errorf("MOCK_SERVER: Error on Decode packet %s", decodeError)

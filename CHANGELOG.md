@@ -1,9 +1,10 @@
-# v 0.10.1 ( unreleased )
+# v 0.11.0 ( unreleased )
 
 ### New Features
 
 * Added swagger api doc
 * Now SNMPCollector URL's use hash(#) for all UI accesses ie: `http(s)://my_snmpcollector_engine/#/home`
+* Updated gosnmp library from  v1.28.1-0.20201116 to v1.32.0 ( for performance improvements and others) 
 
 ### Fixes
 

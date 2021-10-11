@@ -535,7 +535,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 			Version:        gosnmp.Version2c,
 			Timeout:        time.Duration(s.Timeout) * time.Second,
 			Retries:        s.Retries,
-			MaxRepetitions: maxrep,
+			MaxRepetitions: uint32(maxrep),
 		}
 	case "3":
 		seclpmap := map[string]gosnmp.SnmpV3MsgFlags{
@@ -640,7 +640,7 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 			Version:            gosnmp.Version3,
 			Timeout:            time.Duration(s.Timeout) * time.Second,
 			Retries:            s.Retries,
-			MaxRepetitions:     maxrep,
+			MaxRepetitions:     uint32(maxrep),
 			SecurityModel:      gosnmp.UserSecurityModel,
 			MsgFlags:           seclpmap[s.V3SecLevel],
 			SecurityParameters: UsmParams,

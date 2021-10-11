@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gosnmp/gosnmp"
 	c "github.com/gosnmp/gosnmp"
 	"github.com/sirupsen/logrus"
 )
@@ -34,7 +35,7 @@ func ExampleServerClientGet() {
 	c.Default.Port = 1161
 	c.Default.Timeout = 5 * time.Second
 	c.Default.Retries = 0
-	c.Default.Logger = log
+	c.Default.Logger = gosnmp.NewLogger(log)
 	err = c.Default.Connect()
 	if err != nil {
 		log.Fatalf("Connect() err: %v", err)
@@ -88,7 +89,7 @@ func ExampleServerClientWalk() {
 	c.Default.Port = 1161
 	c.Default.Timeout = 5 * time.Second
 	c.Default.Retries = 0
-	c.Default.Logger = log
+	c.Default.Logger = gosnmp.NewLogger(log)
 	err = c.Default.Connect()
 	if err != nil {
 		log.Fatalf("Connect() err: %v", err)
@@ -154,7 +155,7 @@ func ExampleServerClientBulkWalk() {
 	c.Default.Port = 1161
 	c.Default.Timeout = 5 * time.Second
 	c.Default.Retries = 0
-	c.Default.Logger = log
+	c.Default.Logger = gosnmp.NewLogger(log)
 	err = c.Default.Connect()
 	if err != nil {
 		log.Fatalf("Connect() err: %v", err)
