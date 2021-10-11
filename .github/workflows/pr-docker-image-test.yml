@@ -1,8 +1,8 @@
-name: Nightly Docker Image CI
+name: PR Docker Build Test
 
 on:
-  schedule:
-    - cron: "0 0 * * *" # build nightly!
+  pull_request:
+    branches: [ master ]
 
 jobs:
 
@@ -41,8 +41,8 @@ jobs:
           context: ./
           file: ./Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
-          push: true
-          tags:  tonimoreno/snmpcollector:nightly
+          push: false 
+          tags:  tonimoreno/snmpcollector:prtest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
       -
