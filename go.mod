@@ -12,7 +12,7 @@ require (
 	github.com/go-xorm/core v0.6.0
 	github.com/go-xorm/xorm v0.7.1
 	github.com/google/go-cmp v0.5.3
-	github.com/gosnmp/gosnmp v1.28.1-0.20201116205349-412b15e9428b
+	github.com/gosnmp/gosnmp v1.32.0
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lib/pq v1.9.0

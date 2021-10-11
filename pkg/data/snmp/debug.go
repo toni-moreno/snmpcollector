@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/gosnmp/gosnmp"
 )
 
 type writer struct {
@@ -19,12 +21,15 @@ func (w writer) Write(b []byte) (n int, err error) {
 }
 
 // GetDebugLogger returns a logger handler for snmp debug data
-func GetDebugLogger(filename string) *log.Logger {
+func GetDebugLogger(filename string) gosnmp.Logger {
 	name := filepath.Join(logDir, "snmpdebug_"+strings.Replace(filename, ".", "-", -1)+".log")
 	l, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err == nil {
-		return log.New(&writer{l, "2006-01-02 15:04:05.00000"}, " [SNMP-DEBUG] ", 0)
+		//x.Logger = NewLogger(log.New(os.Stdout, "", 0))
+		return gosnmp.NewLogger(log.New(&writer{l, "2006-01-02 15:04:05.00000"}, " [SNMP-DEBUG] ", 0))
 	}
 	mainlog.Warnf("Error on create debug file : %s ", err)
-	return nil
+	return gosnmp.NewLogger(log.New(os.Stdout, "", 0))
 }
+
+//"github.com/gosnmp/gosnmp"
