@@ -1,6 +1,6 @@
-export const InfluxMeasCfgComponentConfig: any =
+export const MeasurementCfgComponentConfig: any =
   {
-    'name' : 'Influx Measurements',
+    'name' : 'Measurements',
     'table-columns' : [
       { title: 'ID', name: 'ID' },
       { title: 'Name', name: 'Name' },

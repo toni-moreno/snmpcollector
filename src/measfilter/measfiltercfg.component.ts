@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, ViewChild  } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
 import { MeasFilterService } from './measfiltercfg.service';
-import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
+import { MeasurementService } from '../measurement/measurementcfg.service';
 import { CustomFilterService } from '../customfilter/customfilter.service';
 import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
@@ -24,7 +24,7 @@ declare var _:any;
 
 @Component({
   selector: 'measfilters',
-  providers: [MeasFilterService, InfluxMeasService, CustomFilterService,OidConditionService],
+  providers: [MeasFilterService, MeasurementService, CustomFilterService,OidConditionService],
   templateUrl: './measfiltereditor.html',
   styleUrls: ['../css/component-styles.css']
 })
@@ -46,7 +46,7 @@ export class MeasFilterCfgComponent {
   measfilters: Array<any>;
   filter: string;
   measfilterForm: any;
-  influxmeas: Array<any>;
+  measurement: Array<any>;
   selectmeas: IMultiSelectOption[] = [];
   selectCustomFilters:  IMultiSelectOption[] = [];
   public defaultConfig : any = MeasFilterCfgComponentConfig;
@@ -80,7 +80,7 @@ export class MeasFilterCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public oidCondService: OidConditionService,public customFilterService: CustomFilterService, public measFilterService: MeasFilterService, public measMeasFilterService: InfluxMeasService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
+  constructor(public oidCondService: OidConditionService,public customFilterService: CustomFilterService, public measFilterService: MeasFilterService, public measMeasFilterService: MeasurementService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -341,7 +341,7 @@ export class MeasFilterCfgComponent {
     this.measMeasFilterService.getMeas(null)
       .subscribe(
       data => {
-        this.influxmeas = data;
+        this.measurement = data;
         this.selectmeas = [];
         for (let entry of data) {
           console.log(entry)

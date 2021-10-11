@@ -2,7 +2,7 @@ import { Component, Input, Output, Pipe, PipeTransform, ViewChild, EventEmitter,
 import { Validators, FormGroup, FormArray, FormBuilder } from '@angular/forms';
 import { ModalDirective, ModalOptions } from 'ngx-bootstrap';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
-import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
+import { MeasurementService } from '../measurement/measurementcfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
 import { MeasGroupService } from '../measgroup/measgroupcfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
@@ -18,7 +18,7 @@ import { CustomFilterService } from './customfilter.service';
   selector: 'test-filter-modal',
   templateUrl: './testingfilter.html',
   styleUrls: ['./filter-modal-styles.css'],
-  providers: [SnmpDeviceService, MeasGroupService, InfluxMeasService, MeasFilterService, SpinnerComponent, CustomFilterService],
+  providers: [SnmpDeviceService, MeasGroupService, MeasurementService, MeasFilterService, SpinnerComponent, CustomFilterService],
 })
 
 export class TestFilterModal implements OnInit {
@@ -41,7 +41,7 @@ export class TestFilterModal implements OnInit {
 
   //CONSTRUCTOR
 
-  constructor(builder: FormBuilder, public influxMeasService: InfluxMeasService, public customFilterService: CustomFilterService, public measGroupService: MeasGroupService, public measFilterService: MeasFilterService, public snmpDeviceService: SnmpDeviceService) {
+  constructor(builder: FormBuilder, public measurementService: MeasurementService, public customFilterService: CustomFilterService, public measGroupService: MeasGroupService, public measFilterService: MeasFilterService, public snmpDeviceService: SnmpDeviceService) {
     this.builder = builder;
   }
 
@@ -443,7 +443,7 @@ export class TestFilterModal implements OnInit {
 
 
   getMeasByIdforModal(id: string) {
-    this.myObservable = this.influxMeasService.getMeasById(id)
+    this.myObservable = this.measurementService.getMeasById(id)
       .subscribe(
       data => {
         this.selectedOID = data.IndexOID || null;

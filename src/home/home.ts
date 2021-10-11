@@ -36,7 +36,7 @@ export class Home {
   {'title': 'Influx Servers', 'selector' : 'influxserver'},
   {'title': 'OID Conditions', 'selector' : 'oidcondition'},
   {'title': 'SNMP Metrics', 'selector' : 'snmpmetric'},
-  {'title': 'Influx Measurements', 'selector' : 'influxmeas'},
+  {'title': 'Measurements', 'selector' : 'measurement'},
   {'title': 'Measurement Groups', 'selector' : 'measgroup'},
   {'title': 'Measurement Filters', 'selector' : 'measfilter'},
   {'title': 'Custom Filters', 'selector' : 'customfilter'},

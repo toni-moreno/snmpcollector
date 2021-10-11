@@ -26,7 +26,7 @@ import { VarCatalogCfgComponent } from './varcatalog/varcatalogcfg.component';
 import { SnmpDeviceCfgComponent } from './snmpdevice/snmpdevicecfg.component';
 import { OidConditionCfgComponent } from './oidcondition/oidconditioncfg.component';
 import { SnmpMetricCfgComponent } from './snmpmetric/snmpmetriccfg.component';
-import { InfluxMeasCfgComponent } from './influxmeas/influxmeascfg.component';
+import { MeasurementCfgComponent } from './measurement/measurementcfg.component';
 import { MeasGroupCfgComponent } from './measgroup/measgroupcfg.component';
 import { MeasFilterCfgComponent } from './measfilter/measfiltercfg.component';
 import { InfluxServerCfgComponent } from './influxserver/influxservercfg.component';
@@ -78,7 +78,7 @@ import { SwaggerUiComponent} from './swagger-ui/swagger-ui.component';
     SnmpDeviceCfgComponent,
     OidConditionCfgComponent,
     SnmpMetricCfgComponent,
-    InfluxMeasCfgComponent,
+    MeasurementCfgComponent,
     MeasGroupCfgComponent,
     MeasFilterCfgComponent,
     InfluxServerCfgComponent,

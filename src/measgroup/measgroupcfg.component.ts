@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, ViewChild, ChangeDetectorRef } from
 import { FormBuilder, Validators} from '@angular/forms';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 import { MeasGroupService } from './measgroupcfg.service';
-import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
+import { MeasurementService } from '../measurement/measurementcfg.service';
 import { ValidationService } from '../common/validation.service'
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 import { ExportServiceCfg } from '../common/dataservice/export.service'
@@ -22,7 +22,7 @@ declare var _:any;
 
 @Component({
   selector: 'measgroups',
-  providers: [MeasGroupService, InfluxMeasService],
+  providers: [MeasGroupService, MeasurementService],
   templateUrl: './measgroupeditor.html',
   styleUrls: ['../css/component-styles.css']
 })
@@ -43,7 +43,7 @@ export class MeasGroupCfgComponent {
   filter: string;
   measgroupForm: any;
   testmeasgroups: any;
-  influxmeas: Array<any>;
+  measurement: Array<any>;
   selectmeas: IMultiSelectOption[] = [];
   public defaultConfig : any = MeasGroupCfgComponentConfig;
   public tableRole : any = TableRole;
@@ -70,7 +70,7 @@ export class MeasGroupCfgComponent {
   };
 
 
-  constructor(public measGroupService: MeasGroupService, public measMeasGroupService: InfluxMeasService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
+  constructor(public measGroupService: MeasGroupService, public measMeasGroupService: MeasurementService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -281,7 +281,7 @@ export class MeasGroupCfgComponent {
     this.measMeasGroupService.getMeas(null)
       .subscribe(
       data => {
-        this.influxmeas = data;
+        this.measurement = data;
         this.selectmeas = [];
         for (let entry of data) {
           console.log(entry)

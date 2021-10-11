@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/Observable';
 declare var _:any;
 
 @Injectable()
-export class InfluxMeasService {
+export class MeasurementService {
 
     constructor(public httpAPI: HttpService) {
         console.log('Task Service created.', httpAPI);
@@ -34,11 +34,11 @@ export class InfluxMeasService {
         .map( (responseData) => {
             return responseData.json();
         })
-        .map((influxmeas) => {
-            console.log("MAP SERVICE",influxmeas);
+        .map((measurement) => {
+            console.log("MAP SERVICE",measurement);
             let result = [];
-            if (influxmeas) {
-                _.forEach(influxmeas,function(value,key){
+            if (measurement) {
+                _.forEach(measurement,function(value,key){
                     console.log("FOREACH LOOP",value,key);
                     if (value.GetMode == "indexed_mit") {
                         if (value.MultiTagOID.length > 0 ) {
@@ -100,7 +100,7 @@ export class InfluxMeasService {
             responseData.json()
     )};
 
-    checkOnDeleteInfluxMeas(id : string){
+    checkOnDeleteMeasurement(id : string){
       return this.httpAPI.get('/api/cfg/measurement/checkondel/'+id)
       .map( (responseData) =>
        responseData.json()

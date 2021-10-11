@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, ViewChild} from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { InfluxMeasService } from './influxmeascfg.service';
+import { MeasurementService } from './measurementcfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
 import { ValidationService } from '../common/validation.service'
@@ -15,18 +15,18 @@ import { ItemsPerPageOptions } from '../common/global-constants';
 import { TableActions } from '../common/table-actions';
 import { AvailableTableActions } from '../common/table-available-actions';
 import { TableListComponent } from '../common/table-list.component';
-import { InfluxMeasCfgComponentConfig, TableRole, OverrideRoleActions } from './influxmeascfg.data';
+import { MeasurementCfgComponentConfig, TableRole, OverrideRoleActions } from './measurementcfg.data';
 
 declare var _:any;
 
 @Component({
-  selector: 'influxmeas',
-  providers: [InfluxMeasService, SnmpMetricService],
-  templateUrl: './influxmeaseditor.html',
+  selector: 'measurement',
+  providers: [MeasurementService, SnmpMetricService],
+  templateUrl: './measurementeditor.html',
   styleUrls: ['../css/component-styles.css']
 })
 
-export class InfluxMeasCfgComponent {
+export class MeasurementCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
@@ -38,13 +38,13 @@ export class InfluxMeasCfgComponent {
 
   itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
-  influxmeas: Array<any>;
+  measurement: Array<any>;
   filter: string;
-  influxmeasForm: any;
-  testinfluxmeas: any;
+  measurementForm: any;
+  testmeasurement: any;
   snmpmetrics: Array<any>;
   selectmetrics: IMultiSelectOption[] = [];
-  public defaultConfig : any = InfluxMeasCfgComponentConfig;
+  public defaultConfig : any = MeasurementCfgComponentConfig;
   public tableRole : any = TableRole;
   public overrideRoleActions: any = OverrideRoleActions;
   metricArray: Array<Object> = [];
@@ -78,26 +78,26 @@ export class InfluxMeasCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public influxMeasService: InfluxMeasService, public metricMeasService: SnmpMetricService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
+  constructor(public measurementService: MeasurementService, public metricMeasService: SnmpMetricService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
   }
 
   createStaticForm() {
-    this.influxmeasForm = this.builder.group({
-      ID: [this.influxmeasForm ? this.influxmeasForm.value.ID : '', Validators.required],
-      Name: [this.influxmeasForm ? this.influxmeasForm.value.Name : '', Validators.required],
-      GetMode: [this.influxmeasForm ? this.influxmeasForm.value.GetMode : 'value', Validators.required],
-      Fields: this.builder.array(this.influxmeasForm ? ((this.influxmeasForm.value.Fields) !== null ? this.influxmeasForm.value.Fields : []) : []),
-      Description: [this.influxmeasForm ? this.influxmeasForm.value.Description : '']
+    this.measurementForm = this.builder.group({
+      ID: [this.measurementForm ? this.measurementForm.value.ID : '', Validators.required],
+      Name: [this.measurementForm ? this.measurementForm.value.Name : '', Validators.required],
+      GetMode: [this.measurementForm ? this.measurementForm.value.GetMode : 'value', Validators.required],
+      Fields: this.builder.array(this.measurementForm ? ((this.measurementForm.value.Fields) !== null ? this.measurementForm.value.Fields : []) : []),
+      Description: [this.measurementForm ? this.measurementForm.value.Description : '']
     });
   }
 
   createDynamicForm(fieldsArray: any) : void {
     //Saves the actual to check later if there are shared values
     let tmpform : any;
-    if (this.influxmeasForm)  tmpform = this.influxmeasForm.value;
+    if (this.measurementForm)  tmpform = this.measurementForm.value;
     this.createStaticForm();
 
     for (let entry of fieldsArray) {
@@ -111,12 +111,12 @@ export class InfluxMeasCfgComponent {
 
       console.log(entry.ID)
       if (entry.ID == "MultiTagOID") {
-        this.influxmeasForm.addControl(entry.ID, entry.defVal);
+        this.measurementForm.addControl(entry.ID, entry.defVal);
         // if it has already values, load them passing it to function - addMultiIndex
         if (value == tmpform[entry.ID]) {
           for (let val of value) {
             let p = this.addMultiTagOID(val)
-            this.influxmeasForm.get("MultiTagOID").push(p)
+            this.measurementForm.get("MultiTagOID").push(p)
 
           }
         }
@@ -126,19 +126,19 @@ export class InfluxMeasCfgComponent {
       //Set different controls:
       // if MultiIndex, the added control must be an special FormArray, not FormControl and we have to map its values first
       if (entry.ID == "MultiIndexCfg") {
-        this.influxmeasForm.addControl(entry.ID, entry.defVal);
+        this.measurementForm.addControl(entry.ID, entry.defVal);
         // if it has already values, load them passing it to function - addMultiIndex
         if (value == tmpform[entry.ID]) {
           for (let val of value) {
             let p = this.addMultiIndex(val.GetMode, val)
-            this.influxmeasForm.get("MultiIndexCfg").push(p)
+            this.measurementForm.get("MultiIndexCfg").push(p)
 
           }
         }
         
         continue
       }
-      this.influxmeasForm.addControl(entry.ID, new FormControl(value, entry.Validators));
+      this.measurementForm.addControl(entry.ID, new FormControl(value, entry.Validators));
     }
   }
 
@@ -178,16 +178,16 @@ export class InfluxMeasCfgComponent {
   }
 
   get MultiIndexCfg(): FormArray {
-    return this.influxmeasForm.get("MultiIndexCfg") as FormArray
+    return this.measurementForm.get("MultiIndexCfg") as FormArray
   }
 
   get MultiTagOID(): FormArray {
-    console.log("this.influxmeasform.get(MultiTagOID)", this.influxmeasForm.get("MultiTagOID"))
-    return this.influxmeasForm.get("MultiTagOID") as FormArray
+    console.log("this.measurementform.get(MultiTagOID)", this.measurementForm.get("MultiTagOID"))
+    return this.measurementForm.get("MultiTagOID") as FormArray
   }
 
   MIMultiTagOID(i : string): FormArray {
-    console.log("this.influxmeasform.get(MultiTagOID)", this.influxmeasForm.get("MultiTagOID"))
+    console.log("this.measurementform.get(MultiTagOID)", this.measurementForm.get("MultiTagOID"))
     return this.MultiIndexCfg.controls[i].get("MultiTagOID") as FormArray
   }
 
@@ -209,11 +209,11 @@ export class InfluxMeasCfgComponent {
       //   return bb
       // }
       console.log()
-      this.influxmeasForm.get("MultiIndexCfg").controls[i].get("MultiTagOID").push(bb)
+      this.measurementForm.get("MultiIndexCfg").controls[i].get("MultiTagOID").push(bb)
   }
 
   getMIMultiTagOID(i: number) {
-    return this.influxmeasForm.get("MultiIndexCfg").controls[i].get("MultiTagOID")
+    return this.measurementForm.get("MultiIndexCfg").controls[i].get("MultiTagOID")
   }
 
 
@@ -234,7 +234,7 @@ export class InfluxMeasCfgComponent {
     if (fieldArray) {
       return bb
     }
-    this.influxmeasForm.get("MultiTagOID").push(bb);
+    this.measurementForm.get("MultiTagOID").push(bb);
   }
 
   removeTagOID(i: number) {
@@ -313,7 +313,7 @@ export class InfluxMeasCfgComponent {
       return bb
     }
     console.log(bb)
-    this.influxmeasForm.get("MultiIndexCfg").push(bb);
+    this.measurementForm.get("MultiIndexCfg").push(bb);
   }
 
   removeMeas(i: number) {
@@ -368,11 +368,11 @@ export class InfluxMeasCfgComponent {
     this.selectedArray = [];
     this.isRequesting = true;
     // now it's a simple subscription to the observable
-    this.influxMeasService.getMeas(this.filter)
+    this.measurementService.getMeas(this.filter)
       .subscribe(
       data => {
         this.isRequesting = false;
-        this.influxmeas = data
+        this.measurement = data
         this.data = data;
       },
       err => console.error(err),
@@ -471,8 +471,8 @@ export class InfluxMeasCfgComponent {
     this.isRequesting = true;
     for (let i in myArray) {
       console.log("Removing ",myArray[i].ID)
-      this.deleteInfluxMeas(myArray[i].ID,true);
-      obsArray.push(this.deleteInfluxMeas(myArray[i].ID,true));
+      this.deleteMeasurement(myArray[i].ID,true);
+      obsArray.push(this.deleteMeasurement(myArray[i].ID,true));
     }
     this.genericForkJoin(obsArray);
   }
@@ -480,7 +480,7 @@ export class InfluxMeasCfgComponent {
   removeItem(row) {
     let id = row.ID;
     console.log('remove', id);
-    this.influxMeasService.checkOnDeleteInfluxMeas(id)
+    this.measurementService.checkOnDeleteMeasurement(id)
       .subscribe(
       data => {
         console.log(data);
@@ -493,8 +493,8 @@ export class InfluxMeasCfgComponent {
   }
 
   newMeas() {
-    if (this.influxmeasForm) {
-      this.setDynamicFields(this.influxmeasForm.value.GetMode);
+    if (this.measurementForm) {
+      this.setDynamicFields(this.measurementForm.value.GetMode);
     } else {
       this.setDynamicFields(null);
     }
@@ -506,10 +506,10 @@ export class InfluxMeasCfgComponent {
     let id = row.ID;
     this.metricArray = [];
     this.selectedMetrics = [];
-    this.influxMeasService.getMeasById(id)
+    this.measurementService.getMeasById(id)
       .subscribe(data => {
-        this.influxmeasForm = {};
-        this.influxmeasForm.value = data;
+        this.measurementForm = {};
+        this.measurementForm.value = data;
         if (data.Fields) {
           for (var values of data.Fields) {
             this.metricArray.push({ ID: values.ID, Report: values.Report });
@@ -525,15 +525,15 @@ export class InfluxMeasCfgComponent {
       );
   }
 
-  deleteInfluxMeas(id, recursive?) {
+  deleteMeasurement(id, recursive?) {
     if(!recursive) {
-      this.influxMeasService.deleteMeas(id)
+      this.measurementService.deleteMeas(id)
         .subscribe(data => { },
         err => console.error(err),
         () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
         );
     } else {
-      return this.influxMeasService.deleteMeas(id,true)
+      return this.measurementService.deleteMeas(id,true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -545,11 +545,11 @@ export class InfluxMeasCfgComponent {
     this.editmode = "list";
   }
 
-  saveInfluxMeas() {
-    this.influxmeasForm.value['Fields'] = this.metricArray;
-    console.log(this.influxmeasForm.value);
-    if (this.influxmeasForm.valid) {
-      this.influxMeasService.addMeas(this.influxmeasForm.value)
+  saveMeasurement() {
+    this.measurementForm.value['Fields'] = this.metricArray;
+    console.log(this.measurementForm.value);
+    if (this.measurementForm.valid) {
+      this.measurementService.addMeas(this.measurementForm.value)
         .subscribe(data => { console.log(data) },
         err => console.error(err),
         () => { this.editmode = "list"; this.reloadData() }
@@ -564,7 +564,7 @@ export class InfluxMeasCfgComponent {
     if (!append)
     for (let component of mySelectedArray) {
       component[field] = value;
-      obsArray.push(this.updateInfluxMeas(true,component));
+      obsArray.push(this.updateMeasurement(true,component));
     } else {
       let tmpArray = [];
       if(!Array.isArray(value)) value = value.split(',');
@@ -576,7 +576,7 @@ export class InfluxMeasCfgComponent {
         tmpArray = newEntries.concat(component[field])
         console.log(tmpArray);
         component[field] = tmpArray;
-        obsArray.push(this.updateInfluxMeas(true,component));
+        obsArray.push(this.updateMeasurement(true,component));
       }
     }
     this.genericForkJoin(obsArray);
@@ -584,16 +584,16 @@ export class InfluxMeasCfgComponent {
     this.counterErrors = [];
   }
 
-  updateInfluxMeas(recursive?, component?) {
+  updateMeasurement(recursive?, component?) {
     if (!recursive) {
-      if (this.influxmeasForm.valid) {
+      if (this.measurementForm.valid) {
         var r = true;
-        if (this.influxmeasForm.value.ID != this.oldID) {
-          r = confirm("Changing Measurement ID from " + this.oldID + " to " + this.influxmeasForm.value.ID + ". Proceed?");
+        if (this.measurementForm.value.ID != this.oldID) {
+          r = confirm("Changing Measurement ID from " + this.oldID + " to " + this.measurementForm.value.ID + ". Proceed?");
         }
         if (r == true) {
-          this.influxmeasForm.value['Fields'] = this.metricArray;
-          this.influxMeasService.editMeas(this.influxmeasForm.value, this.oldID)
+          this.measurementForm.value['Fields'] = this.metricArray;
+          this.measurementService.editMeas(this.measurementForm.value, this.oldID)
             .subscribe(data => { console.log(data) },
             err => console.error(err),
             () => { this.editmode = "list"; this.reloadData() }
@@ -601,7 +601,7 @@ export class InfluxMeasCfgComponent {
         }
       }
     } else {
-      return this.influxMeasService.editMeas(component, component.ID, true)
+      return this.measurementService.editMeas(component, component.ID, true)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}
@@ -626,7 +626,7 @@ export class InfluxMeasCfgComponent {
       data => {
         this.snmpmetrics = data;
         this.selectmetrics = [];
-        this.influxmeasForm.controls['Fields'].reset();
+        this.measurementForm.controls['Fields'].reset();
         this.selectmetrics = this.createMultiselectArray(data);
       },
       err => console.error(err),

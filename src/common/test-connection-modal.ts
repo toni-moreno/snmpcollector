@@ -3,7 +3,7 @@ import { Validators, FormGroup, FormArray, FormBuilder } from '@angular/forms';
 import { ModalDirective,ModalOptions} from 'ngx-bootstrap';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 import { SnmpMetricService } from '../snmpmetric/snmpmetriccfg.service';
-import { InfluxMeasService } from '../influxmeas/influxmeascfg.service';
+import { MeasurementService } from '../measurement/measurementcfg.service';
 import { OidConditionService } from '../oidcondition/oidconditioncfg.service';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from './multiselect-dropdown';
 
@@ -140,7 +140,7 @@ import { Subscription } from "rxjs";
             </div>
           </div>
         </div>`,
-        providers: [SnmpDeviceService, SnmpMetricService, InfluxMeasService, OidConditionService, SpinnerComponent],
+        providers: [SnmpDeviceService, SnmpMetricService, MeasurementService, OidConditionService, SpinnerComponent],
 })
 
 export class TestConnectionModal implements OnInit  {
@@ -154,7 +154,7 @@ export class TestConnectionModal implements OnInit  {
     this.validationClicked.emit(myId);
   }
 
-  constructor(private builder: FormBuilder, public metricMeasService: SnmpMetricService, public influxMeasService: InfluxMeasService, public oidConditionService : OidConditionService,public snmpDeviceService: SnmpDeviceService) {
+  constructor(private builder: FormBuilder, public metricMeasService: SnmpMetricService, public measurementService: MeasurementService, public oidConditionService : OidConditionService,public snmpDeviceService: SnmpDeviceService) {
   }
 
   ngOnInit () {
@@ -273,7 +273,7 @@ export class TestConnectionModal implements OnInit  {
   }
 
   getMeasforModal(type : string, index : number){
-    this.myObservable = this.influxMeasService.getMeasByType(type)
+    this.myObservable = this.measurementService.getMeasByType(type)
     .subscribe(
       data => {
           this.selectors[index].Array = [];
