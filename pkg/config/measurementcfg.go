@@ -35,6 +35,8 @@ type MeasurementCfg struct {
 	FieldMetric       []*SnmpMetricCfg         `xorm:"-" json:"-"`
 	EvalMetric        []*SnmpMetricCfg         `xorm:"-" json:"-"`
 	OidCondMetric     []*SnmpMetricCfg         `xorm:"-" json:"-"`
+	Freq              int                      `xorm:"'freq'" binding:"IntegerNotZero"`
+	UpdateFltFreq     int                      `xorm:"'update_flt_freq'" binding:"UIntegerAndLessOne"`
 	Description       string                   `xorm:"description"`
 }
 
