@@ -45,10 +45,10 @@ export class MeasurementService {
                 _.forEach(measurement,function(value,key){
                     console.log("FOREACH LOOP",value,key);
                     if (value.Freq == 0 ) {
-                        value.Freq = 'N.A'
+                        value.Freq = '-'
                     }
                     if (value.UpdateFltFreq == 0 ) {
-                        value.UpdateFltFreq = 'N.A'
+                        value.UpdateFltFreq = '-'
                     }
 
                     if (value.GetMode == "indexed_mit") {

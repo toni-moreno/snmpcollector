@@ -89,7 +89,8 @@ export class MeasurementCfgComponent {
       ID: [this.measurementForm ? this.measurementForm.value.ID : '', Validators.required],
       Name: [this.measurementForm ? this.measurementForm.value.Name : '', Validators.required],
       GetMode: [this.measurementForm ? this.measurementForm.value.GetMode : 'value', Validators.required],
-      Freq: [this.measurementForm ? this.measurementForm.value.Freq : '',],
+      Freq: [this.measurementForm ? this.measurementForm.value.Freq : ''],
+      UpdateFltFreq: [this.measurementForm ? this.measurementForm.value.UpdateFltFreq : ''],
       Fields: this.builder.array(this.measurementForm ? ((this.measurementForm.value.Fields) !== null ? this.measurementForm.value.Fields : []) : []),
       Description: [this.measurementForm ? this.measurementForm.value.Description : '']
     });
@@ -148,8 +149,10 @@ export class MeasurementCfgComponent {
     console.log(field);
     switch (field) {
       case 'indexed_it':
+        console.log("AAAAAAAAAAAAAAAAAAAAAA indexed_it")
         controlArray.push({'ID': 'TagOID', 'defVal' : defVal["TagOID"] ?  defVal["TagOID"] : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
       case 'indexed':
+        console.log("BBBBBBBBBBBBBBBBB indexed")
         controlArray.push({'ID': 'UpdateFltFreq', 'defVal' : defVal["UpdateFltFreq"] ? defVal["UpdateFltFreq"] : '' });
         controlArray.push({'ID': 'IndexOID', 'defVal' : defVal["IndexOID"] ? defVal["IndexOID"] : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
         controlArray.push({'ID': 'IndexTag', 'defVal' : defVal["IndexTag"] ? defVal["IndexTag"] : '', 'Validators' : Validators.required});
@@ -157,6 +160,7 @@ export class MeasurementCfgComponent {
         controlArray.push({'ID': 'IndexAsValue', 'defVal' : defVal["IndexAsValue"] ? defVal["IndexAsValue"] : "false", 'Validators' : Validators.required});
       break;
       case 'indexed_mit':
+        console.log("CCCCCCCCCCCCCCCCCC indexed_mit")
         controlArray.push({'ID': 'UpdateFltFreq', 'defVal' : defVal["UpdateFltFreq"] ? defVal["UpdateFltFreq"] : '' });
         controlArray.push({'ID': 'IndexOID', 'defVal' : defVal["IndexOID"] ? defVal["IndexOID"] : '', 'Validators' : Validators.compose([ValidationService.OIDValidator, Validators.required])});
         controlArray.push({'ID': 'MultiTagOID', 'defVal' : this.builder.array([]), 'Validators': Validators.compose([ValidationService.notEmpty, Validators.required])});
@@ -165,9 +169,13 @@ export class MeasurementCfgComponent {
         controlArray.push({'ID': 'IndexAsValue', 'defVal' : defVal["IndexAsValue"] ? defVal["IndexAsValue"] : "false", 'Validators' : Validators.required});
         break
       case 'indexed_multiple':
+        console.log("DDDDDDDDDDDDDDDDDDDDDDD indexed_multiple")
         controlArray.push({'ID': 'UpdateFltFreq', 'defVal' : defVal["UpdateFltFreq"] ? defVal["UpdateFltFreq"] : ''});
         controlArray.push({'ID': 'MultiIndexResult', 'defVal': defVal["MultiIndexResult"], 'Validators': Validators.required});
         controlArray.push({'ID': 'MultiIndexCfg', 'defVal' : this.builder.array([])});
+        break;
+      case 'value':
+        console.log("EEEEEEEEEEEEEEEEEEEEEEEE value")
       default:
         break;
     }
