@@ -12,9 +12,9 @@ import (
 type DevStatType uint
 
 const (
-	//SnmpGetQueries num Get Queries on last gather cycle
+	// SnmpGetQueries num Get Queries on last gather cycle
 	SnmpGetQueries = 0
-	//SnmpWalkQueries num Walk Queries on last gather cycle
+	// SnmpWalkQueries num Walk Queries on last gather cycle
 	SnmpWalkQueries = 1
 	// SnmpGetErrors num Get Errors on last gather cycle
 	SnmpGetErrors = 2
@@ -64,22 +64,22 @@ const (
 
 // DevStat minimal info to show users
 type DevStat struct {
-	//ID
+	// ID
 	id     string
 	TagMap map[string]string
-	//Control
+	// Control
 	log     *logrus.Logger
 	selfmon *selfmon.SelfMon
 	mutex   sync.Mutex
 
-	//Counter Statistics
+	// Counter Statistics
 	Counters []interface{}
 
-	//device state
+	// device state
 	ReloadLoopsPending int
 	DeviceActive       bool
 	DeviceConnected    bool
-	//extra measurement statistics
+	// extra measurement statistics
 	NumMeasurements int
 	SysDescription  string
 	NumMetrics      int
@@ -141,7 +141,6 @@ func (s *DevStat) GetCounter(stat DevStatType) interface{} {
 }
 
 func (s *DevStat) getStatusFields() map[string]interface{} {
-
 	active := 0
 	connected := 0
 	if s.DeviceActive {
@@ -159,7 +158,6 @@ func (s *DevStat) getStatusFields() map[string]interface{} {
 }
 
 func (s *DevStat) getMetricFields() map[string]interface{} {
-
 	active := 0
 	connected := 0
 	if s.DeviceActive {
@@ -224,7 +222,6 @@ func (s *DevStat) SetStatus(active, connected bool) {
 	defer s.mutex.Unlock()
 	s.DeviceActive = active
 	s.DeviceConnected = connected
-
 }
 
 func (s *DevStat) SetActive(active bool) {
@@ -315,7 +312,7 @@ func (s *DevStat) SetGatherDuration(start time.Time, duration time.Duration) {
 func (s *DevStat) AddSentDuration(start time.Time, duration time.Duration) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	//only register the first start time on concurrent mode
+	// only register the first start time on concurrent mode
 	if s.Counters[BackEndSentStartTime] == 0 {
 		s.Counters[BackEndSentStartTime] = start.Unix()
 	}

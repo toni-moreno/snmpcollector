@@ -56,7 +56,7 @@ func (dbc *DatabaseCfg) GetVarCatalogCfgMap(filter string) (map[string]*VarCatal
 func (dbc *DatabaseCfg) GetVarCatalogCfgArray(filter string) ([]*VarCatalogCfg, error) {
 	var err error
 	var devices []*VarCatalogCfg
-	//Get Only data for selected metrics
+	// Get Only data for selected metrics
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&devices); err != nil {
 			log.Warnf("Fail to get VarCatalogCfg  data filteter with %s : %v\n", filter, err)
@@ -89,7 +89,7 @@ func (dbc *DatabaseCfg) AddVarCatalogCfg(dev VarCatalogCfg) (int64, error) {
 		session.Rollback()
 		return 0, err
 	}
-	//no other relation
+	// no other relation
 	err = session.Commit()
 	if err != nil {
 		return 0, err
@@ -140,7 +140,7 @@ func (dbc *DatabaseCfg) UpdateVarCatalogCfg(id string, dev VarCatalogCfg) (int64
 	}
 	defer session.Close()
 
-	if id != dev.ID { //ID has been changed
+	if id != dev.ID { // ID has been changed
 		var metrics []*SnmpMetricCfg
 		session.Where("datasrctype = 'STRINGEVAL' and extradata like '%" + id + "%'").Find(&metrics)
 		for _, v := range metrics {
@@ -172,7 +172,7 @@ func (dbc *DatabaseCfg) UpdateVarCatalogCfg(id string, dev VarCatalogCfg) (int64
 
 /*GetVarCatalogCfgAffectOnDel for deleting devices from ID*/
 func (dbc *DatabaseCfg) GetVarCatalogCfgAffectOnDel(id string) ([]*DbObjAction, error) {
-	//var devices []*MeasurementFieldCfg
+	// var devices []*MeasurementFieldCfg
 	var obj []*DbObjAction
 	/*
 		if err := dbc.x.Where("id_metric_cfg='" + id + "'").Find(&devices); err != nil {

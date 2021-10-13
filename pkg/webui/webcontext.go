@@ -17,8 +17,8 @@ type Context struct {
 
 func accessForbidden(ctx *Context) {
 	ctx.JSON(403, fmt.Errorf("access forbidden %+v", ctx))
-	//c.SetCookie("redirect_to", url.QueryEscape(c.Req.RequestURI), 0, "/")
-	//c.Redirect("/login")
+	// c.SetCookie("redirect_to", url.QueryEscape(c.Req.RequestURI), 0, "/")
+	// c.Redirect("/login")
 }
 
 var reqSignedIn = func(ctx *Context) {
@@ -44,11 +44,9 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 	}
 
 	return false
-
 }
 
 func initContextWithBasicAuth(ctx *Context) bool {
-
 	header := ctx.Req.Header.Get("Authorization")
 	if header == "" {
 		return false
@@ -86,9 +84,9 @@ func GetContextHandler() macaron.Handler {
 		switch {
 		case initContextWithBasicAuth(ctx):
 		case initContextWithUserSessionCookie(ctx):
-			//case initContextWithAuthProxy(remoteCache, ctx, orgId):
-			//case initContextWithToken(ats, ctx, orgId):
-			//case initContextWithAnonymousUser(ctx):
+			// case initContextWithAuthProxy(remoteCache, ctx, orgId):
+			// case initContextWithToken(ats, ctx, orgId):
+			// case initContextWithAnonymousUser(ctx):
 
 		}
 
@@ -99,7 +97,6 @@ func GetContextHandler() macaron.Handler {
 
 // RawAsJSON raw to json conversion
 func (ctx *Context) RawAsJSON(status int, json []byte) {
-
 	// json rendered fine, write out the result
 	ctx.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	ctx.WriteHeader(status)

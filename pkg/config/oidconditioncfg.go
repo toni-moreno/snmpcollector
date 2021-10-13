@@ -24,7 +24,7 @@ type OidConditionCfg struct {
 // Init Initialize a OIDConditionCfg
 func (oid *OidConditionCfg) Init(dbc *DatabaseCfg) error {
 	if oid.IsMultiple {
-		//check if OIDCond expression  is good
+		// check if OIDCond expression  is good
 		// First get all conditions ID's
 		oids, err := dbc.GetOidConditionCfgMap("")
 		if err != nil {
@@ -34,7 +34,7 @@ func (oid *OidConditionCfg) Init(dbc *DatabaseCfg) error {
 		for k := range oids {
 			OidsMap[k] = bool(true)
 		}
-		//check
+		// check
 		expression, err := govaluate.NewEvaluableExpression(oid.OIDCond)
 		if err != nil {
 			log.Errorf("Error on evaluate expression on OIDCOndition %s evaluation : %s : ERROR : %s", oid.ID, oid.OIDCond, err)
@@ -49,7 +49,7 @@ func (oid *OidConditionCfg) Init(dbc *DatabaseCfg) error {
 	}
 	switch {
 	case oid.CondType == "notmatch" || oid.CondType == "match":
-		//check for a well formed regular expression
+		// check for a well formed regular expression
 		_, err := regexp.Compile(oid.CondValue)
 		if err != nil {
 			er := fmt.Sprintf("ERROR OIDCOND [%s] with Condition %s regexp error : %s ", oid.ID, oid.CondValue, err)
@@ -62,7 +62,7 @@ func (oid *OidConditionCfg) Init(dbc *DatabaseCfg) error {
 			return fmt.Errorf("%s", er)
 		}
 	case strings.Contains(oid.CondType, "n"):
-		//undesrstand valueCondition as numeric
+		// undesrstand valueCondition as numeric
 		_, err := strconv.Atoi(oid.CondValue)
 		if err != nil {
 			er := fmt.Sprintf("ERROR OIDCOND [%s] type %s on value  %s  on translation error: %s", oid.ID, oid.CondType, oid.CondValue, err)
@@ -129,7 +129,7 @@ func (dbc *DatabaseCfg) GetOidConditionCfgMap(filter string) (map[string]*OidCon
 func (dbc *DatabaseCfg) GetOidConditionCfgArray(filter string) ([]*OidConditionCfg, error) {
 	var err error
 	var filters []*OidConditionCfg
-	//Get Only data for selected metrics
+	// Get Only data for selected metrics
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&filters); err != nil {
 			log.Warnf("Fail to get OidConditionCfg  data filteter with %s : %v\n", filter, err)
@@ -168,7 +168,7 @@ func (dbc *DatabaseCfg) AddOidConditionCfg(dev OidConditionCfg) (int64, error) {
 		session.Rollback()
 		return 0, err
 	}
-	//no other relation
+	// no other relation
 	err = session.Commit()
 	if err != nil {
 		return 0, err
@@ -235,14 +235,14 @@ func (dbc *DatabaseCfg) UpdateOidConditionCfg(id string, dev OidConditionCfg) (i
 	}
 	defer session.Close()
 
-	if id != dev.ID { //ID has been changed
-		//SnmpMetricCfg
+	if id != dev.ID { // ID has been changed
+		// SnmpMetricCfg
 		affecteddev, err = session.Where("extradata='" + id + "' and datasrctype = 'CONDITIONEVAL'").Cols("extradata").Update(&SnmpMetricCfg{ExtraData: dev.ID})
 		if err != nil {
 			session.Rollback()
 			return 0, fmt.Errorf("Error on Update SnmpMetricCfg on update OID Condition id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		//MeasFilterCfg
+		// MeasFilterCfg
 		affecteddev, err = session.Where("filter_name='" + id + "'").Cols("filter_name").Update(&MeasFilterCfg{FilterName: dev.ID})
 		if err != nil {
 			session.Rollback()
@@ -255,7 +255,7 @@ func (dbc *DatabaseCfg) UpdateOidConditionCfg(id string, dev OidConditionCfg) (i
 		session.Rollback()
 		return 0, err
 	}
-	//no other relation
+	// no other relation
 	err = session.Commit()
 	if err != nil {
 		return 0, err

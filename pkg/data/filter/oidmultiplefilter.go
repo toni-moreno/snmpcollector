@@ -12,11 +12,11 @@ import (
 // OidMultipleFilter a new Oid condition filter
 type OidMultipleFilter struct {
 	FilterLabels  map[string]string `json:"-"`
-	EvalCondition string            //Eval condition
+	EvalCondition string            // Eval condition
 	condMap       map[string]*config.OidConditionCfg
 	oidFilterMap  map[string]*OidFilter
 	vars          []string
-	//evaluable
+	// evaluable
 	expr *govaluate.EvaluableExpression
 
 	dbc  *config.DatabaseCfg
@@ -31,7 +31,6 @@ func NewOidMultipleFilter(cond string, l *logrus.Logger) *OidMultipleFilter {
 
 // Init initialize
 func (of *OidMultipleFilter) Init(arg ...interface{}) error {
-
 	of.FilterLabels = make(map[string]string)
 	of.condMap = make(map[string]*config.OidConditionCfg)
 
@@ -44,7 +43,7 @@ func (of *OidMultipleFilter) Init(arg ...interface{}) error {
 	if of.dbc == nil {
 		return fmt.Errorf("Error when initializing oid cond %s", of.EvalCondition)
 	}
-	//needs to get data conditions
+	// needs to get data conditions
 	expression, err := govaluate.NewEvaluableExpression(of.EvalCondition)
 	if err != nil {
 		of.log.Errorf("OIDMULTIPLEFILTER [%s] Error on initializing  ERROR : %s", of.EvalCondition, err)
@@ -68,7 +67,6 @@ func (of *OidMultipleFilter) Init(arg ...interface{}) error {
 	}
 
 	return nil
-
 }
 
 // Count return current number of itemp in the filter
@@ -91,7 +89,7 @@ func (of *OidMultipleFilter) MapLabels(AllIndexedLabels map[string]string) map[s
 
 // Update use this to reload conditions
 func (of *OidMultipleFilter) Update() error {
-	filterMatrix := make(map[string]map[string]interface{}) //key [oidcond]
+	filterMatrix := make(map[string]map[string]interface{}) // key [oidcond]
 	for condID, f := range of.oidFilterMap {
 		of.log.Debugf("OIDMULTIPLEFILTER [%s] updating filter data for key : %s", of.EvalCondition, condID)
 		f.Update()
@@ -105,12 +103,12 @@ func (of *OidMultipleFilter) Update() error {
 				a[condID] = true
 				filterMatrix[index] = a
 			} else {
-				//already exist only set variable
+				// already exist only set variable
 				filterMatrix[index][condID] = true
 			}
 		}
 	}
-	//now we can already compute value
+	// now we can already compute value
 	of.FilterLabels = make(map[string]string)
 	for kf, v := range filterMatrix {
 		result, err := of.expr.Evaluate(v)
@@ -120,7 +118,7 @@ func (of *OidMultipleFilter) Update() error {
 		}
 		if result.(bool) {
 			of.log.Debugf("OIDMULTIPLEFILTER [%s] Multiple filter expression for index %s TRUE on condition with map %+v", of.EvalCondition, kf, v)
-			//save this index as true
+			// save this index as true
 			of.FilterLabels[kf] = ""
 		}
 	}

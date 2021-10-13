@@ -27,7 +27,6 @@ type MultiIndexDependency struct {
 
 // GetDepMultiParams - Parse Dependency description and creates a new MultiIndexDependency object
 func (mi *MultiIndexFormat) GetDepMultiParams() error {
-
 	// Dependency syntax follows as:
 	// IDX{M}[];DOT[START:END];FILL(XXX)]
 	// To simplify its logic, it can be defined also as IDX{M}
@@ -90,7 +89,7 @@ func (mi *MultiIndexFormat) GetDepMultiParams() error {
 		last, err := strconv.Atoi(dotEnd) // if there is an error last
 		if err != nil {
 			last = -1
-			//Not sure if needs to return an error...
+			// Not sure if needs to return an error...
 			return err
 		}
 		mdep.Start = first
@@ -107,14 +106,13 @@ func (mi *MultiIndexFormat) GetDepMultiParams() error {
 		if len(fmatch) < 1 {
 			return fmt.Errorf("Error trying to parse dependency strategy %v", fmatch)
 		}
-		//finally, store the result...
+		// finally, store the result...
 		mdep.Strategy = fmatch
 
 		mi.Dependency = &mdep
 		return nil
 	}
 	return fmt.Errorf("Missing dependency variable %s", mi.DepDesc)
-
 }
 
 // MultiIndexFormatArray - type to implement Sort interface and allow order by dependency
@@ -127,8 +125,7 @@ func (mif MultiIndexFormatArray) Len() int {
 
 // Less - Sort interface function to add logic on sort function
 func (mif MultiIndexFormatArray) Less(i, j int) bool {
-
-	//Retrieve if there are dependencies and retrieve the index of each one...
+	// Retrieve if there are dependencies and retrieve the index of each one...
 	idxi := -1
 	idxj := -1
 
@@ -159,8 +156,7 @@ func (mif MultiIndexFormatArray) GetDepIndex(ri int) (int, error) {
 
 // BuildParseResults - Build result array based on result string
 func BuildParseResults(allindex MultiIndexFormatArray, rs []string) (MultiIndexFormatArray, string, error) {
-
-	//combpattern := `^([0-9]+)$|^(IDX\{([0-9])\})$`
+	// combpattern := `^([0-9]+)$|^(IDX\{([0-9])\})$`
 	combpattern := `^([0-9]+)$|^(IDX\{([0-9])\}(?:;(DOT\[\d*:\d*\]))?)$`
 	re, err := regexp.Compile(combpattern)
 	if err != nil {
@@ -179,11 +175,11 @@ func BuildParseResults(allindex MultiIndexFormatArray, rs []string) (MultiIndexF
 	for i, v := range rs {
 		// we need to check if v is a simple number or an expression (using regex?)
 		match := re.FindStringSubmatch(v)
-		//fmt.Println(match, len(match))
+		// fmt.Println(match, len(match))
 		if len(match) == 0 {
 			return nil, "", fmt.Errorf("Invalid value provided on mulitindex result %s", v)
 		}
-		//Case number is retrieved
+		// Case number is retrieved
 		if match[1] != "" {
 			if prefix != "" {
 				prefix += "."
@@ -193,7 +189,7 @@ func BuildParseResults(allindex MultiIndexFormatArray, rs []string) (MultiIndexF
 				suffix += prefix
 			}
 		}
-		//Case IDX{M} is retrieved
+		// Case IDX{M} is retrieved
 		if match[2] != "" {
 			ndep, err := strconv.Atoi(match[3])
 			if err != nil {
@@ -212,7 +208,7 @@ func BuildParseResults(allindex MultiIndexFormatArray, rs []string) (MultiIndexF
 				Dependency:       allindex[ir].Dependency,
 				CurIndexedLabels: make(map[string]string),
 			}
-			//Deep copy if CurIndexedLabels, index can be reused...
+			// Deep copy if CurIndexedLabels, index can be reused...
 			// Case DOT is provided...
 			var first, last int
 			var sapply bool
@@ -237,7 +233,7 @@ func BuildParseResults(allindex MultiIndexFormatArray, rs []string) (MultiIndexF
 				last, err = strconv.Atoi(dotEnd) // if there is an error last
 				if err != nil {
 					last = -1
-					//Not sure if needs to return an error...
+					// Not sure if needs to return an error...
 					return nil, "", err
 				}
 				sapply = true
@@ -252,7 +248,7 @@ func BuildParseResults(allindex MultiIndexFormatArray, rs []string) (MultiIndexF
 				}
 				mi.CurIndexedLabels[section] = v
 			}
-			//mi := allindex[ir]
+			// mi := allindex[ir]
 			kk := make(map[string]string)
 
 			// if there is some prefix, we need to append to the existing map, if not, it will directly be the currend indexes labels
@@ -272,18 +268,17 @@ func BuildParseResults(allindex MultiIndexFormatArray, rs []string) (MultiIndexF
 
 // MergeResults - Merge all results
 func MergeResults(resindex MultiIndexFormatArray, suffix string) (*MultiIndexFormat, error) {
-
 	if len(resindex) == 0 {
 		return &MultiIndexFormat{}, fmt.Errorf("Empty result index after parsed all indexes")
 	}
 
-	//Start iteration to over all indexes and it will recursively store results on mi
+	// Start iteration to over all indexes and it will recursively store results on mi
 	mi := resindex[0]
 	for i := 1; i < len(resindex); i++ {
 		mi = MergeIndex(mi, resindex[i])
 	}
 
-	//Finally, check if we must apply some suffix...
+	// Finally, check if we must apply some suffix...
 	if len(suffix) > 0 {
 		mi = AddSuffix(suffix, mi)
 	}
@@ -293,7 +288,6 @@ func MergeResults(resindex MultiIndexFormatArray, suffix string) (*MultiIndexFor
 
 // MergeIndex - Merges two tables by scalar product between indexes
 func MergeIndex(tmp, input *MultiIndexFormat) *MultiIndexFormat {
-
 	var pp MultiIndexFormat
 	pp.CurIndexedLabels = make(map[string]string)
 

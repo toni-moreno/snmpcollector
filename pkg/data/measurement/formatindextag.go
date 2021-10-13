@@ -43,7 +43,7 @@ func formatDec2ASCII(input string) string {
 	bArray := make([]byte, n)
 	for i := 0; i < n; i++ {
 		num, _ := strconv.Atoi(sArray[i])
-		//fmt.Printf("num %d\n",num)
+		// fmt.Printf("num %d\n",num)
 		bArray = append(bArray, byte(num))
 	}
 	return stripCtlAndExtFromBytes(string(bArray))
@@ -103,13 +103,13 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 	for k, v := range data {
 		final = strings.Replace(final, "$"+k, v, -1)
 	}
-	//check if more varibles defined
+	// check if more varibles defined
 	if !strings.Contains(final, "$") {
 		return final
 	}
-	//continue evaluating for each variable
+	// continue evaluating for each variable
 	for k, v := range data {
-		//check as many times as repeaded variables it has
+		// check as many times as repeaded variables it has
 		for {
 			// ${VARNAME|SECTION|TRANSFORMATION}
 			pattern := "\\${" + k + "\\|([^|]*)\\|([^}]*)}"
@@ -122,12 +122,12 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 			if len(match) < 3 {
 				l.Debugf("FormatTag[%s]: match length: %d , match  %+v with pattern %s", format, len(match), match, pattern)
 				break
-				//continue
+				// continue
 			}
-			//here we hav found a tranformation to do
+			// here we hav found a tranformation to do
 			sectionmode := match[1]
 			transformation := match[2]
-			//check defaultvalues
+			// check defaultvalues
 			if len(sectionmode) == 0 {
 				sectionmode = "ALL"
 			}
@@ -190,8 +190,8 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 				l.Warnf("FormatTag[%s]: Unknown SECTION parameters %s ,  pattern %s", format, sectionmode, pattern)
 			}
 
-			//here we have the section we want to decode
-			//Doing transfomations over de selected section
+			// here we have the section we want to decode
+			// Doing transfomations over de selected section
 			decoded := section
 			switch {
 			case transformation == "STRING":

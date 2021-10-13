@@ -43,7 +43,7 @@ func (dbc *DatabaseCfg) GetMeasFilterCfgMap(filter string) (map[string]*MeasFilt
 func (dbc *DatabaseCfg) GetMeasFilterCfgArray(filter string) ([]*MeasFilterCfg, error) {
 	var err error
 	var devices []*MeasFilterCfg
-	//Get Only data for selected measurements
+	// Get Only data for selected measurements
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&devices); err != nil {
 			log.Warnf("Fail to get MeasFilterCfg  data filteter with %s : %v\n", filter, err)
@@ -74,7 +74,7 @@ func (dbc *DatabaseCfg) AddMeasFilterCfg(dev MeasFilterCfg) (int64, error) {
 		session.Rollback()
 		return 0, err
 	}
-	//here we should also add file if this is a file filter
+	// here we should also add file if this is a file filter
 
 	err = session.Commit()
 	if err != nil {
@@ -129,7 +129,7 @@ func (dbc *DatabaseCfg) UpdateMeasFilterCfg(id string, dev MeasFilterCfg) (int64
 	}
 	defer session.Close()
 
-	if id != dev.ID { //ID has been changed only need change id's in snsmpdev
+	if id != dev.ID { // ID has been changed only need change id's in snsmpdev
 		affecteddev, err = session.Where("id_filter='" + id + "'").Cols("id_filter").Update(&SnmpDevFilters{IDFilter: dev.ID})
 		if err != nil {
 			session.Rollback()
@@ -138,7 +138,7 @@ func (dbc *DatabaseCfg) UpdateMeasFilterCfg(id string, dev MeasFilterCfg) (int64
 		log.Infof("Updated Measurement Filter Config to %d devices ", affecteddev)
 	}
 
-	//update data
+	// update data
 	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
 		session.Rollback()

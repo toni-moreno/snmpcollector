@@ -9,7 +9,6 @@ import (
 
 // NewAPICfgSnmpMetric SnmpMetric  API REST creator
 func NewAPICfgSnmpMetric(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	m.Group("/api/cfg/metric", func() {
@@ -54,7 +53,7 @@ func GetMetrics(ctx *Context) {
 	log.Debugf("Getting Metrics %+v", &cfgarray)
 }
 
-//GetMetricByID --pending--
+// GetMetricByID --pending--
 func GetMetricByID(ctx *Context) {
 	// swagger:operation GET /cfg/metric/{id}  Config_Metric GetMetricByID
 	//---
@@ -122,7 +121,7 @@ func AddMetric(ctx *Context, dev config.SnmpMetricCfg) {
 		log.Warningf("Error on insert Metric %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return data  or affected
+		// TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
 	}
 }
@@ -166,12 +165,12 @@ func UpdateMetric(ctx *Context, dev config.SnmpMetricCfg) {
 		log.Warningf("Error on update Metric %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return device data
+		// TODO: review if needed return device data
 		ctx.JSON(200, &dev)
 	}
 }
 
-//DeleteMetric --pending--
+// DeleteMetric --pending--
 func DeleteMetric(ctx *Context) {
 	// swagger:operation DETELE /cfg/metric/{id}  Config_Metric DeleteMetric
 	//---
@@ -207,7 +206,7 @@ func DeleteMetric(ctx *Context) {
 	}
 }
 
-//GetMetricsAffectOnDel --pending--
+// GetMetricsAffectOnDel --pending--
 func GetMetricsAffectOnDel(ctx *Context) {
 	// swagger:operation GET /cfg/metric/checkondel/{id} Config_Metric GetMetricsAffectOnDel
 	//---

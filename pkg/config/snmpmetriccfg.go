@@ -58,18 +58,18 @@ func (c ConversionMode) GetString() string {
 // SnmpMetricCfg Metric config
 // swagger:model SnmpMetricCfg
 type SnmpMetricCfg struct {
-	ID          string         `xorm:"'id' unique" binding:"Required"` //name of the key in the config array
+	ID          string         `xorm:"'id' unique" binding:"Required"` // name of the key in the config array
 	FieldName   string         `xorm:"field_name" binding:"Required"`
 	Description string         `xorm:"description"`
 	BaseOID     string         `xorm:"baseoid"`
 	DataSrcType string         `xorm:"datasrctype"`
-	GetRate     bool           `xorm:"getrate"` //ony Valid with COUNTERS
+	GetRate     bool           `xorm:"getrate"` // ony Valid with COUNTERS
 	Scale       float64        `xorm:"scale"`
 	Shift       float64        `xorm:"shift"`
-	IsTag       bool           `xorm:"'istag' default 0"`      //Not Valid on  MULTISTRINGPARSER
-	ExtraData   string         `xorm:"extradata"`              //Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK, ENUM
-	Conversion  ConversionMode `xorm:"'conversion' default 0"` //Conversion will be always float for
-	Names       map[int]string `xorm:"-" json:"-"`             //BitString Name array
+	IsTag       bool           `xorm:"'istag' default 0"`      // Not Valid on  MULTISTRINGPARSER
+	ExtraData   string         `xorm:"extradata"`              // Only Valid with STRINGPARSER, MULTISTRINGPARSER, STRINGEVAL , BITS , BITSCHK, ENUM
+	Conversion  ConversionMode `xorm:"'conversion' default 0"` // Conversion will be always float for
+	Names       map[int]string `xorm:"-" json:"-"`             // BitString Name array
 }
 
 // MarshalJSON marshall (not sure if needed here....)
@@ -108,24 +108,24 @@ fieldname != null
 */
 // Init initialize metrics
 func (m *SnmpMetricCfg) Init() error {
-	//valIDate config values
+	// valIDate config values
 	if len(m.FieldName) == 0 {
 		return errors.New("FieldName not set in metric Config " + m.ID)
 	}
 	if len(m.BaseOID) == 0 && m.DataSrcType != "STRINGEVAL" && m.DataSrcType != "CONDITIONEVAL" {
 		return fmt.Errorf("BaseOid not set in metric Config %s type  %s"+m.ID, m.DataSrcType)
 	}
-	//https://tools.ietf.org/html/rfc2578 (SMIv2)
-	//https://tools.ietf.org/html/rfc2579 (Textual Conventions for SMIv2)
-	//https://tools.ietf.org/html/rfc2851 (Textual Conventions for Internet Network Address)
+	// https://tools.ietf.org/html/rfc2578 (SMIv2)
+	// https://tools.ietf.org/html/rfc2579 (Textual Conventions for SMIv2)
+	// https://tools.ietf.org/html/rfc2851 (Textual Conventions for Internet Network Address)
 	switch m.DataSrcType {
 	case "INTEGER", "Integer32":
 	case "Gauge32":
 	case "UInteger32", "Unsigned32":
-	case "Counter32", "COUNTER32": //raw and cooked increment of Counter32
-	case "Counter64", "COUNTER64": //raw and Cooked increment of Counter64
-	case "COUNTERXX": //raw and Coocked increment with non_negative behaviour of Counters
-	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
+	case "Counter32", "COUNTER32": // raw and cooked increment of Counter32
+	case "Counter64", "COUNTER64": // raw and Cooked increment of Counter64
+	case "COUNTERXX": // raw and Coocked increment with non_negative behaviour of Counters
+	case "TimeTicks", "TIMETICKS": // raw and cooked to second of timeticks
 	case "BITS", "BITSCHK":
 	case "ENUM":
 	case "OCTETSTRING":
@@ -152,7 +152,7 @@ func (m *SnmpMetricCfg) Init() error {
 		if len(m.ExtraData) == 0 {
 			return errors.New("BITS type requires extradata to work " + m.ID)
 		}
-		//named bits array construction for this Config
+		// named bits array construction for this Config
 		re := regexp.MustCompile("([a-zA-Z0-9\\-_]+)\\s*\\(\\s*([0-9]+)\\s*\\)")
 		m.Names = make(map[int]string)
 		str := re.FindAllStringSubmatch(m.ExtraData, -1)
@@ -165,7 +165,7 @@ func (m *SnmpMetricCfg) Init() error {
 		if len(m.ExtraData) == 0 {
 			return errors.New("ENUM type requires extradata to work " + m.ID)
 		}
-		//named enum array construction for this Config
+		// named enum array construction for this Config
 		re := regexp.MustCompile("([a-zA-Z0-9\\-_]+)\\s*\\(\\s*([0-9]+)\\s*\\)")
 		m.Names = make(map[int]string)
 		str := re.FindAllStringSubmatch(m.ExtraData, -1)
@@ -185,17 +185,17 @@ func (m *SnmpMetricCfg) Init() error {
 		if len(m.ExtraData) == 0 {
 			return errors.New("MULTISTRINGPARSER type requires extradata to work " + m.ID)
 		}
-		//Check Field Syntax.
+		// Check Field Syntax.
 		ma, err := m.GetMultiStringTagFieldMap()
 		if err != nil {
 			return fmt.Errorf("MULTISTRINGPARSER ITEM definition Format Error %s type  %s", m.ID, err)
 		}
-		//Check regex syntax
+		// Check regex syntax
 		re, err := regexp.Compile(m.ExtraData)
 		if err != nil {
 			return fmt.Errorf("MULTISTRINGPARSER Regexp Format Error %s type  %s", m.ID, err)
 		}
-		//Check number of capturing groups are the same as ITEM definitions
+		// Check number of capturing groups are the same as ITEM definitions
 		ncg := len(re.SubexpNames())
 		if ncg != len(ma)+1 {
 			return fmt.Errorf("MULTISTRINGPARSER  %s Format Error %d ITEMS defined different than %d Capturing groups", m.ID, len(ma), ncg-1)
@@ -225,33 +225,33 @@ func (m *SnmpMetricCfg) GetValidConversions() ([]ConversionMode, ConversionMode,
 		return []ConversionMode{FLOAT, INTEGER}, INTEGER, nil
 	case "COUNTER32",
 		"COUNTER64",
-		"COUNTERXX": //raw and cooked increment of Counter32
+		"COUNTERXX": // raw and cooked increment of Counter32
 		if m.GetRate == true {
 			return []ConversionMode{FLOAT, INTEGER}, FLOAT, nil
 		} else {
 			return []ConversionMode{FLOAT, INTEGER}, INTEGER, nil
 		}
-	case "TimeTicks", "TIMETICKS": //raw and cooked to second of timeticks
+	case "TimeTicks", "TIMETICKS": // raw and cooked to second of timeticks
 		return []ConversionMode{FLOAT, INTEGER}, INTEGER, nil
 	case "BITSCHK":
 		return []ConversionMode{FLOAT, INTEGER, BOOLEAN}, BOOLEAN, nil
-	case "BITS": //no conversion  neeeded (not triggered)
+	case "BITS": // no conversion  neeeded (not triggered)
 		return []ConversionMode{STRING}, STRING, nil
-	case "ENUM": //no conversion  neeeded (not triggered)
+	case "ENUM": // no conversion  neeeded (not triggered)
 		return []ConversionMode{STRING}, STRING, nil
-	case "OCTETSTRING": //no conversion  needed (not triggered)
+	case "OCTETSTRING": // no conversion  needed (not triggered)
 		return []ConversionMode{STRING, INTEGER}, STRING, nil
-	case "OID": //no conversion  neeeded (not triggered)
+	case "OID": // no conversion  neeeded (not triggered)
 		return []ConversionMode{STRING}, STRING, nil
-	case "HWADDR", "IpAddress": //no conversion  neeeded (not triggered)
+	case "HWADDR", "IpAddress": // no conversion  neeeded (not triggered)
 		return []ConversionMode{STRING}, STRING, nil
 	case "STRINGPARSER":
 		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, FLOAT, nil
-	case "MULTISTRINGPARSER": //no conversion  needed
+	case "MULTISTRINGPARSER": // no conversion  needed
 		return []ConversionMode{NONE}, NONE, nil
 	case "STRINGEVAL":
 		return []ConversionMode{FLOAT, INTEGER, BOOLEAN, STRING}, FLOAT, nil
-	case "CONDITIONEVAL": //not conversion will be triggered
+	case "CONDITIONEVAL": // not conversion will be triggered
 		return []ConversionMode{INTEGER}, INTEGER, nil
 	default:
 		return []ConversionMode{NONE}, NONE, errors.New("UnkNown DataSourceType:" + m.DataSrcType + " in metric Config " + m.ID)
@@ -265,12 +265,12 @@ func (m *SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
 	}
 	expression, err := govaluate.NewEvaluableExpression(m.ExtraData)
 	if err != nil {
-		//log.Errorf("Error on initialice STRINGEVAL on metric %s evaluation : %s : ERROR : %s", m.ID, m.ExtraData, err)
+		// log.Errorf("Error on initialice STRINGEVAL on metric %s evaluation : %s : ERROR : %s", m.ID, m.ExtraData, err)
 		return err
 	}
 	_, err = expression.Evaluate(parameters)
 	if err != nil {
-		//log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", m.ID, m.ExtraData, err)
+		// log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", m.ID, m.ExtraData, err)
 		return err
 	}
 	return nil
@@ -278,23 +278,22 @@ func (m *SnmpMetricCfg) CheckEvalCfg(parameters map[string]interface{}) error {
 
 // GetMultiStringTagFieldMap get tag/field description map
 func (m *SnmpMetricCfg) GetMultiStringTagFieldMap() ([]*MetricMultiMap, error) {
-
 	var retval []*MetricMultiMap
 
 	items := strings.Split(m.FieldName, ",")
 
 	for _, v := range items {
 		itcfg := strings.Split(v, "|")
-		//checklength
-		iType := itcfg[0] //T/F
+		// checklength
+		iType := itcfg[0] // T/F
 		if iType != "T" && iType != "F" {
 			str := fmt.Sprintf("MultiString Parse Config error on Metric %s  Type %s is not of type (T=Tag ) or (F=Field)", m.ID, itcfg)
 			log.Warnf(str)
 			return nil, errors.New(str)
 		}
 		// Name
-		iName := itcfg[1] //name
-		//Default Conversions
+		iName := itcfg[1] // name
+		// Default Conversions
 		var iConv string
 		if iType == "T" {
 			iConv = "STR"
@@ -338,7 +337,6 @@ func (m *SnmpMetricCfg) GetUsedVarNames() ([]string, error) {
 	}
 	expression, err := govaluate.NewEvaluableExpression(m.ExtraData)
 	if err != nil {
-
 		return nil, err
 	}
 	return expression.Vars(), nil
@@ -461,7 +459,7 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgMap(filter string) (map[string]*SnmpMetr
 func (dbc *DatabaseCfg) GetSnmpMetricCfgArray(filter string) ([]*SnmpMetricCfg, error) {
 	var err error
 	var devices []*SnmpMetricCfg
-	//Get Only data for selected metrics
+	// Get Only data for selected metrics
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&devices); err != nil {
 			log.Warnf("Fail to get SnmpMetricCfg  data filteter with %s : %v\n", filter, err)
@@ -498,7 +496,7 @@ func (dbc *DatabaseCfg) AddSnmpMetricCfg(dev SnmpMetricCfg) (int64, error) {
 		session.Rollback()
 		return 0, err
 	}
-	//no other relation
+	// no other relation
 	err = session.Commit()
 	if err != nil {
 		return 0, err
@@ -559,7 +557,7 @@ func (dbc *DatabaseCfg) UpdateSnmpMetricCfg(id string, dev SnmpMetricCfg) (int64
 	}
 	defer session.Close()
 
-	if id != dev.ID { //ID has been changed
+	if id != dev.ID { // ID has been changed
 		affecteddev, err = session.Where("id_metric_cfg='" + id + "'").Cols("id_metric_cfg").Update(&MeasurementFieldCfg{IDMetricCfg: dev.ID})
 		if err != nil {
 			session.Rollback()
@@ -599,7 +597,6 @@ func (dbc *DatabaseCfg) GetSnmpMetricCfgAffectOnDel(id string) ([]*DbObjAction, 
 			ObID:     val.IDMeasurementCfg,
 			Action:   "Delete SNMPMetric field from Measurement relation",
 		})
-
 	}
 	return obj, nil
 }

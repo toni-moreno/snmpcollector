@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	//Log the Logger
+	// Log the Logger
 	log     *logrus.Logger
 	dataDir string
 	logDir  string

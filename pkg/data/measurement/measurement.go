@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	confDir string              //Needed to get File Filters data
-	dbc     *config.DatabaseCfg //Needed to get Custom Filter  data
+	confDir string              // Needed to get File Filters data
+	dbc     *config.DatabaseCfg // Needed to get Custom Filter  data
 )
 
 // SetConfDir  enable load File Filters from anywhere in the our FS.
@@ -33,7 +33,7 @@ func SetDB(db *config.DatabaseCfg) {
 	metric.SetDB(db)
 }
 
-//Measurement the runtime measurement config
+// Measurement the runtime measurement config
 type Measurement struct {
 	cfg              *config.MeasurementCfg
 	ID               string
@@ -41,12 +41,12 @@ type Measurement struct {
 	TagName          []string
 	MetricTable      *MetricTable
 	snmpOids         []string
-	OidSnmpMap       map[string]*metric.SnmpMetric `json:"-"` //snmpMetric mapped with real OID's
+	OidSnmpMap       map[string]*metric.SnmpMetric `json:"-"` // snmpMetric mapped with real OID's
 	AllIndexedLabels map[string]string             //`json:"-"` //all available values on the remote device
 	CurIndexedLabels map[string]string             //`json:"-"`
 	idxPosInOID      int
 	idx2PosInOID     int
-	curIdxPos        int //used in Walk functions could be variable depending on the Index (or IndexTag)
+	curIdxPos        int // used in Walk functions could be variable depending on the Index (or IndexTag)
 	FilterCfg        *config.MeasFilterCfg
 	Filter           filter.Filter
 	log              *logrus.Logger
@@ -55,7 +55,7 @@ type Measurement struct {
 	MultiIndexMeas   []*Measurement
 }
 
-//New  creates object with config , log + goSnmp client
+// New  creates object with config , log + goSnmp client
 func New(c *config.MeasurementCfg, l *logrus.Logger, cli *snmp.Client) (*Measurement, error) {
 	m := &Measurement{ID: c.ID, MName: c.Name, cfg: c, log: l, snmpClient: cli}
 	err := m.Init()
@@ -64,7 +64,7 @@ func New(c *config.MeasurementCfg, l *logrus.Logger, cli *snmp.Client) (*Measure
 
 // InvalidateMetrics Invalidate all MetricTable metrics
 func (m *Measurement) InvalidateMetrics() {
-	//invalidate normal metrics
+	// invalidate normal metrics
 	m.MetricTable.InvalidateTable()
 }
 
@@ -74,7 +74,7 @@ func (m *Measurement) InvalidateMetrics() {
  *init MetricTable
  */
 func (m *Measurement) Init() error {
-	//Init snmp methods
+	// Init snmp methods
 	switch m.cfg.GetMode {
 	case "value":
 		m.GetData = m.SnmpGetData
@@ -96,7 +96,7 @@ func (m *Measurement) Init() error {
 		return nil
 	}
 
-	//loading all posible values in 	m.AllIndexedLabels
+	// loading all posible values in 	m.AllIndexedLabels
 	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" || m.cfg.GetMode == "indexed_mit" {
 		m.idxPosInOID = len(m.cfg.IndexOID)
 		m.TagName = append([]string{}, m.cfg.IndexTag)
@@ -105,13 +105,12 @@ func (m *Measurement) Init() error {
 		}
 		m.Infof("Loading Indexed values")
 		il, err := m.loadIndexedLabels()
-
 		if err != nil {
 			m.Errorf("Error while trying to load Indexed Labels on for measurement : for baseOid %s : ERROR: %s", m.cfg.IndexOID, err)
 			return err
 		}
 		m.AllIndexedLabels = il
-		//Final Selected Indexes are All Indexed
+		// Final Selected Indexes are All Indexed
 		m.CurIndexedLabels = m.AllIndexedLabels
 	}
 
@@ -125,7 +124,6 @@ func (m *Measurement) Init() error {
 
 // InitMultiIndex initializes measurements from MultiIndexCfg
 func (m *Measurement) InitMultiIndex() error {
-
 	// Create an array of measurements, based on length of indexed_multiple:
 
 	multimeas := []*Measurement{}
@@ -147,13 +145,13 @@ func (m *Measurement) InitMultiIndex() error {
 			FieldMetric:    m.cfg.FieldMetric,
 		}
 
-		//create entirely new measurement based on provided CFG
+		// create entirely new measurement based on provided CFG
 		mm, err := New(&mcfg, m.log, m.snmpClient)
 		if err != nil {
 			return err
 		}
 
-		//append it with order
+		// append it with order
 		multimeas = append(multimeas, mm)
 	}
 
@@ -178,7 +176,6 @@ func (m *Measurement) UpdateMultiFilter() {
 
 // BuildMultiIndexLabels - builds the multi index labels. Returns the CurIndexedLabels and TagName from processed result
 func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, error) {
-
 	// Declare array of MultiIndexFormat
 	allindex := MultiIndexFormatArray{}
 
@@ -218,13 +215,13 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 			if index.Dependency.Index > len(allindex)-1 {
 				return nil, nil, fmt.Errorf("[%s] - Dependency is out of index range - %d [len: %d], read from %s", m.ID, index.Dependency.Index, len(allindex)-1, index.Label)
 			}
-			//Read the real id from dependency one, as it is orderered, it is guaranteed that it has already been processed
+			// Read the real id from dependency one, as it is orderered, it is guaranteed that it has already been processed
 			ri, err := allindex.GetDepIndex(index.Dependency.Index)
 			if err != nil {
 				return nil, nil, err
 			}
 
-			//Check if the index is itself, just skip it
+			// Check if the index is itself, just skip it
 			if si == ri {
 				m.Warnf("[%s] - Detected same IDX on dependency index, skipping it", index.Label)
 				continue
@@ -255,7 +252,7 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 						}
 						fallthrough
 					default:
-						//fill need to be the number of retrieved tagNames
+						// fill need to be the number of retrieved tagNames
 						for i := 0; i < len(allindex[ri].TagName); i++ {
 							fill += fillt + "|"
 						}
@@ -294,7 +291,7 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 	// [(1.1) = "TAG1A", (1.2) = "TAG1B"]
 	// [(2.1) = "TAG2A", (2.2) = "TAG2B"]
 
-	//RESULT:
+	// RESULT:
 	// [(1.1.2.1)="TAG1A|TAG2A"]
 	// [(1.1.2.2)="TAG1A|TAG2B"]
 	// [(1.2.2.1)="TAG1B|TAG2A"]
@@ -305,7 +302,7 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 	// [(2.1) = "TAG2A", (2.2) = "TAG2B"]
 	// [(3.1) = "TAG3A", (3.2) = "TAG3B"]
 
-	//RESULT:
+	// RESULT:
 	// [(1.1.2.1.3.1)="TAG1A|TAG2A|TAG3A"]
 	// [(1.1.2.1.3.1)="TAG1A|TAG2A|TAG3B"]
 	// [(1.1.2.2.3.1)="TAG1A|TAG2B|TAG3A"]
@@ -328,7 +325,6 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 
 // LoadMultiIndex loads the multiindex with all attached measurements
 func (m *Measurement) LoadMultiIndex() error {
-
 	// Load MultiIndex labels based on dependencies
 	mil, tag, err := m.BuildMultiIndexLabels()
 	if err != nil {
@@ -357,14 +353,12 @@ func (m *Measurement) GetMode() string {
 
 // InitBuildRuntime init
 func (m *Measurement) InitBuildRuntime() {
-
 	switch m.cfg.GetMode {
 	case "value":
 		m.snmpOids, m.OidSnmpMap = m.MetricTable.GetSnmpMaps()
 	default:
 		m.OidSnmpMap = m.MetricTable.GetSnmpMap()
 	}
-
 }
 
 // CheckInitFilter loads measurement filter on measurement if name/label is matched
@@ -457,8 +451,8 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool) error {
 		m.Errorf("Error while trying to apply file Filter  ERROR: %s", err)
 	}
 
-	//now we have the 	m.Filterlabels array initialized with only those values which we will need
-	//Loading final Values to query with snmp
+	// now we have the 	m.Filterlabels array initialized with only those values which we will need
+	// Loading final Values to query with snmp
 	m.CurIndexedLabels = m.Filter.MapLabels(m.AllIndexedLabels)
 	m.MetricTable = NewMetricTable(m.cfg, m.log, m.CurIndexedLabels)
 	return err
@@ -472,7 +466,7 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 		return false, fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
 	}
 
-	//fist update  all indexed--------
+	// fist update  all indexed--------
 	m.Infof("Re Loading Indexed values")
 
 	// if its indexed_multiple, we need to update internal filters and create the new metric table on based one
@@ -496,12 +490,12 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 	// Reload measurement indexes
 	if m.Filter == nil {
 		m.Debugf("There is no filter configured in this measurement %s", m.cfg.ID)
-		//check if curindexed different of AllIndexed
+		// check if curindexed different of AllIndexed
 		delIndexes := utils.DiffKeyValuesInMap(m.CurIndexedLabels, m.AllIndexedLabels)
 		newIndexes := utils.DiffKeyValuesInMap(m.AllIndexedLabels, m.CurIndexedLabels)
 
 		if len(newIndexes) == 0 && len(delIndexes) == 0 {
-			//no changes on the Filter
+			// no changes on the Filter
 			m.Infof("No changes found on the Index for this measurement")
 			return false, nil
 		}
@@ -526,21 +520,21 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 		m.Errorf("Error while trying to apply Filter : ERROR: %s", err)
 		return false, err
 	}
-	//check if all values have been filtered to send a warnign message.
+	// check if all values have been filtered to send a warnign message.
 	if m.Filter.Count() == 0 {
 		m.Warnf("WARNING after applying filter no values on this measurement will be sent")
 	}
-	//check if newfilterlabels are different than previous.
+	// check if newfilterlabels are different than previous.
 
-	//now we have the 	m.Filter,m.ls array initialized with only those values which we will need
-	//Loading final Values to query with snmp
+	// now we have the 	m.Filter,m.ls array initialized with only those values which we will need
+	// Loading final Values to query with snmp
 	newIndexedLabels := m.Filter.MapLabels(m.AllIndexedLabels)
 
 	delIndexes := utils.DiffKeyValuesInMap(m.CurIndexedLabels, newIndexedLabels)
 	newIndexes := utils.DiffKeyValuesInMap(newIndexedLabels, m.CurIndexedLabels)
 
 	if len(newIndexes) == 0 && len(delIndexes) == 0 {
-		//no changes on the Filter
+		// no changes on the Filter
 		m.Infof("No changes on the filter %s ", m.FilterCfg.FType)
 		return false, nil
 	}
@@ -566,7 +560,6 @@ SnmpBulkData GetSNMP Data
 
 // SnmpWalkData get data with snmpwalk
 func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
-
 	now := time.Now()
 	var gathered int64
 	var processed int64
@@ -578,7 +571,7 @@ func (m *Measurement) SnmpWalkData() (int64, int64, int64, error) {
 		if pdu.Value == nil {
 			m.Warnf("no value retured by pdu :%+v", pdu)
 			errors++
-			return nil //if error return the bulk process will stop
+			return nil // if error return the bulk process will stop
 		}
 		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
 			m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
@@ -608,7 +601,7 @@ func (m *Measurement) ComputeOidConditionalMetrics() {
 	}
 	switch m.cfg.GetMode {
 	case "value":
-		//compute Evalutated metrics
+		// compute Evalutated metrics
 		for _, v := range m.cfg.OidCondMetric {
 			evalkey := m.cfg.ID + "." + v.ID
 			if metr, ok := m.OidSnmpMap[evalkey]; ok {
@@ -630,20 +623,20 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 		return
 	}
 
-	//copy the input
+	// copy the input
 	switch m.cfg.GetMode {
 	case "value":
 		parameters := make(map[string]interface{})
-		//copy of the catalog map
+		// copy of the catalog map
 		for k, v := range catalog {
 			parameters[k] = v
 		}
 
 		m.Debugf("Building parrameters array for index measurement %s", m.cfg.ID)
-		parameters["NFR"] = len(m.AllIndexedLabels)                          //Number of non filtered rows
-		parameters["NR"] = len(m.CurIndexedLabels)                           //Number of current rows (like awk) --after filtered applied  --
-		parameters["NF"] = len(m.cfg.FieldMetric) + len(m.cfg.OidCondMetric) //Number of fields ( like awk)
-		//getting all values to the array
+		parameters["NFR"] = len(m.AllIndexedLabels)                          // Number of non filtered rows
+		parameters["NR"] = len(m.CurIndexedLabels)                           // Number of current rows (like awk) --after filtered applied  --
+		parameters["NF"] = len(m.cfg.FieldMetric) + len(m.cfg.OidCondMetric) // Number of fields ( like awk)
+		// getting all values to the array
 		for _, v := range m.cfg.FieldMetric {
 			if metr, ok := m.OidSnmpMap[v.BaseOID]; ok {
 				metr.GetEvaluableVariables(parameters)
@@ -660,7 +653,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 			}
 		}
 		m.Debugf("PARAMETERS: %+v", parameters)
-		//compute Evalutated metrics
+		// compute Evalutated metrics
 		for _, v := range m.cfg.EvalMetric {
 			evalkey := m.cfg.ID + "." + v.ID
 			if metr, ok := m.OidSnmpMap[evalkey]; ok {
@@ -674,17 +667,17 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 	case "indexed", "indexed_it", "indexed_mit", "indexed_multiple":
 		for key, val := range m.CurIndexedLabels {
 			parameters := make(map[string]interface{})
-			//copy of the catalog map
+			// copy of the catalog map
 			for k, v := range catalog {
 				parameters[k] = v
 			}
-			//building parameters array
+			// building parameters array
 			m.Debugf("Building parrameters array for index %s/%s", key, val)
-			parameters["NFR"] = len(m.AllIndexedLabels) //Number of non filtered rows
-			parameters["NR"] = len(m.CurIndexedLabels)  //Number of rows (like awk)
-			parameters["NF"] = len(m.cfg.FieldMetric)   //Number of fields ( like awk)
-			//TODO: add other common variables => Elapsed , etc
-			//getting all values to the array
+			parameters["NFR"] = len(m.AllIndexedLabels) // Number of non filtered rows
+			parameters["NR"] = len(m.CurIndexedLabels)  // Number of rows (like awk)
+			parameters["NF"] = len(m.cfg.FieldMetric)   // Number of fields ( like awk)
+			// TODO: add other common variables => Elapsed , etc
+			// getting all values to the array
 			for _, v := range m.cfg.FieldMetric {
 				if metr, ok := m.OidSnmpMap[v.BaseOID+"."+key]; ok {
 					m.Debugf("OK Field metric found %s with FieldName %s", metr.GetID(), metr.GetFieldName())
@@ -694,7 +687,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 				}
 			}
 			m.Debugf("PARAMETERS: %+v", parameters)
-			//compute Evalutated metrics
+			// compute Evalutated metrics
 			for _, v := range m.cfg.EvalMetric {
 				evalkey := m.cfg.ID + "." + v.ID + "." + key
 				if metr, ok := m.OidSnmpMap[evalkey]; ok {
@@ -715,20 +708,18 @@ GetSnmpData GetSNMP Data
 
 // SnmpGetData get Snmp data with snmpget
 func (m *Measurement) SnmpGetData() (int64, int64, int64, error) {
-
 	now := time.Now()
 	var gathered int64
 	var processed int64
 	var errors int64
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
-
 		m.Debugf("DEBUG pdu [%+v] || Value type %T [%x]", pdu, pdu.Value, pdu.Type)
 		gathered++
 		if pdu.Value == nil {
 			m.Warnf("no value retured by pdu :%+v", pdu)
 			errors++
-			return nil //if error return the bulk process will stop
+			return nil // if error return the bulk process will stop
 		}
 		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
 			m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
@@ -740,14 +731,13 @@ func (m *Measurement) SnmpGetData() (int64, int64, int64, error) {
 		return nil
 	}
 
-	//never will be error
+	// never will be error
 	m.snmpClient.Get(m.snmpOids, setRawData)
 
 	return gathered, processed, errors, nil
 }
 
 func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
-
 	m.Debugf("Looking up column names %s ", m.cfg.IndexOID)
 
 	allindex := make(map[string]string)
@@ -756,13 +746,13 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		m.Debugf("received SNMP  pdu:%+v", pdu)
 		if pdu.Value == nil {
 			m.Warnf("no value retured by pdu :%+v", pdu)
-			return nil //if error return the bulk process will stop
+			return nil // if error return the bulk process will stop
 		}
 		if len(pdu.Name) < m.curIdxPos+1 {
 			m.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", m.curIdxPos, pdu)
-			return nil //if error return the bulk process will stop
+			return nil // if error return the bulk process will stop
 		}
-		//i := strings.LastIndex(pdu.Name, ".")
+		// i := strings.LastIndex(pdu.Name, ".")
 		suffix := pdu.Name[m.curIdxPos+1:]
 
 		if m.cfg.IndexAsValue == true {
@@ -793,7 +783,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		allindex[suffix] = name
 		return nil
 	}
-	//needed to get data for different indexes
+	// needed to get data for different indexes
 	m.curIdxPos = m.idxPosInOID
 	err := m.snmpClient.Walk(m.cfg.IndexOID, setRawData)
 	if err != nil {
@@ -807,7 +797,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		return allindex, nil
 	}
 	// INDIRECT INDEXED
-	//backup old index
+	// backup old index
 	allindexOrigin := make(map[string]string, len(allindex))
 	for k, v := range allindex {
 		allindexOrigin[k] = v
@@ -815,7 +805,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 
 	switch m.cfg.GetMode {
 	case "indexed_it":
-		//initialize allindex again
+		// initialize allindex again
 		allindex = make(map[string]string)
 		m.curIdxPos = m.idx2PosInOID
 		err = m.snmpClient.Walk(m.cfg.TagOID, setRawData)
@@ -824,7 +814,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 			return allindex, err
 		}
 
-		//At this point we have Indirect indexes on allindex_origin and values on allindex
+		// At this point we have Indirect indexes on allindex_origin and values on allindex
 		// Example:
 		// allindexOrigin["1"]="9008"
 		//    key1="1"
@@ -850,7 +840,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		return allindexIt, nil
 
 	case "indexed_mit":
-		//Make another copy of origin, we need to mantain always a base origin index
+		// Make another copy of origin, we need to mantain always a base origin index
 		allindexRes := make(map[string]string, len(allindexOrigin))
 		for k, v := range allindexOrigin {
 			allindexRes[k] = v
@@ -858,9 +848,9 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 
 		// Go over all defined multipletagoid
 		for k, tagcfg := range m.cfg.MultiTagOID {
-			//initialize all index again
+			// initialize all index again
 			allindex = make(map[string]string)
-			//Store the last position to use it on allindex
+			// Store the last position to use it on allindex
 			m.curIdxPos = len(tagcfg.TagOID)
 			err = m.snmpClient.Walk(tagcfg.TagOID, setRawData)
 			if err != nil {
@@ -875,7 +865,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 				// It is used on qos to get parent cfg oids
 				check := formatTag(m.log, tagcfg.IndexFormat, map[string]string{"IDX1": key1, "VAL1": val1}, "VAL1")
 				if val2, ok := allindex[check]; ok {
-					//Only apply formatTag based on the last index...
+					// Only apply formatTag based on the last index...
 					if k == len(m.cfg.MultiTagOID)-1 {
 						allindexIt[key1] = formatTag(m.log, m.cfg.IndexTagFormat, map[string]string{"IDX1": key1, "VAL1": val1, "IDX2": val1, "VAL2": val2}, "VAL2")
 						continue

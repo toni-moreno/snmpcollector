@@ -9,7 +9,6 @@ import (
 
 // NewAPICfgOidCondition OID Condition API REST creator
 func NewAPICfgOidCondition(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	m.Group("/api/cfg/oidcondition", func() {
@@ -52,7 +51,7 @@ func GetOidConditions(ctx *Context) {
 	log.Debugf("Getting OID contitions %+v", &cfgarray)
 }
 
-//GetOidConditionByID --pending--
+// GetOidConditionByID --pending--
 func GetOidConditionByID(ctx *Context) {
 	// swagger:operation GET /cfg/oidcondition/{id} OID_Cond GetOidConditionByID
 	//---
@@ -119,7 +118,7 @@ func AddOidCondition(ctx *Context, dev config.OidConditionCfg) {
 		log.Warningf("Error on insert OID condition %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return data  or affected
+		// TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
 	}
 }
@@ -162,12 +161,12 @@ func UpdateOidCondition(ctx *Context, dev config.OidConditionCfg) {
 		log.Warningf("Error on update OID Condition %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return device data
+		// TODO: review if needed return device data
 		ctx.JSON(200, &dev)
 	}
 }
 
-//DeleteOidCondition --pending--
+// DeleteOidCondition --pending--
 func DeleteOidCondition(ctx *Context) {
 	// swagger:operation DELETE /cfg/oidcondition/{id} OID_Cond DeleteOidCondition
 	//---
@@ -204,7 +203,7 @@ func DeleteOidCondition(ctx *Context) {
 	}
 }
 
-//GetOidConditionAffectOnDel --pending--
+// GetOidConditionAffectOnDel --pending--
 func GetOidConditionAffectOnDel(ctx *Context) {
 	// swagger:operation GET /cfg/oidcondition/checkondel/{id} OID_Cond GetOidConditionAffectOnDel
 	//---

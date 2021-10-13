@@ -28,7 +28,7 @@ func NewFileFilter(fileName string, enableAlias bool, l *logrus.Logger) *FileFil
 func (ff *FileFilter) Init(arg ...interface{}) error {
 	ff.confDir = arg[0].(string)
 	ff.log.Infof("FILEFILTER [%s] initialize File filter  Enable Alias: %t", ff.FileName, ff.EnableAlias)
-	//chek if File exist
+	// chek if File exist
 	if _, err := os.Stat(filepath.Join(ff.confDir, ff.FileName)); os.IsNotExist(err) {
 		// does not exist
 		ff.log.Errorf("FILEFILTER [%s] file %s does not exist Plase upload first to the %s dir: error: %s", ff.FileName, filepath.Join(ff.confDir, ff.FileName), ff.confDir, err)
@@ -53,10 +53,9 @@ func (ff *FileFilter) MapLabels(AllIndexedLabels map[string]string) map[string]s
 					// map[k_l]v_f (alias to key of the label
 					curIndexedLabels[kl] = vf
 				} else {
-					//map[k_l]v_l (original name)
+					// map[k_l]v_l (original name)
 					curIndexedLabels[kl] = vl
 				}
-
 			}
 		}
 	}
@@ -66,7 +65,7 @@ func (ff *FileFilter) MapLabels(AllIndexedLabels map[string]string) map[string]s
 // Update load filtered data from config file online time
 func (ff *FileFilter) Update() error {
 	ff.log.Infof("FILEFILTER [%s] apply File filter Enable Alias: %t", ff.FileName, ff.EnableAlias)
-	//reset current fil ter
+	// reset current fil ter
 	ff.filterLabels = make(map[string]string)
 	if len(ff.FileName) == 0 {
 		return errors.New("No file configured error ")

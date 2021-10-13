@@ -10,7 +10,6 @@ import (
 
 // NewAPICfgSnmpDevice SnmpDevice REST API creator
 func NewAPICfgSnmpDevice(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	// Data sources
@@ -29,7 +28,7 @@ func NewAPICfgSnmpDevice(m *macaron.Macaron) error {
 	return nil
 }
 
-//DeviceStatMap
+// DeviceStatMap
 // swagger:model DeviceStatMap
 type DeviceStatMap struct {
 	config.SnmpDeviceCfg
@@ -71,7 +70,7 @@ func GetSNMPDevices(ctx *Context) {
 	log.Debugf("Getting DEVICEs %+v", &dsmap)
 }
 
-//GetSNMPDeviceByID --pending--
+// GetSNMPDeviceByID --pending--
 func GetSNMPDeviceByID(ctx *Context) {
 	// swagger:operation GET /cfg/snmpdevice/{id}  Config_Device GetSNMPDeviceByID
 	//---
@@ -108,8 +107,7 @@ func GetSNMPDeviceByID(ctx *Context) {
 }
 
 func addDeviceOnline(mode string, id string, dev *config.SnmpDeviceCfg) error {
-
-	//First doing Ping
+	// First doing Ping
 	log.Infof("trying to ping device %s : %+v", dev.ID, dev)
 
 	_, sysinfo, err := snmp.GetClient(dev, log, "ping", false, 0)
@@ -135,7 +133,7 @@ func addDeviceOnline(mode string, id string, dev *config.SnmpDeviceCfg) error {
 	default:
 	}
 
-	//Next Adding to the Device Runtime
+	// Next Adding to the Device Runtime
 	agent.AddDeviceInRuntime(dev.ID, dev)
 	return nil
 }
@@ -229,11 +227,10 @@ func AddSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 			log.Warningf("Error on insert for device %s  , affected : %+v , error: %s", dev.ID, affected, err)
 			ctx.JSON(404, err.Error())
 		} else {
-			//TODO: review if needed return data  or affected
+			// TODO: review if needed return data  or affected
 			ctx.JSON(200, &dev)
 		}
 	}
-
 }
 
 // UpdateSNMPDevice --pending--
@@ -353,14 +350,13 @@ func UpdateSNMPDevice(ctx *Context, dev config.SnmpDeviceCfg) {
 			log.Warningf("Error on update for device %s  , affected : %+v , error: %s", dev.ID, affected, err)
 			ctx.JSON(404, err.Error())
 		} else {
-			//TODO: review if needed return device data
+			// TODO: review if needed return device data
 			ctx.JSON(200, &dev)
 		}
 	}
-
 }
 
-//DeleteSNMPDevice --pending--
+// DeleteSNMPDevice --pending--
 func DeleteSNMPDevice(ctx *Context) {
 	// swagger:operation DELETE /cfg/snmpdevice/{id} Config_Device DeleteSNMPDevice1
 	//---
@@ -454,10 +450,9 @@ func DeleteSNMPDevice(ctx *Context) {
 			ctx.JSON(200, "deleted")
 		}
 	}
-
 }
 
-//GetSNMPDevicesAffectOnDel --pending--
+// GetSNMPDevicesAffectOnDel --pending--
 func GetSNMPDevicesAffectOnDel(ctx *Context) {
 	// swagger:operation GET /cfg/snmpdevice/checkondel/{id} Config_Device GetSNMPDevicesAffectOnDel
 	//---

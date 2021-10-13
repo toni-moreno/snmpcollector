@@ -14,7 +14,6 @@ import (
 )
 
 func ProcessMeasurementFull(m *Measurement, varmap map[string]interface{}) error {
-
 	err := m.Init()
 	if err != nil {
 		return fmt.Errorf("Can not initialize measurement %s", err)
@@ -36,7 +35,6 @@ func ProcessMeasurementFull(m *Measurement, varmap map[string]interface{}) error
 }
 
 func OrderMapByKey(m map[string]string) string {
-
 	var buffer bytes.Buffer
 
 	buffer.WriteString("{")
@@ -89,11 +87,10 @@ func GetOutputInfluxMetrics(m *Measurement) {
 // 5.- MEASUREMENT CONFIG SETUP
 
 func Example_Measurement_GetMode_Value() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -210,17 +207,16 @@ func Example_Measurement_GetMode_Value() {
 	GetOutputInfluxMetrics(m)
 
 	// Unordered Output:
-	//Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:52
-	//Measurement:test_name Tags:{} Field:metric_1_name ValueType:int64  Value:51
+	// Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:52
+	// Measurement:test_name Tags:{} Field:metric_1_name ValueType:int64  Value:51
 
 }
 
 func Example_Measurement_GetMode_Value_MaxOID_2() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -412,21 +408,20 @@ func Example_Measurement_GetMode_Value_MaxOID_2() {
 	GetOutputInfluxMetrics(m)
 
 	// Unordered Output:
-	//Measurement:test_name Tags:{} Field:metric_1_name ValueType:int64  Value:1
-	//Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:2
-	//Measurement:test_name Tags:{} Field:metric_3_name ValueType:int64  Value:3
-	//Measurement:test_name Tags:{} Field:metric_4_name ValueType:int64  Value:4
-	//Measurement:test_name Tags:{} Field:metric_5_name ValueType:int64  Value:5
-	//Measurement:test_name Tags:{} Field:metric_6_name ValueType:int64  Value:6
-	//Measurement:test_name Tags:{} Field:metric_7_name ValueType:int64  Value:7
+	// Measurement:test_name Tags:{} Field:metric_1_name ValueType:int64  Value:1
+	// Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:2
+	// Measurement:test_name Tags:{} Field:metric_3_name ValueType:int64  Value:3
+	// Measurement:test_name Tags:{} Field:metric_4_name ValueType:int64  Value:4
+	// Measurement:test_name Tags:{} Field:metric_5_name ValueType:int64  Value:5
+	// Measurement:test_name Tags:{} Field:metric_6_name ValueType:int64  Value:6
+	// Measurement:test_name Tags:{} Field:metric_7_name ValueType:int64  Value:7
 }
 
 func Example_Measurement_GetMode_Indexed() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -553,15 +548,13 @@ func Example_Measurement_GetMode_Indexed() {
 	// Measurement:interfaces_data Tags:{ portName:eth3 } Field:output ValueType:int64  Value:23
 	// Measurement:interfaces_data Tags:{ portName:eth4 } Field:input ValueType:int64  Value:54
 	// Measurement:interfaces_data Tags:{ portName:eth4 } Field:output ValueType:int64  Value:24
-
 }
 
 func Example_Measurement_GetMode_Indexed_Indirect() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -694,11 +687,9 @@ func Example_Measurement_GetMode_Indexed_Indirect() {
 	// Measurement:interfaces_data Tags:{ portName:eth3 } Field:output ValueType:int64  Value:23
 	// Measurement:interfaces_data Tags:{ portName:eth4 } Field:input ValueType:int64  Value:54
 	// Measurement:interfaces_data Tags:{ portName:eth4 } Field:output ValueType:int64  Value:24
-
 }
 
 func Example_Measurement_GetMode_Indexed_Multi_Indirect() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
@@ -706,7 +697,7 @@ func Example_Measurement_GetMode_Indexed_Multi_Indirect() {
 
 	l.SetLevel(lev)
 
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -716,7 +707,7 @@ func Example_Measurement_GetMode_Indexed_Multi_Indirect() {
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			{Name: ".1.1.1.1", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.1.2.1", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.1.3.1", Type: gosnmp.Integer, Value: int(53)},
@@ -725,7 +716,7 @@ func Example_Measurement_GetMode_Indexed_Multi_Indirect() {
 			{Name: ".1.3.2.1", Type: gosnmp.Integer, Value: int(22)},
 			{Name: ".1.3.3.1", Type: gosnmp.Integer, Value: int(23)},
 			{Name: ".1.3.4.1", Type: gosnmp.Integer, Value: int(24)},
-			//Indirect Table
+			// Indirect Table
 			{Name: ".1.2.1.1", Type: gosnmp.Integer, Value: int(2)},
 			{Name: ".1.2.2.1", Type: gosnmp.Integer, Value: int(2)},
 			{Name: ".1.2.3.1", Type: gosnmp.Integer, Value: int(2)},
@@ -863,15 +854,13 @@ func Example_Measurement_GetMode_Indexed_Multi_Indirect() {
 	// Measurement:interfaces_data Tags:{ portName:eth3 } Field:output ValueType:int64  Value:23
 	// Measurement:interfaces_data Tags:{ portName:eth4 } Field:input ValueType:int64  Value:54
 	// Measurement:interfaces_data Tags:{ portName:eth4 } Field:output ValueType:int64  Value:24
-
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -1031,15 +1020,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_() {
 	// Measurement:interfaces_data Tags:{ portAlias:myPort4, portDesc:port4, portName:eth4 } Field:output ValueType:int64  Value:24
 	// Measurement:interfaces_data Tags:{ portAlias:myPort1, portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
 	// Measurement:interfaces_data Tags:{ portAlias:myPort1, portDesc:port1, portName:eth1 } Field:output ValueType:int64  Value:21
-
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndexDIM2() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -1049,7 +1036,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndexDIM2() {
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			{Name: ".1.1.1.1", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.1.2.2", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.1.3.3", Type: gosnmp.Integer, Value: int(53)},
@@ -1058,8 +1045,8 @@ func Example_Measurement_GetMode_Indexed_MultiIndexDIM2() {
 			{Name: ".1.3.2.2", Type: gosnmp.Integer, Value: int(22)},
 			{Name: ".1.3.3.3", Type: gosnmp.Integer, Value: int(23)},
 			{Name: ".1.3.4.4", Type: gosnmp.Integer, Value: int(24)},
-			//Measurement tables
-			//Indirect Table
+			// Measurement tables
+			// Indirect Table
 			{Name: ".1.2.1", Type: gosnmp.Integer, Value: int(90)},
 			{Name: ".1.2.2", Type: gosnmp.Integer, Value: int(91)},
 			{Name: ".1.2.3", Type: gosnmp.Integer, Value: int(92)},
@@ -1068,7 +1055,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndexDIM2() {
 			{Name: ".1.4.91", Type: gosnmp.OctetString, Value: "eth2"},
 			{Name: ".1.4.92", Type: gosnmp.OctetString, Value: "eth3"},
 			{Name: ".1.4.93", Type: gosnmp.OctetString, Value: "eth4"},
-			//Direct table
+			// Direct table
 			{Name: ".1.6.1.1", Type: gosnmp.OctetString, Value: "port1"},
 			{Name: ".1.6.2.2", Type: gosnmp.OctetString, Value: "port2"},
 			{Name: ".1.6.3.3", Type: gosnmp.OctetString, Value: "port3"},
@@ -1193,15 +1180,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndexDIM2() {
 	// Measurement:interfaces_data Tags:{ portDesc:port3, portName:eth3 } Field:output ValueType:int64  Value:23
 	// Measurement:interfaces_data Tags:{ portDesc:port4, portName:eth4 } Field:input ValueType:int64  Value:54
 	// Measurement:interfaces_data Tags:{ portDesc:port4, portName:eth4 } Field:output ValueType:int64  Value:24
-
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -1211,7 +1196,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP() {
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			{Name: ".1.1.1.1", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.1.2.2", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.1.3.3", Type: gosnmp.Integer, Value: int(53)},
@@ -1220,13 +1205,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP() {
 			{Name: ".1.3.2.2", Type: gosnmp.Integer, Value: int(22)},
 			{Name: ".1.3.3.3", Type: gosnmp.Integer, Value: int(23)},
 			{Name: ".1.3.4.4", Type: gosnmp.Integer, Value: int(24)},
-			//Measurement tables
-			//Indirect Table
+			// Measurement tables
+			// Indirect Table
 			{Name: ".1.2.1", Type: gosnmp.Integer, Value: int(90)},
 			{Name: ".1.2.2", Type: gosnmp.Integer, Value: int(91)},
 			{Name: ".1.4.90", Type: gosnmp.OctetString, Value: "eth1"},
 			{Name: ".1.4.91", Type: gosnmp.OctetString, Value: "eth2"},
-			//Direct table
+			// Direct table
 			{Name: ".1.6.1.1", Type: gosnmp.OctetString, Value: "port1"},
 			{Name: ".1.6.2.2", Type: gosnmp.OctetString, Value: "port2"},
 			{Name: ".1.6.3.3", Type: gosnmp.OctetString, Value: "port3"},
@@ -1351,11 +1336,10 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP() {
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -1365,7 +1349,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE() {
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			{Name: ".1.1.1.1", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.1.2.2", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.1.3.3", Type: gosnmp.Integer, Value: int(53)},
@@ -1374,13 +1358,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE() {
 			{Name: ".1.3.2.2", Type: gosnmp.Integer, Value: int(22)},
 			{Name: ".1.3.3.3", Type: gosnmp.Integer, Value: int(23)},
 			{Name: ".1.3.4.4", Type: gosnmp.Integer, Value: int(24)},
-			//Measurement tables
-			//Indirect Table
+			// Measurement tables
+			// Indirect Table
 			{Name: ".1.2.1", Type: gosnmp.Integer, Value: int(90)},
 			{Name: ".1.2.2", Type: gosnmp.Integer, Value: int(91)},
 			{Name: ".1.4.90", Type: gosnmp.OctetString, Value: "eth1"},
 			{Name: ".1.4.91", Type: gosnmp.OctetString, Value: "eth2"},
-			//Direct table
+			// Direct table
 			{Name: ".1.6.1.1", Type: gosnmp.OctetString, Value: "port1"},
 			{Name: ".1.6.2.2", Type: gosnmp.OctetString, Value: "port2"},
 			{Name: ".1.6.3.3", Type: gosnmp.OctetString, Value: "port3"},
@@ -1506,15 +1490,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE() {
 	// Measurement:interfaces_data Tags:{ portDesc:port3 } Field:output ValueType:int64  Value:23
 	// Measurement:interfaces_data Tags:{ portDesc:port4 } Field:input ValueType:int64  Value:54
 	// Measurement:interfaces_data Tags:{ portDesc:port4 } Field:output ValueType:int64  Value:24
-
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLSTRING() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -1524,7 +1506,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLSTRING() {
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			{Name: ".1.1.1.1", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.1.2.2", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.1.3.3", Type: gosnmp.Integer, Value: int(53)},
@@ -1533,13 +1515,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLSTRING() {
 			{Name: ".1.3.2.2", Type: gosnmp.Integer, Value: int(22)},
 			{Name: ".1.3.3.3", Type: gosnmp.Integer, Value: int(23)},
 			{Name: ".1.3.4.4", Type: gosnmp.Integer, Value: int(24)},
-			//Measurement tables
-			//Indirect Table
+			// Measurement tables
+			// Indirect Table
 			{Name: ".1.2.1", Type: gosnmp.Integer, Value: int(90)},
 			{Name: ".1.2.2", Type: gosnmp.Integer, Value: int(91)},
 			{Name: ".1.4.90", Type: gosnmp.OctetString, Value: "eth1"},
 			{Name: ".1.4.91", Type: gosnmp.OctetString, Value: "eth2"},
-			//Direct table
+			// Direct table
 			{Name: ".1.6.1.1", Type: gosnmp.OctetString, Value: "port1"},
 			{Name: ".1.6.2.2", Type: gosnmp.OctetString, Value: "port2"},
 			{Name: ".1.6.3.3", Type: gosnmp.OctetString, Value: "port3"},
@@ -1665,15 +1647,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLSTRING() {
 	// Measurement:interfaces_data Tags:{ portDesc:port3, portName:NotRelated } Field:output ValueType:int64  Value:23
 	// Measurement:interfaces_data Tags:{ portDesc:port4, portName:NotRelated } Field:input ValueType:int64  Value:54
 	// Measurement:interfaces_data Tags:{ portDesc:port4, portName:NotRelated } Field:output ValueType:int64  Value:24
-
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -1683,7 +1663,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT() {
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			{Name: ".1.1.1.1.1", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.1.2.2.1", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.1.3.3.1", Type: gosnmp.Integer, Value: int(53)},
@@ -1692,13 +1672,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT() {
 			{Name: ".1.3.2.2.1", Type: gosnmp.Integer, Value: int(22)},
 			{Name: ".1.3.3.3.1", Type: gosnmp.Integer, Value: int(23)},
 			{Name: ".1.3.4.4.1", Type: gosnmp.Integer, Value: int(24)},
-			//Measurement tables
-			//Indirect Table
+			// Measurement tables
+			// Indirect Table
 			{Name: ".1.2.1", Type: gosnmp.Integer, Value: int(90)},
 			{Name: ".1.2.2", Type: gosnmp.Integer, Value: int(91)},
 			{Name: ".1.4.90", Type: gosnmp.OctetString, Value: "eth1"},
 			{Name: ".1.4.91", Type: gosnmp.OctetString, Value: "eth2"},
-			//Direct table
+			// Direct table
 			{Name: ".1.6.1.1", Type: gosnmp.OctetString, Value: "port1"},
 			{Name: ".1.6.2.2", Type: gosnmp.OctetString, Value: "port2"},
 			{Name: ".1.6.3.3", Type: gosnmp.OctetString, Value: "port3"},
@@ -1823,11 +1803,10 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT() {
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT_COMPLEX() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -1837,7 +1816,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT_COMPL
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			{Name: ".1.1.1.1.1.5", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.1.2.2.1.6", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.1.3.3.1.5", Type: gosnmp.Integer, Value: int(53)},
@@ -1846,18 +1825,18 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT_COMPL
 			{Name: ".1.3.2.2.1.6", Type: gosnmp.Integer, Value: int(22)},
 			{Name: ".1.3.3.3.1.5", Type: gosnmp.Integer, Value: int(23)},
 			{Name: ".1.3.4.4.1.6", Type: gosnmp.Integer, Value: int(24)},
-			//Measurement tables
-			//Indirect Table
+			// Measurement tables
+			// Indirect Table
 			{Name: ".1.2.1", Type: gosnmp.Integer, Value: int(90)},
 			{Name: ".1.2.2", Type: gosnmp.Integer, Value: int(91)},
 			{Name: ".1.4.90", Type: gosnmp.OctetString, Value: "eth1"},
 			{Name: ".1.4.91", Type: gosnmp.OctetString, Value: "eth2"},
-			//Direct table
+			// Direct table
 			{Name: ".1.6.1.1", Type: gosnmp.OctetString, Value: "port1"},
 			{Name: ".1.6.2.2", Type: gosnmp.OctetString, Value: "port2"},
 			{Name: ".1.6.3.3", Type: gosnmp.OctetString, Value: "port3"},
 			{Name: ".1.6.4.4", Type: gosnmp.OctetString, Value: "port4"},
-			//Direct table
+			// Direct table
 			{Name: ".1.7.5", Type: gosnmp.OctetString, Value: "5"},
 			{Name: ".1.7.6", Type: gosnmp.OctetString, Value: "6"},
 		},
@@ -1988,11 +1967,10 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT_COMPL
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_COMPLEX() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -2002,7 +1980,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_C
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			{Name: ".1.1.1.1.1.5", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.1.2.2.1.6", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.1.3.3.1.5", Type: gosnmp.Integer, Value: int(53)},
@@ -2011,18 +1989,18 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_C
 			{Name: ".1.3.2.2.1.6", Type: gosnmp.Integer, Value: int(22)},
 			{Name: ".1.3.3.3.1.5", Type: gosnmp.Integer, Value: int(23)},
 			{Name: ".1.3.4.4.1.6", Type: gosnmp.Integer, Value: int(24)},
-			//Measurement tables
-			//Indirect Table
+			// Measurement tables
+			// Indirect Table
 			{Name: ".1.2.1", Type: gosnmp.Integer, Value: int(90)},
 			{Name: ".1.2.2", Type: gosnmp.Integer, Value: int(91)},
 			{Name: ".1.4.90", Type: gosnmp.OctetString, Value: "eth1"},
 			{Name: ".1.4.91", Type: gosnmp.OctetString, Value: "eth2"},
-			//Direct table
+			// Direct table
 			{Name: ".1.6.1.1", Type: gosnmp.OctetString, Value: "port1"},
 			{Name: ".1.6.2.2", Type: gosnmp.OctetString, Value: "port2"},
 			{Name: ".1.6.3.3", Type: gosnmp.OctetString, Value: "port3"},
 			{Name: ".1.6.4.4", Type: gosnmp.OctetString, Value: "port4"},
-			//Direct table
+			// Direct table
 			{Name: ".1.7.5", Type: gosnmp.OctetString, Value: "5"},
 			{Name: ".1.7.6", Type: gosnmp.OctetString, Value: "6"},
 		},
@@ -2157,11 +2135,10 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_C
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -2171,13 +2148,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			// cbQosCMPrePolicyPkt64
 			{Name: ".1.3.6.1.4.1.9.9.166.1.15.1.1.3.1043.1045", Type: gosnmp.Counter64, Value: uint64(8)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.15.1.1.3.1043.1051", Type: gosnmp.Counter64, Value: uint64(1131)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.15.1.1.3.1099.1101", Type: gosnmp.Counter64, Value: uint64(281)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.15.1.1.3.1099.1107", Type: gosnmp.Counter64, Value: uint64(7016)},
-			//cbQosCMPrePolicyByte64
+			// cbQosCMPrePolicyByte64
 			{Name: ".1.3.6.1.4.1.9.9.166.1.15.1.1.6.1043.1045", Type: gosnmp.Counter64, Value: uint64(784)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.15.1.1.6.1043.1051", Type: gosnmp.Counter64, Value: uint64(114630)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.15.1.1.6.1099.1101", Type: gosnmp.Counter64, Value: uint64(69858)},
@@ -2188,8 +2165,8 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
 			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.4.1099", Type: gosnmp.Integer, Value: int(1)},
 			{Name: ".1.3.6.1.2.1.31.1.1.1.1.1", Type: gosnmp.OctetString, Value: "FastEthernet0/0"},
 			//	cbQosPolicyDirection
-			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.3.1043", Type: gosnmp.Integer, Value: int(2)}, //FastEthernet0/0 | output
-			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.3.1099", Type: gosnmp.Integer, Value: int(1)}, //FastEthernet0/0 | input
+			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.3.1043", Type: gosnmp.Integer, Value: int(2)}, // FastEthernet0/0 | output
+			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.3.1099", Type: gosnmp.Integer, Value: int(1)}, // FastEthernet0/0 | input
 
 			// cbQosPolicyMapName
 			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.4.1043.1045", Type: gosnmp.Integer, Value: int(1043)},
@@ -2207,14 +2184,14 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
 
 			//	cbQosCMName
 			//	- cbQosConfigIndex
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1045", Type: gosnmp.Integer, Value: int(1029)}, //FastEthernet0/0 | output
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1051", Type: gosnmp.Integer, Value: int(1025)}, //FastEthernet0/0 | output
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1101", Type: gosnmp.Integer, Value: int(1057)}, //FastEthernet0/0 | input
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1107", Type: gosnmp.Integer, Value: int(1025)}, //FastEthernet0/0 | input
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1045", Type: gosnmp.Integer, Value: int(1029)}, // FastEthernet0/0 | output
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1051", Type: gosnmp.Integer, Value: int(1025)}, // FastEthernet0/0 | output
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1101", Type: gosnmp.Integer, Value: int(1057)}, // FastEthernet0/0 | input
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1107", Type: gosnmp.Integer, Value: int(1025)}, // FastEthernet0/0 | input
 			//- cbQosCMName
-			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1025", Type: gosnmp.OctetString, Value: "class-default"}, //FastEthernet0/0 | output | class-default || //FastEthernet0/0 | input | class-default
-			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1029", Type: gosnmp.OctetString, Value: "ICMP"},          //FastEthernet0/0 | input | ICMP
-			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1057", Type: gosnmp.OctetString, Value: "NonLocal"},      //FastEthernet0/0 | input | NonLocal
+			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1025", Type: gosnmp.OctetString, Value: "class-default"}, // FastEthernet0/0 | output | class-default || //FastEthernet0/0 | input | class-default
+			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1029", Type: gosnmp.OctetString, Value: "ICMP"},          // FastEthernet0/0 | input | ICMP
+			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1057", Type: gosnmp.OctetString, Value: "NonLocal"},      // FastEthernet0/0 | input | NonLocal
 			//- cbQosCMInfo
 			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.3.1025", Type: gosnmp.Integer, Value: int(3)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.3.1029", Type: gosnmp.Integer, Value: int(2)},
@@ -2378,11 +2355,10 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -2392,13 +2368,13 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			// cbQosMatchPrePolicyPkt64
 			{Name: ".1.3.6.1.4.1.9.9.166.1.16.1.1.3.1043.1047", Type: gosnmp.Counter64, Value: uint64(8)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.16.1.1.3.1043.1053", Type: gosnmp.Counter64, Value: uint64(1131)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.16.1.1.3.1099.1103", Type: gosnmp.Counter64, Value: uint64(281)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.16.1.1.3.1099.1109", Type: gosnmp.Counter64, Value: uint64(7016)},
-			//cbQosCMPrePolicyByte64
+			// cbQosCMPrePolicyByte64
 			{Name: ".1.3.6.1.4.1.9.9.166.1.16.1.1.6.1043.1047", Type: gosnmp.Counter64, Value: uint64(784)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.16.1.1.6.1043.1053", Type: gosnmp.Counter64, Value: uint64(114630)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.16.1.1.6.1099.1103", Type: gosnmp.Counter64, Value: uint64(69858)},
@@ -2409,8 +2385,8 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.4.1099", Type: gosnmp.Integer, Value: int(1)},
 			{Name: ".1.3.6.1.2.1.31.1.1.1.1.1", Type: gosnmp.OctetString, Value: "FastEthernet0/0"},
 			//	cbQosPolicyDirection
-			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.3.1043", Type: gosnmp.Integer, Value: int(2)}, //FastEthernet0/0 | output
-			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.3.1099", Type: gosnmp.Integer, Value: int(1)}, //FastEthernet0/0 | input
+			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.3.1043", Type: gosnmp.Integer, Value: int(2)}, // FastEthernet0/0 | output
+			{Name: ".1.3.6.1.4.1.9.9.166.1.1.1.1.3.1099", Type: gosnmp.Integer, Value: int(1)}, // FastEthernet0/0 | input
 
 			// cbQosPolicyMapName
 			// - cbQosParentObjectsIndex
@@ -2436,14 +2412,14 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 
 			//	cbQosCMName
 			//	- cbQosConfigIndex
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1045", Type: gosnmp.Integer, Value: int(1029)}, //FastEthernet0/0 | output
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1051", Type: gosnmp.Integer, Value: int(1025)}, //FastEthernet0/0 | output
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1101", Type: gosnmp.Integer, Value: int(1057)}, //FastEthernet0/0 | input
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1107", Type: gosnmp.Integer, Value: int(1025)}, //FastEthernet0/0 | input
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1045", Type: gosnmp.Integer, Value: int(1029)}, // FastEthernet0/0 | output
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1051", Type: gosnmp.Integer, Value: int(1025)}, // FastEthernet0/0 | output
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1101", Type: gosnmp.Integer, Value: int(1057)}, // FastEthernet0/0 | input
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1107", Type: gosnmp.Integer, Value: int(1025)}, // FastEthernet0/0 | input
 			//- cbQosCMName
-			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1025", Type: gosnmp.OctetString, Value: "class-default"}, //FastEthernet0/0 | output | class-default || //FastEthernet0/0 | input | class-default
-			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1029", Type: gosnmp.OctetString, Value: "ICMP"},          //FastEthernet0/0 | input | ICMP
-			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1057", Type: gosnmp.OctetString, Value: "NonLocal"},      //FastEthernet0/0 | input | NonLocal
+			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1025", Type: gosnmp.OctetString, Value: "class-default"}, // FastEthernet0/0 | output | class-default || //FastEthernet0/0 | input | class-default
+			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1029", Type: gosnmp.OctetString, Value: "ICMP"},          // FastEthernet0/0 | input | ICMP
+			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.1.1057", Type: gosnmp.OctetString, Value: "NonLocal"},      // FastEthernet0/0 | input | NonLocal
 			//- cbQosCMInfo
 			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.3.1025", Type: gosnmp.Integer, Value: int(3)},
 			{Name: ".1.3.6.1.4.1.9.9.166.1.7.1.1.3.1029", Type: gosnmp.Integer, Value: int(2)},
@@ -2451,14 +2427,14 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 
 			// cbQosMatchStmtName
 			// - cbQosConfigIndex
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1047", Type: gosnmp.Integer, Value: int(1053)}, //FastEthernet0/0 | output
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1053", Type: gosnmp.Integer, Value: int(1053)}, //FastEthernet0/0 | output
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1103", Type: gosnmp.Integer, Value: int(1054)}, //FastEthernet0/0 | input
-			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1109", Type: gosnmp.Integer, Value: int(1054)}, //FastEthernet0/0 | input
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1047", Type: gosnmp.Integer, Value: int(1053)}, // FastEthernet0/0 | output
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1043.1053", Type: gosnmp.Integer, Value: int(1053)}, // FastEthernet0/0 | output
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1103", Type: gosnmp.Integer, Value: int(1054)}, // FastEthernet0/0 | input
+			{Name: ".1.3.6.1.4.1.9.9.166.1.5.1.1.2.1099.1109", Type: gosnmp.Integer, Value: int(1054)}, // FastEthernet0/0 | input
 
 			// - cbQosMatchStmtName
-			{Name: ".1.3.6.1.4.1.9.9.166.1.8.1.1.1.1053", Type: gosnmp.OctetString, Value: "CLASS_BACKUP"},   //FastEthernet0/0 | output | class-default || //FastEthernet0/0 | input | class-default
-			{Name: ".1.3.6.1.4.1.9.9.166.1.8.1.1.1.1054", Type: gosnmp.OctetString, Value: "CLASS_INTERNET"}, //FastEthernet0/0 | input | ICMP
+			{Name: ".1.3.6.1.4.1.9.9.166.1.8.1.1.1.1053", Type: gosnmp.OctetString, Value: "CLASS_BACKUP"},   // FastEthernet0/0 | output | class-default || //FastEthernet0/0 | input | class-default
+			{Name: ".1.3.6.1.4.1.9.9.166.1.8.1.1.1.1054", Type: gosnmp.OctetString, Value: "CLASS_INTERNET"}, // FastEthernet0/0 | input | ICMP
 		},
 	}
 
@@ -2622,11 +2598,10 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 }
 
 func Example_Measurement_value_STRINGEVAL() {
-
 	// 1.- LOGGER SETUP
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -2765,15 +2740,13 @@ func Example_Measurement_value_STRINGEVAL() {
 	// Unordered Output:
 	// Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:52
 	// Measurement:test_name Tags:{} Field:metric_3_oper ValueType:int64  Value:31
-
 }
 
 func Example_Measurement_Indexed_STRINGEVAL() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -2918,15 +2891,13 @@ func Example_Measurement_Indexed_STRINGEVAL() {
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:total ValueType:int64  Value:72
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:input ValueType:int64  Value:51
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:output ValueType:int64  Value:21
-
 }
 
 func Example_Measurement_Indexed_Indirect_STRINGEVAL() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -3075,15 +3046,13 @@ func Example_Measurement_Indexed_Indirect_STRINGEVAL() {
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:total ValueType:int64  Value:72
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:input ValueType:int64  Value:51
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:output ValueType:int64  Value:21
-
 }
 
 func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
-
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -3093,7 +3062,7 @@ func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
 	s := &mock.SnmpServer{
 		Listen: "127.0.0.1:1161",
 		Want: []gosnmp.SnmpPDU{
-			//Metrics
+			// Metrics
 			{Name: ".1.1.1", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.1.2", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.1.3", Type: gosnmp.Integer, Value: int(53)},
@@ -3103,19 +3072,19 @@ func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
 			{Name: ".1.3.3", Type: gosnmp.Integer, Value: int(23)},
 			{Name: ".1.3.4", Type: gosnmp.Integer, Value: int(24)},
 
-			//Tables
+			// Tables
 			{Name: ".1.2.1", Type: gosnmp.Integer, Value: int(50)},
 			{Name: ".1.2.2", Type: gosnmp.Integer, Value: int(51)},
 			{Name: ".1.2.3", Type: gosnmp.Integer, Value: int(52)},
 			{Name: ".1.2.4", Type: gosnmp.Integer, Value: int(53)},
 
-			//Tables
+			// Tables
 			{Name: ".1.5.50", Type: gosnmp.Integer, Value: int(90)},
 			{Name: ".1.5.51", Type: gosnmp.Integer, Value: int(91)},
 			{Name: ".1.5.52", Type: gosnmp.Integer, Value: int(92)},
 			{Name: ".1.5.53", Type: gosnmp.Integer, Value: int(93)},
 
-			//Tables
+			// Tables
 			{Name: ".1.4.90", Type: gosnmp.OctetString, Value: "eth1"},
 			{Name: ".1.4.91", Type: gosnmp.OctetString, Value: "eth2"},
 			{Name: ".1.4.92", Type: gosnmp.OctetString, Value: "eth3"},
@@ -3246,14 +3215,13 @@ func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:total ValueType:int64  Value:72
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:input ValueType:int64  Value:51
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:output ValueType:int64  Value:21
-
 }
-func Example_Measurement_GetMode_Indexed_MULTISTRINGPARSER_SKIPFIELD() {
 
+func Example_Measurement_GetMode_Indexed_MULTISTRINGPARSER_SKIPFIELD() {
 	// 1.- SETUP LOGGER
 
 	l := logrus.New()
-	//l.Level = logrus.DebugLevel
+	// l.Level = logrus.DebugLevel
 
 	mock.SetLogger(l)
 	config.SetLogger(l)
@@ -3379,5 +3347,4 @@ func Example_Measurement_GetMode_Indexed_MULTISTRINGPARSER_SKIPFIELD() {
 	// Measurement:interfaces_data Tags:{ myValue:value4, portName:eth4 } Field:output ValueType:int64  Value:24
 	// Measurement:interfaces_data Tags:{ myValue:value1, portName:eth1 } Field:input ValueType:float64  Value:51
 	// Measurement:interfaces_data Tags:{ myValue:value1, portName:eth1 } Field:output ValueType:int64  Value:21
-
 }

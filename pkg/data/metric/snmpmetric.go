@@ -3,7 +3,6 @@ package metric
 import (
 	"encoding/json"
 	"fmt"
-
 	"math"
 	"regexp"
 	"strconv"
@@ -19,8 +18,8 @@ import (
 )
 
 var (
-	confDir string              //Needed to get File Filters data
-	dbc     *config.DatabaseCfg //Needed to get Custom Filter  data
+	confDir string              // Needed to get File Filters data
+	dbc     *config.DatabaseCfg // Needed to get Custom Filter  data
 )
 
 // SetConfDir  enable load File Filters from anywhere in the our FS.
@@ -44,10 +43,10 @@ const (
 	OnChangedReport = 3
 )
 
-//SnmpMetric type to metric runtime
+// SnmpMetric type to metric runtime
 type SnmpMetric struct {
 	cfg         *config.SnmpMetricCfg
-	Valid       bool //indicate if has been updated in the last gathered process
+	Valid       bool // indicate if has been updated in the last gathered process
 	CookedValue interface{}
 	CurValue    interface{}
 	LastValue   interface{}
@@ -59,12 +58,12 @@ type SnmpMetric struct {
 	Convert     func()                                  `json:"-"`
 	SetRawData  func(pdu gosnmp.SnmpPDU, now time.Time) `json:"-"`
 	RealOID     string
-	Report      int //if false this metric won't be sent to the output buffer (is just taken as a coomputed input for other metrics)
-	//for STRINGPARSER/MULTISTRINGPARSER
+	Report      int // if false this metric won't be sent to the output buffer (is just taken as a coomputed input for other metrics)
+	// for STRINGPARSER/MULTISTRINGPARSER
 	re   *regexp.Regexp
 	mm   []*config.MetricMultiMap
 	expr *govaluate.EvaluableExpression
-	//for CONDITIONEVAL
+	// for CONDITIONEVAL
 	condflt filter.Filter
 	// Logger
 	log *logrus.Logger
@@ -105,16 +104,16 @@ func (s *SnmpMetric) SetLogger(l *logrus.Logger) {
 // Conversion functions
 
 func (s *SnmpMetric) convertFromUInteger() {
-	//check first the rigth
+	// check first the rigth
 	switch vt := s.CookedValue.(type) {
 	case uint64, uint:
-		//everything ok
+		// everything ok
 		break
 	default:
 		s.log.Errorf("ERROR: expected value on metric %s type UINT64 and got %T  type ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
 		return
 	}
-	//the only acceptable conversions
+	// the only acceptable conversions
 	// signed integer 64 -> float64
 	// signet integer 64 -> boolean ( true if value != 0 )
 	switch s.cfg.Conversion {
@@ -142,13 +141,13 @@ func (s *SnmpMetric) convertFromUInteger() {
 func (s *SnmpMetric) convertFromInteger() {
 	switch vt := s.CookedValue.(type) {
 	case int64, int:
-		//everything ok
+		// everything ok
 		break
 	default:
 		s.log.Errorf("ERROR: expected value on metric %s type INT64 and got %T ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
 		return
 	}
-	//the only acceptable conversions
+	// the only acceptable conversions
 	// signed integer 64 -> float64
 	// signet integer 64 -> boolean ( true if value != 0 )
 	switch s.cfg.Conversion {
@@ -174,13 +173,13 @@ func (s *SnmpMetric) convertFromInteger() {
 func (s *SnmpMetric) convertFromFloat() {
 	switch vt := s.CookedValue.(type) {
 	case float64:
-		//everything ok
+		// everything ok
 		break
 	default:
 		s.log.Errorf("ERROR: expected value on metric %s type Float64 and got %T type ( %+v) \n", s.cfg.ID, vt, s.CookedValue)
 		return
 	}
-	//the only acceptable conversions
+	// the only acceptable conversions
 	// signed float -> int64 (will do rounded value)
 	switch s.cfg.Conversion {
 	case config.INTEGER:
@@ -206,13 +205,13 @@ func (s *SnmpMetric) convertFromFloat() {
 func (s *SnmpMetric) convertFromString() {
 	switch vt := s.CookedValue.(type) {
 	case string:
-		//everything ok
+		// everything ok
 		break
 	default:
 		s.log.Errorf("ERROR: expected value on metric %s type STRING and got %T type ( %+v) type \n", s.cfg.ID, vt, s.CookedValue)
 		return
 	}
-	//the only acceptable conversions
+	// the only acceptable conversions
 	// string -> int64
 	// string -> float (the default)
 	// string -> boolean
@@ -276,15 +275,15 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	}
 	s.cfg = c
 	s.RealOID = c.BaseOID
-	//set default conversion funcion
+	// set default conversion funcion
 	s.Convert = s.convertFromAny
-	//Force conversion to STRING if metric is tag.
+	// Force conversion to STRING if metric is tag.
 	if s.cfg.IsTag == true {
 		s.cfg.Conversion = config.STRING
 	}
 	if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
 		s.Scale = func() {
-			//always Scale shoud return float (this avoids precission lost)
+			// always Scale shoud return float (this avoids precission lost)
 			switch v := s.CookedValue.(type) {
 			case uint64:
 				s.CookedValue = (s.cfg.Scale * float64(s.CookedValue.(uint64))) + s.cfg.Shift
@@ -295,14 +294,13 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				// here change uint64 to float , with the apropiate type conversion at the end
 				// this temporal format change avoids precission lost
 			case float64:
-				//should return float
+				// should return float
 				s.CookedValue = float64((s.cfg.Scale * float64(s.CookedValue.(float64))) + s.cfg.Shift)
 			case string:
 				s.log.Errorf("Error Trying to  Scale Function from non numbered STRING type value : %s ", s.CookedValue)
 			default:
 				s.log.Errorf("Error Trying to  Scale Function from unknown type %T value: %#+v", v, s.CookedValue)
 			}
-
 		}
 	} else {
 		s.Scale = func() {
@@ -310,12 +308,12 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	}
 	switch s.cfg.DataSrcType {
 	case "CONDITIONEVAL":
-		//select
+		// select
 		cond, err := dbc.GetOidConditionCfgByID(s.cfg.ExtraData)
 		if err != nil {
 			s.log.Errorf("Error getting CONDITIONEVAL [id: %s ] data : %s", s.cfg.ExtraData, err)
 		}
-		//get Regexp
+		// get Regexp
 		if cond.IsMultiple == true {
 			s.condflt = filter.NewOidMultipleFilter(cond.OIDCond, s.log)
 		} else {
@@ -328,9 +326,9 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.CurTime = time.Now()
 			s.Valid = true
 		}
-		//Sign
-		//set Process Data
-	case "TIMETICKS": //Cooked TimeTicks
+		// Sign
+		// set Process Data
+	case "TIMETICKS": // Cooked TimeTicks
 		s.Convert = s.convertFromInteger
 
 		if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
@@ -339,14 +337,14 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			val := snmp.PduVal2Int64(pdu)
-			s.CookedValue = val / 100 //now data in secoonds
+			s.CookedValue = val / 100 // now data in secoonds
 			s.CurTime = now
 			s.Scale()
 			s.Convert()
 			s.Valid = true
 		}
 
-		//Signed Integers
+		// Signed Integers
 	case "INTEGER", "Integer32":
 		s.Convert = s.convertFromInteger
 
@@ -361,7 +359,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Convert()
 			s.Valid = true
 		}
-		//Unsigned Integers
+		// Unsigned Integers
 	case "Counter32", "Gauge32", "Counter64", "TimeTicks", "UInteger32", "Unsigned32":
 		s.Convert = s.convertFromUInteger
 
@@ -376,9 +374,9 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Convert()
 			s.Valid = true
 		}
-	case "COUNTER32": //Increment computed
+	case "COUNTER32": // Increment computed
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			//first time only set values and reassign itself to the complete method this will avoi to send invalid data
+			// first time only set values and reassign itself to the complete method this will avoi to send invalid data
 			val := snmp.PduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
@@ -421,16 +419,16 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Convert = s.convertFromFloat
 		}
 
-	case "COUNTER64": //Increment computed
+	case "COUNTER64": // Increment computed
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			//log.Debugf("========================================>COUNTER64: first time :%s ", s.RealOID)
-			//first time only set values and reassign itself to the complete method
+			// log.Debugf("========================================>COUNTER64: first time :%s ", s.RealOID)
+			// first time only set values and reassign itself to the complete method
 			val := snmp.PduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
 			s.Valid = true
 			s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-				//log.Debugf("========================================>COUNTER64: the other time:%s", s.RealOID)
+				// log.Debugf("========================================>COUNTER64: the other time:%s", s.RealOID)
 				val := snmp.PduVal2UInt64(pdu)
 				s.LastTime = s.CurTime
 				s.LastValue = s.CurValue
@@ -468,9 +466,9 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Convert = s.convertFromFloat
 		}
 
-	case "COUNTERXX": //Generic Counter With Unknown range or buggy counters that  Like Non negative derivative
+	case "COUNTERXX": // Generic Counter With Unknown range or buggy counters that  Like Non negative derivative
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
-			//first time only set values and reassign itself to the complete method this will avoi to send invalid data
+			// first time only set values and reassign itself to the complete method this will avoi to send invalid data
 			val := snmp.PduVal2UInt64(pdu)
 			s.CurValue = val
 			s.CurTime = now
@@ -572,7 +570,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				}
 				s.Valid = true
 			}
-		//For compatibility purposes with previous versions
+		// For compatibility purposes with previous versions
 		case config.FLOAT:
 			s.log.Errorf("WARNING ON SNMPMETRIC ( %s ): You are using version >=0.8 version without database upgrade: you should upgrade the DB by executing this SQL on your database \"update snmp_metric_cfg set Conversion=3 where datasrctype='OCTETSTRING';\", to avoid this message ", s.cfg.ID)
 			fallthrough
@@ -585,7 +583,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				s.Compute()
 				s.Valid = true
 			}
-			//check if trimming needed
+			// check if trimming needed
 			if len(s.cfg.ExtraData) > 0 {
 				if s.cfg.ExtraData == "trimspace" {
 					s.Compute = func(arg ...interface{}) {
@@ -593,21 +591,21 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 					}
 					break
 				}
-				//https://regex101.com/r/55riOI/1/
-				var re = regexp.MustCompile(`([^\(]*)\(([^\)]*)\)$`)
+				// https://regex101.com/r/55riOI/1/
+				re := regexp.MustCompile(`([^\(]*)\(([^\)]*)\)$`)
 				if !re.MatchString(s.cfg.ExtraData) {
 					s.log.Errorf("Error on get Trim Config for OctecString with config %s", s.cfg.ExtraData)
 					break
 				}
 
 				res := re.FindStringSubmatch(s.cfg.ExtraData)
-				//s.log.Debugf("REGEXP: %+v", res)
+				// s.log.Debugf("REGEXP: %+v", res)
 				if len(res) < 3 {
 					s.log.Errorf("Error on get Trim Config for OctecString got %v", res)
 					break
 				}
 				function := res[1]
-				args := strings.Trim(res[2], "'\"") //removed unneded quotes if arguments enclosed on "" or ''
+				args := strings.Trim(res[2], "'\"") // removed unneded quotes if arguments enclosed on "" or ''
 				s.log.Debugf("Trim type [%s] with args [%s]", function, args)
 				switch function {
 				case "trimspace":
@@ -657,13 +655,13 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.Valid = true
 		}
 	case "STRINGPARSER":
-		//get Regexp
+		// get Regexp
 		re, err := regexp.Compile(s.cfg.ExtraData)
 		if err != nil {
 			return fmt.Errorf("Error on initialice STRINGPARSER, invalind Regular Expression : %s", s.cfg.ExtraData)
 		}
 		s.re = re
-		//set Process Data
+		// set Process Data
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			str := snmp.PduVal2str(pdu)
 			retarray := s.re.FindStringSubmatch(str)
@@ -671,7 +669,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] without capturing group", s.cfg.ID, s.cfg.ExtraData, str)
 				return
 			}
-			//retarray[0] contains full string
+			// retarray[0] contains full string
 			if len(retarray[1]) == 0 {
 				s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] cause  void capturing group", s.cfg.ID, s.cfg.ExtraData, str)
 				return
@@ -679,11 +677,11 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			s.CookedValue = retarray[1]
 			s.CurTime = now
 			s.convertFromString()
-			//s.Scale() <-only valid if Integer or Float
+			// s.Scale() <-only valid if Integer or Float
 			s.Valid = true
 		}
 	case "MULTISTRINGPARSER":
-		//get Regexp
+		// get Regexp
 		re, err := regexp.Compile(s.cfg.ExtraData)
 		if err != nil {
 			return fmt.Errorf("Error on initialice MULTISTRINGPARSER, invalind Regular Expression : %s", s.cfg.ExtraData)
@@ -695,7 +693,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			return fmt.Errorf("Error on initialice MULTISTRINGPARSER, invalind Field/Tag definition Format : %s", err)
 		}
 		s.mm = mm
-		//set Process Data
+		// set Process Data
 		s.SetRawData = func(pdu gosnmp.SnmpPDU, now time.Time) {
 			str := snmp.PduVal2str(pdu)
 			s.CookedValue = str
@@ -710,7 +708,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 			return err
 		}
 		s.expr = expression
-		//set Process Data
+		// set Process Data
 		s.Compute = func(arg ...interface{}) {
 			parameters := arg[0].(map[string]interface{})
 			s.log.Debugf("Evaluating Metric %s with eval expresion [%s] with parameters %+v", s.cfg.ID, s.cfg.ExtraData, parameters)
@@ -719,8 +717,8 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				s.log.Errorf("Error in metric %s On EVAL string: %s : ERROR : %s", s.cfg.ID, s.cfg.ExtraData, err)
 				return
 			}
-			//Influxdb has not support for NaN,Inf values
-			//https://github.com/influxdata/influxdb/issues/4089
+			// Influxdb has not support for NaN,Inf values
+			// https://github.com/influxdata/influxdb/issues/4089
 			switch v := result.(type) {
 			case float64:
 				if math.IsNaN(v) || math.IsInf(v, 0) {
@@ -729,10 +727,10 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 				}
 			}
 			s.CookedValue = result
-			//conversion depends onthe type of the evaluted data.
+			// conversion depends onthe type of the evaluted data.
 			s.CurTime = time.Now()
 			s.Scale()
-			s.Convert() //default
+			s.Convert() // default
 			s.Valid = true
 		}
 	}
@@ -750,21 +748,20 @@ func (s *SnmpMetric) GetEvaluableVariables(params map[string]interface{}) {
 			params[k] = v
 		}
 	default:
-		if s.Valid == true { //only valid for compute if it has been updated last
+		if s.Valid == true { // only valid for compute if it has been updated last
 			params[s.cfg.FieldName] = s.CookedValue
 		}
 	}
 }
 
 func (s *SnmpMetric) addSingleField(mid string, fields map[string]interface{}) int64 {
-
 	if s.Report == OnNonZeroReport {
 		if s.CookedValue == 0.0 {
 			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
 			return 0
 		}
 	}
-	//assuming float Cooked Values
+	// assuming float Cooked Values
 	s.log.Debugf("generating field for %s value %#v ", s.cfg.FieldName, s.CookedValue)
 	s.log.Debugf("DEBUG METRIC %+v", s)
 	fields[s.cfg.FieldName] = s.CookedValue
@@ -772,7 +769,6 @@ func (s *SnmpMetric) addSingleField(mid string, fields map[string]interface{}) i
 }
 
 func (s *SnmpMetric) addSingleTag(mid string, tags map[string]string) int64 {
-
 	var tag string
 	switch v := s.CookedValue.(type) {
 	case string:
@@ -795,7 +791,7 @@ func (s *SnmpMetric) addSingleTag(mid string, tags map[string]string) int64 {
 		s.log.Debugf("ERROR wrong type %T for ID [%s] from MEASUREMENT[ %s ] when converting to TAG(STRING) won't be reported to the output backend", v, s.cfg.ID, mid)
 		return 1
 	}
-	//I don't know if a OnNonZeroReport could have sense in any configuration.
+	// I don't know if a OnNonZeroReport could have sense in any configuration.
 	if s.Report == OnNonZeroReport {
 		if tag == "0" {
 			s.log.Debugf("REPORT on non zero in METRIC ID [%s] from MEASUREMENT[ %s ] won't be reported to the output backend", s.cfg.ID, mid)
@@ -823,7 +819,7 @@ func (s *SnmpMetric) computeMultiStringParserValues() {
 		s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] without capturing group", s.cfg.ID, s.cfg.ExtraData, str)
 		return
 	}
-	//retarray[0] contains full string
+	// retarray[0] contains full string
 	if len(retarray[1]) == 0 {
 		s.log.Warnf("Error for metric [%s] parsing REGEXG [%s] on string [%s] cause  void capturing group", s.cfg.ID, s.cfg.ExtraData, str)
 		return
@@ -904,7 +900,7 @@ func (s *SnmpMetric) ImportFieldsAndTags(mid string, fields map[string]interface
 
 // MarshalJSON return JSON formatted data
 func (s *SnmpMetric) MarshalJSON() ([]byte, error) {
-	//type Alias SnmpMetric
+	// type Alias SnmpMetric
 	switch s.cfg.DataSrcType {
 	case "COUNTER32", "COUNTER64", "COUNTERXX":
 		return json.Marshal(&struct {
@@ -957,5 +953,4 @@ func (s *SnmpMetric) MarshalJSON() ([]byte, error) {
 			Valid:       s.Valid,
 		})
 	}
-
 }

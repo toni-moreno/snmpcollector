@@ -78,14 +78,14 @@ func (mt *MetricTable) GetSnmpMaps() ([]string, map[string]*metric.SnmpMetric) {
 	OidSnmpMap := make(map[string]*metric.SnmpMetric)
 	for idx, row := range mt.Row {
 		mt.Debugf("KEY iDX %s", idx)
-		//index level
+		// index level
 		for kM, vM := range row.Data {
 			mt.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
 			t := vM.GetDataSrcType()
 			switch t {
 			case "STRINGEVAL":
 			default:
-				//this array is used in SnmpGetData to send IOD's to the end device
+				// this array is used in SnmpGetData to send IOD's to the end device
 				// so it can not contain any other thing than OID's
 				// on string eval it contains a identifier not OID
 				snmpOids = append(snmpOids, vM.RealOID)
@@ -98,11 +98,10 @@ func (mt *MetricTable) GetSnmpMaps() ([]string, map[string]*metric.SnmpMetric) {
 
 // GetSnmpMap get and snmpmetric OID map
 func (mt *MetricTable) GetSnmpMap() map[string]*metric.SnmpMetric {
-
 	OidSnmpMap := make(map[string]*metric.SnmpMetric)
 	for idx, row := range mt.Row {
 		mt.Debugf("KEY iDX %s", idx)
-		//index level
+		// index level
 		for kM, vM := range row.Data {
 			mt.Debugf("KEY METRIC %s OID %s", kM, vM.RealOID)
 			OidSnmpMap[vM.RealOID] = vM
@@ -147,10 +146,10 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 		}
 	}
 
-	//create metrics.
+	// create metrics.
 	switch mt.cfg.GetMode {
 	case "value":
-		//for each field
+		// for each field
 		idx := NewMetricRow()
 		for k, smcfg := range mt.cfg.FieldMetric {
 			mt.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
@@ -183,13 +182,13 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 			metr.RealOID = mt.cfg.ID + "." + smcfg.ID
 			idx.Add(smcfg.ID, metr)
 		}
-		//setup visibility on db for each metric
+		// setup visibility on db for each metric
 
 		idx.SetVisible(mt.visible)
 		mt.AddRow("0", idx)
 
 	case "indexed", "indexed_it", "indexed_mit", "indexed_multiple":
-		//for each field an each index (previously initialized)
+		// for each field an each index (previously initialized)
 		for key, label := range CurIndexedLabels {
 			idx := NewMetricRow()
 			mt.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
@@ -210,10 +209,10 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 					continue
 				}
 				metr.SetLogger(mt.log)
-				metr.RealOID = mt.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
+				metr.RealOID = mt.cfg.ID + "." + smcfg.ID + "." + key // unique identificator for this metric
 				idx.Add(smcfg.ID, metr)
 			}
-			//setup visibility on db for each metric
+			// setup visibility on db for each metric
 			idx.SetVisible(mt.visible)
 			mt.AddRow(label, idx)
 		}
@@ -260,7 +259,7 @@ func (mt *MetricTable) Push(p map[string]string) error {
 				continue
 			}
 			metr.SetLogger(mt.log)
-			metr.RealOID = mt.cfg.ID + "." + smcfg.ID + "." + key //unique identificator for this metric
+			metr.RealOID = mt.cfg.ID + "." + smcfg.ID + "." + key // unique identificator for this metric
 			idx.Add(smcfg.ID, metr)
 		}
 		idx.SetVisible(mt.visible)

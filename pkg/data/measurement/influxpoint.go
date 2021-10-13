@@ -4,10 +4,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/influxdata/influxdb1-client/v2"
+	client "github.com/influxdata/influxdb1-client/v2"
 )
 
-//GetInfluxPoint get points from measuremnetsl
+// GetInfluxPoint get points from measuremnetsl
 func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, int64, int64, []*client.Point) {
 	var metSent int64
 	var metError int64
@@ -19,7 +19,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 	case "value":
 		k := m.MetricTable.Row["0"]
 		var t time.Time
-		//copy tags and add index tag
+		// copy tags and add index tag
 		Tags := make(map[string]string)
 		for kT, vT := range hostTags {
 			Tags[kT] = vT
@@ -28,7 +28,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 		for _, vMtr := range k.Data {
 			me := vMtr.ImportFieldsAndTags(m.cfg.ID, Fields, Tags)
 			metError += me
-			//check again if metric is valid
+			// check again if metric is valid
 			if vMtr.Valid == true {
 				t = vMtr.CurTime
 			} else {
@@ -53,12 +53,12 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 		var t time.Time
 		for idx, vIdx := range m.MetricTable.Row {
 			m.Debugf("generating influx point for indexed %s", idx)
-			//copy tags and add index tag
+			// copy tags and add index tag
 			Tags := make(map[string]string)
 			for kT, vT := range hostTags {
 				Tags[kT] = vT
 			}
-			//Need to check that the lengt of stags is the same as m.tagName
+			// Need to check that the lengt of stags is the same as m.tagName
 			// The split must be only applied on indexed_multiple measurements
 			stags := []string{idx}
 
@@ -77,7 +77,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 			for _, vMtr := range vIdx.Data {
 				me := vMtr.ImportFieldsAndTags(m.cfg.ID, Fields, Tags)
 				metError += me
-				//check again if metric is valid
+				// check again if metric is valid
 				if vMtr.Valid == true {
 					t = vMtr.CurTime
 				} else {
@@ -85,7 +85,7 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 				}
 			}
 			metSent += int64(len(Fields))
-			//here we can chek Fields names prior to send data
+			// here we can chek Fields names prior to send data
 			m.Debugf("FIELDS:%+v TAGS:%+v", Fields, Tags)
 			pt, err := client.NewPoint(m.cfg.Name, Tags, Fields, t)
 			if err != nil {
@@ -102,5 +102,4 @@ func (m *Measurement) GetInfluxPoint(hostTags map[string]string) (int64, int64, 
 	}
 
 	return metSent, metError, measSent, measError, ptarray
-
 }

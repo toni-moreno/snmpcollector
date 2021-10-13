@@ -1,14 +1,13 @@
 package utils
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
 	"strconv"
 	"strings"
 	"time"
-
-	"encoding/base64"
 
 	"github.com/sirupsen/logrus"
 )
@@ -40,7 +39,6 @@ func RemoveDuplicatesUnordered(elements []string) []string {
 
 // DiffSlice return de Difference between two Slices
 func DiffSlice(X, Y []string) []string {
-
 	diff := []string{}
 	vals := map[string]struct{}{}
 
@@ -58,7 +56,6 @@ func DiffSlice(X, Y []string) []string {
 }
 
 func diffKeysInMap(X, Y map[string]string) map[string]string {
-
 	diff := map[string]string{}
 
 	for k, vK := range X {
@@ -72,17 +69,16 @@ func diffKeysInMap(X, Y map[string]string) map[string]string {
 
 // DiffKeyValuesInMap does a diff key and values from 2 strings maps
 func DiffKeyValuesInMap(X, Y map[string]string) map[string]string {
-
 	diff := map[string]string{}
 
 	for kX, vX := range X {
 		if vY, ok := Y[kX]; !ok {
-			//not exist
+			// not exist
 			diff[kX] = vX
 		} else {
-			//exist
+			// exist
 			if vX != vY {
-				//but value is different
+				// but value is different
 				diff[kX] = vX
 			}
 		}

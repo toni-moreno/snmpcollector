@@ -356,7 +356,7 @@ func Test_Integer32_Scale_to_FLOAT(t *testing.T) {
 
 	switch v := met.CookedValue.(type) {
 	case float64:
-		//15789*0.001 = 15.789
+		// 15789*0.001 = 15.789
 		if v != 15.789 {
 			t.Errorf("Metric error : got [%v] expected [15.789]", v)
 			return
@@ -391,7 +391,7 @@ func Test_Integer32_to_INTEGER(t *testing.T) {
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Integer,
-		Value: int(15789), //after scale and Round => 16
+		Value: int(15789), // after scale and Round => 16
 	}
 
 	met.SetRawData(data, time.Now())
@@ -432,14 +432,14 @@ func Test_Integer32_Scale_to_INTEGER(t *testing.T) {
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Integer,
-		Value: int(15789), //after scale and Round => 16
+		Value: int(15789), // after scale and Round => 16
 	}
 
 	met.SetRawData(data, time.Now())
 
 	switch v := met.CookedValue.(type) {
 	case int64:
-		//15789*0.001 = 15.789 => round(15.789) = 16
+		// 15789*0.001 = 15.789 => round(15.789) = 16
 		if v != 16 {
 			t.Errorf("Metric error : got [%v] expected [16]", v)
 			return
@@ -526,7 +526,7 @@ func Test_Counter32_Scale_to_FLOAT(t *testing.T) {
 
 	switch v := met.CookedValue.(type) {
 	case float64:
-		//15800*0.001 = 15.8
+		// 15800*0.001 = 15.8
 		if v != 15.8 {
 			t.Errorf("Metric error : got [%v] expected [15.8]", v)
 			return
@@ -561,7 +561,7 @@ func Test_Counter32_to_INTEGER(t *testing.T) {
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
 		Type:  gosnmp.Counter32,
-		Value: uint(15800), //after scale and Round => 16
+		Value: uint(15800), // after scale and Round => 16
 	}
 
 	met.SetRawData(data, time.Now())
@@ -602,14 +602,14 @@ func Test_Counter32_Scale_to_INTEGER(t *testing.T) {
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
 		Type:  gosnmp.Counter32,
-		Value: uint(15800), //after scale and Round => 16
+		Value: uint(15800), // after scale and Round => 16
 	}
 
 	met.SetRawData(data, time.Now())
 
 	switch v := met.CookedValue.(type) {
 	case int64:
-		//15800*0.001 = 15.8 => round(15.8) = 16
+		// 15800*0.001 = 15.8 => round(15.8) = 16
 		if v != 16 {
 			t.Errorf("Metric error : got [%v] expected [16]", v)
 			return
@@ -648,7 +648,7 @@ func Test_COUNTER32_to_FLOAT(t *testing.T) {
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
-	//1st data
+	// 1st data
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
 		Type:  gosnmp.Counter32,
@@ -657,7 +657,7 @@ func Test_COUNTER32_to_FLOAT(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
 		Type:  gosnmp.Counter32,
@@ -710,7 +710,7 @@ func Test_COUNTER32_to_INTEGER(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
 		Type:  gosnmp.Counter32,
@@ -763,7 +763,7 @@ func Test_COUNTER32_rate_to_FLOAT(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
 		Type:  gosnmp.Counter32,
@@ -816,7 +816,7 @@ func Test_COUNTER32_Scale_to_FLOAT(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
 		Type:  gosnmp.Counter32,
@@ -828,7 +828,7 @@ func Test_COUNTER32_Scale_to_FLOAT(t *testing.T) {
 	case float64:
 		//(162600 - 15600)=6600*0.001 = 6.600
 		if !cmp.Equal(v, 6.6000, opt) {
-			//need compare with tolerance the resulting value was 6.6000000000000005
+			// need compare with tolerance the resulting value was 6.6000000000000005
 			t.Errorf("Metric error : got [%v] expected [6.6000]", v)
 			return
 		}
@@ -869,7 +869,7 @@ func Test_COUNTER32_Scale_to_INTEGER(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.6.10.0",
 		Type:  gosnmp.Counter32,
@@ -966,7 +966,7 @@ func Test_Counter64_Scale_to_FLOAT(t *testing.T) {
 
 	switch v := met.CookedValue.(type) {
 	case float64:
-		//15800*0.001 = 15.8
+		// 15800*0.001 = 15.8
 		if v != 15.8 {
 			t.Errorf("Metric error : got [%v] expected [15.8]", v)
 			return
@@ -1001,7 +1001,7 @@ func Test_Counter64_to_INTEGER(t *testing.T) {
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.31.1.1.1.11.8",
 		Type:  gosnmp.Counter64,
-		Value: uint64(15800), //after scale and Round => 16
+		Value: uint64(15800), // after scale and Round => 16
 	}
 
 	met.SetRawData(data, time.Now())
@@ -1042,14 +1042,14 @@ func Test_Counter64_Scale_to_INTEGER(t *testing.T) {
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.2.1.31.1.1.1.11.8",
 		Type:  gosnmp.Counter64,
-		Value: uint64(15800), //after scale and Round => 16
+		Value: uint64(15800), // after scale and Round => 16
 	}
 
 	met.SetRawData(data, time.Now())
 
 	switch v := met.CookedValue.(type) {
 	case int64:
-		//15800*0.001 = 15.8 => round(15.8) = 16
+		// 15800*0.001 = 15.8 => round(15.8) = 16
 		if v != 16 {
 			t.Errorf("Metric error : got [%v] expected [16]", v)
 			return
@@ -1088,7 +1088,7 @@ func Test_COUNTER64_to_FLOAT(t *testing.T) {
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
-	//1st data
+	// 1st data
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,
@@ -1097,7 +1097,7 @@ func Test_COUNTER64_to_FLOAT(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,
@@ -1140,7 +1140,7 @@ func Test_COUNTER64_to_INTEGER(t *testing.T) {
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
-	//1st data
+	// 1st data
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,
@@ -1149,7 +1149,7 @@ func Test_COUNTER64_to_INTEGER(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,
@@ -1194,7 +1194,7 @@ func Test_COUNTER64_rate_to_FLOAT(t *testing.T) {
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
 
-	//1st data
+	// 1st data
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,
@@ -1203,7 +1203,7 @@ func Test_COUNTER64_rate_to_FLOAT(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,
@@ -1224,10 +1224,10 @@ func Test_COUNTER64_rate_to_FLOAT(t *testing.T) {
 	}
 }
 
-//https://play.golang.org/p/E_VQv8U7ha
-//https://dev.to/juliaferraioli/testing-in-go-testing-floating-point-numbers-4i0a
-//https://www.reddit.com/r/golang/comments/5rwywn/float64_precision/
-//https://floating-point-gui.de/
+// https://play.golang.org/p/E_VQv8U7ha
+// https://dev.to/juliaferraioli/testing-in-go-testing-floating-point-numbers-4i0a
+// https://www.reddit.com/r/golang/comments/5rwywn/float64_precision/
+// https://floating-point-gui.de/
 
 func Test_COUNTER64_Scale_to_FLOAT(t *testing.T) {
 	mc := &config.SnmpMetricCfg{
@@ -1252,7 +1252,7 @@ func Test_COUNTER64_Scale_to_FLOAT(t *testing.T) {
 
 	now := time.Now()
 	before := now.Add(-60 * time.Second)
-	//1st data
+	// 1st data
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,
@@ -1261,7 +1261,7 @@ func Test_COUNTER64_Scale_to_FLOAT(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,
@@ -1273,7 +1273,7 @@ func Test_COUNTER64_Scale_to_FLOAT(t *testing.T) {
 	case float64:
 		//(162600 - 15600)=6600*0.001 = 6.6
 		if !cmp.Equal(v, 6.6000, opt) {
-			//need compare with tolerance the resulting value was 6.6000000000000005
+			// need compare with tolerance the resulting value was 6.6000000000000005
 			t.Errorf("Metric error : got [%v] expected [6.6000]", v)
 			return
 		}
@@ -1307,7 +1307,7 @@ func Test_COUNTER64_Scale_to_INTEGER(t *testing.T) {
 	now := time.Now()
 	before := now.Add(-60)
 
-	//1st data
+	// 1st data
 	data := gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,
@@ -1316,7 +1316,7 @@ func Test_COUNTER64_Scale_to_INTEGER(t *testing.T) {
 
 	met.SetRawData(data, before)
 
-	//2nd data
+	// 2nd data
 	data = gosnmp.SnmpPDU{
 		Name:  ".1.3.6.1.4.1.2021.4.3.0",
 		Type:  gosnmp.Counter64,

@@ -12,7 +12,6 @@ import (
 
 // NewAPICfgMeasFilters MeasFilter API REST creator
 func NewAPICfgMeasFilters(m *macaron.Macaron) error {
-
 	bind := binding.Bind
 
 	m.Group("/api/cfg/measfilters", func() {
@@ -60,7 +59,7 @@ func GetMeasFilter(ctx *Context) {
 	log.Debugf("Getting Measurement Filter %+v", &cfgarray)
 }
 
-//GetMeasFilterByID --pending--
+// GetMeasFilterByID --pending--
 func GetMeasFilterByID(ctx *Context) {
 	// swagger:operation GET /cfg/measfilters/{id} Meas_Filter GetMeasFilterByID
 	//---
@@ -124,7 +123,7 @@ func AddMeasFilter(ctx *Context, dev config.MeasFilterCfg) {
 	//       "$ref": "#/responses/idOfStringResp"
 
 	log.Printf("ADDING measurement Filter %+v", dev)
-	//check Filter Config
+	// check Filter Config
 	switch dev.FType {
 	case "file":
 		f := filter.NewFileFilter(dev.FilterName, dev.EnableAlias, log)
@@ -134,7 +133,7 @@ func AddMeasFilter(ctx *Context, dev config.MeasFilterCfg) {
 			return
 		}
 	case "OIDCondition":
-		//no need for check here we have needed  SNMP walk function defined at this level
+		// no need for check here we have needed  SNMP walk function defined at this level
 	case "CustomFilter":
 		f := filter.NewCustomFilter(dev.FilterName, dev.EnableAlias, log)
 		err := f.Init(&agent.MainConfig.Database)
@@ -151,7 +150,7 @@ func AddMeasFilter(ctx *Context, dev config.MeasFilterCfg) {
 		log.Warningf("Error on insert Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return data  or affected
+		// TODO: review if needed return data  or affected
 		ctx.JSON(200, &dev)
 	}
 }
@@ -195,12 +194,12 @@ func UpdateMeasFilter(ctx *Context, dev config.MeasFilterCfg) {
 		log.Warningf("Error on update Measurment Filter %s  , affected : %+v , error: %s", dev.ID, affected, err)
 		ctx.JSON(404, err.Error())
 	} else {
-		//TODO: review if needed return device data
+		// TODO: review if needed return device data
 		ctx.JSON(200, &dev)
 	}
 }
 
-//DeleteMeasFilter --pending--
+// DeleteMeasFilter --pending--
 func DeleteMeasFilter(ctx *Context) {
 	// swagger:operation DELETE /cfg/measfilters/{id} Meas_Filter DeleteMeasFilter
 	//---
@@ -237,7 +236,7 @@ func DeleteMeasFilter(ctx *Context) {
 	}
 }
 
-//GetMeasFiltersAffectOnDel --pending--
+// GetMeasFiltersAffectOnDel --pending--
 func GetMeasFiltersAffectOnDel(ctx *Context) {
 	// swagger:operation GET /cfg/measfilters/checkondel/{id} Meas_Filter GetMeasFiltersAffectOnDel
 	//---

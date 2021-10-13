@@ -13,10 +13,12 @@ const (
 	SessKeyUserID = "uid"
 )
 
-var sessionManager *session.Manager
-var sessionOptions *session.Options
-var startSessionGC func()
-var getSessionCount func() int
+var (
+	sessionManager  *session.Manager
+	sessionOptions  *session.Options
+	startSessionGC  func()
+	getSessionCount func() int
+)
 
 func init() {
 	startSessionGC = func() {

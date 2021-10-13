@@ -13,7 +13,6 @@ import (
 
 // ImportCheck  returns and ExportData type with error summary
 func (e *ExportData) ImportCheck() (*ExportData, error) {
-
 	var duplicated []*ExportObject
 
 	for i := 0; i < len(e.Objects); i++ {
@@ -178,7 +177,6 @@ func (e *ExportData) ImportCheck() (*ExportData, error) {
 
 // Import import into the config database data contained in the ExportData struct
 func (e *ExportData) Import(overwrite bool, autorename bool) error {
-
 	var suffix string
 	if autorename == true {
 		timestamp := time.Now().Unix()
@@ -187,7 +185,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 
 	for i := 0; i < len(e.Objects); i++ {
 		o := e.Objects[i]
-		o.Error = "" //reset error if exist becaouse we
+		o.Error = "" // reset error if exist becaouse we
 		log.Debugf("Importing object %+v", o)
 		if o.ObjectCfg == nil {
 			o.Error = fmt.Sprintf("Error inconsistent data not ObjectCfg found on Imported data for id: %s", o.ObjectID)
@@ -205,7 +203,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			json.Unmarshal(raw, &data)
 			var err error
 			_, err = dbc.GetSnmpDeviceCfgByID(o.ObjectID)
-			if err == nil { //value exist already in the database
+			if err == nil { // value exist already in the database
 				if overwrite == true {
 					_, err2 := dbc.UpdateSnmpDeviceCfg(o.ObjectID, data)
 					if err2 != nil {
@@ -228,7 +226,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			json.Unmarshal(raw, &data)
 			var err error
 			_, err = dbc.GetInfluxCfgByID(o.ObjectID)
-			if err == nil { //value exist already in the database
+			if err == nil { // value exist already in the database
 				if overwrite == true {
 					_, err2 := dbc.UpdateInfluxCfg(o.ObjectID, data)
 					if err2 != nil {
@@ -250,7 +248,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			json.Unmarshal(raw, &data)
 			var err error
 			_, err = dbc.GetMeasFilterCfgByID(o.ObjectID)
-			if err == nil { //value exist already in the database
+			if err == nil { // value exist already in the database
 				if overwrite == true {
 					_, err2 := dbc.UpdateMeasFilterCfg(o.ObjectID, data)
 					if err2 != nil {
@@ -272,7 +270,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			json.Unmarshal(raw, &data)
 			var err error
 			_, err = dbc.GetCustomFilterCfgByID(o.ObjectID)
-			if err == nil { //value exist already in the database
+			if err == nil { // value exist already in the database
 				if overwrite == true {
 					_, err2 := dbc.UpdateCustomFilterCfg(o.ObjectID, data)
 					if err2 != nil {
@@ -294,7 +292,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			json.Unmarshal(raw, &data)
 			var err error
 			_, err = dbc.GetOidConditionCfgByID(o.ObjectID)
-			if err == nil { //value exist already in the database
+			if err == nil { // value exist already in the database
 				if overwrite == true {
 					_, err2 := dbc.UpdateOidConditionCfg(o.ObjectID, data)
 					if err2 != nil {
@@ -315,7 +313,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			json.Unmarshal(raw, &data)
 			var err error
 			_, err = dbc.GetMeasurementCfgByID(o.ObjectID)
-			if err == nil { //value exist already in the database
+			if err == nil { // value exist already in the database
 				if overwrite == true {
 					_, err2 := dbc.UpdateMeasurementCfg(o.ObjectID, data)
 					if err2 != nil {
@@ -337,7 +335,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			json.Unmarshal(raw, &data)
 			var err error
 			_, err = dbc.GetSnmpMetricCfgByID(o.ObjectID)
-			if err == nil { //value exist already in the database
+			if err == nil { // value exist already in the database
 				if overwrite == true {
 					_, err2 := dbc.UpdateSnmpMetricCfg(o.ObjectID, data)
 					if err2 != nil {
@@ -359,7 +357,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			json.Unmarshal(raw, &data)
 			var err error
 			_, err = dbc.GetMGroupsCfgByID(o.ObjectID)
-			if err == nil { //value exist already in the database
+			if err == nil { // value exist already in the database
 				if overwrite == true {
 					_, err2 := dbc.UpdateMGroupsCfg(o.ObjectID, data)
 					if err2 != nil {
@@ -381,7 +379,7 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			json.Unmarshal(raw, &data)
 			var err error
 			_, err = dbc.GetVarCatalogCfgByID(o.ObjectID)
-			if err == nil { //value exist already in the database
+			if err == nil { // value exist already in the database
 				if overwrite == true {
 					_, err2 := dbc.UpdateVarCatalogCfg(o.ObjectID, data)
 					if err2 != nil {

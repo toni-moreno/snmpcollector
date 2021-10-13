@@ -21,17 +21,17 @@ type MeasurementFieldReport struct {
 type MeasurementCfg struct {
 	ID                string                   `xorm:"'id' unique" binding:"Required"`
 	Name              string                   `xorm:"name" binding:"Required"`
-	GetMode           string                   `xorm:"getmode" binding:"In(value,indexed,indexed_it,indexed_mit,indexed_multiple)"` //value ,indexed  (direct tag), indexed_it ( indirect_tag)
-	IndexOID          string                   `xorm:"indexoid"`                                                                    //only valid if Indexed (direct or indirect)
+	GetMode           string                   `xorm:"getmode" binding:"In(value,indexed,indexed_it,indexed_mit,indexed_multiple)"` // value ,indexed  (direct tag), indexed_it ( indirect_tag)
+	IndexOID          string                   `xorm:"indexoid"`                                                                    // only valid if Indexed (direct or indirect)
 	TagOID            string                   `xorm:"tagoid"`
-	MultiTagOID       []MultipleTagOID         `xorm:"mtagoid"` //only valid if inderecta TAG indexeded
+	MultiTagOID       []MultipleTagOID         `xorm:"mtagoid"` // only valid if inderecta TAG indexeded
 	IndexTag          string                   `xorm:"indextag"`
 	IndexTagFormat    string                   `xorm:"indextagformat"`
 	IndexAsValue      bool                     `xorm:"'indexasvalue' default 0"`
 	MultiIndexCfg     []MultiIndexCfg          `xorm:"multiindex"`
 	MultiIndexResult  string                   `xorm:"multiindexresult"`
 	MultiIndexVersion string                   `xorm:"multiindexrversion"`
-	Fields            []MeasurementFieldReport `xorm:"-"` //Got from MeasurementFieldCfg table
+	Fields            []MeasurementFieldReport `xorm:"-"` // Got from MeasurementFieldCfg table
 	FieldMetric       []*SnmpMetricCfg         `xorm:"-" json:"-"`
 	EvalMetric        []*SnmpMetricCfg         `xorm:"-" json:"-"`
 	OidCondMetric     []*SnmpMetricCfg         `xorm:"-" json:"-"`
@@ -57,17 +57,17 @@ type MultiIndexCfg struct {
 	IndexTagFormat string
 }
 
-//CheckComputedMetricVars check for computed metrics based on check if variable definition exist
+// CheckComputedMetricVars check for computed metrics based on check if variable definition exist
 func (mc *MeasurementCfg) CheckComputedMetricVars(parameters map[string]interface{}) error {
 	var extvars []string
 	var allusablevars []string
 
-	//external defined vars ( from Catalog database)
+	// external defined vars ( from Catalog database)
 	for k := range parameters {
 		extvars = append(extvars, k)
 	}
 	allusablevars = append(allusablevars, extvars...)
-	//internall defined vars( FieldNames and NFR/FR/NR)
+	// internall defined vars( FieldNames and NFR/FR/NR)
 	intvars, _ := mc.GetEvaluableVarNames()
 	allusablevars = append(allusablevars, intvars...)
 
@@ -79,7 +79,7 @@ func (mc *MeasurementCfg) CheckComputedMetricVars(parameters map[string]interfac
 		log.Debugf("checking if existing var in measurement: %s Metric: %s", mc.ID, val.ID)
 
 		for _, varin := range varinmetric {
-			//check if exist on usable vars
+			// check if exist on usable vars
 			found := false
 			for _, varusable := range allusablevars {
 				if varin == varusable {
@@ -102,12 +102,12 @@ func (mc *MeasurementCfg) CheckComputedMetricVars(parameters map[string]interfac
 func (mc *MeasurementCfg) CheckComputedMetricEval(parameters map[string]interface{}) error {
 	var err error
 	var errstr []string
-	//get all the eval parameters
+	// get all the eval parameters
 	ep, _ := mc.GetEvaluableVarNames()
 	for _, t := range ep {
 		parameters[t] = float64(1)
 	}
-	parameters["NF"] = len(mc.FieldMetric) + len(mc.OidCondMetric) //Number of fields ( like awk)
+	parameters["NF"] = len(mc.FieldMetric) + len(mc.OidCondMetric) // Number of fields ( like awk)
 	log.Debugf("PARAMETERS: %+v", parameters)
 	for _, v := range mc.EvalMetric {
 		err = v.CheckEvalCfg(parameters)
@@ -115,7 +115,7 @@ func (mc *MeasurementCfg) CheckComputedMetricEval(parameters map[string]interfac
 			str := fmt.Sprintf("Error on metric %s evaluation ERROR : %s", v.ID, err)
 			log.Warnf("%s", str)
 			errstr = append(errstr, str)
-			//return fmt.Errorf("Error on metric %s evaluation ERROR : %s", v.ID, err)
+			// return fmt.Errorf("Error on metric %s evaluation ERROR : %s", v.ID, err)
 		}
 		parameters[v.FieldName] = float64(1)
 	}
@@ -128,7 +128,7 @@ func (mc *MeasurementCfg) CheckComputedMetricEval(parameters map[string]interfac
 // GetEvaluableVarNames returns an string array with all posible internal variable Names
 func (mc *MeasurementCfg) GetEvaluableVarNames() ([]string, error) {
 	var intvars []string // internal ( from metric ID's)
-	//Get InternalVariables (those from field names and "NF" and "NR")
+	// Get InternalVariables (those from field names and "NF" and "NR")
 	for _, val := range mc.FieldMetric {
 		vars, err := val.GetEvaluableVarNames()
 		if err != nil {
@@ -145,7 +145,7 @@ func (mc *MeasurementCfg) GetEvaluableVarNames() ([]string, error) {
 	intvars = append(intvars, "NFR")
 	intvars = append(intvars, "NF")
 	intvars = append(intvars, "NR")
-	//log.Debugf("INTVARS %s : %#+v ", mc.ID, intvars)
+	// log.Debugf("INTVARS %s : %#+v ", mc.ID, intvars)
 	return utils.RemoveDuplicatesUnordered(intvars), nil
 }
 
@@ -168,7 +168,6 @@ func (mc *MeasurementCfg) GetAllUsedVarNamesInMetrics() ([]string, error) {
 
 // GetExternalVars Get Needed External Variables in this Measurement
 func (mc *MeasurementCfg) GetExternalVars() ([]string, error) {
-
 	intvars, err := mc.GetEvaluableVarNames()
 	if err != nil {
 		return nil, err
@@ -179,7 +178,7 @@ func (mc *MeasurementCfg) GetExternalVars() ([]string, error) {
 		return nil, err
 	}
 
-	//get difference
+	// get difference
 	extvars := utils.DiffSlice(intvars, allvars)
 
 	log.Debugf("EXTVARS %s : %#+v ", mc.ID, extvars)
@@ -187,10 +186,10 @@ func (mc *MeasurementCfg) GetExternalVars() ([]string, error) {
 	return extvars, nil
 }
 
-//Init initialize the measurement configuration
+// Init initialize the measurement configuration
 func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[string]interface{}) error {
-	//mc.ID = name
-	//validate config values
+	// mc.ID = name
+	// validate config values
 	if len(mc.Name) == 0 {
 		return errors.New("Name not set in measurement Config " + mc.ID)
 	}
@@ -232,7 +231,7 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 		if len(mc.MultiIndexVersion) == 0 {
 			mc.MultiIndexVersion = "1.0"
 		}
-		//store mil labels to compare them, need to be unique between them
+		// store mil labels to compare them, need to be unique between them
 		mil := make(map[string]int)
 		for _, mi := range mc.MultiIndexCfg {
 			if _, ok := mil[mi.Label]; ok {
@@ -240,7 +239,7 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 			}
 			mil[mi.Label] = 1
 		}
-		//check oids formats
+		// check oids formats
 		for i, mi := range mc.MultiIndexCfg {
 			if len(mi.Label) == 0 {
 				return errors.New("Label not set in index Config " + mi.Label)
@@ -310,7 +309,7 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 			log.Warnf("measurement field  %s NOT FOUND in Metrics Database !", fVal.ID)
 		}
 	}
-	//check for valid fields ( should be at least one!! Field in indexed measurements and at least one field or ) in
+	// check for valid fields ( should be at least one!! Field in indexed measurements and at least one field or ) in
 	switch mc.GetMode {
 	case "indexed", "indexed_it", "indexed_multiple":
 		if len(mc.FieldMetric) == 0 {
@@ -321,23 +320,23 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 			return fmt.Errorf("There is no any Field or OID conditional metrics in measurement type \"value\" Config  %s (should be at least one)", mc.ID)
 		}
 	}
-	//Check if duplicated oids for Field metrics
+	// Check if duplicated oids for Field metrics
 	oidcheckarray := make(map[string]string)
 	for _, v := range mc.FieldMetric {
-		//check if the OID has already used as metric in the same measurement
+		// check if the OID has already used as metric in the same measurement
 		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.BaseOID, v.ID)
 		if v2, ok := oidcheckarray[v.BaseOID]; ok {
-			//oid has already inserted
+			// oid has already inserted
 			return fmt.Errorf("This measurement has duplicated OID[%s] in metric [%s/%s] ", v.BaseOID, v.ID, v2)
 		}
 		oidcheckarray[v.BaseOID] = v.ID
 	}
-	//Check if duplicated fieldNames in any of field/eval/oidCondition Metrics
+	// Check if duplicated fieldNames in any of field/eval/oidCondition Metrics
 	fieldnamecheckarray := make(map[string]string)
 	for _, v := range mc.FieldMetric {
 		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
 		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
-			//field name has already inserted
+			// field name has already inserted
 			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
 		}
 		fieldnamecheckarray[v.FieldName] = v.ID
@@ -345,7 +344,7 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 	for _, v := range mc.EvalMetric {
 		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
 		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
-			//field name has already inserted
+			// field name has already inserted
 			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
 		}
 		fieldnamecheckarray[v.FieldName] = v.ID
@@ -353,12 +352,12 @@ func (mc *MeasurementCfg) Init(MetricCfg *map[string]*SnmpMetricCfg, varmap map[
 	for _, v := range mc.OidCondMetric {
 		log.Debugf("VALIDATE MEASUREMENT: %s/%s", v.FieldName, v.ID)
 		if v2, ok := fieldnamecheckarray[v.FieldName]; ok {
-			//field name has already inserted
+			// field name has already inserted
 			return fmt.Errorf("This measurement has duplicated FieldName[%s] in metric [%s/%s] ", v.FieldName, v.ID, v2)
 		}
 		fieldnamecheckarray[v.FieldName] = v.ID
 	}
-	//Check if all evaluated metrics has well defined its parameters as FieldNames and evaluation syntax
+	// Check if all evaluated metrics has well defined its parameters as FieldNames and evaluation syntax
 	var err error
 	if varmap == nil {
 		varmap = make(map[string]interface{})
@@ -423,7 +422,7 @@ func (dbc *DatabaseCfg) GetMeasurementCfgMap(filter string) (map[string]*Measure
 func (dbc *DatabaseCfg) GetMeasurementCfgArray(filter string) ([]*MeasurementCfg, error) {
 	var err error
 	var devices []*MeasurementCfg
-	//Get Only data for selected measurements
+	// Get Only data for selected measurements
 	if len(filter) > 0 {
 		if err = dbc.x.Where(filter).Find(&devices); err != nil {
 			log.Warnf("Fail to get MeasurementCfg  data filteter with %s : %v\n", filter, err)
@@ -441,8 +440,8 @@ func (dbc *DatabaseCfg) GetMeasurementCfgArray(filter string) ([]*MeasurementCfg
 		log.Warnf("Fail to get Measurements Metric relationship data: %v\n", err)
 	}
 
-	//Load Measurements and metrics relationship
-	//We assign field metric ID to each measurement
+	// Load Measurements and metrics relationship
+	// We assign field metric ID to each measurement
 	for _, mVal := range devices {
 		for _, mm := range MeasureMetric {
 			if mm.IDMeasurementCfg == mVal.ID {
@@ -487,7 +486,7 @@ func (dbc *DatabaseCfg) AddMeasurementCfg(dev MeasurementCfg) (int64, error) {
 		session.Rollback()
 		return 0, err
 	}
-	//Measurement Fields
+	// Measurement Fields
 	for _, metric := range dev.Fields {
 
 		mstruct := MeasurementFieldCfg{
@@ -501,7 +500,7 @@ func (dbc *DatabaseCfg) AddMeasurementCfg(dev MeasurementCfg) (int64, error) {
 			return 0, err
 		}
 	}
-	//no other relation
+	// no other relation
 	err = session.Commit()
 	if err != nil {
 		return 0, err
@@ -541,14 +540,14 @@ func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 		return 0, fmt.Errorf("Error on Update FilterMeasurement on with id: %s, error: %s", id, err)
 	}
 
-	//MultiIndex related filters
+	// MultiIndex related filters
 	affectedftm, err = session.Where("id_measurement_cfg like '" + id + "..%'").Cols("id_measurement_cfg").Update(&MeasFilterCfg{})
 	if err != nil {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Update FilterMeasurement on with id: %s, error: %s", id, err)
 	}
 
-	//CustomFilter Related Dev
+	// CustomFilter Related Dev
 	affectedcf, err = session.Where("related_meas='" + id + "'").Cols("related_meas").Update(&CustomFilterCfg{})
 	if err != nil {
 		session.Rollback()
@@ -574,7 +573,7 @@ func (dbc *DatabaseCfg) DelMeasurementCfg(id string) (int64, error) {
 func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int64, error) {
 	var affecteddev, newmf, affected int64
 	var err error
-	//var devices []*MeasurementCfg
+	// var devices []*MeasurementCfg
 	// create SnmpMetricCfg to check if any configuration issue found before persist to database.
 	// config should be got from database
 	// TODO: filter only metrics in Measurement to test if measurement was well defined
@@ -593,7 +592,7 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 	}
 	defer session.Close()
 
-	if id != dev.ID { //ID has been changed
+	if id != dev.ID { // ID has been changed
 		log.Infof("Updated Measurement Config to %d devices ", affecteddev)
 
 		affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").Cols("id_measurement_cfg").Update(&MGroupsMeasurements{IDMeasurementCfg: dev.ID})
@@ -622,14 +621,14 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 
 		log.Infof("Updated Measurement config to %d devices ", affecteddev)
 	}
-	//delete all previous values
+	// delete all previous values
 	affecteddev, err = session.Where("id_measurement_cfg='" + id + "'").Delete(&MeasurementFieldCfg{})
 	if err != nil {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Delete Measurement on MGroupsMeasurements with id: %s, error: %s", id, err)
 	}
 
-	//Creating nuew Measurement Fields
+	// Creating nuew Measurement Fields
 	for _, metric := range dev.Fields {
 
 		mstruct := MeasurementFieldCfg{
@@ -643,7 +642,7 @@ func (dbc *DatabaseCfg) UpdateMeasurementCfg(id string, dev MeasurementCfg) (int
 			return 0, err
 		}
 	}
-	//update data
+	// update data
 	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
 	if err != nil {
 		session.Rollback()
