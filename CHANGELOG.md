@@ -1,4 +1,12 @@
-# v 0.11.0 ( unreleased )
+# v 0.12.0 ( unreleased)
+
+### New Features
+
+### Fixes
+
+### breaking changes
+
+# v 0.11.0 ( 2021-10-13 )
 
 ### New Features
 
@@ -8,6 +16,7 @@
 
 ### Fixes
 
+* Security fix for CVE-2019-17495
 * Fix #499
 * Fix blocking API requests
 * fix #495
