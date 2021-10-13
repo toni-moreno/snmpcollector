@@ -33,11 +33,11 @@ export class CustomFilterService {
       .map((responseData) => {
         return responseData.json();
       })
-      .map((influxmeas) => {
-        console.log("MAP SERVICE", influxmeas);
+      .map((measurement) => {
+        console.log("MAP SERVICE", measurement);
         let result = [];
-        if (influxmeas) {
-          _.forEach(influxmeas, function(value, key) {
+        if (measurement) {
+          _.forEach(measurement, function(value, key) {
             console.log("FOREACH LOOP", value, key);
             if (filter_s && filter_s.length > 0) {
               console.log("maching: " + value.ID + "filter: " + filter_s);

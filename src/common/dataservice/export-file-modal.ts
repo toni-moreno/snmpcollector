@@ -8,7 +8,7 @@ import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../
 //Services
 import { InfluxServerService } from '../../influxserver/influxservercfg.service';
 import { SnmpDeviceService } from '../../snmpdevice/snmpdevicecfg.service';
-import { InfluxMeasService } from '../../influxmeas/influxmeascfg.service';
+import { MeasurementService } from '../../measurement/measurementcfg.service';
 import { OidConditionService } from '../../oidcondition/oidconditioncfg.service';
 import { SnmpMetricService } from '../../snmpmetric/snmpmetriccfg.service';
 import { MeasGroupService } from '../../measgroup/measgroupcfg.service';
@@ -149,7 +149,7 @@ import { Subscription } from 'rxjs';
           </div>
         </div>`,
         styleUrls: ['./import-modal-styles.css'],
-        providers: [ExportServiceCfg, InfluxServerService, SnmpDeviceService, SnmpMetricService, InfluxMeasService, OidConditionService,MeasGroupService, MeasFilterService, CustomFilterService, VarCatalogService, TreeView]
+        providers: [ExportServiceCfg, InfluxServerService, SnmpDeviceService, SnmpMetricService, MeasurementService, OidConditionService,MeasGroupService, MeasFilterService, CustomFilterService, VarCatalogService, TreeView]
 })
 
 export class ExportFileModal {
@@ -174,7 +174,7 @@ export class ExportFileModal {
 
   constructor(builder: FormBuilder, public exportServiceCfg : ExportServiceCfg,
     public influxServerService: InfluxServerService, public metricMeasService: SnmpMetricService,
-    public influxMeasService: InfluxMeasService, public oidConditionService : OidConditionService,
+    public measurementService: MeasurementService, public oidConditionService : OidConditionService,
     public snmpDeviceService: SnmpDeviceService, public measGroupService: MeasGroupService,
     public measFilterService: MeasFilterService, public customFilterService: CustomFilterService,
     public varCatalogService: VarCatalogService) {
@@ -493,7 +493,7 @@ export class ExportFileModal {
        );
       break;
       case 'measurementcfg':
-      this.mySubscriber = this.influxMeasService.getMeas(filter)
+      this.mySubscriber = this.measurementService.getMeas(filter)
        .subscribe(
        data => {
          this.dataArray=data;
