@@ -194,7 +194,7 @@ func ReleaseInfluxOut(idb map[string]*output.InfluxDB) {
 
 // DeviceProcessStop stops all device polling goroutines
 func DeviceProcessStop() {
-	Bus.Broadcast(&bus.Message{Type: "exit"})
+	Bus.Broadcast(&bus.Message{Type: bus.Exit})
 }
 
 // DeviceProcessStart starts all device polling goroutines
@@ -288,7 +288,12 @@ func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 
 	mutex.Lock()
 	devices[k] = dev
-	dev.StartGather(&gatherWg)
+	// Start gather goroutine for device and add it to the wait group for gather goroutines
+	gatherWg.Add(1)
+	go func() {
+		defer gatherWg.Done()
+		dev.StartGather()
+	}()
 	mutex.Unlock()
 }
 

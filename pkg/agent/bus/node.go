@@ -1,8 +1,27 @@
 package bus
 
+// Command define valid message types to be passed using the bus
+type Command int
+
+// TODO documentar cada comando
+const (
+	// Exit without waiting for anything
+	Exit Command = iota
+	// SyncExit order the device and its measurement goroutines to exit and waits till them are finished
+	SyncExit
+	Enabled
+	LogLevel
+	ForceGather
+	FilterUpdate
+	SNMPResetHard
+	SNMPReset
+	SNMPDebug
+	SetSNMPMaxRep
+)
+
 // Message a basic message type
 type Message struct {
-	Type string
+	Type Command
 	Data interface{}
 }
 

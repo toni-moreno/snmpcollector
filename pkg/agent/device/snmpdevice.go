@@ -50,6 +50,8 @@ type SnmpDevice struct {
 	VarMap map[string]interface{}
 
 	// SNMP and Influx Clients config
+	// TODO borrar esto? Mejor que cada gorutina gestione su conex, no en el structs
+	// El cliente snmp no es thread safe: ttps://github.com/gosnmp/gosnmp/issues/64#issuecomment-231645164
 	snmpClientMap map[string]*snmp.Client
 	Influx        *output.InfluxDB `json:"-"`
 	// LastError     time.Time
@@ -58,13 +60,11 @@ type SnmpDevice struct {
 	Stats *DevStat // Public info for thread safe accessing to the data ()
 
 	// runtime controls
-	rtData             sync.RWMutex
-	statsData          sync.RWMutex
-	ReloadLoopsPending int
+	rtData    sync.RWMutex
+	statsData sync.RWMutex
 
 	DeviceActive    bool
 	DeviceConnected bool
-	StateDebug      bool
 
 	Node      *bus.Node `json:"-"`
 	isStopped chan bool `json:"-"`
@@ -113,7 +113,6 @@ func (d *SnmpDevice) getBasicStats() *DevStat {
 		sum += len(m.OidSnmpMap)
 	}
 	stat := d.stats.ThSafeCopy()
-	stat.ReloadLoopsPending = d.ReloadLoopsPending
 	stat.TagMap = d.TagMap
 	stat.NumMeasurements = len(d.Measurements)
 	stat.NumMetrics = sum
@@ -123,20 +122,6 @@ func (d *SnmpDevice) getBasicStats() *DevStat {
 		stat.SysDescription = ""
 	}
 	return stat
-}
-
-func (d *SnmpDevice) setReloadLoopsPending(val int) {
-	d.ReloadLoopsPending = val
-}
-
-func (d *SnmpDevice) getReloadLoopsPending() int {
-	return d.ReloadLoopsPending
-}
-
-func (d *SnmpDevice) decReloadLoopsPending() {
-	if d.ReloadLoopsPending > 0 {
-		d.ReloadLoopsPending--
-	}
 }
 
 // GetOutSenderFromMap to get info about the sender will use
@@ -159,21 +144,21 @@ func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*output.InfluxDB) (
 
 // ForceGather send message to force a data gather execution
 func (d *SnmpDevice) ForceGather() {
-	d.Node.SendMsg(&bus.Message{Type: "forcegather"})
+	d.Node.SendMsg(&bus.Message{Type: bus.ForceGather})
 }
 
 // ForceFltUpdate send info to update the filter counter to the next execution
 func (d *SnmpDevice) ForceFltUpdate() {
-	d.Node.SendMsg(&bus.Message{Type: "filterupdate"})
+	d.Node.SendMsg(&bus.Message{Type: bus.FilterUpdate})
 }
 
 // SnmpReset send message to init an  SNMP connection reset could be soft/hard
 func (d *SnmpDevice) SnmpReset(mode string) {
 	switch mode {
 	case "hard":
-		d.Node.SendMsg(&bus.Message{Type: "snmpresethard"})
+		d.Node.SendMsg(&bus.Message{Type: bus.SNMPResetHard})
 	case "soft":
-		d.Node.SendMsg(&bus.Message{Type: "snmpreset"})
+		d.Node.SendMsg(&bus.Message{Type: bus.SNMPReset})
 	default:
 		d.log.Infof("Unknown mode %s on SNMPRESET ", mode)
 	}
@@ -181,29 +166,29 @@ func (d *SnmpDevice) SnmpReset(mode string) {
 
 // StopGather send signal to stop the Gathering process
 func (d *SnmpDevice) StopGather() {
-	d.Node.SendMsg(&bus.Message{Type: "syncexit"})
+	d.Node.SendMsg(&bus.Message{Type: bus.SyncExit})
 	<-d.isStopped
 	d.log.Info("Exiting from StopGather process...")
 }
 
 // RTActivate change activatio state in runtime
 func (d *SnmpDevice) RTActivate(activate bool) {
-	d.Node.SendMsg(&bus.Message{Type: "enabled", Data: activate})
+	d.Node.SendMsg(&bus.Message{Type: bus.Enabled, Data: activate})
 }
 
 // RTActSnmpDebug change snmp debug runtime
 func (d *SnmpDevice) RTActSnmpDebug(activate bool) {
-	d.Node.SendMsg(&bus.Message{Type: "snmpdebug", Data: activate})
+	d.Node.SendMsg(&bus.Message{Type: bus.SNMPDebug, Data: activate})
 }
 
 // RTActSnmpMaxRep change snmp MaxRepetitions
 func (d *SnmpDevice) RTActSnmpMaxRep(maxrep uint8) {
-	d.Node.SendMsg(&bus.Message{Type: "setsnmpmaxrep", Data: maxrep})
+	d.Node.SendMsg(&bus.Message{Type: bus.SetSNMPMaxRep, Data: maxrep})
 }
 
 // RTSetLogLevel set the log level for this device
 func (d *SnmpDevice) RTSetLogLevel(level string) {
-	d.Node.SendMsg(&bus.Message{Type: "loglevel", Data: level})
+	d.Node.SendMsg(&bus.Message{Type: bus.LogLevel, Data: level})
 }
 
 /*
@@ -220,6 +205,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 	d.Debugf("---Init device measurements from groups %s------------------", d.cfg.Host)
 	// for this device get MeasurementGroups and search all measurements
 
+	// For each measurement group in the device, get the group config
 	for _, devMeas := range d.cfg.MeasurementGroups {
 		// Selecting all Metric Groups that matches with device.MeasurementGroups
 		selGroups := make(map[string]*config.MGroupsCfg, 0)
@@ -249,58 +235,14 @@ func (d *SnmpDevice) InitDevMeasurements() {
 			if mVal, ok := cfg.Measurements[val]; !ok {
 				d.Warnf("no measurement configured with name %s in host : %s", val, d.cfg.Host)
 			} else {
-				d.Debugf("MEASUREMENT CFG KEY: %s VALUE %s | Connection [%s] %+v", val, mVal.Name, val, d.snmpClientMap[mVal.ID])
-				//
-				c, err := d.InitSnmpConnect(mVal.ID, d.cfg.SnmpDebug, 0)
-				if err != nil {
-					d.Errorf("Error on snmpconnection initialization on measurement %s : Error: %s", mVal.ID, err)
-					continue
-				}
+				d.Debugf("MEASUREMENT CFG KEY: %s VALUE %s", val, mVal.Name)
 				// creating a new measurement runtime object and asigning to array
-				imeas, err := measurement.New(mVal, d.log, c)
-				if err != nil {
-					d.Errorf("Error on measurement initialization  Error: %s", err)
-					continue
-				}
+				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, d.log)
 				d.Measurements = append(d.Measurements, imeas)
 			}
 		}
 	}
 
-	/*For each  measurement look for filters and  Add to the measurement with this Filter after it initializes the runtime for the measurement  	*/
-	for _, m := range d.Measurements {
-		// check for filters associated with this measurement
-		var mfilter *config.MeasFilterCfg
-		var multi bool
-		// If multi is found, all internal filters are initialized
-		// multi must be marked as special...?
-		for _, f := range d.cfg.MeasFilters {
-			// we search if exist in the filter Database
-			if filter, ok := cfg.MFilters[f]; ok {
-				// check and init filters in measurement, applies also in multi
-				if ex, mi := m.CheckInitFilter(filter); ex {
-					mfilter = filter
-					// as filters can be defined without specific order, multi must be persisted
-					multi = mi || multi
-				}
-			}
-		}
-		// If multi, filters need to be propagated into the internal array and reload all
-		if mfilter != nil || multi {
-			d.Debugf("filters %s found for device  and measurement %s ", mfilter.ID, m.ID)
-			err := m.AddFilter(mfilter, multi)
-			if err != nil {
-				d.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.ID, err)
-			}
-		} else {
-			d.Debugf("no filters found for device on measurement %s", m.ID)
-		}
-		// m.ApplyFilterts...
-		// Initialize internal structs after
-		m.InitBuildRuntime()
-		// Get Data First Time ( useful for counters)
-		m.GetData()
-	}
 	// Initialize all snmpMetrics  objects and OID array
 	// get data first time
 	// useful to inicialize counter all value and test device snmp availability
@@ -352,10 +294,6 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	d.log.Formatter = customFormatter
 	customFormatter.FullTimestamp = true
 
-	d.StateDebug = d.cfg.SnmpDebug
-
-	d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
-
 	d.DeviceActive = d.cfg.Active
 	d.stats.SetStatus(d.DeviceActive, false)
 
@@ -401,6 +339,7 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	d.stats.Init(d.cfg.ID, d.TagMap, d.log)
 
 	if d.cfg.ConcurrentGather == true {
+		// TODO esto ya no tiene sentido con el nuevo formato de recolectar métricas, borrar
 		d.Gather = d.measConcurrentGatherAndSend
 		d.InitSnmpConnect = d.initSnmpConnectConcurrent
 	} else {
@@ -551,6 +490,7 @@ func (d *SnmpDevice) CheckDeviceConnectivity() {
 	}
 }
 
+// TODO borrar esto? Mejor que cada gorutina gestione su conex, no en el struct
 func (d *SnmpDevice) snmpRelease() {
 	for _, v := range d.snmpClientMap {
 		if v != nil {
@@ -560,6 +500,7 @@ func (d *SnmpDevice) snmpRelease() {
 	}
 }
 
+// TODO borrar esto? Mejor que cada gorutina gestione su conex, no en el struct
 func (d *SnmpDevice) releaseClientMap() {
 	if !d.cfg.ConcurrentGather {
 		if val, ok := d.snmpClientMap["init"]; ok {
@@ -617,202 +558,160 @@ func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 	}
 }
 
-func (d *SnmpDevice) gatherAndProcessData(t *time.Ticker, force bool) *time.Ticker {
-	d.rtData.Lock()
-	// if active
-	if d.DeviceActive || force {
-	FORCEINIT:
-		// check if device has active snmp connections and Initialize if not
-		if d.DeviceConnected == false {
+// StartGather Main GoRutine method to begin snmp data collecting
+func (d *SnmpDevice) StartGather() {
+	d.Infof("Initializating gather process for device on host (%s)", d.cfg.Host)
+	// Wait for the device to become active
+	// This loop will wait for commands and finish if we device recive the command to exit or to activate
+	// Others commands will be logged and ignored
+	for !d.DeviceActive {
+		select {
+		case val := <-d.Node.Read:
+			d.Infof("Device %s received message while waiting state. %s: %+v", d.cfg.Host, val.Type, val.Data)
+			switch val.Type {
+			case bus.Exit:
+				d.Infof("invoked Asyncronous EXIT from SNMP Gather process ")
+				return
+			case bus.SyncExit:
+				d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
+				d.isStopped <- true
+				return
+			case bus.Enabled:
+				status := val.Data.(bool)
+				d.rtData.Lock()
+				d.DeviceActive = status
+				if status {
+					d.stats.SetActive(true)
+				} else {
+					d.stats.SetStatus(false, false)
+				}
+				d.Infof("Device %s STATUS ACTIVE [%t] ", d.cfg.Host, status)
+				d.rtData.Unlock()
+			default:
+				d.Warnf("Device %s in waiting state. Ignored command: %s (%s)", d.cfg.Host, val.Type, val.Data)
+			}
+		}
+	}
 
-			// should release first previouos snmp connections
-			d.releaseClientMap()
-			// try reconnect only once with the "init" connection
+	d.Infof("Device on host (%s) is active. Trying to connect ", d.cfg.Host)
+
+	// Try to establish the first connection. Loop will be finished when the connection has been established
+	for {
+		// If device receive a command to deactivate, stop trying to connect
+		if d.DeviceActive {
+			// This will try to connect to the device, gather SysInfo and set DeviceConnected to true
+			// This connection will be stored on d.snmpClientMap["init"]
 			_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug, 0)
 			if err == nil {
 				startSnmp := time.Now()
+				// Create data structures to store data and connect to the device go gather system info
+				// TODO esto ahora mismo inicializa todo, partirlo para llevarlo a la gorutina del meas
 				d.InitDevMeasurements()
 				elapsedSnmp := time.Since(startSnmp)
 				d.stats.SetFltUpdateStats(startSnmp, elapsedSnmp)
 				d.Infof("snmp INIT runtime measurements/filters took [%s] ", elapsedSnmp)
-				if force == false {
-					// Round collection to nearest interval by sleeping
-					// and reprogram the ticker to aligned starts
-					// only when no extra gather(forced from web-ui)
-					utils.WaitAlignForNextCycle(d.cfg.Freq, d.log)
-					t.Stop()
-					t = time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
-					// force one iteration now..after device has been connected  dont wait for next
-					// ticker (1 complete cycle)
-				}
-				goto FORCEINIT
+				// Connection established, progress
+				break
 			}
-			// send counters when device active and not connected ( no reset needed only status fields/tags are sent)
-			d.stats.Send()
-		} else {
-			// device active and connected
-			d.Infof("Init gather cycle mode Concurrent [ %t ]", d.cfg.ConcurrentGather)
-			/*************************
-			 *
-			 * SNMP Gather data process
-			 *
-			 ***************************/
-			d.invalidateMetrics()
-			d.stats.ResetCounters()
-			d.Gather()
-
-			/*******************************************
-			 *
-			 * Reload Indexes/Filters process(if needed)
-			 *
-			 *******************************************/
-			//Check if reload needed with d.ReloadLoopsPending if a posivive value on negative this will disabled
-
-			d.decReloadLoopsPending()
-
-			if d.getReloadLoopsPending() == 0 {
-				startIdxUpdateStats := time.Now()
-				for _, m := range d.Measurements {
-					if m.GetMode() == "value" {
-						continue
-					}
-					changed, err := m.UpdateFilter()
-					if err != nil {
-						d.Errorf("Error on update Indexes/filter : ERR: %s", err)
-						continue
-					}
-					if changed {
-						m.InitBuildRuntime()
-					}
-				}
-
-				d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
-				elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
-				d.stats.SetFltUpdateStats(startIdxUpdateStats, elapsedIdxUpdateStats)
-			}
-
-			d.CheckDeviceConnectivity()
-
+			// send counters when device active and not connected ( no reset needed only status fields/tags are sen
 			d.stats.Send()
 		}
-	} else {
-		// send stats when device not active ( not reset needed only status fields/tags are sent)
-		d.stats.Send()
-		d.Infof("Gather process is disabled")
+
+		// Wait device freq to retry to reconnect and see if there a new messages on the bus to be processed
+		select {
+		case <-time.NewTimer(time.Duration(d.cfg.Freq) * time.Second).C:
+			// Try to reconnect after d.cfg.Freq seconds
+		case val := <-d.Node.Read:
+			d.Infof("Device %s received message while waiting state. %s: %+v", d.cfg.Host, val.Type, val.Data)
+			switch val.Type {
+			case bus.Exit:
+				d.Infof("invoked Asyncronous EXIT from SNMP Gather process ")
+				return
+			case bus.SyncExit:
+				d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
+				d.isStopped <- true
+				return
+			case bus.Enabled:
+				status := val.Data.(bool)
+				d.rtData.Lock()
+				d.DeviceActive = status
+				if status {
+					d.stats.SetActive(true)
+				} else {
+					d.stats.SetStatus(false, false)
+				}
+
+				d.Infof("Device %s STATUS ACTIVE [%t] ", d.cfg.Host, status)
+				d.rtData.Unlock()
+			default:
+				d.Warnf("Device %s in connecting state. Ignored command: %s (%s)", d.cfg.Host, val.Type, val.Data)
+			}
+		}
 	}
-	// get Ready a copy of the stats to
+	// Device is active and connected
 
-	d.statsData.Lock()
-	d.Stats = d.getBasicStats()
-	d.statsData.Unlock()
-	d.rtData.Unlock()
-	return t
-}
+	// Create a bus to control all goroutines created to manage this device
+	deviceControlBus := bus.NewBus()
 
-// StartGather Main GoRutine method to begin snmp data collecting
-func (d *SnmpDevice) StartGather(wg *sync.WaitGroup) {
-	wg.Add(1)
-	go d.startGatherGo(wg)
-}
+	// Control when all goroutines have finished
+	var deviceWG sync.WaitGroup
 
-func (d *SnmpDevice) startGatherGo(wg *sync.WaitGroup) {
-	defer wg.Done()
+	for _, meas := range d.Measurements {
+		// Start gather goroutine for device and add it to the wait group for gather goroutines
+		deviceWG.Add(1)
+		go func(m *measurement.Measurement) {
+			defer deviceWG.Done()
 
-	if d.DeviceActive && d.DeviceConnected {
-		d.Infof("Begin first InidevInfo")
-		startSnmp := time.Now()
-		d.rtData.Lock()
-		d.InitDevMeasurements()
-		d.rtData.Unlock()
-		elapsedSnmp := time.Since(startSnmp)
-		d.stats.SetFltUpdateStats(startSnmp, elapsedSnmp)
-		d.Infof("snmp INIT runtime measurements/filters took [%s] ", elapsedSnmp)
-	} else {
-		d.Infof("Can not initialize this device: Is Active: %t  |  Connection Active: %t ", d.DeviceActive, d.snmpClientMap != nil)
+			// Add the measurement as a node to the bus
+			deviceControlBus.Join(bus.NewNode(fmt.Sprintf("%s-%s", d.cfg.ID, m.ID)))
+
+			m.GatherLoop(deviceControlBus, d.Freq, d.cfg.UpdateFltFreq)
+		}(meas)
 	}
 
-	d.Infof("Beginning gather process for device on host (%s)", d.cfg.Host)
-
-	t := time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
+	// Check if there is some message in the bus to be processed.
 	for {
-
-		t = d.gatherAndProcessData(t, false)
-
-	LOOP:
-		for {
-			select {
-			case <-t.C:
-				break LOOP
-			case val := <-d.Node.Read:
-				d.Infof("Received Message...%s: %+v", val.Type, val.Data)
-				switch val.Type {
-				case "forcegather":
-					d.Infof("invoked Force Data Gather And Process")
-					d.gatherAndProcessData(t, true)
-				case "exit":
-					d.Infof("invoked Asyncronous EXIT from SNMP Gather process ")
-					return
-				case "syncexit":
-					d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
-					d.isStopped <- true
-					return
-				case "filterupdate":
-					d.rtData.Lock()
-					d.setReloadLoopsPending(1)
-					d.rtData.Unlock()
-				case "snmpresethard":
-					d.rtData.Lock()
-					// when no connection availables on the first initialization
-					// measurmentes should be initialized again
-					d.snmpRelease()
-					d.InitDevMeasurements()
-					d.rtData.Unlock()
-				case "snmpreset":
-					d.rtData.Lock()
-					d.snmpReset(false, 0)
-					d.rtData.Unlock()
-				case "snmpdebug":
-					debug := val.Data.(bool)
-					d.rtData.Lock()
-					d.StateDebug = debug
-					d.snmpReset(debug, 0)
-					d.rtData.Unlock()
-				case "setsnmpmaxrep":
-					maxrep := val.Data.(uint8)
-					d.rtData.Lock()
-					d.snmpReset(false, maxrep)
-					d.rtData.Unlock()
-				case "enabled":
-					status := val.Data.(bool)
-					d.rtData.Lock()
-					d.DeviceActive = status
-					// TODO: review if needed some kind of snmp unconnect/reset here
-					if status {
-						d.stats.SetActive(true)
-					} else {
-						d.stats.SetStatus(false, false)
-					}
-
-					d.Infof("device STATUS  ACTIVE  [%t] ", status)
-					d.rtData.Unlock()
-				case "loglevel":
-					level := val.Data.(string)
-					l, err := logrus.ParseLevel(level)
-					if err != nil {
-						d.Warnf("ERROR on Changing LOGLEVEL to [%t] ", level)
-						break
-					}
-					d.rtData.Lock()
-					d.log.Level = l
-					d.Infof("device loglevel Changed  [%s] ", level)
-					d.CurLogLevel = d.log.Level.String()
-					d.rtData.Unlock()
+		select {
+		case val := <-d.Node.Read:
+			d.Infof("Received Message: %s (%+v)", val.Type, val.Data)
+			switch val.Type {
+			case bus.Exit:
+				d.Infof("invoked Asyncronous EXIT from SNMP Gather process ")
+				// TODO esto es salir sin esperar a las gorutinas?
+				deviceControlBus.Broadcast(val)
+				return
+			case bus.SyncExit:
+				d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
+				deviceControlBus.Broadcast(&bus.Message{Type: val.Type})
+				// TODO esperar a que todas las gorutinas hayan terminado
+				d.isStopped <- true
+				// TODO esperar a las gorutinas de measurement
+				return
+			case bus.LogLevel:
+				// TODO tenemos que pasarle algo a los measurements para cambiar su loglevel?
+				level := val.Data.(string)
+				l, err := logrus.ParseLevel(level)
+				if err != nil {
+					d.Warnf("ERROR on Changing LOGLEVEL to [%t] ", level)
+					break
 				}
+				d.rtData.Lock()
+				d.log.Level = l
+				d.Infof("device loglevel Changed  [%s] ", level)
+				d.CurLogLevel = d.log.Level.String()
+				d.rtData.Unlock()
+
+			default: // snmpresethard, snmpdebug, setsnmpmaxrep, forcegather, enabled, filterupdate
+				d.Infof("invoked %s, passing message to measurements", val)
+				deviceControlBus.Broadcast(val)
+
 			}
-			// Some online actions can change Stats
-			d.statsData.Lock()
-			d.Stats = d.getBasicStats()
-			d.statsData.Unlock()
 		}
+
+		// Some online actions can change Stats
+		d.statsData.Lock()
+		d.Stats = d.getBasicStats()
+		d.statsData.Unlock()
+
 	}
 }

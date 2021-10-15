@@ -9,6 +9,7 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 	"github.com/sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
@@ -36,6 +37,8 @@ func SetDB(db *config.DatabaseCfg) {
 // Measurement the runtime measurement config
 type Measurement struct {
 	cfg              *config.MeasurementCfg
+	measFilters      []string
+	mFilters         map[string]*config.MeasFilterCfg
 	ID               string
 	MName            string
 	TagName          []string
@@ -56,10 +59,15 @@ type Measurement struct {
 }
 
 // New  creates object with config , log + goSnmp client
-func New(c *config.MeasurementCfg, l *logrus.Logger, cli *snmp.Client) (*Measurement, error) {
-	m := &Measurement{ID: c.ID, MName: c.Name, cfg: c, log: l, snmpClient: cli}
-	err := m.Init()
-	return m, err
+func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*config.MeasFilterCfg, l *logrus.Logger) *Measurement {
+	return &Measurement{
+		ID:          c.ID,
+		MName:       c.Name,
+		cfg:         c,
+		measFilters: measFilters,
+		mFilters:    mFilters,
+		log:         l,
+	}
 }
 
 // InvalidateMetrics Invalidate all MetricTable metrics
@@ -72,7 +80,9 @@ func (m *Measurement) InvalidateMetrics() {
  *inicialize AllIndexesLabels
  *Assign CurIndexedLabels to all Labels (until filters set)
  *init MetricTable
+ * This function actually connects to the device to gather values
  */
+// TODO ver como llamar a esta función para que tenga más lógica
 func (m *Measurement) Init() error {
 	// Init snmp methods
 	switch m.cfg.GetMode {
@@ -119,6 +129,8 @@ func (m *Measurement) Init() error {
 	 * ******************************/
 	m.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the walk device] | OID=>Metric MAP")
 	m.MetricTable = NewMetricTable(m.cfg, m.log, m.CurIndexedLabels)
+
+	m.InitFilters()
 	return nil
 }
 
@@ -888,4 +900,193 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 	default:
 		return allindex, fmt.Errorf("Uknown provided getmode %s on measurement %s", m.cfg.GetMode, m.ID)
 	}
+}
+
+// GatherLoop do all measurement processing, gathering metrics, handling filters and receiving messages from device
+// deviceBus used by device to pass messages to the measurements.
+// deviceFreq used if the measurement does not have frequency.
+// deviceUpdateFilterFreq is the number of gather loops after a update filters will be done
+func (m *Measurement) GatherLoop(busNode *bus.Node, deviceFreq int, deviceUpdateFilterFreq int) {
+	// TODO No olvidarme de la gestión de los filters
+	gatherTicker := time.NewTicker(time.Duration(deviceFreq) * time.Second)
+	if m.cfg.Freq != 0 {
+		gatherTicker = time.NewTicker(time.Duration(m.cfg.Freq) * time.Second)
+	}
+	defer gatherTicker.Stop()
+
+	updateFilterTicker := time.NewTicker(time.Duration(deviceFreq) * time.Second * time.Duration(deviceUpdateFilterFreq))
+	defer updateFilterTicker.Stop()
+
+	// TODO establecer conex
+
+	// TODO he quitado la inicialización que se hacía del cliente snmp. Habrá que meterlo en otro lado
+	// TODO no tengo del todo claro que hacemos aquí. Pero hace falta estar conectado
+	err := m.Init()
+	if err != nil {
+		m.Errorf("Error on measurement initialization  Error: %s", err)
+	} else {
+		// TODO needed by counters? Necesario? Creo que no envia a influx, pero si se usa para sacar por la UI
+		m.GetData()
+	}
+
+	for {
+		select {
+		case <-updateFilterTicker.C:
+			// Update filters
+			m.Init()
+		case <-gatherTicker.C:
+			// Gather data
+			// TODO gestion de señales del device
+			fmt.Println("Current time: ")
+		case val := <-busNode.Read:
+			d.Infof("Measurement [%v] received message: %s (%+v)", m.ID, val.Type, val.Data)
+			switch val.Type {
+			case bus.Exit:
+				fallthrough
+			case bus.SyncExit:
+			// TODO
+			case bus.SNMPResetHard:
+			// TODO
+			case bus.SNMPDebug:
+			// TODO
+			case bus.SetSNMPMaxRep:
+			// TODO
+			case bus.ForceGather:
+			// TODO
+			case bus.Enabled:
+			// TODO
+			case bus.FilterUpdate:
+				// TODO
+			}
+		}
+	}
+}
+
+// InitFilters look for filters and add to the measurement with this Filter after it initializes the runtime for the measurement
+func (m *Measurement) InitFilters() {
+	// check for filters associated with this measurement
+	var mfilter *config.MeasFilterCfg
+	var multi bool
+	// If multi is found, all internal filters are initialized
+	// multi must be marked as special...?
+	for _, f := range m.measFilters {
+		// we search if exist in the filter Database
+		if filter, ok := m.mFilters[f]; ok {
+			// check and init filters in measurement, applies also in multi
+			if ex, mi := m.CheckInitFilter(filter); ex {
+				mfilter = filter
+				// as filters can be defined without specific order, multi must be persisted
+				multi = mi || multi
+			}
+		}
+	}
+	// If multi, filters need to be propagated into the internal array and reload all
+	if mfilter != nil || multi {
+		m.Debugf("filters %s found for device  and measurement %s ", mfilter.ID, m.ID)
+		err := m.AddFilter(mfilter, multi)
+		if err != nil {
+			m.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.ID, err)
+		}
+	} else {
+		m.Debugf("no filters found for device on measurement %s", m.ID)
+	}
+	// m.ApplyFilterts...
+	// Initialize internal structs after
+	m.InitBuildRuntime()
+}
+
+// TODO convertir a measurement
+func (d *SnmpDevice) gatherAndProcessData(t *time.Ticker, force bool) *time.Ticker {
+	d.rtData.Lock()
+	// if active
+	if d.DeviceActive || force {
+	FORCEINIT:
+		// check if device has active snmp connections and Initialize if not
+		if d.DeviceConnected == false {
+
+			// should release first previouos snmp connections
+			d.releaseClientMap()
+			// try reconnect only once with the "init" connection
+			// TODO borrar todo el este tema de reintentar conectar a "init" ?
+			_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug, 0)
+			if err == nil {
+				startSnmp := time.Now()
+				// Create data structures to store data and connect to the device to gather system info
+				d.InitDevMeasurements()
+				elapsedSnmp := time.Since(startSnmp)
+				d.stats.SetFltUpdateStats(startSnmp, elapsedSnmp)
+				d.Infof("snmp INIT runtime measurements/filters took [%s] ", elapsedSnmp)
+				if force == false {
+					// Round collection to nearest interval by sleeping
+					// and reprogram the ticker to aligned starts
+					// only when no extra gather(forced from web-ui)
+					utils.WaitAlignForNextCycle(d.cfg.Freq, d.log)
+					t.Stop()
+					t = time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
+					// force one iteration now..after device has been connected  dont wait for next
+					// ticker (1 complete cycle)
+				}
+				goto FORCEINIT
+			}
+			// send counters when device active and not connected ( no reset needed only status fields/tags are sent)
+			d.stats.Send()
+		} else {
+			// device active and connected
+			d.Infof("Init gather cycle mode Concurrent [ %t ]", d.cfg.ConcurrentGather)
+			/*************************
+			 *
+			 * SNMP Gather data process
+			 *
+			 ***************************/
+			d.invalidateMetrics()
+			d.stats.ResetCounters()
+			d.Gather()
+
+			/*******************************************
+			 *
+			 * Reload Indexes/Filters process(if needed)
+			 *
+			 *******************************************/
+			//Check if reload needed with d.ReloadLoopsPending if a posivive value on negative this will disabled
+			// TODO rehacer esto con un grorutina propia con su intervalo
+
+			d.decReloadLoopsPending()
+
+			if d.getReloadLoopsPending() == 0 {
+				startIdxUpdateStats := time.Now()
+				for _, m := range d.Measurements {
+					if m.GetMode() == "value" {
+						continue
+					}
+					changed, err := m.UpdateFilter()
+					if err != nil {
+						d.Errorf("Error on update Indexes/filter : ERR: %s", err)
+						continue
+					}
+					if changed {
+						m.InitBuildRuntime()
+					}
+				}
+
+				d.setReloadLoopsPending(d.cfg.UpdateFltFreq)
+				elapsedIdxUpdateStats := time.Since(startIdxUpdateStats)
+				d.stats.SetFltUpdateStats(startIdxUpdateStats, elapsedIdxUpdateStats)
+			}
+
+			d.CheckDeviceConnectivity()
+
+			d.stats.Send()
+		}
+	} else {
+		// send stats when device not active ( not reset needed only status fields/tags are sent)
+		d.stats.Send()
+		d.Infof("Gather process is disabled")
+	}
+	// get Ready a copy of the stats to
+
+	d.statsData.Lock()
+	d.Stats = d.getBasicStats()
+	d.statsData.Unlock()
+	d.rtData.Unlock()
+	return t
 }
