@@ -3,9 +3,9 @@ package measurement
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // MetricRow Measurment row type
@@ -50,7 +50,7 @@ func (mr *MetricRow) SetVisible(ar map[string]int) {
 type MetricTable struct {
 	Header  map[string]interface{}
 	visible map[string]int
-	log     *logrus.Logger
+	log     utils.Logger
 	cfg     *config.MeasurementCfg
 	Row     map[string]*MetricRow
 }
@@ -111,14 +111,14 @@ func (mt *MetricTable) GetSnmpMap() map[string]*metric.SnmpMetric {
 }
 
 // NewMetricTable create a new MetricTable
-func NewMetricTable(c *config.MeasurementCfg, l *logrus.Logger, CurIndexedLabels map[string]string) *MetricTable {
+func NewMetricTable(c *config.MeasurementCfg, l utils.Logger, CurIndexedLabels map[string]string) *MetricTable {
 	mt := MetricTable{}
 	mt.Init(c, l, CurIndexedLabels)
 	return &mt
 }
 
 // Init Initialize the MetricTable Object
-func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndexedLabels map[string]string) {
+func (mt *MetricTable) Init(c *config.MeasurementCfg, l utils.Logger, CurIndexedLabels map[string]string) {
 	mt.cfg = c
 	mt.log = l
 	mt.Row = make(map[string]*MetricRow)

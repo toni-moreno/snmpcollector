@@ -1,7 +1,10 @@
 package webui
 
 import (
+	"fmt"
+
 	"github.com/go-macaron/binding"
+	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
@@ -108,14 +111,50 @@ func GetSNMPDeviceByID(ctx *Context) {
 
 func addDeviceOnline(mode string, id string, dev *config.SnmpDeviceCfg) error {
 	// First doing Ping
-	log.Infof("trying to ping device %s : %+v", dev.ID, dev)
+	l := log.WithFields(logrus.Fields{
+		"id": dev.ID,
+	})
+	l.Infof("trying to ping device, config: %+v", dev)
 
-	_, sysinfo, err := snmp.GetClient(dev, log, "ping", false, 0)
-	if err != nil {
-		log.Debugf("ERROR  on query device : %s", err)
-		return err
+	connectionParams := snmp.ConnectionParams{
+		Host:           dev.Host,
+		Port:           dev.Port,
+		Timeout:        dev.Timeout,
+		Retries:        dev.Retries,
+		SnmpVersion:    dev.SnmpVersion,
+		Community:      dev.Community,
+		MaxRepetitions: dev.MaxRepetitions,
+		MaxOids:        dev.MaxOids,
+		Debug:          dev.SnmpDebug,
+		V3Params: snmp.V3Params{
+			SecLevel:        dev.V3SecLevel,
+			AuthUser:        dev.V3AuthUser,
+			AuthPass:        dev.V3AuthPass,
+			PrivPass:        dev.V3PrivPass,
+			PrivProt:        dev.V3PrivProt,
+			AuthProt:        dev.V3AuthProt,
+			ContextName:     dev.V3ContextName,
+			ContextEngineID: dev.V3ContextEngineID,
+		},
 	}
-	log.Infof("Device Ping ok : %#v", sysinfo)
+	err := connectionParams.Validation()
+	if err != nil {
+		return fmt.Errorf("SNMP parameter validation: %v", err)
+	}
+
+	snmpClient := snmp.Client{
+		ID:               dev.Host,
+		DisableBulk:      dev.DisableBulk,
+		ConnectionParams: connectionParams,
+		Log:              l,
+	}
+	sysinfo, err := snmpClient.Connect(dev.SystemOIDs)
+	if err != nil {
+		return fmt.Errorf("unable to connect: %v", err)
+	}
+
+	l.Infof("Device Ping ok : %#v", sysinfo)
+
 	// Next updating database
 	switch mode {
 	case "add":

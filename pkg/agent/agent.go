@@ -5,12 +5,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/stats"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 var (
@@ -61,7 +62,7 @@ var (
 	// DBConfig contains the database config
 	DBConfig config.DBConfig
 
-	log *logrus.Logger
+	log utils.Logger
 	// reloadMutex guards the reloadProcess flag
 	reloadMutex   sync.Mutex
 	reloadProcess bool
@@ -79,7 +80,7 @@ var (
 )
 
 // SetLogger sets the current log output.
-func SetLogger(l *logrus.Logger) {
+func SetLogger(l utils.Logger) {
 	log = l
 }
 
@@ -166,8 +167,8 @@ func GetDeviceJSONInfo(id string) ([]byte, error) {
 }
 
 // GetDevStats returns a map with the basic info of each device.
-func GetDevStats() map[string]*device.DevStat {
-	devstats := make(map[string]*device.DevStat)
+func GetDevStats() map[string]*stats.GatherStats {
+	devstats := make(map[string]*stats.GatherStats)
 	mutex.RLock()
 	for k, v := range devices {
 		devstats[k] = v.GetBasicStats()
@@ -194,7 +195,7 @@ func ReleaseInfluxOut(idb map[string]*output.InfluxDB) {
 
 // DeviceProcessStop stops all device polling goroutines
 func DeviceProcessStop() {
-	Bus.Broadcast(&bus.Message{Type: "exit"})
+	Bus.Broadcast(&bus.Message{Type: bus.Exit})
 }
 
 // DeviceProcessStart starts all device polling goroutines
@@ -206,15 +207,6 @@ func DeviceProcessStart() {
 	for k, c := range DBConfig.SnmpDevice {
 		AddDeviceInRuntime(k, c)
 	}
-}
-
-// ReleaseDevices releases all devices resources.
-func ReleaseDevices() {
-	mutex.RLock()
-	for _, c := range devices {
-		c.End()
-	}
-	mutex.RUnlock()
 }
 
 func init() {
@@ -259,14 +251,15 @@ func IsDeviceInRuntime(id string) bool {
 
 // DeleteDeviceInRuntime removes the device `id` from the runtime array.
 func DeleteDeviceInRuntime(id string) error {
+	// Avoid modifications to devices while deleting device
+	mutex.Lock()
+	defer mutex.Unlock()
 	if dev, ok := devices[id]; ok {
+		// Stop all device processes and its measurements. Once finished they will be removed
+		// from the bus and node closed (snmp connections for measurements will be closed)
 		dev.StopGather()
 		log.Debugf("Bus retuned from the exit message to the ID device %s", id)
-		dev.LeaveBus(Bus)
-		dev.End()
-		mutex.Lock()
 		delete(devices, id)
-		mutex.Unlock()
 		return nil
 	}
 	log.Errorf("There is no  %s device in the runtime device list", id)
@@ -288,7 +281,16 @@ func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 
 	mutex.Lock()
 	devices[k] = dev
-	dev.StartGather(&gatherWg)
+	// Start gather goroutine for device and add it to the wait group for gather goroutines
+	gatherWg.Add(1)
+	go func() {
+		defer gatherWg.Done()
+		dev.StartGather()
+		log.Infof("Device %s finished", cfg.ID)
+		// If device goroutine has finished, leave the bus so it won't get blocked trying
+		// to send messages to a not running device.
+		dev.LeaveBus(Bus)
+	}()
 	mutex.Unlock()
 }
 
@@ -312,7 +314,8 @@ func Start() {
 func End() (time.Duration, error) {
 	start := time.Now()
 	log.Infof("END: begin device Gather processes stop... at %s", start.String())
-	// stop all device processes
+	// Stop all device processes and its measurements. Once finished they will be removed
+	// from the bus and node closed (snmp connections for measurements will be closed)
 	DeviceProcessStop()
 	log.Info("END: begin selfmon Gather processes stop...")
 	// stop the selfmon process
@@ -320,8 +323,6 @@ func End() (time.Duration, error) {
 	log.Info("END: waiting for all Gather goroutines stop...")
 	// wait until Done
 	gatherWg.Wait()
-	log.Info("END: releasing Device Resources")
-	ReleaseDevices()
 	log.Info("END: releasing Selfmonitoring Resources")
 	selfmonProc.End()
 	log.Info("END: begin sender processes stop...")

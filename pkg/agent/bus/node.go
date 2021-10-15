@@ -1,8 +1,33 @@
 package bus
 
+// Command define valid message types to be passed using the bus
+type Command int
+
+const (
+	// Exit without waiting for anything
+	Exit Command = iota
+	// SyncExit order the device and its measurement goroutines to exit and waits till them are finished
+	SyncExit
+	Enabled
+	LogLevel
+	ForceGather
+	FilterUpdate
+	// SNMPResetHard tell all measurements to recreate the goSNMP client and redo filters
+	SNMPResetHard
+	// SNMPReset tell all measurements to recreate the goSNMP client
+	SNMPReset
+	// SNMPDebug tell all measurement goroutines to enable the debug in the SNMP client.
+	// And also store the change in runtime to keep the value in case of a reconnect.
+	SNMPDebug
+	// SetSNMPMaxRep tell all measurement goroutines to change the MaxRepetitions of the
+	// current goSNMP client and also store the change in runtime to keep the value in
+	// case of a reconnect.
+	SetSNMPMaxRep
+)
+
 // Message a basic message type
 type Message struct {
-	Type string
+	Type Command
 	Data interface{}
 }
 

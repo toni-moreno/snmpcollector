@@ -11,10 +11,10 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/gosnmp/gosnmp"
-	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 var (
@@ -66,7 +66,7 @@ type SnmpMetric struct {
 	// for CONDITIONEVAL
 	condflt filter.Filter
 	// Logger
-	log *logrus.Logger
+	log utils.Logger
 }
 
 // GetDataSrcType get needed data
@@ -90,14 +90,14 @@ func (s *SnmpMetric) GetID() string {
 }
 
 // New create a new snmpmetric with a specific logger
-func New(c *config.SnmpMetricCfg, l *logrus.Logger) (*SnmpMetric, error) {
+func New(c *config.SnmpMetricCfg, l utils.Logger) (*SnmpMetric, error) {
 	metric := &SnmpMetric{log: l}
 	err := metric.Init(c)
 	return metric, err
 }
 
 // SetLogger attach logger to the current snmpmetric object
-func (s *SnmpMetric) SetLogger(l *logrus.Logger) {
+func (s *SnmpMetric) SetLogger(l utils.Logger) {
 	s.log = l
 }
 
@@ -277,10 +277,6 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	s.RealOID = c.BaseOID
 	// set default conversion funcion
 	s.Convert = s.convertFromAny
-	// Force conversion to STRING if metric is tag.
-	if s.cfg.IsTag == true {
-		s.cfg.Conversion = config.STRING
-	}
 	if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
 		s.Scale = func() {
 			// always Scale shoud return float (this avoids precission lost)

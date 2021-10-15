@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output, Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TooltipModule } from 'ngx-bootstrap';
@@ -110,6 +111,11 @@ export class NgTableComponent {
 
     if  (transform === "elapsedseconds") {
       let test = new ElapsedSecondsPipe().transform(html,'3');
+      html = test.toString();
+    }
+    if  (transform === "toDate") {
+      let toint : number = +html
+      let test = new DatePipe('en-US').transform(toint*1000,'yyyy/M/d HH:mm:ss ');
       html = test.toString();
     }
     if (typeof html === 'object') {

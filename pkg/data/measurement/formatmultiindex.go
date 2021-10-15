@@ -88,8 +88,6 @@ func (mi *MultiIndexFormat) GetDepMultiParams() error {
 		}
 		last, err := strconv.Atoi(dotEnd) // if there is an error last
 		if err != nil {
-			last = -1
-			// Not sure if needs to return an error...
 			return err
 		}
 		mdep.Start = first
@@ -232,8 +230,6 @@ func BuildParseResults(allindex MultiIndexFormatArray, rs []string) (MultiIndexF
 				}
 				last, err = strconv.Atoi(dotEnd) // if there is an error last
 				if err != nil {
-					last = -1
-					// Not sure if needs to return an error...
 					return nil, "", err
 				}
 				sapply = true
