@@ -1,17 +1,16 @@
-package measurement
+package metric
 
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
-	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // MetricRow Measurment row type
 type MetricRow struct {
 	Valid bool
-	Data  map[string]*metric.SnmpMetric
+	Data  map[string]*SnmpMetric
 }
 
 // Invalidate set invalid all metrics on the row
@@ -25,12 +24,12 @@ func (mr *MetricRow) Invalidate() {
 // NewMetricRow create a new metric Row
 func NewMetricRow() *MetricRow {
 	mr := MetricRow{Valid: true}
-	mr.Data = make(map[string]*metric.SnmpMetric)
+	mr.Data = make(map[string]*SnmpMetric)
 	return &mr
 }
 
 // Add Add a new metric in the row
-func (mr *MetricRow) Add(id string, m *metric.SnmpMetric) {
+func (mr *MetricRow) Add(id string, m *SnmpMetric) {
 	mr.Data[id] = m
 }
 
@@ -50,9 +49,41 @@ func (mr *MetricRow) SetVisible(ar map[string]int) {
 type MetricTable struct {
 	Header  map[string]interface{}
 	visible map[string]int
-	log     *logrus.Logger
+	log     utils.Logger
 	cfg     *config.MeasurementCfg
 	Row     map[string]*MetricRow
+}
+
+// Log For MetricTable OBject.
+
+// Debugf info
+func (mt *MetricTable) Debugf(expr string, vars ...interface{}) {
+	expr2 := "METRICTABLE for MEASUREMENT [" + mt.cfg.ID + "]  " + expr
+	mt.log.Debugf(expr2, vars...)
+}
+
+// Debug info
+func (mt *MetricTable) Debug(expr string) {
+	expr2 := "METRICTABLE for MEASUREMENT [" + mt.cfg.ID + "] " + expr
+	mt.log.Debug(expr2)
+}
+
+// Infof info
+func (mt *MetricTable) Infof(expr string, vars ...interface{}) {
+	expr2 := "METRICTABLE for MEASUREMENT [" + mt.cfg.ID + "]  " + expr
+	mt.log.Infof(expr2, vars...)
+}
+
+// Errorf info
+func (mt *MetricTable) Errorf(expr string, vars ...interface{}) {
+	expr2 := "METRICTABLE for MEASUREMENT [" + mt.cfg.ID + "]  " + expr
+	mt.log.Errorf(expr2, vars...)
+}
+
+// Warnf log warn info
+func (mt *MetricTable) Warnf(expr string, vars ...interface{}) {
+	expr2 := "METRICTABLE  for MEASUREMENT [" + mt.cfg.ID + "]" + expr
+	mt.log.Warnf(expr2, vars...)
 }
 
 // AddRow add a new row to the metricTable
@@ -73,9 +104,9 @@ func (mt *MetricTable) InvalidateTable() {
 }
 
 // GetSnmpMaps get an  OID array  and a metric Object OID mapped
-func (mt *MetricTable) GetSnmpMaps() ([]string, map[string]*metric.SnmpMetric) {
+func (mt *MetricTable) GetSnmpMaps() ([]string, map[string]*SnmpMetric) {
 	snmpOids := []string{}
-	OidSnmpMap := make(map[string]*metric.SnmpMetric)
+	OidSnmpMap := make(map[string]*SnmpMetric)
 	for idx, row := range mt.Row {
 		mt.Debugf("KEY iDX %s", idx)
 		// index level
@@ -97,8 +128,8 @@ func (mt *MetricTable) GetSnmpMaps() ([]string, map[string]*metric.SnmpMetric) {
 }
 
 // GetSnmpMap get and snmpmetric OID map
-func (mt *MetricTable) GetSnmpMap() map[string]*metric.SnmpMetric {
-	OidSnmpMap := make(map[string]*metric.SnmpMetric)
+func (mt *MetricTable) GetSnmpMap() map[string]*SnmpMetric {
+	OidSnmpMap := make(map[string]*SnmpMetric)
 	for idx, row := range mt.Row {
 		mt.Debugf("KEY iDX %s", idx)
 		// index level
@@ -111,14 +142,14 @@ func (mt *MetricTable) GetSnmpMap() map[string]*metric.SnmpMetric {
 }
 
 // NewMetricTable create a new MetricTable
-func NewMetricTable(c *config.MeasurementCfg, l *logrus.Logger, CurIndexedLabels map[string]string) *MetricTable {
+func NewMetricTable(c *config.MeasurementCfg, l utils.Logger, CurIndexedLabels map[string]string) *MetricTable {
 	mt := MetricTable{}
 	mt.Init(c, l, CurIndexedLabels)
 	return &mt
 }
 
 // Init Initialize the MetricTable Object
-func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndexedLabels map[string]string) {
+func (mt *MetricTable) Init(c *config.MeasurementCfg, l utils.Logger, CurIndexedLabels map[string]string) {
 	mt.cfg = c
 	mt.log = l
 	mt.Row = make(map[string]*MetricRow)
@@ -153,7 +184,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 		idx := NewMetricRow()
 		for k, smcfg := range mt.cfg.FieldMetric {
 			mt.Debugf("initializing [value]metric cfgi %s", smcfg.ID)
-			metr, err := metric.New(smcfg, mt.log)
+			metr, err := New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [value] field metric %d : Error: %s ", k, err)
 				continue
@@ -163,7 +194,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 		}
 		for k, smcfg := range mt.cfg.EvalMetric {
 			mt.Debugf("initializing [value] [evaluated] metric cfg %s", smcfg.ID)
-			metr, err := metric.New(smcfg, mt.log)
+			metr, err := New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [value] [evaluated] field metric %d : Error: %s ", k, err)
 				continue
@@ -174,7 +205,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 		}
 		for k, smcfg := range mt.cfg.OidCondMetric {
 			mt.Debugf("initializing [value] [oid condition evaluated] metric cfg %s", smcfg.ID)
-			metr, err := metric.New(smcfg, mt.log)
+			metr, err := New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [value] [oid condition evaluated] field metric %d : Error: %s ", k, err)
 				continue
@@ -193,7 +224,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 			idx := NewMetricRow()
 			mt.Debugf("initializing [indexed] metric cfg for [%s/%s]", key, label)
 			for k, smcfg := range mt.cfg.FieldMetric {
-				metr, err := metric.New(smcfg, mt.log)
+				metr, err := New(smcfg, mt.log)
 				if err != nil {
 					mt.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
 					continue
@@ -203,7 +234,7 @@ func (mt *MetricTable) Init(c *config.MeasurementCfg, l *logrus.Logger, CurIndex
 				idx.Add(smcfg.ID, metr)
 			}
 			for k, smcfg := range mt.cfg.EvalMetric {
-				metr, err := metric.New(smcfg, mt.log)
+				metr, err := New(smcfg, mt.log)
 				if err != nil {
 					mt.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
 					continue
@@ -243,7 +274,7 @@ func (mt *MetricTable) Push(p map[string]string) error {
 		idx := NewMetricRow()
 		mt.Infof("initializing [indexed] metric cfg for [%s/%s]", key, label)
 		for k, smcfg := range mt.cfg.FieldMetric {
-			metr, err := metric.New(smcfg, mt.log)
+			metr, err := New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [indexed] fields metric  %d: Error: %s ", k, err)
 				continue
@@ -253,7 +284,7 @@ func (mt *MetricTable) Push(p map[string]string) error {
 			idx.Add(smcfg.ID, metr)
 		}
 		for k, smcfg := range mt.cfg.EvalMetric {
-			metr, err := metric.New(smcfg, mt.log)
+			metr, err := New(smcfg, mt.log)
 			if err != nil {
 				mt.Errorf("ERROR on create new [indexed] [evaluated] fields metric  %d: Error: %s ", k, err)
 				continue

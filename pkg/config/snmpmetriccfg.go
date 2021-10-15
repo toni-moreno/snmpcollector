@@ -208,6 +208,12 @@ func (m *SnmpMetricCfg) Init() error {
 	if m.DataSrcType == "CONDITIONEVAL" && len(m.ExtraData) == 0 {
 		return fmt.Errorf("ExtraData not set in metric Config %s type  %s", m.ID, m.DataSrcType)
 	}
+
+	// Force conversion to STRING if metric is tag.
+	if m.IsTag == true {
+		m.Conversion = STRING
+	}
+
 	return nil
 }
 
