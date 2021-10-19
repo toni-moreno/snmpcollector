@@ -278,6 +278,7 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	// set default conversion funcion
 	s.Convert = s.convertFromAny
 	// Force conversion to STRING if metric is tag.
+	// TODO una snmpmetric escribiendo en la config?? Provoca data race
 	if s.cfg.IsTag == true {
 		s.cfg.Conversion = config.STRING
 	}

@@ -37,14 +37,17 @@ func SetDB(db *config.DatabaseCfg) {
 
 // Measurement the runtime measurement config
 type Measurement struct {
-	cfg              *config.MeasurementCfg
-	measFilters      []string
-	mFilters         map[string]*config.MeasFilterCfg
-	ID               string
-	MName            string
-	TagName          []string
-	MetricTable      *MetricTable
-	snmpOids         []string
+	cfg         *config.MeasurementCfg
+	measFilters []string
+	mFilters    map[string]*config.MeasFilterCfg
+	ID          string
+	MName       string
+	TagName     []string
+	// TODO aqui es donde se almacenan los datos?
+	MetricTable *MetricTable
+	// TODO que es esto?
+	snmpOids []string
+	// OidSnmpMap store values returned from ?? TODO
 	OidSnmpMap       map[string]*metric.SnmpMetric `json:"-"` // snmpMetric mapped with real OID's
 	AllIndexedLabels map[string]string             //`json:"-"` //all available values on the remote device
 	CurIndexedLabels map[string]string             //`json:"-"`
@@ -54,12 +57,11 @@ type Measurement struct {
 	FilterCfg        *config.MeasFilterCfg
 	Filter           filter.Filter
 	log              *logrus.Logger
-	GetData          func(*snmp.Client) (int64, int64, int64, error) `json:"-"`
 	MultiIndexMeas   []*Measurement
 }
 
-// New  creates object with config , log + goSnmp client
 func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*config.MeasFilterCfg, l *logrus.Logger) *Measurement {
+	// TODO Measurement init is moved to GatherLoop
 	return &Measurement{
 		ID:          c.ID,
 		MName:       c.Name,
@@ -84,20 +86,9 @@ func (m *Measurement) InvalidateMetrics() {
  */
 // TODO ver como llamar a esta función para que tenga más lógica
 func (m *Measurement) Init(snmpClient *snmp.Client) error {
-	// Init snmp methods
-	switch m.cfg.GetMode {
-	case "value":
-		m.GetData = m.SnmpGetData
-	default:
-		m.GetData = m.SnmpWalkData
-	}
-
-	/* TODO hace falta tocar el New para tener un cliente SNMP para InitMultiIndex
-		Suena raro, por lo que tal vez haya que hacerlo de otra manera
-		Lo dejo desactivado por ahora.
 	if m.cfg.GetMode == "indexed_multiple" {
 		// Create, init and store the var into base measurement
-		err := m.InitMultiIndex()
+		err := m.InitMultiIndex(snmpClient)
 		if err != nil {
 			return err
 		}
@@ -106,9 +97,10 @@ func (m *Measurement) Init(snmpClient *snmp.Client) error {
 		if err != nil {
 			return err
 		}
+		// TODO si es "indexed_multiple" se sale aqui del Init() ??
+		m.InitFilters(snmpClient)
 		return nil
 	}
-	*/
 
 	// loading all posible values in 	m.AllIndexedLabels
 	if m.cfg.GetMode == "indexed" || m.cfg.GetMode == "indexed_it" || m.cfg.GetMode == "indexed_mit" {
@@ -128,6 +120,10 @@ func (m *Measurement) Init(snmpClient *snmp.Client) error {
 		m.CurIndexedLabels = m.AllIndexedLabels
 	}
 
+	// TODO que pasa si m.cfg.GetMode no es indexed_multiple ni ninguno del otro if?
+	// TODO Usar if-else if-else error ?
+	// TODO Mover el InitFilters a la zona común tras el condicional
+
 	/********************************
 	 * Initialize Metric Runtime data in one array m-values
 	 * ******************************/
@@ -139,12 +135,11 @@ func (m *Measurement) Init(snmpClient *snmp.Client) error {
 }
 
 // InitMultiIndex initializes measurements from MultiIndexCfg
-func (m *Measurement) InitMultiIndex() error {
+func (m *Measurement) InitMultiIndex(snmpClient *snmp.Client) error {
 	// Create an array of measurements, based on length of indexed_multiple:
 
 	multimeas := []*Measurement{}
 
-	/* desactivado el multi measurement por ahora. Darle una vuelta, porque aqui necesita hacer otro New
 	// Go over all defined measuremens in MultiIndex...
 	for _, v := range m.cfg.MultiIndexCfg {
 		// Create a new measurement cfg from multiindex fields...
@@ -163,15 +158,15 @@ func (m *Measurement) InitMultiIndex() error {
 		}
 
 		// create entirely new measurement based on provided CFG
-		mm, err := New(&mcfg, m.log, m.snmpClient)
+		mm := New(&mcfg, m.measFilters, m.mFilters, m.log)
+		err := mm.Init(snmpClient)
 		if err != nil {
-			return err
+			return fmt.Errorf("init multi measurement %s..%s", m.ID, v.Label)
 		}
 
 		// append it with order
 		multimeas = append(multimeas, mm)
 	}
-	*/
 
 	// Save it in memory...
 	m.MultiIndexMeas = multimeas
@@ -567,18 +562,14 @@ func (m *Measurement) UpdateFilter(snmpClient *snmp.Client) (bool, error) {
 	return true, nil
 }
 
-/*
-SnmpBulkData GetSNMP Data
-*/
-
-// SnmpWalkData get data with snmpwalk
-func (m *Measurement) SnmpWalkData(snmpClient *snmp.Client) (int64, int64, int64, error) {
+// GetData read data from device using SNMP get (GetMode=value) or walk (default).
+// Store retrieved values into m.OidSnmpMap
+func (m *Measurement) GetData(snmpClient *snmp.Client) (int64, int64, int64) {
 	now := time.Now()
 	var gathered int64
 	var processed int64
 	var errors int64
 
-	// TODO esta función está duplicada en SnmpGetData
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
 		m.Debugf("DEBUG pdu [%+v] || Value type %T [%x]", pdu, pdu.Value, pdu.Type)
 		gathered++
@@ -590,6 +581,7 @@ func (m *Measurement) SnmpWalkData(snmpClient *snmp.Client) (int64, int64, int64
 		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
 			m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
 			processed++
+			// TODO lock mientras escribimos en los mapas. O no? Si este no es el que lee la UI no hace falta
 			metr.SetRawData(pdu, now)
 		} else {
 			m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v, %v", pdu.Name, m.cfg.ID, m.OidSnmpMap)
@@ -597,14 +589,19 @@ func (m *Measurement) SnmpWalkData(snmpClient *snmp.Client) (int64, int64, int64
 		return nil
 	}
 
-	for _, v := range m.cfg.FieldMetric {
-		if err := snmpClient.Walk(v.BaseOID, setRawData); err != nil {
-			m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", snmpClient.Target(), v.BaseOID, err)
-			errors += int64(m.MetricTable.Len())
+	if m.cfg.GetMode == "value" {
+		// never will be error
+		snmpClient.Get(m.snmpOids, setRawData)
+	} else {
+		for _, v := range m.cfg.FieldMetric {
+			if err := snmpClient.Walk(v.BaseOID, setRawData); err != nil {
+				m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", snmpClient.Target(), v.BaseOID, err)
+				errors += int64(m.MetricTable.Len())
+			}
 		}
 	}
 
-	return gathered, processed, errors, nil
+	return gathered, processed, errors
 }
 
 // ComputeOidConditionalMetrics take OID contitional metrics and computes true value
@@ -715,43 +712,6 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 			}
 		}
 	}
-}
-
-/*
-GetSnmpData GetSNMP Data
-*/
-
-// SnmpGetData get Snmp data with snmpget
-func (m *Measurement) SnmpGetData(snmpClient *snmp.Client) (int64, int64, int64, error) {
-	now := time.Now()
-	var gathered int64
-	var processed int64
-	var errors int64
-
-	// TODO esta función está duplicada en SnmpWalkData
-	// This funcion process each of the values returned by the device
-	setRawData := func(pdu gosnmp.SnmpPDU) error {
-		m.Debugf("DEBUG pdu [%+v] || Value type %T [%x]", pdu, pdu.Value, pdu.Type)
-		gathered++
-		if pdu.Value == nil {
-			m.Warnf("no value retured by pdu :%+v", pdu)
-			errors++
-			return nil // if error return the bulk process will stop
-		}
-		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
-			m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
-			processed++
-			metr.SetRawData(pdu, now)
-		} else {
-			m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v, %v", pdu.Name, m.cfg.ID, m.OidSnmpMap)
-		}
-		return nil
-	}
-
-	// never will be error
-	snmpClient.Get(m.snmpOids, setRawData)
-
-	return gathered, processed, errors, nil
 }
 
 // loadIndexedLabels TODO, connects to the device
@@ -980,8 +940,6 @@ func (m *Measurement) GatherLoop(
 	if err != nil {
 	}
 
-	// TODO he quitado la inicialización que se hacía del cliente snmp. Habrá que meterlo en otro lado
-	// TODO no tengo del todo claro que hacemos aquí. Pero hace falta estar conectado
 	err = m.Init(snmpClient)
 	if err != nil {
 		m.Errorf("Error on measurement initialization  Error: %s", err)
@@ -1015,9 +973,11 @@ func (m *Measurement) GatherLoop(
 
 			// TODO el lock aqui? Me gustaría separar el gather de el almacenamiento
 			// Get data from device and set the values to the snmp metrics structs
+			// TODO si usa SnmpGetData obtiene los valores de m.snmpOids, si lo hace de SnmpWalkData lo obtiene de m.cfg.FieldMetric? Esto es normal?
+			// TODO Simplificado en una única función con un condicional
 			m.GetData(snmpClient)
 			/* TODO measurements
-			nGets, nProcs, nErrs, _ := m.GetData(snmpClient)
+			nGets, nProcs, nErrs := m.GetData(snmpClient)
 			d.stats.UpdateSnmpGetStats(nGets, nProcs, nErrs)
 			*/
 

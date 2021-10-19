@@ -88,6 +88,8 @@ func (d *SnmpDevice) GetLogFilePath() string {
 
 // ToJSON return a JSON version of the device data
 func (d *SnmpDevice) ToJSON() ([]byte, error) {
+	// TODO coger un read lock de cada measurement, para poder independicar los measurements y que cada uno
+	// pueda escribir en sus datos sin bloqueos
 	d.rtData.RLock()
 	defer d.rtData.RUnlock()
 	result, err := json.MarshalIndent(d, "", "  ")
@@ -247,6 +249,10 @@ func (d *SnmpDevice) InitDevMeasurements() {
 					})
 					imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, measLog)
 				*/
+				// TODO pasamos MeasFilters y MFilters porque lo necesitará cuando haga el InitFilters (antes se hacia en un bucle debajo de este for)
+				// TODO no pasar la config del measurement, si no una copia.
+				// Así evitamos que cada gorutina encargada de cada measurement en cada device
+				// puedan intentar modificarla al mismo tiempo (Lo hace SnmpMetric.Init)
 				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, d.log)
 				d.Measurements = append(d.Measurements, imeas)
 			}
