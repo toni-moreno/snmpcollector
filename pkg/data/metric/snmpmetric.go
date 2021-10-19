@@ -279,9 +279,10 @@ func (s *SnmpMetric) Init(c *config.SnmpMetricCfg) error {
 	s.Convert = s.convertFromAny
 	// Force conversion to STRING if metric is tag.
 	// TODO una snmpmetric escribiendo en la config?? Provoca data race
-	if s.cfg.IsTag == true {
-		s.cfg.Conversion = config.STRING
-	}
+	// Esto tiene que moverse a otro sitio, ya que esta es una config compartida.
+	//if s.cfg.IsTag == true {
+	//	s.cfg.Conversion = config.STRING
+	//}
 	if s.cfg.Scale != 0.0 || s.cfg.Shift != 0.0 {
 		s.Scale = func() {
 			// always Scale shoud return float (this avoids precission lost)

@@ -253,6 +253,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 				// TODO no pasar la config del measurement, si no una copia.
 				// Así evitamos que cada gorutina encargada de cada measurement en cada device
 				// puedan intentar modificarla al mismo tiempo (Lo hace SnmpMetric.Init)
+				// En realidad esto no arregla el problema, ya que se sigue pasando el puntero de SnmpMetricCfg
 				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, d.log)
 				d.Measurements = append(d.Measurements, imeas)
 			}
