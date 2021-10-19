@@ -10,7 +10,6 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 	"github.com/sirupsen/logrus"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
 )
 
 var (
@@ -490,50 +489,71 @@ func Release(client *gosnmp.GoSNMP) {
 	}
 }
 
-// GetClient xx
-func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug bool, maxrep uint8) (*gosnmp.GoSNMP, *SysInfo, error) {
-	var client *gosnmp.GoSNMP
-	hostIPs, err := net.LookupHost(s.Host)
+// GetClient return the gosnmp client.
+// The connection is established to the IP address after resolving it. Error if could not be resolved.
+func GetClient(
+	host string,
+	maxRepetitions uint8,
+	snmpVersion string,
+	community string,
+	port int,
+	timeout int,
+	retries int,
+	v3AuthUser string,
+	v3SecLevel string,
+	v3AuthPass string,
+	v3PrivPass string,
+	v3PrivProt string,
+	v3AuthProt string,
+	v3ContextName string,
+	v3ContextEngineID string,
+	id string,
+	systemOIDs []string,
+
+	l *logrus.Logger,
+	meas string,
+	debug bool,
+	maxrep uint8,
+) (*gosnmp.GoSNMP, *SysInfo, error) {
+	hostIPs, err := net.LookupHost(host)
 	if err != nil {
-		l.Errorf("Error on Name Lookup for host: %s  ERROR: %s", s.Host, err)
+		l.Errorf("Error on Name Lookup for host: %s  ERROR: %s", host, err)
 		return nil, nil, err
 	}
 	if len(hostIPs) == 0 {
-		l.Errorf("Error on Name Lookup for host: %s ", s.Host)
-		return nil, nil, ers.New("Error on Name Lookup for host :" + s.Host)
+		l.Errorf("Error on Name Lookup for host: %s ", host)
+		return nil, nil, ers.New("Error on Name Lookup for host :" + host)
 	}
 	if len(hostIPs) > 1 {
-		l.Warnf("Lookup for %s host has more than one IP: %v => Finally used first IP %s", s.Host, hostIPs, hostIPs[0])
+		l.Warnf("Lookup for %s host has more than one IP: %v => Finally used first IP %s", host, hostIPs, hostIPs[0])
 	}
+	// TODO solo dejar un max reps
 	if maxrep == 0 {
 		// if not specified use the config value
-		maxrep = s.MaxRepetitions
+		maxrep = maxRepetitions
 	}
-	switch s.SnmpVersion {
+
+	// Common options
+	client := &gosnmp.GoSNMP{
+		Target:  hostIPs[0],
+		Port:    uint16(port),
+		Version: gosnmp.Version1,
+		Timeout: time.Duration(timeout) * time.Second,
+		Retries: retries,
+	}
+
+	switch snmpVersion {
 	case "1":
-		client = &gosnmp.GoSNMP{
-			Target:    hostIPs[0],
-			Port:      uint16(s.Port),
-			Community: s.Community,
-			Version:   gosnmp.Version1,
-			Timeout:   time.Duration(s.Timeout) * time.Second,
-			Retries:   s.Retries,
-		}
+		// TODO no se chequea que la community esté vacía?
+		client.Community = community
 	case "2c":
 		// validate community
-		if len(s.Community) < 1 {
-			l.Errorf("Error no community found %s in host %s", s.Community, s.Host)
+		if len(community) < 1 {
+			l.Errorf("Error no community found %s in host %s", community, host)
 			return nil, nil, ers.New("Error on snmp community")
 		}
-		client = &gosnmp.GoSNMP{
-			Target:         hostIPs[0],
-			Port:           uint16(s.Port),
-			Community:      s.Community,
-			Version:        gosnmp.Version2c,
-			Timeout:        time.Duration(s.Timeout) * time.Second,
-			Retries:        s.Retries,
-			MaxRepetitions: uint32(maxrep),
-		}
+		client.Community = community
+		client.MaxRepetitions = uint32(maxrep)
 	case "3":
 		seclpmap := map[string]gosnmp.SnmpV3MsgFlags{
 			"NoAuthNoPriv": gosnmp.NoAuthNoPriv,
@@ -560,101 +580,96 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 		}
 		UsmParams := new(gosnmp.UsmSecurityParameters)
 
-		if len(s.V3AuthUser) < 1 {
-			l.Errorf("Error username not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
+		if len(v3AuthUser) < 1 {
+			l.Errorf("Error username not found in snmpv3 %s in host %s", v3AuthUser, host)
 			return nil, nil, ers.New("Error on snmp v3 user")
 		}
 
-		switch s.V3SecLevel {
+		switch v3SecLevel {
 
 		case "NoAuthNoPriv":
 			UsmParams = &gosnmp.UsmSecurityParameters{
-				UserName:               s.V3AuthUser,
+				UserName:               v3AuthUser,
 				AuthenticationProtocol: gosnmp.NoAuth,
 				PrivacyProtocol:        gosnmp.NoPriv,
 			}
 		case "AuthNoPriv":
-			if len(s.V3AuthPass) < 1 {
-				l.Errorf("Error password not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
+			if len(v3AuthPass) < 1 {
+				l.Errorf("Error password not found in snmpv3 %s in host %s", v3AuthUser, host)
 				return nil, nil, ers.New("Error on snmp v3 AuthPass")
 			}
 
 			// validate correct s.authuser
 
-			if val, ok := authpmap[s.V3AuthProt]; !ok {
-				l.Errorf("Error in Auth Protocol %v | %v  in host %s", s.V3AuthProt, val, s.Host)
+			if val, ok := authpmap[v3AuthProt]; !ok {
+				l.Errorf("Error in Auth Protocol %v | %v  in host %s", v3AuthProt, val, host)
 				return nil, nil, ers.New("Error on snmp v3 AuthProt")
 			}
 
 			// validate s.authpass s.authprot
 			UsmParams = &gosnmp.UsmSecurityParameters{
-				UserName:                 s.V3AuthUser,
-				AuthenticationProtocol:   authpmap[s.V3AuthProt],
-				AuthenticationPassphrase: s.V3AuthPass,
+				UserName:                 v3AuthUser,
+				AuthenticationProtocol:   authpmap[v3AuthProt],
+				AuthenticationPassphrase: v3AuthPass,
 				PrivacyProtocol:          gosnmp.NoPriv,
 			}
 		case "AuthPriv":
 			// validate s.authpass s.authprot
 
-			if len(s.V3AuthPass) < 1 {
-				l.Errorf("Error password not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
+			if len(v3AuthPass) < 1 {
+				l.Errorf("Error password not found in snmpv3 %s in host %s", v3AuthUser, host)
 				return nil, nil, ers.New("Error on snmp v3 AuthPass")
 			}
 
-			if val, ok := authpmap[s.V3AuthProt]; !ok {
-				l.Errorf("Error in Auth Protocol %v | %v  in host %s", s.V3AuthProt, val, s.Host)
+			if val, ok := authpmap[v3AuthProt]; !ok {
+				l.Errorf("Error in Auth Protocol %v | %v  in host %s", v3AuthProt, val, host)
 				return nil, nil, ers.New("Error on snmp v3 AuthProt")
 			}
 
 			// validate s.privpass s.privprot
 
-			if len(s.V3PrivPass) < 1 {
-				l.Errorf("Error privPass not found in snmpv3 %s in host %s", s.V3AuthUser, s.Host)
+			if len(v3PrivPass) < 1 {
+				l.Errorf("Error privPass not found in snmpv3 %s in host %s", v3AuthUser, host)
 				//		log.Printf("DEBUG SNMP: %+v", *s)
 				return nil, nil, ers.New("Error on snmp v3 PrivPAss")
 			}
 
-			if val, ok := privpmap[s.V3PrivProt]; !ok {
-				l.Errorf("Error in Priv Protocol %v | %v  in host %s", s.V3PrivProt, val, s.Host)
+			if val, ok := privpmap[v3PrivProt]; !ok {
+				l.Errorf("Error in Priv Protocol %v | %v  in host %s", v3PrivProt, val, host)
 				return nil, nil, ers.New("Error on snmp v3 AuthPass")
 			}
 
 			UsmParams = &gosnmp.UsmSecurityParameters{
-				UserName:                 s.V3AuthUser,
-				AuthenticationProtocol:   authpmap[s.V3AuthProt],
-				AuthenticationPassphrase: s.V3AuthPass,
-				PrivacyProtocol:          privpmap[s.V3PrivProt],
-				PrivacyPassphrase:        s.V3PrivPass,
+				UserName:                 v3AuthUser,
+				AuthenticationProtocol:   authpmap[v3AuthProt],
+				AuthenticationPassphrase: v3AuthPass,
+				PrivacyProtocol:          privpmap[v3PrivProt],
+				PrivacyPassphrase:        v3PrivPass,
 			}
 		default:
-			l.Errorf("Error no Security Level found %s in host %s", s.V3SecLevel, s.Host)
+			l.Errorf("Error no Security Level found %s in host %s", v3SecLevel, host)
 			return nil, nil, ers.New("Error on snmp Security Level")
 
 		}
-		client = &gosnmp.GoSNMP{
-			Target:             hostIPs[0],
-			Port:               uint16(s.Port),
-			Version:            gosnmp.Version3,
-			Timeout:            time.Duration(s.Timeout) * time.Second,
-			Retries:            s.Retries,
-			MaxRepetitions:     uint32(maxrep),
-			SecurityModel:      gosnmp.UserSecurityModel,
-			MsgFlags:           seclpmap[s.V3SecLevel],
-			SecurityParameters: UsmParams,
-		}
 
-		if len(s.V3ContextName) > 0 {
-			client.ContextName = s.V3ContextName
+		client.MaxRepetitions = uint32(maxrep)
+		client.SecurityModel = gosnmp.UserSecurityModel
+		client.MsgFlags = seclpmap[v3SecLevel]
+		client.SecurityParameters = UsmParams
+
+		if len(v3ContextName) > 0 {
+			client.ContextName = v3ContextName
 		}
-		if len(s.V3ContextEngineID) > 0 {
-			client.ContextEngineID = s.V3ContextEngineID
+		if len(v3ContextEngineID) > 0 {
+			client.ContextEngineID = v3ContextEngineID
 		}
 	default:
-		l.Errorf("Error no snmpversion found %s in host %s", s.SnmpVersion, s.Host)
+		l.Errorf("Error no snmpversion found %s in host %s", snmpVersion, host)
 		return nil, nil, ers.New("Error on snmp Version")
 	}
 	if debug {
-		client.Logger = GetDebugLogger(s.ID + "_" + meas)
+		// TODO ver como unirlo a definir un logger específico para el host+meas
+		client.Logger = GetDebugLogger(id + "_" + meas)
 	}
 	// first connect
 	err = client.Connect()
@@ -662,23 +677,23 @@ func GetClient(s *config.SnmpDeviceCfg, l *logrus.Logger, meas string, debug boo
 		l.Errorf("error on first connect %s", err)
 		return nil, nil, err
 	}
-	l.Infof("First SNMP connection to host  %s stablished with MaxRepetitions set to %d", s.Host, maxrep)
+	l.Infof("First SNMP connection to host  %s stablished with MaxRepetitions set to %d", host, maxrep)
 
 	// first snmp query
 
-	if len(s.SystemOIDs) > 0 && len(s.SystemOIDs[0]) > 0 && s.SystemOIDs[0] != "null" {
-		l.Infof("Detected alternate %d SystemOID's ", len(s.SystemOIDs))
+	if len(systemOIDs) > 0 && len(systemOIDs[0]) > 0 && systemOIDs[0] != "null" {
+		l.Infof("Detected alternate %d SystemOID's ", len(systemOIDs))
 		// this device has an alternate System Description (Non MIB-2 based systems)
-		si, err := GetAlternateSysInfo(s.ID, client, l, s.SystemOIDs)
+		si, err := GetAlternateSysInfo(id, client, l, systemOIDs)
 		if err != nil {
-			l.Errorf("error on get Alternate System Info ERROR [%s] for OID's [%s] ", err, strings.Join(s.SystemOIDs[:], ","))
+			l.Errorf("error on get Alternate System Info ERROR [%s] for OID's [%s] ", err, strings.Join(systemOIDs[:], ","))
 			return nil, nil, err
 		}
 		l.Infof("Got basic system info %#v ", si)
 		return client, &si, err
 	}
 	// For most devices System Description could be got with MIB-2::System base OID's
-	si, err := GetSysInfo(s.ID, client, l)
+	si, err := GetSysInfo(id, client, l)
 	if err != nil {
 		l.Errorf("error on get System Info %s", err)
 		return nil, nil, err

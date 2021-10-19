@@ -237,6 +237,16 @@ func (d *SnmpDevice) InitDevMeasurements() {
 			} else {
 				d.Debugf("MEASUREMENT CFG KEY: %s VALUE %s", val, mVal.Name)
 				// creating a new measurement runtime object and asigning to array
+
+				// TODO pasar un logger ya específico para este host y este measurement
+				// Pasar este measLog en vez de d.log
+				/*
+					measLog := d.log.WithFields(logrus.Fields{
+						"host": d.cfg.Host,
+						"measurement": mVal,
+					})
+					imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, measLog)
+				*/
 				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, d.log)
 				d.Measurements = append(d.Measurements, imeas)
 			}
@@ -338,14 +348,6 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	// Init stats
 	d.stats.Init(d.cfg.ID, d.TagMap, d.log)
 
-	if d.cfg.ConcurrentGather == true {
-		// TODO esto ya no tiene sentido con el nuevo formato de recolectar métricas, borrar
-		d.Gather = d.measConcurrentGatherAndSend
-		d.InitSnmpConnect = d.initSnmpConnectConcurrent
-	} else {
-		d.Gather = d.measSeqGatherAndSend
-		d.InitSnmpConnect = d.initSnmpConnectSequential
-	}
 	d.statsData.Lock()
 	d.Stats = d.getBasicStats()
 	d.statsData.Unlock()
@@ -420,61 +422,6 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	d.stats.SetSelfMonitoring(cfg)
 }
 
-// initSnmpConnectConcurrent does the  SNMP client connection and retrieve system info
-func (d *SnmpDevice) initSnmpConnectConcurrent(mkey string, debug bool, maxrep uint8) (*snmp.Client, error) {
-	// this will never happen if previously snmpClientMap has been released
-	if val, ok := d.snmpClientMap[mkey]; ok {
-		if val != nil {
-			d.Infof("Releasing SNMP connection for measurement %s", mkey)
-			val.Release()
-		}
-	}
-	d.Infof("Beginning SNMP connection for measurement %s", mkey)
-	client, err := snmp.New(d.cfg, d.log, mkey, debug, maxrep)
-	if err != nil {
-		d.DeviceConnected = false
-		d.stats.SetStatus(d.DeviceActive, false)
-		d.Errorf("Client connect error to device  error :%s", err)
-		d.snmpClientMap[mkey] = nil
-		return nil, err
-	}
-
-	d.Infof("SNMP connection stablished Successfully for device  and measurement %s", mkey)
-	d.snmpClientMap[mkey] = client
-	d.SysInfo = client.Info
-	d.DeviceConnected = true
-	d.stats.SetStatus(d.DeviceActive, true)
-	return client, nil
-}
-
-// initSnmpConnectConcurrent does the  SNMP client connection and retrieve system info
-func (d *SnmpDevice) initSnmpConnectSequential(mkey string, debug bool, maxrep uint8) (*snmp.Client, error) {
-	// in sequential this
-	if val, ok := d.snmpClientMap["init"]; ok {
-		if val != nil {
-			d.Infof("Previous SNMP connection found")
-			d.snmpClientMap[mkey] = val
-			return val, nil
-		}
-	}
-	d.Infof("Beginning SNMP connection Sequential")
-	client, err := snmp.New(d.cfg, d.log, mkey, debug, maxrep)
-	if err != nil {
-		d.DeviceConnected = false
-		d.stats.SetStatus(d.DeviceActive, false)
-		d.Errorf("Client connect error to device  error :%s", err)
-		d.snmpClientMap[mkey] = nil
-		return nil, err
-	}
-
-	d.Infof("SNMP connection stablished Successfully for device  and measurement %s", mkey)
-	d.snmpClientMap[mkey] = client
-	d.SysInfo = client.Info
-	d.DeviceConnected = true
-	d.stats.SetStatus(d.DeviceActive, true)
-	return client, nil
-}
-
 // CheckDeviceConnectivity check if device snmp connection is ok by checking SnmpOIDGetProcessed stats
 func (d *SnmpDevice) CheckDeviceConnectivity() {
 	ProcessedStat := d.stats.GetCounter(SnmpOIDGetProcessed)
@@ -521,6 +468,8 @@ func (d *SnmpDevice) releaseClientMap() {
 	d.snmpClientMap = make(map[string]*snmp.Client)
 }
 
+// TODO implementar en los measurements
+/*
 func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 	// On sequential we need release connection first , concurrent has an automatic self release system
 	d.Infof("Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
@@ -557,6 +506,7 @@ func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 		}
 	}
 }
+*/
 
 // StartGather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) StartGather() {
@@ -601,6 +551,7 @@ func (d *SnmpDevice) StartGather() {
 		if d.DeviceActive {
 			// This will try to connect to the device, gather SysInfo and set DeviceConnected to true
 			// This connection will be stored on d.snmpClientMap["init"]
+			/* TODO Necesitamos esta conex "init" para algo?
 			_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug, 0)
 			if err == nil {
 				startSnmp := time.Now()
@@ -613,8 +564,11 @@ func (d *SnmpDevice) StartGather() {
 				// Connection established, progress
 				break
 			}
+			*/
+			d.InitDevMeasurements()
+			break
 			// send counters when device active and not connected ( no reset needed only status fields/tags are sen
-			d.stats.Send()
+			// d.stats.Send() // TODO gestion de stats
 		}
 
 		// Wait device freq to retry to reconnect and see if there a new messages on the bus to be processed
@@ -663,9 +617,37 @@ func (d *SnmpDevice) StartGather() {
 			defer deviceWG.Done()
 
 			// Add the measurement as a node to the bus
-			deviceControlBus.Join(bus.NewNode(fmt.Sprintf("%s-%s", d.cfg.ID, m.ID)))
+			node := bus.NewNode(fmt.Sprintf("%s-%s", d.cfg.ID, m.ID))
+			deviceControlBus.Join(node)
 
-			m.GatherLoop(deviceControlBus, d.Freq, d.cfg.UpdateFltFreq)
+			m.GatherLoop(
+				node,
+				d.Freq,
+				d.cfg.UpdateFltFreq,
+				d.cfg.SnmpDebug,
+				d.cfg.Host,
+				d.cfg.MaxRepetitions,
+				d.cfg.SnmpVersion,
+				d.cfg.Community,
+				d.cfg.Port,
+				d.cfg.Timeout,
+				d.cfg.Retries,
+				d.cfg.V3AuthUser,
+				d.cfg.V3SecLevel,
+				d.cfg.V3AuthPass,
+				d.cfg.V3PrivPass,
+				d.cfg.V3PrivProt,
+				d.cfg.V3AuthProt,
+				d.cfg.V3ContextName,
+				d.cfg.V3ContextEngineID,
+				d.cfg.ID,
+				d.cfg.SystemOIDs,
+				d.cfg.MaxOids,
+				d.cfg.DisableBulk,
+				d.VarMap,
+				d.TagMap,
+				d.Influx,
+			)
 		}(meas)
 	}
 
@@ -675,17 +657,14 @@ func (d *SnmpDevice) StartGather() {
 		case val := <-d.Node.Read:
 			d.Infof("Received Message: %s (%+v)", val.Type, val.Data)
 			switch val.Type {
-			case bus.Exit:
-				d.Infof("invoked Asyncronous EXIT from SNMP Gather process ")
-				// TODO esto es salir sin esperar a las gorutinas?
-				deviceControlBus.Broadcast(val)
-				return
 			case bus.SyncExit:
 				d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
+				// Signal all measurement goroutines to exit
 				deviceControlBus.Broadcast(&bus.Message{Type: val.Type})
-				// TODO esperar a que todas las gorutinas hayan terminado
+				// Wait till all measurement goroutines have finished
+				deviceWG.Wait()
+				// Signal the caller of this command that all have finished correctly
 				d.isStopped <- true
-				// TODO esperar a las gorutinas de measurement
 				return
 			case bus.LogLevel:
 				// TODO tenemos que pasarle algo a los measurements para cambiar su loglevel?
@@ -701,7 +680,7 @@ func (d *SnmpDevice) StartGather() {
 				d.CurLogLevel = d.log.Level.String()
 				d.rtData.Unlock()
 
-			default: // snmpresethard, snmpdebug, setsnmpmaxrep, forcegather, enabled, filterupdate
+			default: // exit, snmpresethard, snmpdebug, setsnmpmaxrep, forcegather, enabled, filterupdate
 				d.Infof("invoked %s, passing message to measurements", val)
 				deviceControlBus.Broadcast(val)
 

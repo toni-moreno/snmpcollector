@@ -104,7 +104,33 @@ func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 
 	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
 
-	_, sysinfo, err := snmp.GetClient(&cfg, log, "ping", false, 0)
+	// TODO tal vez pasar el mensaje al device y que sea el quien haga el ping?
+	// Parece un poco raro aqui establecer un cliente snmp
+	// TODO tal vez una función custom en vez de pasar ese param "ping" ?
+	_, sysinfo, err := snmp.GetClient(
+		cfg.Host,
+		cfg.MaxRepetitions,
+		cfg.SnmpVersion,
+		cfg.Community,
+		cfg.Port,
+		cfg.Timeout,
+		cfg.Retries,
+		cfg.V3AuthUser,
+		cfg.V3SecLevel,
+		cfg.V3AuthPass,
+		cfg.V3PrivPass,
+		cfg.V3PrivProt,
+		cfg.V3AuthProt,
+		cfg.V3ContextName,
+		cfg.V3ContextEngineID,
+		cfg.ID,
+		cfg.SystemOIDs,
+
+		log,
+		"ping",
+		false,
+		0,
+	)
 	if err != nil {
 		log.Debugf("ERROR  on query device : %s", err)
 		ctx.JSON(400, err.Error())
@@ -180,7 +206,29 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 		return
 	}
 
-	snmpcli, info, err := snmp.GetClient(&cfg, log, "query", false, 0)
+	snmpcli, info, err := snmp.GetClient(
+		cfg.Host,
+		cfg.MaxRepetitions,
+		cfg.SnmpVersion,
+		cfg.Community,
+		cfg.Port,
+		cfg.Timeout,
+		cfg.Retries,
+		cfg.V3AuthUser,
+		cfg.V3SecLevel,
+		cfg.V3AuthPass,
+		cfg.V3PrivPass,
+		cfg.V3PrivProt,
+		cfg.V3AuthProt,
+		cfg.V3ContextName,
+		cfg.V3ContextEngineID,
+		cfg.ID,
+		cfg.SystemOIDs,
+		log,
+		"query",
+		false,
+		0,
+	)
 	if err != nil {
 		log.Debugf("ERROR  on open connection with device %s : %s", cfg.ID, err)
 		ctx.JSON(400, err.Error())

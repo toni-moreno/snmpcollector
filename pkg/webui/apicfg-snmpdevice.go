@@ -110,7 +110,30 @@ func addDeviceOnline(mode string, id string, dev *config.SnmpDeviceCfg) error {
 	// First doing Ping
 	log.Infof("trying to ping device %s : %+v", dev.ID, dev)
 
-	_, sysinfo, err := snmp.GetClient(dev, log, "ping", false, 0)
+	// TODO tal vez una función custom en vez de pasar ese param "ping" ?
+	_, sysinfo, err := snmp.GetClient(
+		dev.Host,
+		dev.MaxRepetitions,
+		dev.SnmpVersion,
+		dev.Community,
+		dev.Port,
+		dev.Timeout,
+		dev.Retries,
+		dev.V3AuthUser,
+		dev.V3SecLevel,
+		dev.V3AuthPass,
+		dev.V3PrivPass,
+		dev.V3PrivProt,
+		dev.V3AuthProt,
+		dev.V3ContextName,
+		dev.V3ContextEngineID,
+		dev.ID,
+		dev.SystemOIDs,
+		log,
+		"ping",
+		false,
+		0,
+	)
 	if err != nil {
 		log.Debugf("ERROR  on query device : %s", err)
 		return err
