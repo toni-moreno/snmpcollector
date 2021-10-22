@@ -2,6 +2,8 @@ package snmp
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"strings"
 
 	"github.com/gosnmp/gosnmp"
@@ -51,8 +53,6 @@ type Client struct {
 	// ID used to generate the debug file name
 	ID          string
 	DisableBulk bool
-	// Walk        func(string, gosnmp.WalkFunc) error // TODO usar un condicional cuando haga falta usar Walk en vez de definir esta func
-	// Info        *SysInfo // TODO esto que se devuelva, pero no que se almacene
 	// Connected define if the this client is considered Connected
 	Connected        bool
 	ConnectionParams ConnectionParams
@@ -115,6 +115,16 @@ func (c *Client) Release() error {
 	return nil
 }
 
+// SetDebug configure a new logger for the goSNMP client to log everything to a different file
+func (c *Client) SetDebug(debug bool) {
+	if debug {
+		c.snmpClient.Logger = GetDebugLogger(c.ID)
+	} else {
+		nullLogger := gosnmp.NewLogger(log.New(io.Discard, "", 0))
+		c.snmpClient.Logger = nullLogger
+	}
+}
+
 // Connect using the info stored in the struct, generate the goSNMP client and make the first connection to the
 // device to check if it works.
 // It also try to obtain some basic OIDs to check if everything works.
@@ -126,7 +136,7 @@ func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
 
 	c.snmpClient = goSNMPClient
 
-	sysinfo, err := c.SysInfoQuery(systemOIDs) // TODO meter los systemOIDs
+	sysinfo, err := c.SysInfoQuery(systemOIDs)
 	if err != nil {
 		return nil, fmt.Errorf("obtaining the sysInfo: %v", err)
 	}

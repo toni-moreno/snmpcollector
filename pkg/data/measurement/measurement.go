@@ -38,10 +38,9 @@ func SetDB(db *config.DatabaseCfg) {
 
 // Measurement the runtime measurement config
 type Measurement struct {
-	cfg         *config.MeasurementCfg
-	measFilters []string
-	mFilters    map[string]*config.MeasFilterCfg
-	// TODO que es esto?
+	cfg          *config.MeasurementCfg
+	measFilters  []string
+	mFilters     map[string]*config.MeasFilterCfg
 	snmpOids     []string
 	idxPosInOID  int
 	idx2PosInOID int
@@ -70,7 +69,7 @@ type Measurement struct {
 }
 
 func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*config.MeasFilterCfg, l utils.Logger) *Measurement {
-	// TODO Measurement init is moved to GatherLoop
+	// Measurement init is moved to GatherLoop
 	return &Measurement{
 		ID:          c.ID,
 		MName:       c.Name,
@@ -94,6 +93,7 @@ func (m *Measurement) InvalidateMetrics() {
  * This function actually connects to the device to gather values
  */
 // TODO ver como llamar a esta función para que tenga más lógica
+// TODO separar en dos? Una que se ejecuta al comienzo de la gorutina y otra que se llama al hacer el update filters?
 func (m *Measurement) Init(snmpClient *snmp.Client) error {
 	if m.cfg.GetMode == "indexed_multiple" {
 		// Create, init and store the var into base measurement
@@ -131,7 +131,8 @@ func (m *Measurement) Init(snmpClient *snmp.Client) error {
 
 	// TODO que pasa si m.cfg.GetMode no es indexed_multiple ni ninguno del otro if?
 	// TODO Usar if-else if-else error ?
-	// TODO Mover el InitFilters a la zona común tras el condicional
+	// TODO si quitamos el return nil del if de indexed_multiple, mover el InitFilters a la zona común tras el condicional
+	// TODO el InitBuildRuntime creo que se llama en ambos casos (saliendo por el runtime o llegando aqu, al llamar a InitFilter). Si quitamos el return, mover el InitBuildRuntime aqui fuera?
 
 	/********************************
 	 * Initialize Metric Runtime data in one array m-values
@@ -636,7 +637,6 @@ func (m *Measurement) ComputeOidConditionalMetrics(snmpClient *snmp.Client) {
 }
 
 // ComputeEvaluatedMetrics take evaluated metrics and computes them from the other values
-// TODO que datos usa? que devuelve? usa la db? snmp client?
 func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 	if m.cfg.EvalMetric == nil {
 		m.Infof("Not EVAL metrics exist on  this measurement")
@@ -722,7 +722,6 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 	}
 }
 
-// loadIndexedLabels TODO, connects to the device
 func (m *Measurement) loadIndexedLabels(snmpClient *snmp.Client) (map[string]string, error) {
 	m.Debugf("Looking up column names %s ", m.cfg.IndexOID)
 
@@ -876,11 +875,13 @@ func (m *Measurement) loadIndexedLabels(snmpClient *snmp.Client) (map[string]str
 	}
 }
 
-// GatherLoop do all measurement processing, gathering metrics, handling filters and receiving messages from device
+// MeasurementLoop do all measurement processing, gathering metrics, handling filters and receiving messages from device
 // deviceBus used by device to pass messages to the measurements.
 // deviceFreq used if the measurement does not have frequency.
 // deviceUpdateFilterFreq is the number of gather loops after a update filters will be done
-func (m *Measurement) GatherLoop(
+// gatherLock will be used to achieve sequential gathering (only one measurement gorouting gathering data at the same
+// time). It will be enforced if gatherLock is not nil.
+func (m *Measurement) MeasurementLoop(
 	busNode *bus.Node,
 	snmpClient snmp.Client,
 	deviceFreq int,
@@ -890,6 +891,7 @@ func (m *Measurement) GatherLoop(
 	tagMap map[string]string,
 	systemOIDs []string,
 	influxClient *output.InfluxDB,
+	gatherLock *sync.Mutex,
 ) {
 	gatherTicker := time.NewTicker(time.Duration(deviceFreq) * time.Second)
 	if m.cfg.Freq != 0 {
@@ -897,6 +899,7 @@ func (m *Measurement) GatherLoop(
 	}
 	defer gatherTicker.Stop()
 
+	// TODO cambiar la UI para que el deviceUpdateFilterFreq sea un time.Duration y cambiar esta expresión
 	updateFilterTicker := time.NewTicker(time.Duration(deviceFreq) * time.Second * time.Duration(deviceUpdateFilterFreq))
 	defer updateFilterTicker.Stop()
 
@@ -924,6 +927,7 @@ func (m *Measurement) GatherLoop(
 				m.Log.Error("Not able to connect")
 			}
 		}
+		// TODO no inicializar si no estoy enabled y connected
 
 		// If measurement is not initialized, do it. Could be because it returned an error while starting.
 		if !m.initialized {
@@ -936,107 +940,46 @@ func (m *Measurement) GatherLoop(
 				m.GetData(&snmpClient)
 			}
 		}
-		// TODO podemos hacer dos funciones, una de inicialización pura y otra solo de update filters?
 
 		select {
 		case <-updateFilterTicker.C:
-			// Do not try to gather data if measurement is disabled or it doesn't have a connection and measurement is initialized
-			if !m.Enabled || !snmpClient.Connected || !m.initialized {
-				continue
-			}
-
-			// Update filters
-			start := time.Now()
-			m.Init(&snmpClient)
-			// TODO si se ha modificado tenemos que ejecutar el InitBuildRuntime??
-			duration := time.Since(start)
-			// TODO como gestionar stats
-			// d.stats.SetFltUpdateStats(start, duration)
-			// d.stats.Send() // TODO enviarlas aqui?
-			m.Infof("snmp INIT runtime measurements/filters took [%s] ", duration)
-
+			m.filterUpdate(snmpClient)
 		case <-gatherTicker.C:
-			// Do not try to gather data if measurement is disabled or it doesn't have a connection and measurement is initialized
-			if !m.Enabled || !snmpClient.Connected || !m.initialized {
-				continue
-			}
-
-			// Do not allow the UI to get data from the measurement while it is gahering new data.
-			// To have a complete picture, lock until we have all metrics.
-			m.rtData.Lock()
-			// TODO implementar concurrencia a nivel device o no.
-			// Podría ser un lock compartido que lo cogen si debe ser captura secuencial
-			// Gather data
-			m.Infof("Init gather cycle mode")
-			// Mark previous values as old so we can know if new metrics
-			// have been gathered
-			m.InvalidateMetrics()
-			// d.stats.ResetCounters() // TODO, necesario? mejor devolver las métricas y aqui setearlas con el lock apropiado
-
-			m.Debugf("-------Processing measurement : %s", m.ID)
-
-			// TODO el lock aqui? Me gustaría separar el gather de el almacenamiento
-			// Get data from device and set the values to the snmp metrics structs
-			// TODO si usa SnmpGetData obtiene los valores de m.snmpOids, si lo hace de SnmpWalkData lo obtiene de m.cfg.FieldMetric? Esto es normal?
-			// TODO Simplificado en una única función con un condicional
-			m.GetData(&snmpClient)
-			/* TODO measurements
-			nGets, nProcs, nErrs := m.GetData(snmpClient)
-			d.stats.UpdateSnmpGetStats(nGets, nProcs, nErrs)
-			*/
-
-			// TODO esta funcion necesita conex con la db?? Cuando se ha inicializado? Globlamente en el main.
-			// Acceso a la db en cada gather de cada measurement, no parece muy eficiente.
-			m.ComputeOidConditionalMetrics(&snmpClient)
-			m.ComputeEvaluatedMetrics(varMap)
-
-			// prepare batchpoint
-			_, _, _, _, points := m.GetInfluxPoint(tagMap)
-			/*
-				metSent, metError, measSent, measError, points := m.GetInfluxPoint(tagMap)
-				d.stats.AddMeasStats(metSent, metError, measSent, measError)
-			*/
-
-			// startInfluxStats := time.Now()
-			bpts, _ := influxClient.BP()
-			if bpts != nil {
-				(*bpts).AddPoints(points)
-				// send data
-				influxClient.Send(bpts)
-			} else {
-				m.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
-			}
-			// elapsedInfluxStats := time.Since(startInfluxStats)
-			// d.stats.AddSentDuration(startInfluxStats, elapsedInfluxStats)
-
-			// d.stats.Send() // TODO enviarlas aqui?
-
-			// TODO: Decidir si está conectado o no basado en el número de métricas recibidas
-			// Si al menos he recogido un dato es que está conectado, si no, marcar el measurement
-			// como desconectado
-
-			m.rtData.Unlock()
-
+			m.gatherLoop(snmpClient, gatherLock, varMap, tagMap, influxClient)
 		case val := <-busNode.Read:
 			m.Infof("Measurement [%v] received message: %s (%+v)", m.ID, val.Type, val.Data)
 			switch val.Type {
 			case bus.Exit, bus.SyncExit:
 				return
 			case bus.SNMPResetHard:
+				// TODO se marca como desconectado el clciente snmp, cierto?
 				err := snmpClient.Release()
 				if err != nil {
 					m.Errorf("releasing snmp client: %v", err)
 				}
 			case bus.SNMPDebug:
-			// TODO
+				debug, ok := val.Data.(bool)
+				if !ok {
+					m.Log.Errorf("invalid value for debug bus message: %v", val.Data)
+					continue
+				}
+				snmpClient.SetDebug(debug)
 			case bus.SetSNMPMaxRep:
 			// TODO
 			case bus.ForceGather:
-			// TODO
+				m.gatherLoop(snmpClient, gatherLock, varMap, tagMap, influxClient)
 			case bus.Enabled:
-			// TODO modificar m.Enabled
+				enabled, ok := val.Data.(bool)
+				if !ok {
+					m.Log.Errorf("invalid value for enabled bus message: %v", val.Data)
+					continue
+				}
+				m.rtData.Lock()
+				m.Enabled = enabled
+				// TODO meter cosas en stats?
+				m.rtData.Unlock()
 			case bus.FilterUpdate:
-				// TODO
+				m.filterUpdate(snmpClient)
 			}
 		}
 	}
@@ -1105,4 +1048,95 @@ func (m *Measurement) MarshalJSON() ([]byte, error) {
 		MultiIndexMeas:   m.MultiIndexMeas,
 		Enabled:          m.Enabled,
 	})
+}
+
+// gatherLoop metrics from device, process them and send values to the backend.
+// It also checks if it should run based on the measurement state.
+func (m *Measurement) gatherLoop(
+	snmpClient snmp.Client,
+	gatherLock *sync.Mutex,
+	varMap map[string]interface{},
+	tagMap map[string]string,
+	influxClient *output.InfluxDB,
+) {
+	// Do not gather data if measurement is disabled or it doesn't have a connection or measurement is not initialized
+	if !m.Enabled || !snmpClient.Connected || !m.initialized {
+		return
+	}
+
+	// Do not allow the UI to get data from the measurement while it is gahering new data.
+	// To have a complete picture, lock until we have all metrics.
+	m.rtData.Lock()
+	defer m.rtData.Unlock()
+
+	m.Infof("Init gather cycle mode")
+	// Mark previous values as old so we can know if new metrics
+	// have been gathered
+	m.InvalidateMetrics()
+	// d.stats.ResetCounters() // TODO, necesario? mejor devolver las métricas y aqui setearlas con el lock apropiado
+
+	m.Debugf("-------Processing measurement : %s", m.ID)
+
+	// If gatherLock its defined it means we should gather data sequentially.
+	// We get this lock to avoid another goroutines to gather data at the same time.
+	if gatherLock != nil {
+		m.Log.Debug("get lock to avoid concurrent gathering")
+		gatherLock.Lock()
+	}
+	// TODO si usa SnmpGetData obtiene los valores de m.snmpOids, si lo hace de SnmpWalkData lo obtiene de m.cfg.FieldMetric? Esto es normal?
+	// Get data from device and set the values to the snmp metrics structs
+	m.GetData(&snmpClient)
+	// TODO stats
+	// nGets, nProcs, nErrs := m.GetData(snmpClient)
+	// d.stats.UpdateSnmpGetStats(nGets, nProcs, nErrs)
+
+	// TODO que hace esta función?
+	// TODO esta funcion necesita conex con la db?? Cuando se ha inicializado? Globlamente en el main.
+	// TODO Acceso a la db en cada gather de cada measurement, no parece muy eficiente.
+	m.ComputeOidConditionalMetrics(&snmpClient)
+	if gatherLock != nil {
+		m.Log.Debug("release lock to avoid concurrent gathering")
+		gatherLock.Unlock()
+	}
+
+	m.ComputeEvaluatedMetrics(varMap)
+
+	// prepare batchpoint
+	_, _, _, _, points := m.GetInfluxPoint(tagMap)
+	// metSent, metError, measSent, measError, points := m.GetInfluxPoint(tagMap)
+	// d.stats.AddMeasStats(metSent, metError, measSent, measError)
+
+	// startInfluxStats := time.Now()
+	bpts, _ := influxClient.BP()
+	if bpts != nil {
+		(*bpts).AddPoints(points)
+		// send data
+		influxClient.Send(bpts)
+	} else {
+		m.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
+	}
+	// elapsedInfluxStats := time.Since(startInfluxStats)
+	// d.stats.AddSentDuration(startInfluxStats, elapsedInfluxStats)
+
+	// d.stats.Send() // TODO enviarlas aqui?
+
+	// TODO: Decidir si está conectado o no basado en el número de métricas recibidas
+	// Si al menos he recogido un dato es que está conectado, si no, marcar el measurement
+	// como desconectado
+}
+
+// filterUpdate does ... TODO
+func (m *Measurement) filterUpdate(snmpClient snmp.Client) {
+	// Do not try to update filters if measurement is disabled or it doesn't have a connection or measurement is not initialized
+	if !m.Enabled || !snmpClient.Connected || !m.initialized {
+		return
+	}
+
+	// Update filters
+	start := time.Now()
+	m.Init(&snmpClient)
+	duration := time.Since(start)
+	// d.stats.SetFltUpdateStats(start, duration) // TODO
+	// d.stats.Send() // TODO enviarlas aqui?
+	m.Infof("snmp INIT runtime measurements/filters took [%s] ", duration)
 }

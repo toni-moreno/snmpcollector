@@ -53,15 +53,12 @@ type SnmpDevice struct {
 	Measurements []*measurement.Measurement
 	// Variable map
 	VarMap map[string]interface{}
-
-	// SNMP and Influx Clients config
-	// TODO borrar esto? Mejor que cada gorutina gestione su conex, no en el structs
-	// El cliente snmp no es thread safe: ttps://github.com/gosnmp/gosnmp/issues/64#issuecomment-231645164
-	snmpClientMap map[string]*snmp.Client
-	Influx        *output.InfluxDB `json:"-"`
+	// Influx client shared between measurement goroutines to send data and stats to the backend
+	Influx *output.InfluxDB `json:"-"`
 	// LastError     time.Time
 	// Runtime stats
-	stats DevStat  // Runtime Internal statistic
+	stats DevStat // Runtime Internal statistic
+	// TODO asegurarnos que cuando se escriba aquí esté protegido por el rtData
 	Stats *DevStat // Public info for thread safe accessing to the data ()
 
 	// runtime controls
@@ -93,8 +90,6 @@ func (d *SnmpDevice) GetLogFilePath() string {
 
 // ToJSON return a JSON version of the device data
 func (d *SnmpDevice) ToJSON() ([]byte, error) {
-	// TODO coger el rdData lock cuando estemos modificando algo del SnmpDevice
-
 	// Get read lock for SnmpDevice struct (protect all values except Measurements)
 	d.rtData.RLock()
 	defer d.rtData.RUnlock()
@@ -102,7 +97,27 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 	// To avoid data racing while reading SnmpDevice.Measurements, Measurement implements a custom
 	// MarshalJSON function, grabbing there the lock
 
-	result, err := json.MarshalIndent(d, "", "  ")
+	result, err := json.MarshalIndent(&struct {
+		SysInfo         *snmp.SysInfo
+		TagMap          map[string]string
+		Freq            int
+		Measurements    []*measurement.Measurement
+		VarMap          map[string]interface{}
+		Stats           *DevStat // Public info for thread safe accessing to the data ()
+		DeviceActive    bool
+		DeviceConnected bool
+		CurLogLevel     string
+	}{
+		SysInfo:         d.SysInfo,
+		TagMap:          d.TagMap,
+		Freq:            d.Freq,
+		Measurements:    d.Measurements,
+		VarMap:          d.VarMap,
+		Stats:           d.Stats,
+		DeviceActive:    d.DeviceActive,
+		DeviceConnected: d.DeviceConnected,
+		CurLogLevel:     d.CurLogLevel,
+	}, "", "  ")
 	if err != nil {
 		d.Errorf("Error on Get JSON data from device")
 		dummy := []byte{}
@@ -119,6 +134,7 @@ func (d *SnmpDevice) GetBasicStats() *DevStat {
 }
 
 // GetBasicStats get basic info for this device
+// TODO cuidado con data races
 func (d *SnmpDevice) getBasicStats() *DevStat {
 	sum := 0
 	for _, m := range d.Measurements {
@@ -255,11 +271,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 					"host":        d.cfg.Host,
 					"measurement": mVal,
 				})
-				// TODO pasamos MeasFilters y MFilters porque lo necesitará cuando haga el InitFilters (antes se hacia en un bucle debajo de este for)
-				// TODO no pasar la config del measurement, si no una copia.
-				// Así evitamos que cada gorutina encargada de cada measurement en cada device
-				// puedan intentar modificarla al mismo tiempo (Lo hace SnmpMetric.Init)
-				// En realidad esto no arregla el problema, ya que se sigue pasando el puntero de SnmpMetricCfg
+				// MeasFilters and MFitlers used in the InitFilters function used in the initialization of the measurement goroutine
 				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, measLog)
 				d.Measurements = append(d.Measurements, imeas)
 			}
@@ -277,6 +289,7 @@ Init  does the following
 - Initialize not set variables to some defaults
 - Initialize logfile for this device
 - Initialize comunication channels and initial device state
+No need to get the rtData lock because the device it's not yet referenced.
 */
 func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	if c == nil {
@@ -314,14 +327,11 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 
 	// Init Device Tags
 
-	d.TagMap = make(map[string]string)
 	if len(d.cfg.DeviceTagName) == 0 {
 		d.cfg.DeviceTagName = "device"
 	}
 
 	d.Freq = d.cfg.Freq
-
-	d.snmpClientMap = make(map[string]*snmp.Client)
 
 	var val string
 
@@ -335,6 +345,7 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 		d.Warnf("Unkwnown DeviceTagValue %s set ID (%s) as value", d.cfg.DeviceTagValue, val)
 	}
 
+	d.TagMap = make(map[string]string)
 	d.TagMap[d.cfg.DeviceTagName] = val
 
 	if len(d.cfg.ExtraTags) > 0 {
@@ -360,6 +371,7 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 }
 
 // InitCatalogVar Initialize Global Variables on the device
+// No need to protect from reads because device is not yet referenced.
 func (d *SnmpDevice) InitCatalogVar(globalmap map[string]interface{}) {
 	// Init Device Custom Variables
 	d.VarMap = make(map[string]interface{}, len(globalmap))
@@ -414,9 +426,15 @@ func (d *SnmpDevice) LeaveBus(b *bus.Bus) {
 // End The Opposite of Init() uninitialize all variables
 func (d *SnmpDevice) End() {
 	d.Node.Close()
-	for _, val := range d.snmpClientMap {
-		val.Release()
-	}
+	// TODO que debería hacer esta variable.
+	// Cuando se llama desde ReleaseDevices parece que solo se quiere liberar las conex snmp (que si estamos cerrando, y siendo UDP, no se si tiene mucho sentido).
+	// Cuando se llama desde DeleteDeviceInRunTime ya se ha hecho un StopGather, está función sería la que cerrase las conex?
+	// En cualquier caso dejo comentado el for porque d.snmpClientMap ya no existe
+	/*
+		for _, val := range d.snmpClientMap {
+			val.Release()
+		}
+	*/
 	// release files
 	// os.Close(d.log.Out)
 	// release snmp resources
@@ -428,13 +446,19 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 }
 
 // CheckDeviceConnectivity check if device snmp connection is ok by checking SnmpOIDGetProcessed stats
+// TODO no se está llamando desde ningún lado. Borrar?
+// TODO como gestionar si el device está conectado? Tal vez en el ToJSON consultar el stats.GetCounter(...) para devolver si consideramos que estamos conectados?
 func (d *SnmpDevice) CheckDeviceConnectivity() {
 	ProcessedStat := d.stats.GetCounter(SnmpOIDGetProcessed)
 
 	if value, ok := ProcessedStat.(int); ok {
 		// check if no processed SNMP data (when this happens means there is not connectivity with the device )
 		if value == 0 {
+			// Avoid reading device while modifying data
+			d.rtData.Lock()
 			d.DeviceConnected = false
+			d.rtData.Unlock()
+			// TODO Se modifica el DeviceConnected pero se pasa a stats el DeviceActive??
 			d.stats.SetStatus(d.DeviceActive, false)
 		}
 	} else {
@@ -510,10 +534,7 @@ func (d *SnmpDevice) StartGather() {
 	err := connectionParams.Validation()
 	if err != nil {
 		d.Errorf("SNMP parameter validation: %v", err)
-		// TODO aqui estamos terminando la gorutina para el device porque tiene un error que
-		// no va a permitir hacer nada.
-		// Marcar algo más para que en la UI quede claro que este device no funciona?
-		// Como vamos a conseguir que vuelva a la vida?
+		// TODO probar como se comporta la UI si hemos metido una config errónea y nos estamos saliendo aquí
 		return
 	}
 
@@ -533,16 +554,17 @@ func (d *SnmpDevice) StartGather() {
 				d.isStopped <- true
 				return
 			case bus.Enabled:
+				// TODO hacer igual que el del bucle principal
 				status := val.Data.(bool)
 				d.rtData.Lock()
 				d.DeviceActive = status
+				d.rtData.Unlock()
 				if status {
 					d.stats.SetActive(true)
 				} else {
 					d.stats.SetStatus(false, false)
 				}
 				d.Infof("Device %s STATUS ACTIVE [%t] ", d.cfg.Host, status)
-				d.rtData.Unlock()
 			default:
 				d.Warnf("Device %s in waiting state. Ignored command: %s (%s)", d.cfg.Host, val.Type, val.Data)
 			}
@@ -562,14 +584,18 @@ func (d *SnmpDevice) StartGather() {
 				Log:              d.log,
 			}
 			sysinfo, err := snmpClient.Connect(d.cfg.SystemOIDs)
-			if err == nil {
+			if err != nil {
+				d.Errorf("unable to connect")
+			} else {
+				// Avoid data race while modifying d.SysInfo and d.Measurements (in InitDevMeasurements)
+				d.rtData.Lock()
 				d.SysInfo = sysinfo
 				d.InitDevMeasurements()
+				d.rtData.Unlock()
 				break
+				// send counters when device active and not connected ( no reset needed only status fields/tags are sen
+				// d.stats.Send() // TODO gestion de stats
 			}
-			d.Errorf("unable to connect")
-			// send counters when device active and not connected ( no reset needed only status fields/tags are sen
-			// d.stats.Send() // TODO gestion de stats
 		}
 
 		// Wait device freq to retry to reconnect and see if there a new messages on the bus to be processed
@@ -590,6 +616,7 @@ func (d *SnmpDevice) StartGather() {
 				status := val.Data.(bool)
 				d.rtData.Lock()
 				d.DeviceActive = status
+				d.rtData.Unlock()
 				if status {
 					d.stats.SetActive(true)
 				} else {
@@ -597,7 +624,6 @@ func (d *SnmpDevice) StartGather() {
 				}
 
 				d.Infof("Device %s STATUS ACTIVE [%t] ", d.cfg.Host, status)
-				d.rtData.Unlock()
 			default:
 				d.Warnf("Device %s in connecting state. Ignored command: %s (%s)", d.cfg.Host, val.Type, val.Data)
 			}
@@ -610,6 +636,13 @@ func (d *SnmpDevice) StartGather() {
 
 	// Control when all goroutines have finished
 	var deviceWG sync.WaitGroup
+
+	// gatherLock will be used to gather data sequentially is cfg.ConcurrentGather is true.
+	// If false, it will be set to nil and ignored by the measurements goroutines while gathering data.
+	gatherLock := &sync.Mutex{}
+	if d.cfg.ConcurrentGather {
+		gatherLock = nil
+	}
 
 	for _, meas := range d.Measurements {
 		// Start gather goroutine for device and add it to the wait group for gather goroutines
@@ -635,7 +668,7 @@ func (d *SnmpDevice) StartGather() {
 			}
 
 			// Start the loop that will gather metrics and handle signals
-			m.GatherLoop(node, snmpClient, d.Freq, d.cfg.UpdateFltFreq, d.VarMap, d.TagMap, d.cfg.SystemOIDs, d.Influx)
+			m.MeasurementLoop(node, snmpClient, d.Freq, d.cfg.UpdateFltFreq, d.VarMap, d.TagMap, d.cfg.SystemOIDs, d.Influx, gatherLock)
 		}(meas)
 	}
 
@@ -655,7 +688,6 @@ func (d *SnmpDevice) StartGather() {
 				d.isStopped <- true
 				return
 			case bus.LogLevel:
-				// TODO tenemos que pasarle algo a los measurements para cambiar su loglevel?
 				level := val.Data.(string)
 				l, err := logrus.ParseLevel(level)
 				if err != nil {
@@ -663,6 +695,7 @@ func (d *SnmpDevice) StartGather() {
 					break
 				}
 				d.rtData.Lock()
+				// Changing log level here affects all "child" loggers (those passed to measurements goroutines)
 				d.log.Level = l
 				d.Infof("device loglevel Changed  [%s] ", level)
 				d.CurLogLevel = d.log.Level.String()
