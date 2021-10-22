@@ -63,6 +63,7 @@ type Measurement struct {
 	FilterCfg        *config.MeasFilterCfg
 	Filter           filter.Filter
 	Log              utils.Logger `json:"-"`
+	snmpClient       *snmp.Client
 	MultiIndexMeas   []*Measurement
 	// Enabled is true if this measurement should gather metrics. This value is controlled by the device
 	Enabled bool
@@ -94,10 +95,10 @@ func (m *Measurement) InvalidateMetrics() {
  */
 // TODO ver como llamar a esta función para que tenga más lógica
 // TODO separar en dos? Una que se ejecuta al comienzo de la gorutina y otra que se llama al hacer el update filters?
-func (m *Measurement) Init(snmpClient *snmp.Client) error {
+func (m *Measurement) Init() error {
 	if m.cfg.GetMode == "indexed_multiple" {
 		// Create, init and store the var into base measurement
-		err := m.InitMultiIndex(snmpClient)
+		err := m.InitMultiIndex()
 		if err != nil {
 			return err
 		}
@@ -107,7 +108,7 @@ func (m *Measurement) Init(snmpClient *snmp.Client) error {
 			return err
 		}
 		// TODO si es "indexed_multiple" se sale aqui del Init() ??
-		m.InitFilters(snmpClient)
+		m.InitFilters()
 		return nil
 	}
 
@@ -119,7 +120,7 @@ func (m *Measurement) Init(snmpClient *snmp.Client) error {
 			m.idx2PosInOID = len(m.cfg.TagOID)
 		}
 		m.Infof("Loading Indexed values")
-		il, err := m.loadIndexedLabels(snmpClient)
+		il, err := m.loadIndexedLabels()
 		if err != nil {
 			m.Errorf("Error while trying to load Indexed Labels on for measurement : for baseOid %s : ERROR: %s", m.cfg.IndexOID, err)
 			return err
@@ -140,12 +141,12 @@ func (m *Measurement) Init(snmpClient *snmp.Client) error {
 	m.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the walk device] | OID=>Metric MAP")
 	m.MetricTable = NewMetricTable(m.cfg, m.Log, m.CurIndexedLabels)
 
-	m.InitFilters(snmpClient)
+	m.InitFilters()
 	return nil
 }
 
 // InitMultiIndex initializes measurements from MultiIndexCfg
-func (m *Measurement) InitMultiIndex(snmpClient *snmp.Client) error {
+func (m *Measurement) InitMultiIndex() error {
 	// Create an array of measurements, based on length of indexed_multiple:
 
 	multimeas := []*Measurement{}
@@ -169,7 +170,7 @@ func (m *Measurement) InitMultiIndex(snmpClient *snmp.Client) error {
 
 		// create entirely new measurement based on provided CFG
 		mm := New(&mcfg, m.measFilters, m.mFilters, m.Log)
-		err := mm.Init(snmpClient)
+		err := mm.Init()
 		if err != nil {
 			return fmt.Errorf("init multi measurement %s..%s", m.ID, v.Label)
 		}
@@ -184,16 +185,16 @@ func (m *Measurement) InitMultiIndex(snmpClient *snmp.Client) error {
 }
 
 // AddMultiFilter - initializes filter for each existin measurement defined in MultiIndexMeas
-func (m *Measurement) AddMultiFilter(snmpClient *snmp.Client) {
+func (m *Measurement) AddMultiFilter() {
 	for _, meas := range m.MultiIndexMeas {
-		meas.AddFilter(meas.FilterCfg, false, snmpClient)
+		meas.AddFilter(meas.FilterCfg, false)
 	}
 }
 
 // UpdateMultiFilter - updates filter for each existin measurement defined in MultiIndexMeas
-func (m *Measurement) UpdateMultiFilter(snmpClient *snmp.Client) {
+func (m *Measurement) UpdateMultiFilter() {
 	for _, meas := range m.MultiIndexMeas {
-		meas.UpdateFilter(snmpClient)
+		meas.UpdateFilter()
 	}
 }
 
@@ -400,7 +401,7 @@ func (m *Measurement) CheckInitFilter(f *config.MeasFilterCfg) (bool, bool) {
 }
 
 // AddFilter attach a filtering process to the measurement, but it is not initialized
-func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool, snmpClient *snmp.Client) error {
+func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool) error {
 	var err error
 	if m.cfg.GetMode == "value" {
 		return fmt.Errorf("Error this measurement %s  is not indexed(snmptable) not Filter apply ", m.cfg.ID)
@@ -408,7 +409,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool, snmpClient 
 
 	// If multi, all multi indexes must be reloaded and reload main measurement
 	if multi {
-		m.AddMultiFilter(snmpClient)
+		m.AddMultiFilter()
 		err := m.LoadMultiIndex()
 		if err != nil {
 			return err
@@ -442,13 +443,13 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool, snmpClient 
 
 		if cond.IsMultiple {
 			m.Filter = filter.NewOidMultipleFilter(cond.OIDCond, m.Log)
-			err = m.Filter.Init(snmpClient.Walk, dbc)
+			err = m.Filter.Init(m.snmpClient.Walk, dbc)
 			if err != nil {
 				return fmt.Errorf("Error invalid Multiple Condition Filter : %s", err)
 			}
 		} else {
 			m.Filter = filter.NewOidFilter(cond.OIDCond, cond.CondType, cond.CondValue, m.Log)
-			err = m.Filter.Init(snmpClient.Walk)
+			err = m.Filter.Init(m.snmpClient.Walk)
 			if err != nil {
 				return fmt.Errorf("Error invalid OID condition Filter : %s", err)
 			}
@@ -477,7 +478,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool, snmpClient 
 }
 
 // UpdateFilter reload indexed with filters
-func (m *Measurement) UpdateFilter(snmpClient *snmp.Client) (bool, error) {
+func (m *Measurement) UpdateFilter() (bool, error) {
 	var err error
 
 	if m.cfg.GetMode == "value" {
@@ -489,14 +490,14 @@ func (m *Measurement) UpdateFilter(snmpClient *snmp.Client) (bool, error) {
 
 	// if its indexed_multiple, we need to update internal filters and create the new metric table on based one
 	if m.cfg.GetMode == "indexed_multiple" {
-		m.UpdateMultiFilter(snmpClient)
+		m.UpdateMultiFilter()
 		il, _, err := m.BuildMultiIndexLabels()
 		if err != nil {
 			return false, err
 		}
 		m.AllIndexedLabels = il
 	} else {
-		il, err2 := m.loadIndexedLabels(snmpClient)
+		il, err2 := m.loadIndexedLabels()
 
 		if err2 != nil {
 			m.Errorf("Error while trying to reload Indexed Labels for baseOid %s : ERROR: %s", m.cfg.IndexOID, err)
@@ -574,7 +575,7 @@ func (m *Measurement) UpdateFilter(snmpClient *snmp.Client) (bool, error) {
 
 // GetData read data from device using SNMP get (GetMode=value) or walk (default).
 // Store retrieved values into m.OidSnmpMap
-func (m *Measurement) GetData(snmpClient *snmp.Client) (int64, int64, int64) {
+func (m *Measurement) GetData() (int64, int64, int64) {
 	now := time.Now()
 	var gathered int64
 	var processed int64
@@ -600,11 +601,11 @@ func (m *Measurement) GetData(snmpClient *snmp.Client) (int64, int64, int64) {
 
 	if m.cfg.GetMode == "value" {
 		// never will be error
-		snmpClient.Get(m.snmpOids, setRawData)
+		m.snmpClient.Get(m.snmpOids, setRawData)
 	} else {
 		for _, v := range m.cfg.FieldMetric {
-			if err := snmpClient.Walk(v.BaseOID, setRawData); err != nil {
-				m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", snmpClient.Target(), v.BaseOID, err)
+			if err := m.snmpClient.Walk(v.BaseOID, setRawData); err != nil {
+				m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target(), v.BaseOID, err)
 				errors += int64(m.MetricTable.Len())
 			}
 		}
@@ -614,7 +615,7 @@ func (m *Measurement) GetData(snmpClient *snmp.Client) (int64, int64, int64) {
 }
 
 // ComputeOidConditionalMetrics take OID contitional metrics and computes true value
-func (m *Measurement) ComputeOidConditionalMetrics(snmpClient *snmp.Client) {
+func (m *Measurement) ComputeOidConditionalMetrics() {
 	if m.cfg.OidCondMetric == nil {
 		m.Infof("Not Oid CONDITIONEVAL metrics exist on this measurement")
 		return
@@ -626,7 +627,7 @@ func (m *Measurement) ComputeOidConditionalMetrics(snmpClient *snmp.Client) {
 			evalkey := m.cfg.ID + "." + v.ID
 			if metr, ok := m.OidSnmpMap[evalkey]; ok {
 				m.Debugf("OK OidCondition  metric found %s Eval KEY", evalkey)
-				metr.Compute(snmpClient.Walk, dbc)
+				metr.Compute(m.snmpClient.Walk, dbc)
 			} else {
 				m.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 			}
@@ -722,7 +723,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 	}
 }
 
-func (m *Measurement) loadIndexedLabels(snmpClient *snmp.Client) (map[string]string, error) {
+func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 	m.Debugf("Looking up column names %s ", m.cfg.IndexOID)
 
 	allindex := make(map[string]string)
@@ -770,7 +771,7 @@ func (m *Measurement) loadIndexedLabels(snmpClient *snmp.Client) (map[string]str
 	}
 	// needed to get data for different indexes
 	m.curIdxPos = m.idxPosInOID
-	err := snmpClient.Walk(m.cfg.IndexOID, setRawData)
+	err := m.snmpClient.Walk(m.cfg.IndexOID, setRawData)
 	if err != nil {
 		m.Errorf("LOADINDEXEDLABELS - SNMP WALK error: %s", err)
 		return allindex, err
@@ -793,7 +794,7 @@ func (m *Measurement) loadIndexedLabels(snmpClient *snmp.Client) (map[string]str
 		// initialize allindex again
 		allindex = make(map[string]string)
 		m.curIdxPos = m.idx2PosInOID
-		err = snmpClient.Walk(m.cfg.TagOID, setRawData)
+		err = m.snmpClient.Walk(m.cfg.TagOID, setRawData)
 		if err != nil {
 			m.Errorf("SNMP WALK over IndexOID error: %s", err)
 			return allindex, err
@@ -837,7 +838,7 @@ func (m *Measurement) loadIndexedLabels(snmpClient *snmp.Client) (map[string]str
 			allindex = make(map[string]string)
 			// Store the last position to use it on allindex
 			m.curIdxPos = len(tagcfg.TagOID)
-			err = snmpClient.Walk(tagcfg.TagOID, setRawData)
+			err = m.snmpClient.Walk(tagcfg.TagOID, setRawData)
 			if err != nil {
 				m.Errorf("SNMP WALK over IndexOID error: %s", err)
 				return allindex, err
@@ -875,15 +876,15 @@ func (m *Measurement) loadIndexedLabels(snmpClient *snmp.Client) (map[string]str
 	}
 }
 
-// MeasurementLoop do all measurement processing, gathering metrics, handling filters and receiving messages from device
+// GatherLoop do all measurement processing, gathering metrics, handling filters and receiving messages from device
 // deviceBus used by device to pass messages to the measurements.
 // deviceFreq used if the measurement does not have frequency.
 // deviceUpdateFilterFreq is the number of gather loops after a update filters will be done
-// gatherLock will be used to achieve sequential gathering (only one measurement gorouting gathering data at the same
+// gatherLock will be used to achieve sequential gathering (only one measurement goroutine gathering data at the same
 // time). It will be enforced if gatherLock is not nil.
-func (m *Measurement) MeasurementLoop(
+func (m *Measurement) GatherLoop(
 	busNode *bus.Node,
-	snmpClient snmp.Client,
+	snmpCli snmp.Client,
 	deviceFreq int,
 	deviceUpdateFilterFreq int,
 
@@ -903,54 +904,55 @@ func (m *Measurement) MeasurementLoop(
 	updateFilterTicker := time.NewTicker(time.Duration(deviceFreq) * time.Second * time.Duration(deviceUpdateFilterFreq))
 	defer updateFilterTicker.Stop()
 
+	m.snmpClient = &snmpCli
 	// Try to connect for the first time, init metrics and gather data
-	_, err := snmpClient.Connect(systemOIDs)
+	_, err := m.snmpClient.Connect(systemOIDs)
 	if err != nil {
 		m.Log.Error("Not able to connect at the start of the measurement")
 	} else {
 		// If the connection is succesfull, initialize
-		errInit := m.Init(&snmpClient)
+		errInit := m.Init()
 		if errInit != nil {
 			m.Log.Error("Not able to initialize at the start of the measurement")
 		} else {
 			// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
 			m.initialized = true
-			m.GetData(&snmpClient)
+			m.GetData()
 		}
 	}
 
 	for {
 		// In each iteration, if measurement is enabled and not connected, try again to connect
-		if m.Enabled && !snmpClient.Connected {
-			_, err := snmpClient.Connect(systemOIDs)
+		if m.Enabled && !m.snmpClient.Connected {
+			_, err := m.snmpClient.Connect(systemOIDs)
 			if err != nil {
 				m.Log.Error("Not able to connect")
 			}
 		}
 		// If measurement is not initialized, do it. Could be because it returned an error while starting.
-		if m.Enabled && snmpClient.Connected && !m.initialized {
-			err := m.Init(&snmpClient)
+		if m.Enabled && m.snmpClient.Connected && !m.initialized {
+			err := m.Init()
 			if err != nil {
 				m.Log.Error("Not able to initialize at the start of the measurement")
 			} else {
 				// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
 				m.initialized = true
-				m.GetData(&snmpClient)
+				m.GetData()
 			}
 		}
 
 		select {
 		case <-updateFilterTicker.C:
-			m.filterUpdate(snmpClient)
+			m.filterUpdate()
 		case <-gatherTicker.C:
-			m.gatherLoop(snmpClient, gatherLock, varMap, tagMap, influxClient)
+			m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
 		case val := <-busNode.Read:
 			m.Infof("Measurement [%v] received message: %s (%+v)", m.ID, val.Type, val.Data)
 			switch val.Type {
 			case bus.FilterUpdate:
-				m.filterUpdate(snmpClient)
+				m.filterUpdate()
 			case bus.ForceGather:
-				m.gatherLoop(snmpClient, gatherLock, varMap, tagMap, influxClient)
+				m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
 			case bus.Enabled:
 				enabled, ok := val.Data.(bool)
 				if !ok {
@@ -962,30 +964,30 @@ func (m *Measurement) MeasurementLoop(
 				// TODO meter cosas en stats?
 				m.rtData.Unlock()
 			case bus.SNMPReset:
-				err := snmpClient.Release()
+				err := m.snmpClient.Release()
 				if err != nil {
 					m.Errorf("releasing snmp client: %v", err)
 				}
 			case bus.SNMPResetHard:
-				err := snmpClient.Release()
+				err := m.snmpClient.Release()
 				if err != nil {
 					m.Errorf("releasing snmp client: %v", err)
 				}
-				m.filterUpdate(snmpClient)
+				m.filterUpdate()
 			case bus.SNMPDebug:
 				debug, ok := val.Data.(bool)
 				if !ok {
 					m.Log.Errorf("invalid value for debug bus message: %v", val.Data)
 					continue
 				}
-				snmpClient.SetDebug(debug)
+				m.snmpClient.SetDebug(debug)
 			case bus.SetSNMPMaxRep:
 				maxrep, ok := val.Data.(uint8)
 				if !ok {
 					m.Log.Errorf("invalid value for maxrep bus message: %v", val.Data)
 					continue
 				}
-				snmpClient.SetMaxRep(maxrep)
+				m.snmpClient.SetMaxRep(maxrep)
 			case bus.Exit, bus.SyncExit:
 				return
 			default:
@@ -996,7 +998,7 @@ func (m *Measurement) MeasurementLoop(
 }
 
 // InitFilters look for filters and add to the measurement with this Filter after it initializes the runtime for the measurement
-func (m *Measurement) InitFilters(snmpClient *snmp.Client) {
+func (m *Measurement) InitFilters() {
 	// check for filters associated with this measurement
 	var mfilter *config.MeasFilterCfg
 	var multi bool
@@ -1016,7 +1018,7 @@ func (m *Measurement) InitFilters(snmpClient *snmp.Client) {
 	// If multi, filters need to be propagated into the internal array and reload all
 	if mfilter != nil || multi {
 		m.Debugf("filters %s found for device  and measurement %s ", mfilter.ID, m.ID)
-		err := m.AddFilter(mfilter, multi, snmpClient)
+		err := m.AddFilter(mfilter, multi)
 		if err != nil {
 			m.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.ID, err)
 		}
@@ -1060,23 +1062,22 @@ func (m *Measurement) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// gatherLoop metrics from device, process them and send values to the backend.
+// gatherOnce metrics from device, process them and send values to the backend.
 // It also checks if it should run based on the measurement state.
 // At the end of the function it could change the status of the connection (to not
 // connected) if it was unable to get data
-func (m *Measurement) gatherLoop(
-	snmpClient snmp.Client,
+func (m *Measurement) gatherOnce(
 	gatherLock *sync.Mutex,
 	varMap map[string]interface{},
 	tagMap map[string]string,
 	influxClient *output.InfluxDB,
 ) {
 	// Do not gather data if measurement is disabled or it doesn't have a connection or measurement is not initialized
-	if !m.Enabled || !snmpClient.Connected || !m.initialized {
+	if !m.Enabled || !m.snmpClient.Connected || !m.initialized {
 		return
 	}
 
-	// Do not allow the UI to get data from the measurement while it is gahering new data.
+	// Do not allow the UI to get data from the measurement while it is gathering new data.
 	// To have a complete picture, lock until we have all metrics.
 	m.rtData.Lock()
 	defer m.rtData.Unlock()
@@ -1097,7 +1098,7 @@ func (m *Measurement) gatherLoop(
 	}
 	// TODO si usa SnmpGetData obtiene los valores de m.snmpOids, si lo hace de SnmpWalkData lo obtiene de m.cfg.FieldMetric? Esto es normal?
 	// Get data from device and set the values to the snmp metrics structs
-	m.GetData(&snmpClient)
+	m.GetData()
 	// TODO stats
 	// nGets, nProcs, nErrs := m.GetData(snmpClient)
 	// d.stats.UpdateSnmpGetStats(nGets, nProcs, nErrs)
@@ -1105,7 +1106,7 @@ func (m *Measurement) gatherLoop(
 	// TODO que hace esta función?
 	// TODO esta funcion necesita conex con la db?? Cuando se ha inicializado? Globlamente en el main.
 	// TODO Acceso a la db en cada gather de cada measurement, no parece muy eficiente.
-	m.ComputeOidConditionalMetrics(&snmpClient)
+	m.ComputeOidConditionalMetrics()
 	if gatherLock != nil {
 		m.Log.Debug("release lock to avoid concurrent gathering")
 		gatherLock.Unlock()
@@ -1138,20 +1139,20 @@ func (m *Measurement) gatherLoop(
 	// estuviésemos recogiendo datos pero no enviándolos a influx.
 	if len(points) == 0 {
 		m.Log.Warnf("marking as not connected because there were no points to send")
-		snmpClient.Connected = false
+		m.snmpClient.Connected = false
 	}
 }
 
 // filterUpdate does ... TODO
-func (m *Measurement) filterUpdate(snmpClient snmp.Client) {
+func (m *Measurement) filterUpdate() {
 	// Do not try to update filters if measurement is disabled or it doesn't have a connection or measurement is not initialized
-	if !m.Enabled || !snmpClient.Connected || !m.initialized {
+	if !m.Enabled || !m.snmpClient.Connected || !m.initialized {
 		return
 	}
 
 	// Update filters
 	start := time.Now()
-	m.Init(&snmpClient)
+	m.Init()
 	duration := time.Since(start)
 	// d.stats.SetFltUpdateStats(start, duration) // TODO
 	// d.stats.Send() // TODO enviarlas aqui?

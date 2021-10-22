@@ -643,7 +643,7 @@ func (d *SnmpDevice) StartGather() {
 			}
 
 			// Start the loop that will gather metrics and handle signals
-			m.MeasurementLoop(node, snmpClient, d.Freq, d.cfg.UpdateFltFreq, d.VarMap, d.TagMap, d.cfg.SystemOIDs, d.Influx, gatherLock)
+			m.GatherLoop(node, snmpClient, d.Freq, d.cfg.UpdateFltFreq, d.VarMap, d.TagMap, d.cfg.SystemOIDs, d.Influx, gatherLock)
 		}(meas)
 	}
 
