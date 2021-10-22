@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // FileFilter a filter loaded from a Config File placed in confDir (made for influxsnmp tool compatibility)
@@ -16,11 +16,11 @@ type FileFilter struct {
 	FileName     string
 	EnableAlias  bool
 	confDir      string
-	log          *logrus.Logger
+	log          utils.Logger
 }
 
 // NewFileFilter creates a new Filter
-func NewFileFilter(fileName string, enableAlias bool, l *logrus.Logger) *FileFilter {
+func NewFileFilter(fileName string, enableAlias bool, l utils.Logger) *FileFilter {
 	return &FileFilter{FileName: fileName, EnableAlias: enableAlias, log: l}
 }
 

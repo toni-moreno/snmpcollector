@@ -19,6 +19,11 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
+const (
+	// DEFAULT_MAX_OIDS default value if value in config is 0 or less
+	DEFAULT_MAX_OIDS = 60
+)
+
 var (
 	cfg    *config.DBConfig
 	logDir string
@@ -88,10 +93,15 @@ func (d *SnmpDevice) GetLogFilePath() string {
 
 // ToJSON return a JSON version of the device data
 func (d *SnmpDevice) ToJSON() ([]byte, error) {
-	// TODO coger un read lock de cada measurement, para poder independicar los measurements y que cada uno
-	// pueda escribir en sus datos sin bloqueos
+	// TODO coger el rdData lock cuando estemos modificando algo del SnmpDevice
+
+	// Get read lock for SnmpDevice struct (protect all values except Measurements)
 	d.rtData.RLock()
 	defer d.rtData.RUnlock()
+
+	// To avoid data racing while reading SnmpDevice.Measurements, Measurement implements a custom
+	// MarshalJSON function, grabbing there the lock
+
 	result, err := json.MarshalIndent(d, "", "  ")
 	if err != nil {
 		d.Errorf("Error on Get JSON data from device")
@@ -240,21 +250,17 @@ func (d *SnmpDevice) InitDevMeasurements() {
 				d.Debugf("MEASUREMENT CFG KEY: %s VALUE %s", val, mVal.Name)
 				// creating a new measurement runtime object and asigning to array
 
-				// TODO pasar un logger ya específico para este host y este measurement
-				// Pasar este measLog en vez de d.log
-				/*
-					measLog := d.log.WithFields(logrus.Fields{
-						"host": d.cfg.Host,
-						"measurement": mVal,
-					})
-					imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, measLog)
-				*/
+				// Pass a logger with predefined values to distinguish this host-measurement
+				measLog := d.log.WithFields(logrus.Fields{
+					"host":        d.cfg.Host,
+					"measurement": mVal,
+				})
 				// TODO pasamos MeasFilters y MFilters porque lo necesitará cuando haga el InitFilters (antes se hacia en un bucle debajo de este for)
 				// TODO no pasar la config del measurement, si no una copia.
 				// Así evitamos que cada gorutina encargada de cada measurement en cada device
 				// puedan intentar modificarla al mismo tiempo (Lo hace SnmpMetric.Init)
 				// En realidad esto no arregla el problema, ya que se sigue pasando el puntero de SnmpMetricCfg
-				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, d.log)
+				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, measLog)
 				d.Measurements = append(d.Measurements, imeas)
 			}
 		}
@@ -263,14 +269,6 @@ func (d *SnmpDevice) InitDevMeasurements() {
 	// Initialize all snmpMetrics  objects and OID array
 	// get data first time
 	// useful to inicialize counter all value and test device snmp availability
-}
-
-// this method puts all metrics as invalid once sent to the backend
-// it lets us to know if any of them has not been updated in the gathering process
-func (d *SnmpDevice) invalidateMetrics() {
-	for _, v := range d.Measurements {
-		v.InvalidateMetrics()
-	}
 }
 
 /*
@@ -444,37 +442,6 @@ func (d *SnmpDevice) CheckDeviceConnectivity() {
 	}
 }
 
-// TODO borrar esto? Mejor que cada gorutina gestione su conex, no en el struct
-func (d *SnmpDevice) snmpRelease() {
-	for _, v := range d.snmpClientMap {
-		if v != nil {
-			d.Infof("Releasing snmp connection for %s", "init")
-			v.Release()
-		}
-	}
-}
-
-// TODO borrar esto? Mejor que cada gorutina gestione su conex, no en el struct
-func (d *SnmpDevice) releaseClientMap() {
-	if !d.cfg.ConcurrentGather {
-		if val, ok := d.snmpClientMap["init"]; ok {
-			if val != nil {
-				d.Infof("Releasing snmp connection for %s", "init")
-				val.Release()
-			}
-		}
-	} else {
-		for k, val := range d.snmpClientMap {
-			if val != nil {
-				d.Infof("Releasing snmp connection for %s", k)
-				val.Release()
-			}
-		}
-	}
-	// begin reset process
-	d.snmpClientMap = make(map[string]*snmp.Client)
-}
-
 // TODO implementar en los measurements
 /*
 func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
@@ -484,16 +451,6 @@ func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 	initerrors := 0
 	if d.cfg.ConcurrentGather == false {
 		c, err := d.InitSnmpConnect("init", debug, maxrep)
-		if err == nil {
-			for _, m := range d.Measurements {
-				m.SetSnmpClient(c)
-			}
-		} else {
-			d.Errorf("Error on reset snmp connection  on device %s: disconnecting now...  ", d.cfg.ID)
-			d.DeviceConnected = false
-			d.stats.SetStatus(d.DeviceActive, false)
-		}
-	} else {
 		for _, m := range d.Measurements {
 			c, err := d.InitSnmpConnect(m.ID, debug, maxrep)
 			if err != nil {
@@ -518,6 +475,48 @@ func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
 // StartGather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) StartGather() {
 	d.Infof("Initializating gather process for device on host (%s)", d.cfg.Host)
+
+	// Define a default value for maxOids if its zero
+	maxOids := d.cfg.MaxOids
+	if maxOids <= 0 {
+		maxOids = DEFAULT_MAX_OIDS
+	}
+
+	// Organize the config needed to establish a SNMP connection.
+	// Will be used when a new snmp connection is needed.
+	connectionParams := snmp.ConnectionParams{
+		Host:           d.cfg.Host,
+		Port:           d.cfg.Port,
+		Timeout:        d.cfg.Timeout,
+		Retries:        d.cfg.Retries,
+		SnmpVersion:    d.cfg.SnmpVersion,
+		Community:      d.cfg.Community,
+		MaxRepetitions: d.cfg.MaxRepetitions,
+		MaxOids:        maxOids,
+		Debug:          d.cfg.SnmpDebug,
+		V3Params: snmp.V3Params{
+			SecLevel:        d.cfg.V3SecLevel,
+			AuthUser:        d.cfg.V3AuthUser,
+			AuthPass:        d.cfg.V3AuthPass,
+			PrivPass:        d.cfg.V3PrivPass,
+			PrivProt:        d.cfg.V3PrivProt,
+			AuthProt:        d.cfg.V3AuthProt,
+			ContextName:     d.cfg.V3ContextName,
+			ContextEngineID: d.cfg.V3ContextEngineID,
+		},
+	}
+
+	// Check if the values are valid, for example, if we have a community if the connection is v2c
+	err := connectionParams.Validation()
+	if err != nil {
+		d.Errorf("SNMP parameter validation: %v", err)
+		// TODO aqui estamos terminando la gorutina para el device porque tiene un error que
+		// no va a permitir hacer nada.
+		// Marcar algo más para que en la UI quede claro que este device no funciona?
+		// Como vamos a conseguir que vuelva a la vida?
+		return
+	}
+
 	// Wait for the device to become active
 	// This loop will wait for commands and finish if we device recive the command to exit or to activate
 	// Others commands will be logged and ignored
@@ -556,24 +555,19 @@ func (d *SnmpDevice) StartGather() {
 	for {
 		// If device receive a command to deactivate, stop trying to connect
 		if d.DeviceActive {
-			// This will try to connect to the device, gather SysInfo and set DeviceConnected to true
-			// This connection will be stored on d.snmpClientMap["init"]
-			/* TODO Necesitamos esta conex "init" para algo?
-			_, err := d.InitSnmpConnect("init", d.cfg.SnmpDebug, 0)
+			snmpClient := snmp.Client{
+				ID:               d.cfg.Host,
+				DisableBulk:      d.cfg.DisableBulk,
+				ConnectionParams: connectionParams,
+				Log:              d.log,
+			}
+			sysinfo, err := snmpClient.Connect(d.cfg.SystemOIDs)
 			if err == nil {
-				startSnmp := time.Now()
-				// Create data structures to store data and connect to the device go gather system info
-				// TODO esto ahora mismo inicializa todo, partirlo para llevarlo a la gorutina del meas
+				d.SysInfo = sysinfo
 				d.InitDevMeasurements()
-				elapsedSnmp := time.Since(startSnmp)
-				d.stats.SetFltUpdateStats(startSnmp, elapsedSnmp)
-				d.Infof("snmp INIT runtime measurements/filters took [%s] ", elapsedSnmp)
-				// Connection established, progress
 				break
 			}
-			*/
-			d.InitDevMeasurements()
-			break
+			d.Errorf("unable to connect")
 			// send counters when device active and not connected ( no reset needed only status fields/tags are sen
 			// d.stats.Send() // TODO gestion de stats
 		}
@@ -623,38 +617,25 @@ func (d *SnmpDevice) StartGather() {
 		go func(m *measurement.Measurement) {
 			defer deviceWG.Done()
 
+			identifier := fmt.Sprintf("%s-%s", d.cfg.ID, m.ID)
+
 			// Add the measurement as a node to the bus
-			node := bus.NewNode(fmt.Sprintf("%s-%s", d.cfg.ID, m.ID))
+			node := bus.NewNode(identifier)
 			deviceControlBus.Join(node)
 
-			m.GatherLoop(
-				node,
-				d.Freq,
-				d.cfg.UpdateFltFreq,
-				d.cfg.SnmpDebug,
-				d.cfg.Host,
-				d.cfg.MaxRepetitions,
-				d.cfg.SnmpVersion,
-				d.cfg.Community,
-				d.cfg.Port,
-				d.cfg.Timeout,
-				d.cfg.Retries,
-				d.cfg.V3AuthUser,
-				d.cfg.V3SecLevel,
-				d.cfg.V3AuthPass,
-				d.cfg.V3PrivPass,
-				d.cfg.V3PrivProt,
-				d.cfg.V3AuthProt,
-				d.cfg.V3ContextName,
-				d.cfg.V3ContextEngineID,
-				d.cfg.ID,
-				d.cfg.SystemOIDs,
-				d.cfg.MaxOids,
-				d.cfg.DisableBulk,
-				d.VarMap,
-				d.TagMap,
-				d.Influx,
-			)
+			// Create the SNMP client for each measurement.
+			// This client is just the data needed to connect, it does not start any connection yet.
+			// Here is created just the building blocks to be able to create the goSNMP client.
+			// We leave to the Measurement to handle the creation and destruction of that client.
+			snmpClient := snmp.Client{
+				ID:               identifier,
+				DisableBulk:      d.cfg.DisableBulk,
+				ConnectionParams: connectionParams,
+				Log:              m.Log,
+			}
+
+			// Start the loop that will gather metrics and handle signals
+			m.GatherLoop(node, snmpClient, d.Freq, d.cfg.UpdateFltFreq, d.VarMap, d.TagMap, d.cfg.SystemOIDs, d.Influx)
 		}(meas)
 	}
 

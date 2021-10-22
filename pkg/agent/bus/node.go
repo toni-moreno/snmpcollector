@@ -13,6 +13,7 @@ const (
 	LogLevel
 	ForceGather
 	FilterUpdate
+	// SNMPResetHard borramos el cliente goSNMP y lo regeneramos
 	SNMPResetHard
 	SNMPReset
 	SNMPDebug

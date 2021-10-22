@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // two byte-oriented functions identical except for operator comparing c to 127.
@@ -49,7 +49,7 @@ func formatDec2ASCII(input string) string {
 	return stripCtlAndExtFromBytes(string(bArray))
 }
 
-func formatReGexp(l *logrus.Logger, input string, pattern string, replace string) string {
+func formatReGexp(l utils.Logger, input string, pattern string, replace string) string {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		l.Errorf("FormatReGexp  Input[%s] Pattern [%s] Error [%s] ", input, pattern, err)
@@ -94,7 +94,7 @@ func sectionDotSlice(input string, first int, last int) (string, error) {
 	return output, err
 }
 
-func formatTag(l *logrus.Logger, format string, data map[string]string, def string) string {
+func formatTag(l utils.Logger, format string, data map[string]string, def string) string {
 	if len(format) == 0 {
 		return data[def]
 	}

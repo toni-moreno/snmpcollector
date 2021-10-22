@@ -5,12 +5,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 var (
@@ -61,7 +61,7 @@ var (
 	// DBConfig contains the database config
 	DBConfig config.DBConfig
 
-	log *logrus.Logger
+	log utils.Logger
 	// reloadMutex guards the reloadProcess flag
 	reloadMutex   sync.Mutex
 	reloadProcess bool
@@ -79,7 +79,7 @@ var (
 )
 
 // SetLogger sets the current log output.
-func SetLogger(l *logrus.Logger) {
+func SetLogger(l utils.Logger) {
 	log = l
 }
 

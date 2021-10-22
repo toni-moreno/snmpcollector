@@ -1,11 +1,13 @@
 package webui
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/go-macaron/binding"
+	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
@@ -102,42 +104,56 @@ func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	//     schema:
 	//       "$ref": "#/responses/idOfStringResp"
 
-	log.Infof("trying to ping device %s : %+v", cfg.ID, cfg)
+	l := log.WithFields(logrus.Fields{
+		"id": cfg.ID,
+	})
+	l.Infof("trying to ping device, config: %+v", cfg)
 
-	// TODO tal vez pasar el mensaje al device y que sea el quien haga el ping?
-	// Parece un poco raro aqui establecer un cliente snmp
-	// TODO tal vez una función custom en vez de pasar ese param "ping" ?
-	_, sysinfo, err := snmp.GetClient(
-		cfg.Host,
-		cfg.MaxRepetitions,
-		cfg.SnmpVersion,
-		cfg.Community,
-		cfg.Port,
-		cfg.Timeout,
-		cfg.Retries,
-		cfg.V3AuthUser,
-		cfg.V3SecLevel,
-		cfg.V3AuthPass,
-		cfg.V3PrivPass,
-		cfg.V3PrivProt,
-		cfg.V3AuthProt,
-		cfg.V3ContextName,
-		cfg.V3ContextEngineID,
-		cfg.ID,
-		cfg.SystemOIDs,
-
-		log,
-		"ping",
-		false,
-		0,
-	)
-	if err != nil {
-		log.Debugf("ERROR  on query device : %s", err)
-		ctx.JSON(400, err.Error())
-	} else {
-		log.Debugf("OK on query device ")
-		ctx.JSON(200, sysinfo)
+	connectionParams := snmp.ConnectionParams{
+		Host:           cfg.Host,
+		Port:           cfg.Port,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		SnmpVersion:    cfg.SnmpVersion,
+		Community:      cfg.Community,
+		MaxRepetitions: cfg.MaxRepetitions,
+		MaxOids:        cfg.MaxOids,
+		Debug:          cfg.SnmpDebug,
+		V3Params: snmp.V3Params{
+			SecLevel:        cfg.V3SecLevel,
+			AuthUser:        cfg.V3AuthUser,
+			AuthPass:        cfg.V3AuthPass,
+			PrivPass:        cfg.V3PrivPass,
+			PrivProt:        cfg.V3PrivProt,
+			AuthProt:        cfg.V3AuthProt,
+			ContextName:     cfg.V3ContextName,
+			ContextEngineID: cfg.V3ContextEngineID,
+		},
 	}
+	err := connectionParams.Validation()
+	if err != nil {
+		// TODO cambiar a l.Errorf?
+		l.Debugf("ERROR on query device : %s", err)
+		ctx.JSON(400, fmt.Errorf("SNMP parameter validation: %v", err))
+		return
+	}
+
+	snmpClient := snmp.Client{
+		ID:               cfg.Host,
+		DisableBulk:      cfg.DisableBulk,
+		ConnectionParams: connectionParams,
+		Log:              l,
+	}
+	sysinfo, err := snmpClient.Connect(cfg.SystemOIDs)
+	if err != nil {
+		// TODO cambiar a l.Errorf?
+		l.Debugf("ERROR on query device : %s", err)
+		ctx.JSON(400, fmt.Errorf("unable to connect: %v", err))
+		return
+	}
+
+	l.Debugf("OK on query device")
+	ctx.JSON(200, sysinfo)
 }
 
 // SnmpQueryResponse response for queries in the UI
@@ -198,55 +214,75 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	obtype := ctx.Params(":obtype")
 	data := strings.TrimSpace(ctx.Params(":data"))
 
-	log.Infof("trying to query device %s : getmode: %s objectype: %s data %s", cfg.ID, getmode, obtype, data)
+	l := log.WithFields(logrus.Fields{
+		"id": cfg.ID,
+	})
+	l.Infof("trying to query device : getmode: %s objectype: %s data %s", getmode, obtype, data)
 
 	if obtype != "oid" {
-		log.Warnf("Object Type [%s] Not Supperted", obtype)
+		l.Warnf("Object Type [%s] Not Supperted", obtype)
 		ctx.JSON(400, "Object Type [ "+obtype+"] Not Supperted")
 		return
 	}
 
-	snmpcli, info, err := snmp.GetClient(
-		cfg.Host,
-		cfg.MaxRepetitions,
-		cfg.SnmpVersion,
-		cfg.Community,
-		cfg.Port,
-		cfg.Timeout,
-		cfg.Retries,
-		cfg.V3AuthUser,
-		cfg.V3SecLevel,
-		cfg.V3AuthPass,
-		cfg.V3PrivPass,
-		cfg.V3PrivProt,
-		cfg.V3AuthProt,
-		cfg.V3ContextName,
-		cfg.V3ContextEngineID,
-		cfg.ID,
-		cfg.SystemOIDs,
-		log,
-		"query",
-		false,
-		0,
-	)
+	connectionParams := snmp.ConnectionParams{
+		Host:           cfg.Host,
+		Port:           cfg.Port,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		SnmpVersion:    cfg.SnmpVersion,
+		Community:      cfg.Community,
+		MaxRepetitions: cfg.MaxRepetitions,
+		MaxOids:        cfg.MaxOids,
+		Debug:          cfg.SnmpDebug,
+		V3Params: snmp.V3Params{
+			SecLevel:        cfg.V3SecLevel,
+			AuthUser:        cfg.V3AuthUser,
+			AuthPass:        cfg.V3AuthPass,
+			PrivPass:        cfg.V3PrivPass,
+			PrivProt:        cfg.V3PrivProt,
+			AuthProt:        cfg.V3AuthProt,
+			ContextName:     cfg.V3ContextName,
+			ContextEngineID: cfg.V3ContextEngineID,
+		},
+	}
+	err := connectionParams.Validation()
 	if err != nil {
-		log.Debugf("ERROR  on open connection with device %s : %s", cfg.ID, err)
-		ctx.JSON(400, err.Error())
+		// TODO cambiar a l.Errorf?
+		l.Debugf("ERROR on query device : %s", err)
+		ctx.JSON(400, fmt.Errorf("SNMP parameter validation: %v", err))
 		return
 	}
+
+	snmpClient := snmp.Client{
+		ID:               cfg.Host,
+		DisableBulk:      cfg.DisableBulk,
+		ConnectionParams: connectionParams,
+		Log:              l,
+	}
+	sysinfo, err := snmpClient.Connect(cfg.SystemOIDs)
+	if err != nil {
+		// TODO cambiar a l.Errorf?
+		l.Debugf("ERROR on query device : %s", err)
+		ctx.JSON(400, fmt.Errorf("unable to connect: %v", err))
+		return
+	}
+
 	start := time.Now()
-	result, err := snmp.Query(snmpcli, getmode, data)
+	result, err := snmpClient.Query(getmode, data)
 	elapsed := time.Since(start)
 	if err != nil {
-		log.Debugf("ERROR  on query device : %s", err)
-		ctx.JSON(400, err.Error())
+		// TODO cambiar a l.Errorf?
+		l.Debugf("ERROR  on query device : %s", err)
+		ctx.JSON(400, fmt.Errorf("unable to query: %v", err))
 		return
 	}
-	log.Debugf("OK on query device ")
+
+	l.Debugf("OK on query device")
 	snmpdata := SnmpQueryResponse{
 		&cfg,
 		elapsed.Seconds(),
-		info,
+		sysinfo,
 		result,
 	}
 	ctx.JSON(200, snmpdata)
