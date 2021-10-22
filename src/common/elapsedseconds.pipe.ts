@@ -3,11 +3,11 @@ import {Pipe, PipeTransform} from '@angular/core';
 @Pipe({ name: 'elapsedseconds' })
 export class ElapsedSecondsPipe implements PipeTransform {
   transform(value: any, ...args: string[]): string {
-    if (typeof args === 'undefined' || args.length !== 1) {
+    if (typeof args === 'undefined' || args.length < 1) {
       throw new Error('ElapsedSecondsPipe: missing required decimals');
     }
 
-    return this.toSeconds(value, args[0] ,0);
+    return this.toSeconds(value, args[0], args[1], 0);
   }
   //from kbn.js in grafana project
   toFixed(value , decimals )  {
@@ -44,8 +44,12 @@ export class ElapsedSecondsPipe implements PipeTransform {
      }
   }
 
-  toSeconds(size , decimals, scaledDecimals) {
+  toSeconds(size , decimals, units = "seconds", scaledDecimals) {
     if (size === null) { return ""; }
+
+    if (units == "ns") {
+      size = size * 1.e-9
+    }
 
     // Less than 1 µs, devide in ns
     if (Math.abs(size) < 0.000001) {

@@ -30,7 +30,8 @@ import { InfluxMeasCfgComponent } from './influxmeas/influxmeascfg.component';
 import { MeasGroupCfgComponent } from './measgroup/measgroupcfg.component';
 import { MeasFilterCfgComponent } from './measfilter/measfiltercfg.component';
 import { InfluxServerCfgComponent } from './influxserver/influxservercfg.component';
-import { RuntimeComponent } from './runtime/runtime.component';
+import { RuntimeDeviceComponent } from './runtime_device/runtime_device.component';
+import { RuntimeOutputComponent } from './runtime_output/runtime_output.component';
 import { CustomFilterCfgComponent } from './customfilter/customfiltercfg.component';
 import { BlockUIService } from './common/blockui/blockui-service';
 
@@ -83,7 +84,8 @@ import { SpinnerComponent } from './common/spinner';
     CustomFilterCfgComponent,
     VarCatalogCfgComponent,
     TableListComponent,
-    RuntimeComponent,
+    RuntimeDeviceComponent,
+    RuntimeOutputComponent,
     GenericModal,
     AboutModal,
     ExportFileModal,

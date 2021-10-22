@@ -29,13 +29,12 @@ func NewAPIRtOutput(m *macaron.Macaron) error {
 func RTOutputBufferAction(ctx *Context) {
 	id := ctx.Params(":id")
 	action := ctx.Params(":action")
-	log.Infof("activating runtime on device %s", id)
+	log.Infof("apply action: %s on output %s runtime", action, id)
 	out, err := agent.GetOutput(id)
 	if err != nil {
 		ctx.JSON(404, err.Error())
 		return
 	}
-	log.Infof("activating runtime on device %s", id)
 	out.Action(action)
 	ctx.JSON(200, "OK")
 }
@@ -49,14 +48,13 @@ func RTGetOutputInfo(ctx *Context) {
 			ctx.JSON(404, err.Error())
 			return
 		}
-
 		log.Infof("get runtime data from id %s", id)
 		ctx.RawAsJSON(200, json)
 
 		//get only one device info
 	} else {
-		devstats := agent.GetOutputStats()
-		ctx.JSON(200, &devstats)
+		outputs := agent.GetOutputStats()
+		ctx.JSON(200, &outputs)
 	}
 	return
 }

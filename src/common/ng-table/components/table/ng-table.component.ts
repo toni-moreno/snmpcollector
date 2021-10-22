@@ -31,6 +31,7 @@ export class NgTableComponent {
   @Input() public showCustom: boolean = false;
   @Input() public showConnection: boolean = false;
   @Input() public showStatus: boolean = false;
+  @Input() public showOutput: boolean = false;
   @Input() public editMode: boolean = false;
   @Input() public exportType: string;
   @Input() public extraActions: Array<any>;
@@ -111,6 +112,13 @@ export class NgTableComponent {
     if  (transform === "elapsedseconds") {
       let test = new ElapsedSecondsPipe().transform(html,'3');
       html = test.toString();
+    }
+    if  (transform === "elapsednanoseconds") {
+      let test = new ElapsedSecondsPipe().transform(html,'3','ns');
+      html = test.toString();
+    }
+    if  (transform === "percent") {
+      html = html.toString() + " %"
     }
     if (typeof html === 'object') {
       var test: any = '<ul class="list-unstyled">';
