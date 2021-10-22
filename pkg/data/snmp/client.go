@@ -115,7 +115,16 @@ func (c *Client) Release() error {
 	return nil
 }
 
+// SetMaxRep change the MaxRepetitions of the snmp client.
+// It changes the current client and also the ConnectionParams to reuse the same
+// value if a regeneration of the client is done.
+func (c *Client) SetMaxRep(rep uint8) {
+	c.snmpClient.MaxRepetitions = uint32(rep)
+	c.ConnectionParams.MaxRepetitions = rep
+}
+
 // SetDebug configure a new logger for the goSNMP client to log everything to a different file
+// It also changes the ConnectionParams to reuse this value in case of a reconnection.
 func (c *Client) SetDebug(debug bool) {
 	if debug {
 		c.snmpClient.Logger = GetDebugLogger(c.ID)
@@ -123,6 +132,7 @@ func (c *Client) SetDebug(debug bool) {
 		nullLogger := gosnmp.NewLogger(log.New(io.Discard, "", 0))
 		c.snmpClient.Logger = nullLogger
 	}
+	c.ConnectionParams.Debug = debug
 }
 
 // Connect using the info stored in the struct, generate the goSNMP client and make the first connection to the
@@ -134,12 +144,22 @@ func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
 		return nil, fmt.Errorf("initializating the goSNMP client: %v", err)
 	}
 
+	// Close previous client if it exists
+	if c.snmpClient != nil {
+		err = c.snmpClient.Conn.Close()
+		if err != nil {
+			c.Log.Warnf("closing SNMP connection: %v", err)
+		}
+	}
+
 	c.snmpClient = goSNMPClient
 
 	sysinfo, err := c.SysInfoQuery(systemOIDs)
 	if err != nil {
 		return nil, fmt.Errorf("obtaining the sysInfo: %v", err)
 	}
+
+	c.Connected = true
 
 	return sysinfo, nil
 }

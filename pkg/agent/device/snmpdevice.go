@@ -466,36 +466,6 @@ func (d *SnmpDevice) CheckDeviceConnectivity() {
 	}
 }
 
-// TODO implementar en los measurements
-/*
-func (d *SnmpDevice) snmpReset(debug bool, maxrep uint8) {
-	// On sequential we need release connection first , concurrent has an automatic self release system
-	d.Infof("Reseting snmp connections DEBUG  ACTIVE  [%t] ", debug)
-	d.releaseClientMap()
-	initerrors := 0
-	if d.cfg.ConcurrentGather == false {
-		c, err := d.InitSnmpConnect("init", debug, maxrep)
-		for _, m := range d.Measurements {
-			c, err := d.InitSnmpConnect(m.ID, debug, maxrep)
-			if err != nil {
-				d.Warnf("Error on recreate connection without debug for measurement %s", m.ID)
-				initerrors++
-			} else {
-				m.SetSnmpClient(c)
-			}
-		}
-		if initerrors > 0 {
-			d.Warnf("Error on reset snmp connection for %d  measurements", initerrors)
-		}
-		if initerrors == len(d.Measurements) {
-			d.Errorf("Error on reset snmp connection all (%d) measurements without valid connection : disconnecting now...  ", initerrors)
-			d.DeviceConnected = false
-			d.stats.SetStatus(d.DeviceActive, false)
-		}
-	}
-}
-*/
-
 // StartGather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) StartGather() {
 	d.Infof("Initializating gather process for device on host (%s)", d.cfg.Host)
@@ -554,17 +524,22 @@ func (d *SnmpDevice) StartGather() {
 				d.isStopped <- true
 				return
 			case bus.Enabled:
-				// TODO hacer igual que el del bucle principal
-				status := val.Data.(bool)
+				enabled, ok := val.Data.(bool)
+				if !ok {
+					d.Errorf("invalid value for enabled bus message: %v", val.Data)
+					continue
+				}
+
 				d.rtData.Lock()
-				d.DeviceActive = status
+				d.DeviceActive = enabled
 				d.rtData.Unlock()
-				if status {
+				// TODO gestionar stats
+				if enabled {
 					d.stats.SetActive(true)
 				} else {
 					d.stats.SetStatus(false, false)
 				}
-				d.Infof("Device %s STATUS ACTIVE [%t] ", d.cfg.Host, status)
+				d.Infof("Device %s STATUS ACTIVE [%t] ", d.cfg.Host, enabled)
 			default:
 				d.Warnf("Device %s in waiting state. Ignored command: %s (%s)", d.cfg.Host, val.Type, val.Data)
 			}

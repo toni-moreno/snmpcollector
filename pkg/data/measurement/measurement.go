@@ -927,10 +927,8 @@ func (m *Measurement) MeasurementLoop(
 				m.Log.Error("Not able to connect")
 			}
 		}
-		// TODO no inicializar si no estoy enabled y connected
-
 		// If measurement is not initialized, do it. Could be because it returned an error while starting.
-		if !m.initialized {
+		if m.Enabled && snmpClient.Connected && !m.initialized {
 			err := m.Init(&snmpClient)
 			if err != nil {
 				m.Log.Error("Not able to initialize at the start of the measurement")
@@ -949,23 +947,8 @@ func (m *Measurement) MeasurementLoop(
 		case val := <-busNode.Read:
 			m.Infof("Measurement [%v] received message: %s (%+v)", m.ID, val.Type, val.Data)
 			switch val.Type {
-			case bus.Exit, bus.SyncExit:
-				return
-			case bus.SNMPResetHard:
-				// TODO se marca como desconectado el clciente snmp, cierto?
-				err := snmpClient.Release()
-				if err != nil {
-					m.Errorf("releasing snmp client: %v", err)
-				}
-			case bus.SNMPDebug:
-				debug, ok := val.Data.(bool)
-				if !ok {
-					m.Log.Errorf("invalid value for debug bus message: %v", val.Data)
-					continue
-				}
-				snmpClient.SetDebug(debug)
-			case bus.SetSNMPMaxRep:
-			// TODO
+			case bus.FilterUpdate:
+				m.filterUpdate(snmpClient)
 			case bus.ForceGather:
 				m.gatherLoop(snmpClient, gatherLock, varMap, tagMap, influxClient)
 			case bus.Enabled:
@@ -978,8 +961,35 @@ func (m *Measurement) MeasurementLoop(
 				m.Enabled = enabled
 				// TODO meter cosas en stats?
 				m.rtData.Unlock()
-			case bus.FilterUpdate:
+			case bus.SNMPReset:
+				err := snmpClient.Release()
+				if err != nil {
+					m.Errorf("releasing snmp client: %v", err)
+				}
+			case bus.SNMPResetHard:
+				err := snmpClient.Release()
+				if err != nil {
+					m.Errorf("releasing snmp client: %v", err)
+				}
 				m.filterUpdate(snmpClient)
+			case bus.SNMPDebug:
+				debug, ok := val.Data.(bool)
+				if !ok {
+					m.Log.Errorf("invalid value for debug bus message: %v", val.Data)
+					continue
+				}
+				snmpClient.SetDebug(debug)
+			case bus.SetSNMPMaxRep:
+				maxrep, ok := val.Data.(uint8)
+				if !ok {
+					m.Log.Errorf("invalid value for maxrep bus message: %v", val.Data)
+					continue
+				}
+				snmpClient.SetMaxRep(maxrep)
+			case bus.Exit, bus.SyncExit:
+				return
+			default:
+				m.Log.Errorf("unknown command: %v", val)
 			}
 		}
 	}
@@ -1052,6 +1062,8 @@ func (m *Measurement) MarshalJSON() ([]byte, error) {
 
 // gatherLoop metrics from device, process them and send values to the backend.
 // It also checks if it should run based on the measurement state.
+// At the end of the function it could change the status of the connection (to not
+// connected) if it was unable to get data
 func (m *Measurement) gatherLoop(
 	snmpClient snmp.Client,
 	gatherLock *sync.Mutex,
@@ -1120,9 +1132,14 @@ func (m *Measurement) gatherLoop(
 
 	// d.stats.Send() // TODO enviarlas aqui?
 
-	// TODO: Decidir si está conectado o no basado en el número de métricas recibidas
-	// Si al menos he recogido un dato es que está conectado, si no, marcar el measurement
-	// como desconectado
+	// Decide if the connection is working based on the data captured in this gather
+	// TODO usar mejor el número de datos "crudos" recogidos, entiendo que usar los points
+	// es más restrictivo, porque podríamos estar aplicando unos filtros de forma que si
+	// estuviésemos recogiendo datos pero no enviándolos a influx.
+	if len(points) == 0 {
+		m.Log.Warnf("marking as not connected because there were no points to send")
+		snmpClient.Connected = false
+	}
 }
 
 // filterUpdate does ... TODO
