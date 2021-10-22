@@ -22,7 +22,7 @@
                 </th>
                 </ng-container>
             </ng-container>
-            <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column" (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important; white-space:nowrap" container=body [tooltip]="column.tooltipInfo ? tooltipValues : ( column.tooltip ? column.name : '')">
+            <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column" (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important; white-space:nowrap" container=body [tooltip]="column.tooltipInfo ? tooltipValues : ( column.tooltip ? column.tooltip : column.name)">
                 <ng-template #tooltipValues>
                     <ng-container>
                         <h6> {{column.title}} </h6>
@@ -52,7 +52,7 @@
     </thead>
     <tbody>
         <tr *ngIf="showFilterRow ">
-            <td *ngIf="(tableRole === 'fulledit' || tableRole === 'viewdelete' || tableRole === 'view') && showStatus === false" style="width:100px ">
+            <td *ngIf="(tableRole === 'fulledit' || tableRole === 'viewdelete' || tableRole === 'view') && showStatus === false && showOutput === false" style="width:100px ">
             </td>
             <td *ngIf="tableRole === 'fulledit' || tableRole === 'viewdelete' || tableRole === 'view'" style="width:100px ">
             </td>
@@ -65,7 +65,7 @@
             <td *ngIf="editMode==true ">
                 <i [ngClass]="checkItems(row.ID) ? [ 'glyphicon glyphicon-unchecked text-danger'] : [ 'glyphicon glyphicon-check text-success'] " (click)="selectItem(row) "></i>
             </td>
-            <td *ngIf="(tableRole === 'fulledit' || tableRole === 'viewdelete' || tableRole === 'view') && showStatus === false">
+            <td *ngIf="(tableRole === 'fulledit' || tableRole === 'viewdelete' || tableRole === 'view') && showStatus === false && showOutput === false">
                 <i *ngFor="let action of roleActions" [ngClass]="action.icon" [tooltip]="action.tooltip" (click)="customClick(action.name, row)" style="padding-left:5px">
                 </i>
             </td>
@@ -84,6 +84,13 @@
         </span>
                 <label style="display: inline; margin-right: 2px " container=body [tooltip]="row.DeviceConnected ? 'Connected' : 'Not connected' " [ngClass]="row.DeviceConnected ? 'glyphicon glyphicon-globe label label-success' :
         'glyphicon glyphicon-warning-sign label label-danger' "></label>
+            </td>
+            <td *ngIf="showOutput==true " style="min-width: 50px ">
+                <span style="padding-left: 12px ">
+          <label style="display: inline; margin-right: 2px " container=body [tooltip]="row.Active ? 'Active' : 'Not active' " [ngClass]="row.Active ? 'glyphicon glyphicon-play label label-success' :
+          'glyphicon glyphicon-pause label label-danger' "></label>
+        </span>
+    
             </td>
             <ng-container *ngIf="checkRows ">
                 <td style="width: 80px; text-align: center; padding-top: 15px; " [ngClass]="row.valid===true? [ 'bg-success'] : [ 'bg-warning'] ">
@@ -120,7 +127,7 @@
                         <label  *ngIf="i.type=='boolean-label'"role="button"  [tooltip]= "i.tooltip" container=body (click)="extraActionClick(row,i.action,i.property) " [ngClass]="row[i.property] ? [ 'label label-success'] : [ 'label label-danger'] " [innerHtml]="row[i.property] ? i['enabled'] : i['disabled'] "></label>
                         <button *ngIf="i.type=='boolean'" [tooltip]= "i.tooltip" container=body (click)="extraActionClick(row,i.action,i.property) " [ngClass]="row[i.property] ? [ 'btn btn-success'] : [ 'btn btn-danger'] " [innerHtml]="row[i.property] ? i['enabled'] : i['disabled'] "></button>                     
                         <label *ngIf="i.type=='button-label'" role="button"  [tooltip]= "i.tooltip" container=body class="label label-primary " (click)="extraActionClick(row,i.action)" [innerHtml]="i['text']"></label>
-                        <button *ngIf="i.type=='button'" [tooltip]= "i.tooltip" container=body class="btn btn-primary " (click)="extraActionClick(row,i.action)" [innerHtml]="i['text']"></button>
+                        <button *ngIf="i.type=='button'" [tooltip]= "i.tooltip" container=body class="btn btn-{{i.color? i.color : 'primary'}}" (click)="extraActionClick(row,i.action)" [innerHtml]="i['text']"></button>
                     </ng-container>
                 </td>
             </ng-template>

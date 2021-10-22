@@ -5,7 +5,7 @@ import { Observable } from 'rxjs/Observable';
 declare var _:any;
 
 @Injectable()
-export class RuntimeService {
+export class RuntimeDeviceService {
 
     constructor(public httpAPI: HttpService) {
     }

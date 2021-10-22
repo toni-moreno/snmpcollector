@@ -195,14 +195,14 @@ func GetOutputJSONInfo(id string) ([]byte, error) {
 }
 
 // GetDeviceStats returns a map with the basic info of each device.
-func GetOutputStats() map[string]*output.InfluxStats {
-	outstats := make(map[string]*output.InfluxStats)
+func GetOutputStats() map[string]*output.SinkDB {
+	out := make(map[string]*output.SinkDB)
 	mutex.RLock()
+	defer mutex.RUnlock()
 	for k, v := range outputdb {
-		outstats[k] = v.GetBasicStats()
+		out[k] = v.GetSinkDBBasicStats()
 	}
-	mutex.RUnlock()
-	return outstats
+	return out
 }
 
 // GetDeviceStats returns a map with the basic info of each device.

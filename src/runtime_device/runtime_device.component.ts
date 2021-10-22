@@ -1,31 +1,31 @@
 
 import { ChangeDetectionStrategy, Component, ViewChild, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { RuntimeService } from './runtime.service';
+import { RuntimeDeviceService } from './runtime_device.service';
 import { ItemsPerPageOptions } from '../common/global-constants';
 
 import { SpinnerComponent } from '../common/spinner';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 
 import { TestConnectionModal } from '../common/test-connection-modal';
-import { RuntimeComponentConfig, TableRole, ExtraActions, CounterDef } from './runtime.data';
+import { RuntimeDeviceComponentConfig, TableRole, ExtraActions, CounterDef } from './runtime_device.data';
 
 declare var _: any;
 @Component({
-  selector: 'runtime',
-  providers: [RuntimeService, SnmpDeviceService],
-  templateUrl: './runtimeview.html',
-  styleUrls: ['./runtimeeditor.css'],
+  selector: 'runtime-device',
+  providers: [RuntimeDeviceService, SnmpDeviceService],
+  templateUrl: './runtime_deviceview.html',
+  styleUrls: ['./runtime_deviceeditor.css'],
 })
 
 
-export class RuntimeComponent implements OnDestroy {
+export class RuntimeDeviceComponent implements OnDestroy {
   @ViewChild('viewTestConnectionModal') public viewTestConnectionModal: TestConnectionModal;
 
   itemsPerPageOptions: any = ItemsPerPageOptions;
   public isRefreshing: boolean = true;
 
-  public defaultConfig : any = RuntimeComponentConfig;
+  public defaultConfig : any = RuntimeDeviceComponentConfig;
   public tableRole : any = TableRole;
   public extraActions: any = ExtraActions;
   public oneAtATime: boolean = true;
@@ -86,7 +86,7 @@ export class RuntimeComponent implements OnDestroy {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public runtimeService: RuntimeService, builder: FormBuilder, private ref: ChangeDetectorRef, public snmpDeviceService: SnmpDeviceService) {
+  constructor(public runtimeService: RuntimeDeviceService, builder: FormBuilder, private ref: ChangeDetectorRef, public snmpDeviceService: SnmpDeviceService) {
     this.editmode = 'list';
     this.reloadData();
   }

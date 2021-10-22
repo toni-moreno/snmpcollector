@@ -1,6 +1,6 @@
-export const RuntimeComponentConfig: any =
+export const RuntimeDeviceComponentConfig: any =
   {
-    'name' : 'Runtime',
+    'name' : 'Runtime Device',
     'table-columns' : [
       { title: 'ID', name: 'ID' },
       { title: 'TagMap', name: 'TagMap', tooltip: 'Num Measurements configured' },

@@ -25,7 +25,7 @@ export class Home {
   @ViewChild('importFileModal') public importFileModal : ImportFileModal;
   @ViewChild('exportBulkFileModal') public exportBulkFileModal : ExportFileModal;
   @ViewChild('aboutModal') public aboutModal : AboutModal;
-  @ViewChild('RuntimeComponent') public rt : any;
+  @ViewChild('RuntimeDeviceComponent') public rt : any;
   nativeWindow: any
   response: string;
   api: string;
@@ -44,7 +44,8 @@ export class Home {
   ];
 
   runtimeItems : Array<any> = [
-  {'title': 'Device status', 'selector' : 'runtime'},
+  {'title': 'Device status', 'selector' : 'runtime-device'},
+  {'title': 'Output status', 'selector' : 'runtime-output'},
   ];
 
   mode : boolean = false;
@@ -56,7 +57,7 @@ export class Home {
   constructor(private winRef: WindowRef,public router: Router, public httpAPI: HttpService, private _blocker: BlockUIService, public homeService: HomeService) {
     this.nativeWindow = winRef.nativeWindow;
     this.getFooterInfo();
-    this.item_type= "runtime";
+    this.item_type= "runtime-device";
   }
 
   link(url: string) {

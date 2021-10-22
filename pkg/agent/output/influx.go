@@ -37,13 +37,14 @@ type SinkDB struct {
 	smutex      sync.Mutex
 	statsData   sync.RWMutex
 
-	dummy    bool
-	iChan    chan *client.BatchPoints
-	client   client.Client
-	OutInfo  string
-	PingTime time.Duration
-	Node     *bus.Node `json:"-"`
-	Active   bool
+	dummy               bool
+	iChan               chan *client.BatchPoints
+	client              client.Client
+	OutInfo             string
+	PingTime            time.Duration
+	Node                *bus.Node `json:"-"`
+	Active              bool
+	EnqueueOnWriteError bool
 }
 
 // DummyDB a BD struct needed if no database configured
@@ -103,6 +104,13 @@ func (db *SinkDB) GetBasicStats() *InfluxStats {
 }
 
 // GetBasicStats get basic info for this device
+func (db *SinkDB) GetSinkDBBasicStats() *SinkDB {
+	db.statsData.RLock()
+	defer db.statsData.RUnlock()
+	return db
+}
+
+// GetBasicStats get basic info for this device
 func (db *SinkDB) getBasicStats() *InfluxStats {
 	stat := db.stats.ThSafeCopy()
 	return stat
@@ -110,6 +118,8 @@ func (db *SinkDB) getBasicStats() *InfluxStats {
 
 // GetResetStats return outdb stats and reset its counters
 func (db *SinkDB) GetResetStats() *InfluxStats {
+	db.statsData.RLock()
+	defer db.statsData.RUnlock()
 	if db.dummy == true {
 		log.Debug("Reseting Influxstats for DUMMY DB ")
 		return &InfluxStats{}
@@ -365,29 +375,45 @@ func (db *SinkDB) sendBatchPoint(data *client.BatchPoints, enqueueonerror bool) 
 			nf += len(fields)
 		}
 	}
-	// keep trying until we get it (don't drop the data)
-	startSend := time.Now()
-	err := db.client.Write(*data)
-	elapsedSend := time.Since(startSend)
-
-	bufferPercent = (float32(len(db.iChan)) * 100.0) / float32(db.cfg.BufferSize)
-	log.Infof("Buffer OUTPUT [%s] : %.2f%%", db.cfg.ID, bufferPercent)
-	if err != nil {
-		db.stats.WriteErrUpdate(elapsedSend, bufferPercent)
-		log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
-		// If the queue is not full we will resend after a while
+	// Check if the output is active
+	if !db.Active {
+		// Enqueue on error is active, try to store data on buffer
 		if enqueueonerror {
-			log.Debug("queing data again...")
 			if len(db.iChan) < db.cfg.BufferSize {
 				db.iChan <- data
+				bufferPercent = (float32(len(db.iChan)) * 100.0) / float32(db.cfg.BufferSize)
+				log.Infof("Buffer OUTPUT [%s] : %.2f%%", db.cfg.ID, bufferPercent)
+				db.stats.WriteErrUpdate(0, bufferPercent)
 				time.Sleep(time.Duration(db.cfg.TimeWriteRetry) * time.Second)
 			}
+		} else {
+			// Drop data if enqueue on error is false and output is not active
+			log.Infof("Skipped point on output %s, output is not active and enqueue on error is false", db.cfg.ID)
 		}
 	} else {
-		log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
-		db.stats.WriteOkUpdate(int64(np), int64(nf), elapsedSend, bufferPercent)
-	}
+		// keep trying until we get it (don't drop the data)
+		startSend := time.Now()
+		err := db.client.Write(*data)
+		elapsedSend := time.Since(startSend)
 
+		bufferPercent = (float32(len(db.iChan)) * 100.0) / float32(db.cfg.BufferSize)
+		log.Infof("Buffer OUTPUT [%s] : %.2f%%", db.cfg.ID, bufferPercent)
+		if err != nil {
+			db.stats.WriteErrUpdate(elapsedSend, bufferPercent)
+			log.Errorf("ERROR on Write batchPoint in DB %s (%d points) | elapsed : %s | Error: %s ", db.cfg.ID, np, elapsedSend.String(), err)
+			// If the queue is not full we will resend after a while
+			if enqueueonerror {
+				log.Debug("queing data again...")
+				if len(db.iChan) < db.cfg.BufferSize {
+					db.iChan <- data
+					time.Sleep(time.Duration(db.cfg.TimeWriteRetry) * time.Second)
+				}
+			}
+		} else {
+			log.Debugf("OK on Write batchPoint in DB %s (%d points) | elapsed : %s ", db.cfg.ID, np, elapsedSend.String())
+			db.stats.WriteOkUpdate(int64(np), int64(nf), elapsedSend, bufferPercent)
+		}
+	}
 }
 
 func (db *SinkDB) resetBuffer(length int) {
@@ -410,14 +436,14 @@ func (db *SinkDB) startSenderGo(r int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	time.Sleep(5)
-	EnqueueOnWriteError := db.cfg.EnqueueOnWriteError
+	db.EnqueueOnWriteError = db.cfg.EnqueueOnWriteError
 
 	log.Infof("beginning Influx Sender thread: [%s]", db.cfg.ID)
 	for {
 		select {
 		case data := <-db.iChan:
 			if !db.Active {
-				log.Warn("skip send: Output not active")
+				db.sendBatchPoint(data, db.EnqueueOnWriteError)
 				continue
 			}
 			if data == nil {
@@ -429,18 +455,26 @@ func (db *SinkDB) startSenderGo(r int, wg *sync.WaitGroup) {
 				continue
 			}
 
-			db.sendBatchPoint(data, EnqueueOnWriteError)
+			db.sendBatchPoint(data, db.EnqueueOnWriteError)
 		case val := <-db.Node.Read:
 			log.Infof("Received Message...%s: %+v", val.Type, val.Data)
 			switch val.Type {
 			case "resetbuffer":
+				db.statsData.Lock()
 				db.resetBuffer(db.cfg.BufferSize)
+				db.statsData.Unlock()
 			case "flushbuffer":
+				db.statsData.Lock()
 				db.flushBuffer()
+				db.statsData.Unlock()
 			case "setactive":
+				db.statsData.Lock()
 				db.Active = val.Data.(bool)
+				db.statsData.Unlock()
 			case "enqueue_policy_change":
-				EnqueueOnWriteError = val.Data.(bool)
+				db.statsData.Lock()
+				db.EnqueueOnWriteError = val.Data.(bool)
+				db.statsData.Unlock()
 			case "exit":
 				log.Infof("invoked Force Exit")
 				//need to flush all data

@@ -112,9 +112,12 @@
                             <ng-template ngSwitchCase="snmpdevice">
                              <snmpdevs></snmpdevs>
                            </ng-template>
-                            <ng-template ngSwitchCase="runtime">
-                              <runtime #RuntimeComponent></runtime>
+                            <ng-template ngSwitchCase="runtime-device">
+                              <runtime-device #RuntimeDeviceComponent></runtime-device>
                             </ng-template>
+                            <ng-template ngSwitchCase="runtime-output">
+                                <runtime-output #RuntimeOutputComponent></runtime-output>
+                              </ng-template>
                             <ng-template ngSwitchCase="varcatalog">
                               <varcatalog></varcatalog>
                             </ng-template>
