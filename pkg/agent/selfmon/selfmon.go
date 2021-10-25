@@ -140,7 +140,7 @@ func (sm *SelfMon) addDataPoint(pt *client.Point) {
 }
 
 // AddDeviceMetrics add data from devices
-func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface{}, devtags, statustags map[string]string) {
+func (sm *SelfMon) AddMetrics(t string, id string, fields map[string]interface{}, devtags, statustags map[string]string) {
 	if !sm.IsInitialized() {
 		return
 	}
@@ -162,7 +162,15 @@ func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface
 		tagMap[k] = v
 	}
 
-	tagMap["device"] = deviceid
+	switch t {
+	case "measurement":
+		tagMap["meas_name"] = id
+	case "device":
+		tagMap["device"] = id
+	}
+
+	tagMap["type"] = t
+
 	now := time.Now()
 	pt, err := client.NewPoint(
 		sm.RtMeasName,
@@ -170,7 +178,7 @@ func (sm *SelfMon) AddDeviceMetrics(deviceid string, fields map[string]interface
 		fields,
 		now)
 	if err != nil {
-		log.Warnf("Error on compute Stats data Point %+v for device %s: Error:%s", fields, deviceid, err)
+		log.Warnf("Error on compute Stats data Point %+v for %s : %s: Error:%s", fields, t, id, err)
 		return
 	}
 

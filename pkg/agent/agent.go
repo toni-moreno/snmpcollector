@@ -10,6 +10,7 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/stats"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
@@ -166,8 +167,8 @@ func GetDeviceJSONInfo(id string) ([]byte, error) {
 }
 
 // GetDevStats returns a map with the basic info of each device.
-func GetDevStats() map[string]*device.DevStat {
-	devstats := make(map[string]*device.DevStat)
+func GetDevStats() map[string]*stats.GatherStats {
+	devstats := make(map[string]*stats.GatherStats)
 	mutex.RLock()
 	for k, v := range devices {
 		devstats[k] = v.GetBasicStats()

@@ -16,6 +16,7 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/data/filter"
 	"github.com/toni-moreno/snmpcollector/pkg/data/metric"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/stats"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
@@ -66,11 +67,37 @@ type Measurement struct {
 	snmpClient       *snmp.Client
 	MultiIndexMeas   []*Measurement
 	// Enabled is true if this measurement should gather metrics. This value is controlled by the device
-	Enabled bool
+	Enabled   bool
+	Connected bool
+	// Measurement statistics
+	stats stats.GatherStats // Runtime Internal statistic
+	// TODO asegurarnos que cuando se escriba aquí esté protegido por el rtData
+	Stats     *stats.GatherStats // Public info for thread safe accessing to the data ()
+	statsData sync.RWMutex
+}
+
+// GetBasicStats get basic info for this measurement
+func (m *Measurement) GetBasicStats() *stats.GatherStats {
+	m.statsData.RLock()
+	defer m.statsData.RUnlock()
+	return m.Stats
+}
+
+// GetBasicStats get basic info for this device
+// TODO cuidado con data races
+func (m *Measurement) getBasicStats() *stats.GatherStats {
+	stat := m.stats.ThSafeCopy()
+	stat.TagMap = m.stats.TagMap
+	stat.NumMeasurements = 1
+	stat.NumMetrics = len(m.OidSnmpMap)
+	return stat
+}
+
+func (m *Measurement) SetStats(st stats.GatherStats) {
+	m.stats = st
 }
 
 func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*config.MeasFilterCfg, l utils.Logger) *Measurement {
-	// Measurement init is moved to GatherLoop
 	return &Measurement{
 		ID:          c.ID,
 		MName:       c.Name,
@@ -79,6 +106,20 @@ func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*co
 		mFilters:    mFilters,
 		Log:         l,
 		Enabled:     true,
+	}
+}
+
+func (m *Measurement) CheckConnectivity() {
+	ProcessedStat := m.stats.GetCounter(stats.SnmpOIDGetProcessed)
+
+	if value, ok := ProcessedStat.(int); ok {
+		// check if no processed SNMP data (when this happens means there is not connectivity with the device )
+		if value == 0 {
+			m.Connected = false
+			m.stats.SetStatus(m.Enabled, false)
+		}
+	} else {
+		m.Warnf("Error in check Processd Stats %#+v ", ProcessedStat)
 	}
 }
 
@@ -142,6 +183,9 @@ func (m *Measurement) Init() error {
 	m.MetricTable = NewMetricTable(m.cfg, m.Log, m.CurIndexedLabels)
 
 	m.InitFilters()
+
+	m.Enabled = true
+	m.stats.SetActive(m.Enabled)
 	return nil
 }
 
@@ -911,6 +955,7 @@ func (m *Measurement) GatherLoop(
 		m.Log.Error("Not able to connect at the start of the measurement")
 	} else {
 		// If the connection is succesfull, initialize
+		m.Connected = true
 		errInit := m.Init()
 		if errInit != nil {
 			m.Log.Error("Not able to initialize at the start of the measurement")
@@ -920,17 +965,20 @@ func (m *Measurement) GatherLoop(
 			m.GetData()
 		}
 	}
-
+	m.stats.SetStatus(m.Enabled, m.Connected)
 	for {
+		m.Log.Infof("STATS Enabled [%t]/Connected [%t]", m.Enabled, m.Connected)
 		// In each iteration, if measurement is enabled and not connected, try again to connect
-		if m.Enabled && !m.snmpClient.Connected {
+		if m.Enabled && !m.Connected {
+
 			_, err := m.snmpClient.Connect(systemOIDs)
 			if err != nil {
 				m.Log.Error("Not able to connect")
 			}
+			m.Connected = true
 		}
 		// If measurement is not initialized, do it. Could be because it returned an error while starting.
-		if m.Enabled && m.snmpClient.Connected && !m.initialized {
+		if m.Enabled && m.Connected && !m.initialized {
 			err := m.Init()
 			if err != nil {
 				m.Log.Error("Not able to initialize at the start of the measurement")
@@ -940,12 +988,17 @@ func (m *Measurement) GatherLoop(
 				m.GetData()
 			}
 		}
-
+		m.stats.SetStatus(m.Enabled, m.Connected)
 		select {
 		case <-updateFilterTicker.C:
 			m.filterUpdate()
 		case <-gatherTicker.C:
 			m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
+			// Check if errors in previous gather
+			m.CheckConnectivity()
+			// sending only once all statistics for this measurement
+			// if not filtered the value should be 0 for filter counters
+			m.stats.Send()
 		case val := <-busNode.Read:
 			m.Infof("Measurement [%v] received message: %s (%+v)", m.ID, val.Type, val.Data)
 			switch val.Type {
@@ -961,8 +1014,14 @@ func (m *Measurement) GatherLoop(
 				}
 				m.rtData.Lock()
 				m.Enabled = enabled
-				// TODO meter cosas en stats?
+				if enabled {
+					m.stats.SetActive(true)
+				} else {
+					m.stats.SetStatus(false, false)
+				}
+				m.Infof("STATUS  ACTIVE  [%t] ", enabled)
 				m.rtData.Unlock()
+
 			case bus.SNMPReset:
 				err := m.snmpClient.Release()
 				if err != nil {
@@ -1072,8 +1131,9 @@ func (m *Measurement) gatherOnce(
 	tagMap map[string]string,
 	influxClient *output.InfluxDB,
 ) {
+	start := time.Now()
 	// Do not gather data if measurement is disabled or it doesn't have a connection or measurement is not initialized
-	if !m.Enabled || !m.snmpClient.Connected || !m.initialized {
+	if !m.Enabled || !m.Connected || !m.initialized {
 		return
 	}
 
@@ -1086,7 +1146,7 @@ func (m *Measurement) gatherOnce(
 	// Mark previous values as old so we can know if new metrics
 	// have been gathered
 	m.InvalidateMetrics()
-	// d.stats.ResetCounters() // TODO, necesario? mejor devolver las métricas y aqui setearlas con el lock apropiado
+	m.stats.ResetCounters() // TODO, necesario? mejor devolver las métricas y aqui setearlas con el lock apropiado
 
 	m.Debugf("-------Processing measurement : %s", m.ID)
 
@@ -1098,10 +1158,9 @@ func (m *Measurement) gatherOnce(
 	}
 	// TODO si usa SnmpGetData obtiene los valores de m.snmpOids, si lo hace de SnmpWalkData lo obtiene de m.cfg.FieldMetric? Esto es normal?
 	// Get data from device and set the values to the snmp metrics structs
-	m.GetData()
-	// TODO stats
-	// nGets, nProcs, nErrs := m.GetData(snmpClient)
-	// d.stats.UpdateSnmpGetStats(nGets, nProcs, nErrs)
+
+	nGets, nProcs, nErrs := m.GetData()
+	m.stats.UpdateSnmpGetStats(nGets, nProcs, nErrs)
 
 	// TODO que hace esta función?
 	// TODO esta funcion necesita conex con la db?? Cuando se ha inicializado? Globlamente en el main.
@@ -1115,11 +1174,10 @@ func (m *Measurement) gatherOnce(
 	m.ComputeEvaluatedMetrics(varMap)
 
 	// prepare batchpoint
-	_, _, _, _, points := m.GetInfluxPoint(tagMap)
-	// metSent, metError, measSent, measError, points := m.GetInfluxPoint(tagMap)
-	// d.stats.AddMeasStats(metSent, metError, measSent, measError)
+	metSent, metError, measSent, measError, points := m.GetInfluxPoint(tagMap)
+	m.stats.AddMeasStats(metSent, metError, measSent, measError)
 
-	// startInfluxStats := time.Now()
+	sentStats := time.Now()
 	bpts, _ := influxClient.BP()
 	if bpts != nil {
 		(*bpts).AddPoints(points)
@@ -1128,10 +1186,8 @@ func (m *Measurement) gatherOnce(
 	} else {
 		m.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
 	}
-	// elapsedInfluxStats := time.Since(startInfluxStats)
-	// d.stats.AddSentDuration(startInfluxStats, elapsedInfluxStats)
-
-	// d.stats.Send() // TODO enviarlas aqui?
+	elapsedSentStats := time.Since(sentStats)
+	m.stats.AddSentDuration(sentStats, elapsedSentStats)
 
 	// Decide if the connection is working based on the data captured in this gather
 	// TODO usar mejor el número de datos "crudos" recogidos, entiendo que usar los points
@@ -1139,22 +1195,31 @@ func (m *Measurement) gatherOnce(
 	// estuviésemos recogiendo datos pero no enviándolos a influx.
 	if len(points) == 0 {
 		m.Log.Warnf("marking as not connected because there were no points to send")
-		m.snmpClient.Connected = false
 	}
+	end := time.Since(start)
+	m.stats.SetGatherDuration(start, end)
 }
 
 // filterUpdate does ... TODO
 func (m *Measurement) filterUpdate() {
 	// Do not try to update filters if measurement is disabled or it doesn't have a connection or measurement is not initialized
-	if !m.Enabled || !m.snmpClient.Connected || !m.initialized {
+	if !m.Enabled || !m.Connected || !m.initialized {
 		return
 	}
-
 	// Update filters
+	if m.cfg.GetMode == "value" {
+		return
+	}
 	start := time.Now()
-	m.Init()
+	changed, err := m.UpdateFilter()
+	if err != nil {
+		m.Errorf("Error on update Indexes/filter : ERR: %s", err)
+		return
+	}
+	if changed {
+		m.InitBuildRuntime()
+	}
 	duration := time.Since(start)
-	// d.stats.SetFltUpdateStats(start, duration) // TODO
-	// d.stats.Send() // TODO enviarlas aqui?
+	m.stats.SetFltUpdateStats(start, duration) // TODO
 	m.Infof("snmp INIT runtime measurements/filters took [%s] ", duration)
 }

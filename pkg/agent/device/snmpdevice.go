@@ -16,6 +16,7 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/measurement"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/stats"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
@@ -57,9 +58,9 @@ type SnmpDevice struct {
 	Influx *output.InfluxDB `json:"-"`
 	// LastError     time.Time
 	// Runtime stats
-	stats DevStat // Runtime Internal statistic
+	stats stats.GatherStats // Runtime Internal statistic
 	// TODO asegurarnos que cuando se escriba aquí esté protegido por el rtData
-	Stats *DevStat // Public info for thread safe accessing to the data ()
+	Stats *stats.GatherStats // Public info for thread safe accessing to the data ()
 
 	// runtime controls
 	rtData    sync.RWMutex
@@ -74,6 +75,8 @@ type SnmpDevice struct {
 	CurLogLevel     string
 	Gather          func()                                                            `json:"-"`
 	InitSnmpConnect func(mkey string, debug bool, maxrep uint8) (*snmp.Client, error) `json:"-"`
+	// Needed to inicialize measurement selfmon
+	selfmon *selfmon.SelfMon
 }
 
 // New create and Initialice a device Object
@@ -103,7 +106,7 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 		Freq            int
 		Measurements    []*measurement.Measurement
 		VarMap          map[string]interface{}
-		Stats           *DevStat // Public info for thread safe accessing to the data ()
+		Stats           *stats.GatherStats // Public info for thread safe accessing to the data ()
 		DeviceActive    bool
 		DeviceConnected bool
 		CurLogLevel     string
@@ -127,7 +130,7 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 }
 
 // GetBasicStats get basic info for this device
-func (d *SnmpDevice) GetBasicStats() *DevStat {
+func (d *SnmpDevice) GetBasicStats() *stats.GatherStats {
 	d.statsData.RLock()
 	defer d.statsData.RUnlock()
 	return d.Stats
@@ -135,7 +138,7 @@ func (d *SnmpDevice) GetBasicStats() *DevStat {
 
 // GetBasicStats get basic info for this device
 // TODO cuidado con data races
-func (d *SnmpDevice) getBasicStats() *DevStat {
+func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 	sum := 0
 	for _, m := range d.Measurements {
 		sum += len(m.OidSnmpMap)
@@ -264,15 +267,20 @@ func (d *SnmpDevice) InitDevMeasurements() {
 				d.Warnf("no measurement configured with name %s in host : %s", val, d.cfg.Host)
 			} else {
 				d.Debugf("MEASUREMENT CFG KEY: %s VALUE %s", val, mVal.Name)
-				// creating a new measurement runtime object and asigning to array
 
 				// Pass a logger with predefined values to distinguish this host-measurement
 				measLog := d.log.WithFields(logrus.Fields{
-					"host":        d.cfg.Host,
-					"measurement": mVal,
+					"device":      d.cfg.Host,
+					"measurement": val,
 				})
+
+				mstat := stats.GatherStats{}
+				mstat.Init("measurement", mVal.Name, d.TagMap, measLog)
+				mstat.SetSelfMonitoring(d.selfmon)
+				// creating a new measurement runtime object and asigning to array
 				// MeasFilters and MFitlers used in the InitFilters function used in the initialization of the measurement goroutine
 				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, measLog)
+				imeas.SetStats(mstat)
 				d.Measurements = append(d.Measurements, imeas)
 			}
 		}
@@ -362,7 +370,7 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 		d.Warnf("No map detected in device")
 	}
 	// Init stats
-	d.stats.Init(d.cfg.ID, d.TagMap, d.log)
+	d.stats.Init("device", d.cfg.ID, d.TagMap, d.log)
 
 	d.statsData.Lock()
 	d.Stats = d.getBasicStats()
@@ -442,6 +450,7 @@ func (d *SnmpDevice) End() {
 
 // SetSelfMonitoring set the output device where send monitoring metrics
 func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
+	d.selfmon = cfg
 	d.stats.SetSelfMonitoring(cfg)
 }
 
@@ -449,7 +458,7 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 // TODO no se está llamando desde ningún lado. Borrar?
 // TODO como gestionar si el device está conectado? Tal vez en el ToJSON consultar el stats.GetCounter(...) para devolver si consideramos que estamos conectados?
 func (d *SnmpDevice) CheckDeviceConnectivity() {
-	ProcessedStat := d.stats.GetCounter(SnmpOIDGetProcessed)
+	ProcessedStat := d.stats.GetCounter(stats.SnmpOIDGetProcessed)
 
 	if value, ok := ProcessedStat.(int); ok {
 		// check if no processed SNMP data (when this happens means there is not connectivity with the device )

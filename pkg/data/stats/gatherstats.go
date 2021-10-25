@@ -1,15 +1,15 @@
-package device
+package stats
 
 import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
-// DevStatType a device stat type
-type DevStatType uint
+// GatherStatType a device stat type
+type GatherStatType uint
 
 const (
 	// SnmpGetQueries num Get Queries on last gather cycle
@@ -62,23 +62,25 @@ const (
 	DevStatTypeSize = 23
 )
 
-// DevStat minimal info to show users
-type DevStat struct {
+// GatherStats minimal info to show users
+type GatherStats struct {
 	// ID
 	id     string
+	Type   string
 	TagMap map[string]string
 	// Control
-	log     *logrus.Logger
+	log     utils.Logger
 	selfmon *selfmon.SelfMon
 	mutex   sync.Mutex
 
 	// Counter Statistics
 	Counters []interface{}
 
-	// device state
-	ReloadLoopsPending int
-	DeviceActive       bool
-	DeviceConnected    bool
+	// Gather state
+	//
+	//ReloadLoopsPending int
+	Active    bool
+	Connected bool
 	// extra measurement statistics
 	NumMeasurements int
 	SysDescription  string
@@ -86,9 +88,11 @@ type DevStat struct {
 }
 
 // Init initializes the device stat object
-func (s *DevStat) Init(id string, tm map[string]string, l *logrus.Logger) {
+func (s *GatherStats) Init(t string, id string, tm map[string]string, l utils.Logger) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+	// Only valid "measurement" and "device"
+	s.Type = t
 	s.id = id
 	s.TagMap = tm
 	s.log = l
@@ -118,7 +122,7 @@ func (s *DevStat) Init(id string, tm map[string]string, l *logrus.Logger) {
 	s.Counters[DeviceConnected] = 0
 }
 
-func (s *DevStat) reset() {
+func (s *GatherStats) reset() {
 	for k, val := range s.Counters {
 		switch v := val.(type) {
 		case string:
@@ -134,19 +138,19 @@ func (s *DevStat) reset() {
 }
 
 // GetCounter get Counter for stats
-func (s *DevStat) GetCounter(stat DevStatType) interface{} {
+func (s *GatherStats) GetCounter(stat GatherStatType) interface{} {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	return s.Counters[stat]
 }
 
-func (s *DevStat) getStatusFields() map[string]interface{} {
+func (s *GatherStats) getStatusFields() map[string]interface{} {
 	active := 0
 	connected := 0
-	if s.DeviceActive {
+	if s.Active {
 		active = 1
 	}
-	if s.DeviceConnected {
+	if s.Connected {
 		connected = 1
 	}
 
@@ -157,13 +161,13 @@ func (s *DevStat) getStatusFields() map[string]interface{} {
 	return fields
 }
 
-func (s *DevStat) getMetricFields() map[string]interface{} {
+func (s *GatherStats) getMetricFields() map[string]interface{} {
 	active := 0
 	connected := 0
-	if s.DeviceActive {
+	if s.Active {
 		active = 1
 	}
-	if s.DeviceConnected {
+	if s.Connected {
 		connected = 1
 	}
 
@@ -196,42 +200,42 @@ func (s *DevStat) getMetricFields() map[string]interface{} {
 }
 
 // SetSelfMonitoring set the output device where send monitoring metrics
-func (s *DevStat) SetSelfMonitoring(cfg *selfmon.SelfMon) {
+func (s *GatherStats) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.selfmon = cfg
 }
 
 // ThSafeCopy get a new object with public data copied in thread safe way
-func (s *DevStat) ThSafeCopy() *DevStat {
+func (s *GatherStats) ThSafeCopy() *GatherStats {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	st := &DevStat{}
-	st.Init(s.id, s.TagMap, s.log)
+	st := &GatherStats{}
+	st.Init(s.Type, s.id, s.TagMap, s.log)
 	for k, v := range s.Counters {
 		st.Counters[k] = v
 	}
-	st.DeviceActive = s.DeviceActive
-	st.DeviceConnected = s.DeviceConnected
+	st.Active = s.Active
+	st.Connected = s.Connected
 	return st
 }
 
 // SetStatus set status for stats
-func (s *DevStat) SetStatus(active, connected bool) {
+func (s *GatherStats) SetStatus(active, connected bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.DeviceActive = active
-	s.DeviceConnected = connected
+	s.Active = active
+	s.Connected = connected
 }
 
-func (s *DevStat) SetActive(active bool) {
+func (s *GatherStats) SetActive(active bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.DeviceActive = active
+	s.Active = active
 }
 
 // Send send data to the selfmon device
-func (s *DevStat) Send() {
+func (s *GatherStats) Send() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -240,49 +244,49 @@ func (s *DevStat) Send() {
 	activeTag := "true"
 	connectedTag := "true"
 	switch {
-	case !s.DeviceActive:
+	case !s.Active:
 		activeTag = "false"
 		connectedTag = "false"
 		fields = s.getStatusFields()
-		s.log.Info("STATS SEND NOT ACTIVE")
-	case s.DeviceActive && s.DeviceConnected:
+		s.log.Infof("[%s] STATS SEND NOT ACTIVE", s.Type)
+	case s.Active && s.Connected:
 		activeTag = "true"
 		connectedTag = "true"
-		s.log.Infof("STATS SNMP GET: snmp polling took [%f seconds] SNMP: Gets [%d] , Processed [%d], Errors [%d]", s.Counters[CycleGatherDuration], s.Counters[SnmpOIDGetAll], s.Counters[SnmpOIDGetProcessed], s.Counters[SnmpOIDGetErrors])
-		s.log.Infof("STATS SNMP FILTER: filter polling took [%f seconds] ", s.Counters[FilterDuration])
-		s.log.Infof("STATS INFLUX: influx send took [%f seconds]", s.Counters[BackEndSentDuration])
+		s.log.Infof("[%s] STATS SNMP GET: snmp polling took [%f seconds] SNMP: Gets [%d] , Processed [%d], Errors [%d]", s.Type, s.Counters[CycleGatherDuration], s.Counters[SnmpOIDGetAll], s.Counters[SnmpOIDGetProcessed], s.Counters[SnmpOIDGetErrors])
+		s.log.Infof("[%s] STATS SNMP FILTER: filter polling took [%f seconds] ", s.Type, s.Counters[FilterDuration])
+		s.log.Infof("[%s] STATS INFLUX: influx send took [%f seconds]", s.Type, s.Counters[BackEndSentDuration])
 		fields = s.getMetricFields()
-	case s.DeviceActive && !s.DeviceConnected:
+	case s.Active && !s.Connected:
 		activeTag = "true"
 		connectedTag = "false"
-		s.log.Info("STATS SEND NOT CONNECTED")
+		s.log.Infof("[%s] STATS SEND NOT CONNECTED", s.Type)
 		fields = s.getStatusFields()
 	default:
-		s.log.Error("STATS mode unknown")
+		s.log.Errorf("[%s] STATS mode unknown", s.Type)
 		return
 	}
 
 	if s.selfmon != nil {
-		s.selfmon.AddDeviceMetrics(s.id, fields, s.TagMap, map[string]string{"device_active": activeTag, "device_connected": connectedTag})
+		s.selfmon.AddMetrics(s.Type, s.id, fields, s.TagMap, map[string]string{"active": activeTag, "connected": connectedTag})
 	}
 }
 
 // ResetCounters initialize metric counters
-func (s *DevStat) ResetCounters() {
+func (s *GatherStats) ResetCounters() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.reset()
 }
 
 // CounterInc n values to the counter set by id
-func (s *DevStat) CounterInc(id DevStatType, n int64) {
+func (s *GatherStats) CounterInc(id GatherStatType, n int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.Counters[id] = s.Counters[id].(int) + int(n)
 }
 
 // AddMeasStats add measurement stats to the device stats object
-func (s *DevStat) AddMeasStats(mets int64, mete int64, meass int64, mease int64) {
+func (s *GatherStats) AddMeasStats(mets int64, mete int64, meass int64, mease int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.Counters[MetricSent] = s.Counters[MetricSent].(int) + int(mets)
@@ -292,7 +296,7 @@ func (s *DevStat) AddMeasStats(mets int64, mete int64, meass int64, mease int64)
 }
 
 // UpdateSnmpGetStats update snmp statistics
-func (s *DevStat) UpdateSnmpGetStats(g int64, p int64, e int64) {
+func (s *GatherStats) UpdateSnmpGetStats(g int64, p int64, e int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.Counters[SnmpOIDGetAll] = s.Counters[SnmpOIDGetAll].(int) + int(g)
@@ -301,7 +305,7 @@ func (s *DevStat) UpdateSnmpGetStats(g int64, p int64, e int64) {
 }
 
 // SetGatherDuration Update Gather Duration stats
-func (s *DevStat) SetGatherDuration(start time.Time, duration time.Duration) {
+func (s *GatherStats) SetGatherDuration(start time.Time, duration time.Duration) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.Counters[CycleGatherStartTime] = start.Unix()
@@ -309,7 +313,7 @@ func (s *DevStat) SetGatherDuration(start time.Time, duration time.Duration) {
 }
 
 // AddSentDuration Update Sent Duration stats
-func (s *DevStat) AddSentDuration(start time.Time, duration time.Duration) {
+func (s *GatherStats) AddSentDuration(start time.Time, duration time.Duration) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	// only register the first start time on concurrent mode
@@ -320,7 +324,7 @@ func (s *DevStat) AddSentDuration(start time.Time, duration time.Duration) {
 }
 
 // SetFltUpdateStats Set Filter Stats
-func (s *DevStat) SetFltUpdateStats(start time.Time, duration time.Duration) {
+func (s *GatherStats) SetFltUpdateStats(start time.Time, duration time.Duration) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.Counters[FilterStartTime] = start.Unix()
