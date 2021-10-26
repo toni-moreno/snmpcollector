@@ -963,7 +963,9 @@ func (m *Measurement) GatherLoop(
 		} else {
 			// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
 			m.initialized = true
+			m.rtData.Lock()
 			m.GetData()
+			m.rtData.Unlock()
 		}
 	}
 	m.stats.SetStatus(m.Enabled, m.Connected)
@@ -986,7 +988,9 @@ func (m *Measurement) GatherLoop(
 			} else {
 				// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
 				m.initialized = true
+				m.rtData.Lock()
 				m.GetData()
+				m.rtData.Unlock()
 			}
 		}
 		m.stats.SetStatus(m.Enabled, m.Connected)
