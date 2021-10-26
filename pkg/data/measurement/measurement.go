@@ -160,11 +160,10 @@ func (m *Measurement) Init() error {
 		if (m.cfg.GetMode) == "indexed_it" {
 			m.idx2PosInOID = len(m.cfg.TagOID)
 		}
-		m.Infof("Loading Indexed values")
+		m.Log.Infof("Loading Indexed values")
 		il, err := m.loadIndexedLabels()
 		if err != nil {
-			m.Errorf("Error while trying to load Indexed Labels on for measurement : for baseOid %s : ERROR: %s", m.cfg.IndexOID, err)
-			return err
+			return fmt.Errorf("trying to load Indexed Labels for baseOid %s: %s", m.cfg.IndexOID, err)
 		}
 		m.AllIndexedLabels = il
 		// Final Selected Indexes are All Indexed
@@ -649,7 +648,7 @@ func (m *Measurement) GetData() (int64, int64, int64) {
 	} else {
 		for _, v := range m.cfg.FieldMetric {
 			if err := m.snmpClient.Walk(v.BaseOID, setRawData); err != nil {
-				m.Errorf("SNMP WALK (%s) for OID (%s) get error: %s\n", m.snmpClient.Target(), v.BaseOID, err)
+				m.Errorf("SNMP WALK for OID (%s) get error: %s", v.BaseOID, err)
 				errors += int64(m.MetricTable.Len())
 			}
 		}
@@ -661,7 +660,7 @@ func (m *Measurement) GetData() (int64, int64, int64) {
 // ComputeOidConditionalMetrics take OID contitional metrics and computes true value
 func (m *Measurement) ComputeOidConditionalMetrics() {
 	if m.cfg.OidCondMetric == nil {
-		m.Infof("Not Oid CONDITIONEVAL metrics exist on this measurement")
+		m.Log.Infof("Not Oid CONDITIONEVAL metrics exist on this measurement")
 		return
 	}
 	switch m.cfg.GetMode {
@@ -684,7 +683,7 @@ func (m *Measurement) ComputeOidConditionalMetrics() {
 // ComputeEvaluatedMetrics take evaluated metrics and computes them from the other values
 func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 	if m.cfg.EvalMetric == nil {
-		m.Infof("Not EVAL metrics exist on  this measurement")
+		m.Log.Infof("Not EVAL metrics exist on  this measurement")
 		return
 	}
 
@@ -938,6 +937,8 @@ func (m *Measurement) GatherLoop(
 	influxClient *output.InfluxDB,
 	gatherLock *sync.Mutex,
 ) {
+	m.Log.Info("MeasurementLoop")
+
 	gatherTicker := time.NewTicker(time.Duration(deviceFreq) * time.Second)
 	if m.cfg.Freq != 0 {
 		gatherTicker = time.NewTicker(time.Duration(m.cfg.Freq) * time.Second)
@@ -1000,7 +1001,7 @@ func (m *Measurement) GatherLoop(
 			// if not filtered the value should be 0 for filter counters
 			m.stats.Send()
 		case val := <-busNode.Read:
-			m.Infof("Measurement [%v] received message: %s (%+v)", m.ID, val.Type, val.Data)
+			m.Infof("measurement received message: %s (%+v)", val.Type, val.Data)
 			switch val.Type {
 			case bus.FilterUpdate:
 				m.filterUpdate()
@@ -1048,6 +1049,7 @@ func (m *Measurement) GatherLoop(
 				}
 				m.snmpClient.SetMaxRep(maxrep)
 			case bus.Exit, bus.SyncExit:
+				m.Log.Info("exit measurement")
 				return
 			default:
 				m.Log.Errorf("unknown command: %v", val)
@@ -1142,7 +1144,7 @@ func (m *Measurement) gatherOnce(
 	m.rtData.Lock()
 	defer m.rtData.Unlock()
 
-	m.Infof("Init gather cycle mode")
+	m.Log.Infof("Init gather cycle mode")
 	// Mark previous values as old so we can know if new metrics
 	// have been gathered
 	m.InvalidateMetrics()
@@ -1193,6 +1195,7 @@ func (m *Measurement) gatherOnce(
 	// TODO usar mejor el número de datos "crudos" recogidos, entiendo que usar los points
 	// es más restrictivo, porque podríamos estar aplicando unos filtros de forma que si
 	// estuviésemos recogiendo datos pero no enviándolos a influx.
+	// TODO corregir esto, cambiar por nGets o nErrs. Chequear si goSNMP nos pasa PDUs auque el dispositivo no funcione
 	if len(points) == 0 {
 		m.Log.Warnf("marking as not connected because there were no points to send")
 	}
@@ -1202,6 +1205,7 @@ func (m *Measurement) gatherOnce(
 
 // filterUpdate does ... TODO
 func (m *Measurement) filterUpdate() {
+	m.Debug("filterUpdate")
 	// Do not try to update filters if measurement is disabled or it doesn't have a connection or measurement is not initialized
 	if !m.Enabled || !m.Connected || !m.initialized {
 		return

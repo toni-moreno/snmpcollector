@@ -294,6 +294,10 @@ func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 	go func() {
 		defer gatherWg.Done()
 		dev.StartGather()
+		log.Infof("Device %s finished", cfg.ID)
+		// If device goroutine has finished, leave the bus so it won't get blocked trying
+		// to send messages to a not running device.
+		dev.LeaveBus(Bus)
 	}()
 	mutex.Unlock()
 }

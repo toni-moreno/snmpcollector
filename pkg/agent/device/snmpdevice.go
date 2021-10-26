@@ -512,8 +512,7 @@ func (d *SnmpDevice) StartGather() {
 	// Check if the values are valid, for example, if we have a community if the connection is v2c
 	err := connectionParams.Validation()
 	if err != nil {
-		d.Errorf("SNMP parameter validation: %v", err)
-		// TODO probar como se comporta la UI si hemos metido una config errónea y nos estamos saliendo aquí
+		d.log.Errorf("SNMP parameter validation: %v", err)
 		return
 	}
 
@@ -617,6 +616,7 @@ func (d *SnmpDevice) StartGather() {
 
 	// Create a bus to control all goroutines created to manage this device
 	deviceControlBus := bus.NewBus()
+	go deviceControlBus.Start()
 
 	// Control when all goroutines have finished
 	var deviceWG sync.WaitGroup
@@ -662,8 +662,13 @@ func (d *SnmpDevice) StartGather() {
 		case val := <-d.Node.Read:
 			d.Infof("Received Message: %s (%+v)", val.Type, val.Data)
 			switch val.Type {
+			case bus.Exit:
+				d.log.Infof("invoked asyncronous EXIT from SNMP Gather process ")
+				// This broadcast is blocking, will wait till all measurement goroutines have received the message
+				deviceControlBus.Broadcast(&bus.Message{Type: val.Type})
+				return
 			case bus.SyncExit:
-				d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
+				d.log.Infof("invoked syncronous EXIT from SNMP Gather process ")
 				// Signal all measurement goroutines to exit
 				deviceControlBus.Broadcast(&bus.Message{Type: val.Type})
 				// Wait till all measurement goroutines have finished
@@ -686,8 +691,10 @@ func (d *SnmpDevice) StartGather() {
 				d.rtData.Unlock()
 
 			default: // exit, snmpresethard, snmpdebug, setsnmpmaxrep, forcegather, enabled, filterupdate
-				d.Infof("invoked %s, passing message to measurements", val)
+				d.Infof("invoked %+v, passing message to measurements", val)
+				// Blocking operation. Waits till all measurements have received it
 				deviceControlBus.Broadcast(val)
+				d.Infof("messaged %+v received by all measurements", val)
 
 			}
 		}

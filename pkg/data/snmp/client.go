@@ -108,6 +108,7 @@ func (c ConnectionParams) Validation() error {
 
 // Release release the GoSNMP object
 func (c *Client) Release() error {
+	c.Log.Debug("client.Release")
 	c.Connected = false
 	if c.snmpClient != nil {
 		return c.snmpClient.Conn.Close()
@@ -119,6 +120,7 @@ func (c *Client) Release() error {
 // It changes the current client and also the ConnectionParams to reuse the same
 // value if a regeneration of the client is done.
 func (c *Client) SetMaxRep(rep uint8) {
+	c.Log.Debugf("client.SetMaxRep %v", rep)
 	c.snmpClient.MaxRepetitions = uint32(rep)
 	c.ConnectionParams.MaxRepetitions = rep
 }
@@ -126,6 +128,7 @@ func (c *Client) SetMaxRep(rep uint8) {
 // SetDebug configure a new logger for the goSNMP client to log everything to a different file
 // It also changes the ConnectionParams to reuse this value in case of a reconnection.
 func (c *Client) SetDebug(debug bool) {
+	c.Log.Debugf("client.SetDebug %v", debug)
 	if debug {
 		c.snmpClient.Logger = GetDebugLogger(c.ID)
 	} else {
@@ -139,6 +142,7 @@ func (c *Client) SetDebug(debug bool) {
 // device to check if it works.
 // It also try to obtain some basic OIDs to check if everything works.
 func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
+	c.Log.Debug("client.Connect")
 	goSNMPClient, err := GetClient(c.ConnectionParams, c.Log)
 	if err != nil {
 		return nil, fmt.Errorf("initializating the goSNMP client: %v", err)
@@ -169,6 +173,8 @@ func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
 // It will query a set of default basic OIDs (check GetSysInfo), or the defined in the parameter if it
 // is not empty and its first element is not the string "null"
 func (c *Client) SysInfoQuery(systemOIDs []string) (*SysInfo, error) {
+	c.Log.Debug("client.SysInfoQuery")
+
 	if len(systemOIDs) > 0 && systemOIDs[0] != "" && systemOIDs[0] != "null" {
 		c.Log.Infof("Detected alternate %d SystemOID's ", len(systemOIDs))
 		// this device has an alternate System Description (Non MIB-2 based systems)
@@ -207,7 +213,7 @@ func (c *Client) Walk(rootOid string, walkFn gosnmp.WalkFunc) error {
 // Send each value to the walkfunc (second parameter).
 func (c *Client) Get(oids []string, walkFunc gosnmp.WalkFunc) error {
 	l := len(oids)
-	c.Log.Infof("LEN %d : %+v | client : %+v", l, oids, c)
+	c.Log.Debugf("LEN %d : %+v | client : %+v", l, oids, c)
 
 	// Get values in groups of c.MaxOids
 	for i := 0; i < l; i += c.snmpClient.MaxOids {
@@ -215,7 +221,7 @@ func (c *Client) Get(oids []string, walkFunc gosnmp.WalkFunc) error {
 		if end > l {
 			end = len(oids)
 		}
-		c.Log.Infof("Getting snmp data from %d to %d", i, end)
+		c.Log.Debugf("Getting snmp data from %d to %d", i, end)
 		pkt, err := c.snmpClient.Get(oids[i:end])
 		if err != nil {
 			c.Log.Debugf("selected OIDS %+v", oids[i:end])
