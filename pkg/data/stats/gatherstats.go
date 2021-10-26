@@ -112,11 +112,11 @@ func (s *GatherStats) Init(t string, id string, tm map[string]string, l utils.Lo
 	s.Counters[MeasurementSent] = 0
 	s.Counters[MetricSentErrors] = 0
 	s.Counters[MeasurementSentErrors] = 0
-	s.Counters[CycleGatherStartTime] = 0
+	s.Counters[CycleGatherStartTime] = int64(0)
 	s.Counters[CycleGatherDuration] = 0.0
-	s.Counters[FilterStartTime] = 0
+	s.Counters[FilterStartTime] = int64(0)
 	s.Counters[FilterDuration] = 0.0
-	s.Counters[BackEndSentStartTime] = 0
+	s.Counters[BackEndSentStartTime] = int64(0)
 	s.Counters[BackEndSentDuration] = 0.0
 	s.Counters[DeviceActive] = 0
 	s.Counters[DeviceConnected] = 0
@@ -127,8 +127,12 @@ func (s *GatherStats) reset() {
 		switch v := val.(type) {
 		case string:
 			s.Counters[k] = ""
-		case int32, int64, int:
-			s.Counters[k] = 0
+		case int64:
+			s.Counters[k] = int64(0)
+		case int32:
+			s.Counters[k] = int32(0)
+		case int:
+			s.Counters[k] = int(0)
 		case float64, float32:
 			s.Counters[k] = 0.0
 		default:
@@ -283,6 +287,45 @@ func (s *GatherStats) CounterInc(id GatherStatType, n int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.Counters[id] = s.Counters[id].(int) + int(n)
+}
+
+func maxf(x, y float64) float64 {
+	if x < y {
+		return y
+	}
+	return x
+}
+
+func minI(x, y int64) int64 {
+	if x > y {
+		return y
+	}
+	return x
+}
+
+func (s *GatherStats) Combine(sc *GatherStats) {
+	s.mutex.Lock()
+	sc.mutex.Lock()
+	defer s.mutex.Unlock()
+	defer sc.mutex.Unlock()
+	// Meas Stats
+	s.Counters[MetricSent] = s.Counters[MetricSent].(int) + sc.Counters[MetricSent].(int)
+	s.Counters[MetricSentErrors] = s.Counters[MetricSentErrors].(int) + sc.Counters[MetricSentErrors].(int)
+	s.Counters[MeasurementSent] = s.Counters[MeasurementSent].(int) + sc.Counters[MeasurementSent].(int)
+	s.Counters[MeasurementSentErrors] = s.Counters[MeasurementSentErrors].(int) + sc.Counters[MeasurementSentErrors].(int)
+	// Snmp Stats
+	s.Counters[SnmpOIDGetAll] = s.Counters[SnmpOIDGetAll].(int) + sc.Counters[SnmpOIDGetAll].(int)
+	s.Counters[SnmpOIDGetProcessed] = s.Counters[SnmpOIDGetProcessed].(int) + sc.Counters[SnmpOIDGetProcessed].(int)
+	s.Counters[SnmpOIDGetErrors] = s.Counters[SnmpOIDGetErrors].(int) + sc.Counters[SnmpOIDGetErrors].(int)
+	// Gather Stats
+	s.Counters[CycleGatherStartTime] = minI(s.Counters[CycleGatherStartTime].(int64), sc.Counters[CycleGatherStartTime].(int64))
+	s.Counters[CycleGatherDuration] = maxf(s.Counters[CycleGatherDuration].(float64), sc.Counters[CycleGatherDuration].(float64))
+	// Sent Duration
+	s.Counters[BackEndSentStartTime] = minI(s.Counters[BackEndSentStartTime].(int64), sc.Counters[BackEndSentStartTime].(int64))
+	s.Counters[BackEndSentDuration] = s.Counters[BackEndSentDuration].(float64) + sc.Counters[BackEndSentDuration].(float64)
+	// Filter Durations
+	s.Counters[FilterStartTime] = minI(s.Counters[FilterStartTime].(int64), sc.Counters[FilterStartTime].(int64))
+	s.Counters[FilterDuration] = s.Counters[FilterDuration].(float64) + sc.Counters[FilterDuration].(float64)
 }
 
 // AddMeasStats add measurement stats to the device stats object

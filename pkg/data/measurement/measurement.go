@@ -95,9 +95,12 @@ func (m *Measurement) getBasicStats() *stats.GatherStats {
 
 func (m *Measurement) SetStats(st stats.GatherStats) {
 	m.stats = st
+	m.statsData.Lock()
+	m.Stats = m.getBasicStats()
+	m.statsData.Unlock()
 }
 
-func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*config.MeasFilterCfg, l utils.Logger) *Measurement {
+func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*config.MeasFilterCfg, enabled bool, l utils.Logger) *Measurement {
 	return &Measurement{
 		ID:          c.ID,
 		MName:       c.Name,
@@ -105,10 +108,11 @@ func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*co
 		measFilters: measFilters,
 		mFilters:    mFilters,
 		Log:         l,
-		Enabled:     true,
+		Enabled:     enabled,
 	}
 }
 
+/*
 func (m *Measurement) CheckConnectivity() {
 	ProcessedStat := m.stats.GetCounter(stats.SnmpOIDGetProcessed)
 
@@ -121,7 +125,7 @@ func (m *Measurement) CheckConnectivity() {
 	} else {
 		m.Warnf("Error in check Processd Stats %#+v ", ProcessedStat)
 	}
-}
+}*/
 
 // InvalidateMetrics mark as old (Valid=False) all the metrics in the table
 func (m *Measurement) InvalidateMetrics() {
@@ -183,8 +187,11 @@ func (m *Measurement) Init() error {
 
 	m.InitFilters()
 
-	m.Enabled = true
 	m.stats.SetActive(m.Enabled)
+	// init public queriable stats
+	m.statsData.Lock()
+	m.Stats = m.getBasicStats()
+	m.statsData.Unlock()
 	return nil
 }
 
@@ -212,7 +219,7 @@ func (m *Measurement) InitMultiIndex() error {
 		}
 
 		// create entirely new measurement based on provided CFG
-		mm := New(&mcfg, m.measFilters, m.mFilters, m.Log)
+		mm := New(&mcfg, m.measFilters, m.mFilters, m.Enabled, m.Log)
 		err := mm.Init()
 		if err != nil {
 			return fmt.Errorf("init multi measurement %s..%s", m.ID, v.Label)
@@ -950,35 +957,40 @@ func (m *Measurement) GatherLoop(
 	defer updateFilterTicker.Stop()
 
 	m.snmpClient = &snmpCli
-	// Try to connect for the first time, init metrics and gather data
-	_, err := m.snmpClient.Connect(systemOIDs)
-	if err != nil {
-		m.Log.Error("Not able to connect at the start of the measurement")
-	} else {
-		// If the connection is succesfull, initialize
-		m.Connected = true
-		errInit := m.Init()
-		if errInit != nil {
-			m.Log.Error("Not able to initialize at the start of the measurement")
+	// Try to connect for the first time, init metrics and gather data if Enabled
+	// if not enabled will be initializated on the main loop
+	if m.Enabled {
+		_, err := m.snmpClient.Connect(systemOIDs)
+		if err != nil {
+			m.Log.Error("Not able to connect at the start of the measurement")
 		} else {
-			// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
-			m.initialized = true
-			m.rtData.Lock()
-			m.GetData()
-			m.rtData.Unlock()
+			// If the connection is succesfull, initialize
+			m.Connected = true
+			errInit := m.Init()
+			if errInit != nil {
+				m.Log.Error("Not able to initialize at the start of the measurement")
+			} else {
+				// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
+				m.initialized = true
+				m.rtData.Lock()
+				m.GetData()
+				m.rtData.Unlock()
+			}
 		}
 	}
-	m.stats.SetStatus(m.Enabled, m.Connected)
+
 	for {
 		m.Log.Infof("STATS Enabled [%t]/Connected [%t]", m.Enabled, m.Connected)
 		// In each iteration, if measurement is enabled and not connected, try again to connect
 		if m.Enabled && !m.Connected {
-
+			// Connect
 			_, err := m.snmpClient.Connect(systemOIDs)
 			if err != nil {
 				m.Log.Error("Not able to connect")
+			} else {
+				m.Connected = true
 			}
-			m.Connected = true
+
 		}
 		// If measurement is not initialized, do it. Could be because it returned an error while starting.
 		if m.Enabled && m.Connected && !m.initialized {
@@ -998,9 +1010,12 @@ func (m *Measurement) GatherLoop(
 		case <-updateFilterTicker.C:
 			m.filterUpdate()
 		case <-gatherTicker.C:
-			m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
-			// Check if errors in previous gather
-			m.CheckConnectivity()
+			err := m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
+			if err != nil {
+				m.Connected = false
+				m.stats.SetStatus(m.Enabled, m.Connected)
+				m.Log.Error(err)
+			}
 			// sending only once all statistics for this measurement
 			// if not filtered the value should be 0 for filter counters
 			m.stats.Send()
@@ -1136,11 +1151,11 @@ func (m *Measurement) gatherOnce(
 	varMap map[string]interface{},
 	tagMap map[string]string,
 	influxClient *output.InfluxDB,
-) {
+) error {
 	start := time.Now()
 	// Do not gather data if measurement is disabled or it doesn't have a connection or measurement is not initialized
 	if !m.Enabled || !m.Connected || !m.initialized {
-		return
+		return nil
 	}
 
 	// Do not allow the UI to get data from the measurement while it is gathering new data.
@@ -1195,16 +1210,16 @@ func (m *Measurement) gatherOnce(
 	elapsedSentStats := time.Since(sentStats)
 	m.stats.AddSentDuration(sentStats, elapsedSentStats)
 
-	// Decide if the connection is working based on the data captured in this gather
-	// TODO usar mejor el número de datos "crudos" recogidos, entiendo que usar los points
-	// es más restrictivo, porque podríamos estar aplicando unos filtros de forma que si
-	// estuviésemos recogiendo datos pero no enviándolos a influx.
-	// TODO corregir esto, cambiar por nGets o nErrs. Chequear si goSNMP nos pasa PDUs auque el dispositivo no funcione
-	if len(points) == 0 {
-		m.Log.Warnf("marking as not connected because there were no points to send")
-	}
 	end := time.Since(start)
 	m.stats.SetGatherDuration(start, end)
+	// updating public query stats
+	m.statsData.Lock()
+	m.Stats = m.getBasicStats()
+	m.statsData.Unlock()
+	if nProcs == 0 {
+		return fmt.Errorf("Device not connected")
+	}
+	return nil
 }
 
 // filterUpdate does ... TODO

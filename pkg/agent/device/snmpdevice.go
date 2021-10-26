@@ -140,13 +140,26 @@ func (d *SnmpDevice) GetBasicStats() *stats.GatherStats {
 // TODO cuidado con data races
 func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 	sum := 0
+	d.DeviceConnected = false
 	for _, m := range d.Measurements {
+		st := m.GetBasicStats()
+		if st == nil {
+			d.log.Warnf("No Basic stats exist in Device [%s] Measurement: %s", d.cfg.ID, m.ID)
+			panic(fmt.Errorf("No Basic stats exist in Device [%s] Measurement: %s", d.cfg.ID, m.ID))
+			// continue
+		}
+		d.stats.Combine(st)
+		d.DeviceConnected = d.DeviceConnected || st.Connected
 		sum += len(m.OidSnmpMap)
 	}
+	d.stats.SetStatus(d.DeviceActive, d.DeviceConnected)
 	stat := d.stats.ThSafeCopy()
 	stat.TagMap = d.TagMap
-	stat.NumMeasurements = len(d.Measurements)
-	stat.NumMetrics = sum
+	// reporting only measurements/metrics to the UI only if connected
+	if d.DeviceConnected {
+		stat.NumMeasurements = len(d.Measurements)
+		stat.NumMetrics = sum
+	}
 	if d.SysInfo != nil {
 		stat.SysDescription = d.SysInfo.SysDescr
 	} else {
@@ -279,7 +292,7 @@ func (d *SnmpDevice) InitDevMeasurements() {
 				mstat.SetSelfMonitoring(d.selfmon)
 				// creating a new measurement runtime object and asigning to array
 				// MeasFilters and MFitlers used in the InitFilters function used in the initialization of the measurement goroutine
-				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, measLog)
+				imeas := measurement.New(mVal, d.cfg.MeasFilters, cfg.MFilters, d.cfg.Active, measLog)
 				imeas.SetStats(mstat)
 				d.Measurements = append(d.Measurements, imeas)
 			}
@@ -454,25 +467,30 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	d.stats.SetSelfMonitoring(cfg)
 }
 
-// CheckDeviceConnectivity check if device snmp connection is ok by checking SnmpOIDGetProcessed stats
-// TODO no se está llamando desde ningún lado. Borrar?
-// TODO como gestionar si el device está conectado? Tal vez en el ToJSON consultar el stats.GetCounter(...) para devolver si consideramos que estamos conectados?
-func (d *SnmpDevice) CheckDeviceConnectivity() {
-	ProcessedStat := d.stats.GetCounter(stats.SnmpOIDGetProcessed)
-
-	if value, ok := ProcessedStat.(int); ok {
-		// check if no processed SNMP data (when this happens means there is not connectivity with the device )
-		if value == 0 {
-			// Avoid reading device while modifying data
-			d.rtData.Lock()
-			d.DeviceConnected = false
-			d.rtData.Unlock()
-			// TODO Se modifica el DeviceConnected pero se pasa a stats el DeviceActive??
-			d.stats.SetStatus(d.DeviceActive, false)
-		}
-	} else {
-		d.Warnf("Error in check Processd Stats %#+v ", ProcessedStat)
+func (d *SnmpDevice) firstSnmpConnect(connectionParams snmp.ConnectionParams) bool {
+	var connected bool
+	snmpClient := snmp.Client{
+		ID:               d.cfg.Host,
+		DisableBulk:      d.cfg.DisableBulk,
+		ConnectionParams: connectionParams,
+		Log:              d.log,
 	}
+	sysinfo, err := snmpClient.Connect(d.cfg.SystemOIDs)
+	if err != nil {
+		d.Errorf("unable to connect")
+		d.DeviceConnected = false
+		connected = false
+	} else {
+		// Avoid data race while modifying d.SysInfo and d.Measurements (in InitDevMeasurements)
+		d.rtData.Lock()
+		d.SysInfo = sysinfo
+		d.rtData.Unlock()
+		connected = true
+		// send counters when device active and not connected ( no reset needed only status fields/tags are sen
+		// d.stats.Send() // TODO gestion de stats
+	}
+	d.stats.SetStatus(d.DeviceActive, d.DeviceConnected)
+	return connected
 }
 
 // StartGather Main GoRutine method to begin snmp data collecting
@@ -519,45 +537,46 @@ func (d *SnmpDevice) StartGather() {
 	// Wait for the device to become active
 	// This loop will wait for commands and finish if we device recive the command to exit or to activate
 	// Others commands will be logged and ignored
-	for !d.DeviceActive {
-		select {
-		case val := <-d.Node.Read:
-			d.Infof("Device %s received message while waiting state. %s: %+v", d.cfg.Host, val.Type, val.Data)
-			switch val.Type {
-			case bus.Exit:
-				d.Infof("invoked Asyncronous EXIT from SNMP Gather process ")
-				return
-			case bus.SyncExit:
-				d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
-				d.isStopped <- true
-				return
-			case bus.Enabled:
-				enabled, ok := val.Data.(bool)
-				if !ok {
-					d.Errorf("invalid value for enabled bus message: %v", val.Data)
-					continue
-				}
+	/* 	for !d.DeviceActive {
+	   		select {
+	   		case val := <-d.Node.Read:
+	   			d.Infof("Device %s received message while waiting state. %s: %+v", d.cfg.Host, val.Type, val.Data)
+	   			switch val.Type {
+	   			case bus.Exit:
+	   				d.Infof("invoked Asyncronous EXIT from SNMP Gather process ")
+	   				return
+	   			case bus.SyncExit:
+	   				d.Infof("invoked Syncronous EXIT from SNMP Gather process ")
+	   				d.isStopped <- true
+	   				return
+	   			case bus.Enabled:
+	   				enabled, ok := val.Data.(bool)
+	   				if !ok {
+	   					d.Errorf("invalid value for enabled bus message: %v", val.Data)
+	   					continue
+	   				}
 
-				d.rtData.Lock()
-				d.DeviceActive = enabled
-				d.rtData.Unlock()
-				// TODO gestionar stats
-				if enabled {
-					d.stats.SetActive(true)
-				} else {
-					d.stats.SetStatus(false, false)
-				}
-				d.Infof("Device %s STATUS ACTIVE [%t] ", d.cfg.Host, enabled)
-			default:
-				d.Warnf("Device %s in waiting state. Ignored command: %s (%s)", d.cfg.Host, val.Type, val.Data)
-			}
-		}
-	}
-
+	   				d.rtData.Lock()
+	   				d.DeviceActive = enabled
+	   				d.rtData.Unlock()
+	   				// TODO gestionar stats
+	   				if enabled {
+	   					d.stats.SetActive(true)
+	   				} else {
+	   					d.stats.SetStatus(false, false)
+	   				}
+	   				d.Infof("Device %s STATUS ACTIVE [%t] ", d.cfg.Host, enabled)
+	   			default:
+	   				d.Warnf("Device %s in waiting state. Ignored command: %s (%s)", d.cfg.Host, val.Type, val.Data)
+	   			}
+	   		}
+	   	}
+	*/
 	d.Infof("Device on host (%s) is active. Trying to connect ", d.cfg.Host)
 
 	// Try to establish the first connection. Loop will be finished when the connection has been established
-	for {
+	/* 	for {
+		d.log.Infof("YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY")
 		// If device receive a command to deactivate, stop trying to connect
 		if d.DeviceActive {
 			snmpClient := snmp.Client{
@@ -584,6 +603,7 @@ func (d *SnmpDevice) StartGather() {
 		// Wait device freq to retry to reconnect and see if there a new messages on the bus to be processed
 		select {
 		case <-time.NewTimer(time.Duration(d.cfg.Freq) * time.Second).C:
+
 			// Try to reconnect after d.cfg.Freq seconds
 		case val := <-d.Node.Read:
 			d.Infof("Device %s received message while waiting state. %s: %+v", d.cfg.Host, val.Type, val.Data)
@@ -611,8 +631,11 @@ func (d *SnmpDevice) StartGather() {
 				d.Warnf("Device %s in connecting state. Ignored command: %s (%s)", d.cfg.Host, val.Type, val.Data)
 			}
 		}
-	}
+	} */
+
 	// Device is active and connected
+
+	d.InitDevMeasurements()
 
 	// Create a bus to control all goroutines created to manage this device
 	deviceControlBus := bus.NewBus()
@@ -656,9 +679,26 @@ func (d *SnmpDevice) StartGather() {
 		}(meas)
 	}
 
+	if d.DeviceActive {
+		d.firstSnmpConnect(connectionParams)
+	}
+
 	// Check if there is some message in the bus to be processed.
 	for {
 		select {
+		case <-time.NewTimer(time.Duration(d.cfg.Freq) * time.Second).C:
+			if d.DeviceActive && !d.DeviceConnected {
+				// connect
+				d.firstSnmpConnect(connectionParams)
+			}
+
+			// Some online actions can change Stats
+			d.statsData.Lock()
+			d.Stats = d.getBasicStats()
+			d.statsData.Unlock()
+			d.stats.Send()
+			d.stats.ResetCounters()
+			// Try to reconnect after d.cfg.Freq seconds
 		case val := <-d.Node.Read:
 			d.Infof("Received Message: %s (%+v)", val.Type, val.Data)
 			switch val.Type {
@@ -698,11 +738,5 @@ func (d *SnmpDevice) StartGather() {
 
 			}
 		}
-
-		// Some online actions can change Stats
-		d.statsData.Lock()
-		d.Stats = d.getBasicStats()
-		d.statsData.Unlock()
-
 	}
 }
