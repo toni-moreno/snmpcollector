@@ -977,7 +977,6 @@ func (m *Measurement) GatherLoop(
 	}
 
 	for {
-		m.Log.Infof("STATS Enabled [%t]/Connected [%t]", m.Active, m.Connected)
 		// In each iteration, if measurement is enabled and not connected, try again to connect
 		if m.Active && !m.Connected {
 			// Connect
@@ -1165,6 +1164,11 @@ func (m *Measurement) gatherOnce(
 	start := time.Now()
 	// Do not gather data if measurement is disabled or it doesn't have a connection or measurement is not initialized
 	if !m.Active || !m.Connected || !m.initialized {
+		m.Log.Infof("Skip measurement Gathering process Active[%t],Connected[%t],Initialized[%t]", m.Active, m.Connected, m.initialized)
+		m.stats.ResetCounters()
+		m.statsData.Lock()
+		m.Stats = m.getBasicStats()
+		m.statsData.Unlock()
 		return nil
 	}
 
