@@ -946,15 +946,21 @@ func (m *Measurement) GatherLoop(
 ) {
 	m.Log.Info("MeasurementLoop")
 
-	gatherTicker := time.NewTicker(time.Duration(deviceFreq) * time.Second)
+	// Measurement Freq better than device Freq
+	gatherFreq := deviceFreq
 	if m.cfg.Freq != 0 {
-		gatherTicker = time.NewTicker(time.Duration(m.cfg.Freq) * time.Second)
+		gatherFreq = m.cfg.Freq
 	}
+	gatherTicker := time.NewTicker(time.Duration(gatherFreq) * time.Second)
 	defer gatherTicker.Stop()
-
-	// TODO cambiar la UI para que el deviceUpdateFilterFreq sea un time.Duration y cambiar esta expresión
-	updateFilterTicker := time.NewTicker(time.Duration(deviceFreq) * time.Second * time.Duration(deviceUpdateFilterFreq))
+	// Filter frequency
+	filterFreq := deviceFreq * deviceUpdateFilterFreq
+	updateFilterTicker := time.NewTicker(time.Duration(filterFreq) * time.Second)
 	defer updateFilterTicker.Stop()
+	// update stats info
+
+	m.stats.GatherFreq = gatherFreq
+	m.stats.FilterFreq = filterFreq
 
 	m.snmpClient = &snmpCli
 	// Try to connect for the first time, init metrics and gather data if Enabled
@@ -1008,10 +1014,18 @@ func (m *Measurement) GatherLoop(
 		m.stats.SetStatus(m.Active, m.Connected)
 		select {
 		case <-updateFilterTicker.C:
+			// compute next filter time ( needed to show in the UI )
+			m.stats.SetFilterNextTime(time.Now().Add(time.Duration(filterFreq) * time.Second).Unix())
+			// filter
 			m.filterUpdate()
 		case <-gatherTicker.C:
+			// compute next gather time ( needed to show in the UI )
+			m.stats.SetGatherNextTime(time.Now().Add(time.Duration(gatherFreq) * time.Second).Unix())
+			// Gather
 			err := m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
 			if err != nil {
+				// if error is because of no response from any metric
+				// we can suppose the connection has been dropped
 				m.Connected = false
 				m.stats.SetStatus(m.Active, m.Connected)
 				m.Log.Error(err)

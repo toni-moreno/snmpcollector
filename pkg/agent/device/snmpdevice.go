@@ -139,11 +139,6 @@ func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 	d.DeviceConnected = false
 	for _, m := range d.Measurements {
 		st := m.GetBasicStats()
-		if st == nil {
-			d.log.Warnf("No Basic stats exist in Device [%s] Measurement: %s", d.cfg.ID, m.ID)
-			panic(fmt.Errorf("No Basic stats exist in Device [%s] Measurement: %s", d.cfg.ID, m.ID))
-			// continue
-		}
 		d.stats.Combine(st)
 		d.DeviceConnected = d.DeviceConnected || st.Connected
 		sum += len(m.OidSnmpMap)
@@ -155,12 +150,13 @@ func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 	if d.DeviceConnected {
 		stat.NumMeasurements = len(d.Measurements)
 		stat.NumMetrics = sum
+		if d.SysInfo != nil {
+			stat.SysDescription = d.SysInfo.SysDescr
+		} else {
+			stat.SysDescription = ""
+		}
 	}
-	if d.SysInfo != nil {
-		stat.SysDescription = d.SysInfo.SysDescr
-	} else {
-		stat.SysDescription = ""
-	}
+
 	return stat
 }
 
@@ -679,11 +675,15 @@ func (d *SnmpDevice) StartGather() {
 		d.firstSnmpConnect(connectionParams)
 	}
 
-	deviceTicker := time.NewTimer(time.Duration(d.cfg.Freq) * time.Second)
+	deviceTicker := time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
+	defer deviceTicker.Stop()
+	d.stats.GatherFreq = d.cfg.Freq
+
 	// Wait for commands
 	for {
 		select {
 		case <-deviceTicker.C:
+			d.stats.SetGatherNextTime(time.Now().Add(time.Duration(d.cfg.Freq) * time.Second).Unix())
 			if d.DeviceActive && !d.DeviceConnected {
 				// connect
 				d.firstSnmpConnect(connectionParams)
@@ -700,12 +700,12 @@ func (d *SnmpDevice) StartGather() {
 			d.Infof("Received Message: %s (%+v)", val.Type, val.Data)
 			switch val.Type {
 			case bus.Exit:
-				d.log.Infof("invoked asyncronous EXIT from SNMP Gather process ")
+				d.log.Infof("invoked asynchronous EXIT from SNMP Gather process ")
 				// This broadcast is blocking, will wait till all measurement goroutines have received the message
 				deviceControlBus.Broadcast(&bus.Message{Type: val.Type})
 				return
 			case bus.SyncExit:
-				d.log.Infof("invoked syncronous EXIT from SNMP Gather process ")
+				d.log.Infof("invoked synchronous EXIT from SNMP Gather process ")
 				// Signal all measurement goroutines to exit
 				deviceControlBus.Broadcast(&bus.Message{Type: val.Type})
 				// Wait till all measurement goroutines have finished

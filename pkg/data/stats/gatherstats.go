@@ -85,6 +85,11 @@ type GatherStats struct {
 	NumMeasurements int
 	SysDescription  string
 	NumMetrics      int
+	// Gather
+	GatherFreq     int
+	GatherNextTime int64
+	FilterFreq     int
+	FilterNextTime int64
 }
 
 // Init initializes the device stat object
@@ -139,6 +144,20 @@ func (s *GatherStats) reset() {
 			s.log.Warnf("unknown typpe for counter %#v", v)
 		}
 	}
+}
+
+// SetFilterNextTime get Counter for stats
+func (s *GatherStats) SetFilterNextTime(t int64) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.FilterNextTime = t
+}
+
+// SetGatherNextTime get Counter for stats
+func (s *GatherStats) SetGatherNextTime(t int64) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.GatherNextTime = t
 }
 
 // GetCounter get Counter for stats
@@ -221,6 +240,10 @@ func (s *GatherStats) ThSafeCopy() *GatherStats {
 	}
 	st.Active = s.Active
 	st.Connected = s.Connected
+	st.GatherNextTime = s.GatherNextTime
+	st.FilterNextTime = s.FilterNextTime
+	st.FilterFreq = s.FilterFreq
+	st.GatherFreq = s.GatherFreq
 	return st
 }
 
