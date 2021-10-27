@@ -220,6 +220,7 @@ func (m *Measurement) InitMultiIndex() error {
 
 		// create entirely new measurement based on provided CFG
 		mm := New(&mcfg, m.measFilters, m.mFilters, m.Active, m.Log)
+		mm.SetSNMPClient(*m.snmpClient)
 		err := mm.Init()
 		if err != nil {
 			return fmt.Errorf("init multi measurement %s..%s", m.ID, v.Label)
@@ -1264,4 +1265,9 @@ func (m *Measurement) filterUpdate() {
 	duration := time.Since(start)
 	m.stats.SetFltUpdateStats(start, duration) // TODO
 	m.Infof("snmp INIT runtime measurements/filters took [%s] ", duration)
+}
+
+// SetSNMPClient used by unit tests to insert the snmp client
+func (m *Measurement) SetSNMPClient(snmpCli snmp.Client) {
+	m.snmpClient = &snmpCli
 }
