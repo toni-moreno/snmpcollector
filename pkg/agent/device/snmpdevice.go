@@ -683,10 +683,11 @@ func (d *SnmpDevice) StartGather() {
 		d.firstSnmpConnect(connectionParams)
 	}
 
-	// Check if there is some message in the bus to be processed.
+	deviceTicker := time.NewTimer(time.Duration(d.cfg.Freq) * time.Second)
+	// Wait for commands
 	for {
 		select {
-		case <-time.NewTimer(time.Duration(d.cfg.Freq) * time.Second).C:
+		case <-deviceTicker.C:
 			if d.DeviceActive && !d.DeviceConnected {
 				// connect
 				d.firstSnmpConnect(connectionParams)

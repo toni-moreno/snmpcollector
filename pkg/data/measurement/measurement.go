@@ -1045,14 +1045,17 @@ func (m *Measurement) GatherLoop(
 			case bus.SNMPReset:
 				err := m.snmpClient.Release()
 				if err != nil {
-					m.Errorf("releasing snmp client: %v", err)
+					m.Log.Errorf("releasing snmp client in snmpreset: %v", err)
 				}
 			case bus.SNMPResetHard:
 				err := m.snmpClient.Release()
 				if err != nil {
-					m.Errorf("releasing snmp client: %v", err)
+					m.Log.Errorf("releasing snmp client: %v", err)
 				}
-				m.filterUpdate()
+				err = m.Init()
+				if err != nil {
+					m.Log.Errorf("init failed in snmpreset hard: %s", err)
+				}
 			case bus.SNMPDebug:
 				debug, ok := val.Data.(bool)
 				if !ok {
