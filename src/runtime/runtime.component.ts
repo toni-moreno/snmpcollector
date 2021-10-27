@@ -8,7 +8,7 @@ import { SpinnerComponent } from '../common/spinner';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
 
 import { TestConnectionModal } from '../common/test-connection-modal';
-import { RuntimeComponentConfig, TableRole, ExtraActions, CounterDef } from './runtime.data';
+import { RuntimeComponentConfig, TableRole, ExtraActions, DeviceCounterDef, MeasurementCounterDef } from './runtime.data';
 
 declare var _: any;
 @Component({
@@ -49,7 +49,8 @@ export class RuntimeComponent implements OnDestroy {
     'debug'
   ];
   maxrep: any = '';
-  counterDef = CounterDef;
+  deviceCounterDef = DeviceCounterDef;
+  measCounterDef = MeasurementCounterDef;
 
   //TABLE
   private data: Array<any> = [];
@@ -391,7 +392,7 @@ export class RuntimeComponent implements OnDestroy {
         // runtime_dev is only differnet null on runtime device view
         // as the property is different than list, DeviceActive is used
         if (this.runtime_dev != null) {
-          this.runtime_dev.DeviceActive = !this.runtime_dev.DeviceActive;
+          this.runtime_dev.Stats.Active = !this.runtime_dev.Stats.Active;
         }
 
       },

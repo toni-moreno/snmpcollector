@@ -67,7 +67,7 @@ type Measurement struct {
 	snmpClient       *snmp.Client
 	MultiIndexMeas   []*Measurement
 	// Enabled is true if this measurement should gather metrics. This value is controlled by the device
-	Enabled   bool
+	Active    bool
 	Connected bool
 	// Measurement statistics
 	stats stats.GatherStats // Runtime Internal statistic
@@ -100,7 +100,7 @@ func (m *Measurement) SetStats(st stats.GatherStats) {
 	m.statsData.Unlock()
 }
 
-func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*config.MeasFilterCfg, enabled bool, l utils.Logger) *Measurement {
+func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*config.MeasFilterCfg, active bool, l utils.Logger) *Measurement {
 	return &Measurement{
 		ID:          c.ID,
 		MName:       c.Name,
@@ -108,7 +108,7 @@ func New(c *config.MeasurementCfg, measFilters []string, mFilters map[string]*co
 		measFilters: measFilters,
 		mFilters:    mFilters,
 		Log:         l,
-		Enabled:     enabled,
+		Active:      active,
 	}
 }
 
@@ -187,7 +187,7 @@ func (m *Measurement) Init() error {
 
 	m.InitFilters()
 
-	m.stats.SetActive(m.Enabled)
+	m.stats.SetActive(m.Active)
 	// init public queriable stats
 	m.statsData.Lock()
 	m.Stats = m.getBasicStats()
@@ -219,7 +219,7 @@ func (m *Measurement) InitMultiIndex() error {
 		}
 
 		// create entirely new measurement based on provided CFG
-		mm := New(&mcfg, m.measFilters, m.mFilters, m.Enabled, m.Log)
+		mm := New(&mcfg, m.measFilters, m.mFilters, m.Active, m.Log)
 		err := mm.Init()
 		if err != nil {
 			return fmt.Errorf("init multi measurement %s..%s", m.ID, v.Label)
@@ -959,7 +959,7 @@ func (m *Measurement) GatherLoop(
 	m.snmpClient = &snmpCli
 	// Try to connect for the first time, init metrics and gather data if Enabled
 	// if not enabled will be initializated on the main loop
-	if m.Enabled {
+	if m.Active {
 		_, err := m.snmpClient.Connect(systemOIDs)
 		if err != nil {
 			m.Log.Error("Not able to connect at the start of the measurement")
@@ -980,9 +980,9 @@ func (m *Measurement) GatherLoop(
 	}
 
 	for {
-		m.Log.Infof("STATS Enabled [%t]/Connected [%t]", m.Enabled, m.Connected)
+		m.Log.Infof("STATS Enabled [%t]/Connected [%t]", m.Active, m.Connected)
 		// In each iteration, if measurement is enabled and not connected, try again to connect
-		if m.Enabled && !m.Connected {
+		if m.Active && !m.Connected {
 			// Connect
 			_, err := m.snmpClient.Connect(systemOIDs)
 			if err != nil {
@@ -993,7 +993,7 @@ func (m *Measurement) GatherLoop(
 
 		}
 		// If measurement is not initialized, do it. Could be because it returned an error while starting.
-		if m.Enabled && m.Connected && !m.initialized {
+		if m.Active && m.Connected && !m.initialized {
 			err := m.Init()
 			if err != nil {
 				m.Log.Error("Not able to initialize at the start of the measurement")
@@ -1005,7 +1005,7 @@ func (m *Measurement) GatherLoop(
 				m.rtData.Unlock()
 			}
 		}
-		m.stats.SetStatus(m.Enabled, m.Connected)
+		m.stats.SetStatus(m.Active, m.Connected)
 		select {
 		case <-updateFilterTicker.C:
 			m.filterUpdate()
@@ -1013,7 +1013,7 @@ func (m *Measurement) GatherLoop(
 			err := m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
 			if err != nil {
 				m.Connected = false
-				m.stats.SetStatus(m.Enabled, m.Connected)
+				m.stats.SetStatus(m.Active, m.Connected)
 				m.Log.Error(err)
 			}
 			// sending only once all statistics for this measurement
@@ -1027,19 +1027,19 @@ func (m *Measurement) GatherLoop(
 			case bus.ForceGather:
 				m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
 			case bus.Enabled:
-				enabled, ok := val.Data.(bool)
+				active, ok := val.Data.(bool)
 				if !ok {
-					m.Log.Errorf("invalid value for enabled bus message: %v", val.Data)
+					m.Log.Errorf("invalid value for active bus message: %v", val.Data)
 					continue
 				}
 				m.rtData.Lock()
-				m.Enabled = enabled
-				if enabled {
+				m.Active = active
+				if active {
 					m.stats.SetActive(true)
 				} else {
 					m.stats.SetStatus(false, false)
 				}
-				m.Infof("STATUS  ACTIVE  [%t] ", enabled)
+				m.Infof("STATUS  ACTIVE  [%t] ", active)
 				m.rtData.Unlock()
 
 			case bus.SNMPReset:
@@ -1132,8 +1132,6 @@ func (m *Measurement) MarshalJSON() ([]byte, error) {
 		FilterCfg        *config.MeasFilterCfg
 		Filter           filter.Filter
 		MultiIndexMeas   []*Measurement
-		Enabled          bool
-		Connected        bool
 		Stats            *stats.GatherStats
 	}{
 		ID:               m.ID,
@@ -1145,8 +1143,6 @@ func (m *Measurement) MarshalJSON() ([]byte, error) {
 		FilterCfg:        m.FilterCfg,
 		Filter:           m.Filter,
 		MultiIndexMeas:   m.MultiIndexMeas,
-		Enabled:          m.Enabled,
-		Connected:        m.Connected,
 		Stats:            m.Stats,
 	})
 }
@@ -1163,7 +1159,7 @@ func (m *Measurement) gatherOnce(
 ) error {
 	start := time.Now()
 	// Do not gather data if measurement is disabled or it doesn't have a connection or measurement is not initialized
-	if !m.Enabled || !m.Connected || !m.initialized {
+	if !m.Active || !m.Connected || !m.initialized {
 		return nil
 	}
 
@@ -1235,7 +1231,7 @@ func (m *Measurement) gatherOnce(
 func (m *Measurement) filterUpdate() {
 	m.Debug("filterUpdate")
 	// Do not try to update filters if measurement is disabled or it doesn't have a connection or measurement is not initialized
-	if !m.Enabled || !m.Connected || !m.initialized {
+	if !m.Active || !m.Connected || !m.initialized {
 		return
 	}
 	// Update filters

@@ -101,25 +101,21 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 	// MarshalJSON function, grabbing there the lock
 
 	result, err := json.MarshalIndent(&struct {
-		SysInfo         *snmp.SysInfo
-		TagMap          map[string]string
-		Freq            int
-		Measurements    []*measurement.Measurement
-		VarMap          map[string]interface{}
-		Stats           *stats.GatherStats // Public info for thread safe accessing to the data ()
-		DeviceActive    bool
-		DeviceConnected bool
-		CurLogLevel     string
+		SysInfo      *snmp.SysInfo
+		TagMap       map[string]string
+		Freq         int
+		Measurements []*measurement.Measurement
+		VarMap       map[string]interface{}
+		Stats        *stats.GatherStats // Public info for thread safe accessing to the data ()
+		CurLogLevel  string
 	}{
-		SysInfo:         d.SysInfo,
-		TagMap:          d.TagMap,
-		Freq:            d.Freq,
-		Measurements:    d.Measurements,
-		VarMap:          d.VarMap,
-		Stats:           d.Stats,
-		DeviceActive:    d.DeviceActive,
-		DeviceConnected: d.DeviceConnected,
-		CurLogLevel:     d.CurLogLevel,
+		SysInfo:      d.SysInfo,
+		TagMap:       d.TagMap,
+		Freq:         d.Freq,
+		Measurements: d.Measurements,
+		VarMap:       d.VarMap,
+		Stats:        d.Stats,
+		CurLogLevel:  d.CurLogLevel,
 	}, "", "  ")
 	if err != nil {
 		d.Errorf("Error on Get JSON data from device")

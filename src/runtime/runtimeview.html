@@ -79,11 +79,7 @@
                         <div class="panel-heading"><span class="text-primary glyphicon glyphicon-dashboard" style="margin-top: 2px; margin-right: 10px"></span>Statistics SNMP Device</div>
                         <div class="panel-body">
                             <table class="table-striped table-bordered">
-                                <tr>
-                                    <span style="padding-right:10px"> Reload Loop Pending</span>
-                                    <td style="padding-left:10px">{{ runtime_dev['Stats'].ReloadLoopsPending }}</td>
-                                </tr>
-                                <ng-template ngFor let-item [ngForOf]="counterDef" let-i="index">
+                                <ng-template ngFor let-item [ngForOf]="deviceCounterDef" let-i="index">
                                     <tr *ngIf="item.show">
                                         <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
                                         <span style="padding-right:10px"> {{item.label}} </span>
@@ -104,7 +100,7 @@
                                     <span style="padding-right:10px"> Reload Loop Pending</span>
                                     <td style="padding-left:10px">{{ runtime_dev['Stats'].ReloadLoopsPending }}</td>
                                 </tr>
-                                <ng-template ngFor let-item [ngForOf]="counterDef" let-i="index">
+                                <ng-template ngFor let-item [ngForOf]="measCounterDef" let-i="index">
                                     <tr *ngIf="item.show">
                                         <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
                                         <span style="padding-right:10px"> {{item.label}} </span>
@@ -136,7 +132,7 @@
                                             <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the Gathering Process(only online not saved in the configuration database)"></span>
                                         </div>
                                         <div class="col-md-5 text-right">
-                                            <button type="button" (click)="runtime_dev.DeviceActive ? changeActiveDevice(runtime_dev.ID,false) : changeActiveDevice(runtime_dev.ID,true)" [ngClass]="runtime_dev.DeviceActive ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.DeviceActive ? 'Disable' : 'Enable'}}</button>
+                                            <button type="button" (click)="runtime_dev.Stats.Active ? changeActiveDevice(runtime_dev.ID,false) : changeActiveDevice(runtime_dev.ID,true)" [ngClass]="runtime_dev.Stats.Active ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.Stats.Active ? 'Disable' : 'Enable'}}</button>
                                         </div>
                                     </div>
                                 </li>
@@ -185,7 +181,6 @@
                                         <div class="col-md-8 text-left">
                                             <span>Force Filter/Indexes Update</span>
                                             <span class="glyphicon glyphicon-question-sign" tooltip="Force Filter update on next gathering cycle "></span>
-                                            <span>Pending Cycles: {{ runtime_dev['Stats'].ReloadLoopsPending }} </span>
                                         </div>
                                         <div class="col-md-4 text-right">
                                             <button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Force Now</button>
