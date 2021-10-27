@@ -109,8 +109,6 @@ func GetSNMPDeviceByID(ctx *Context) {
 	}
 }
 
-// TODO quien llama a esta función? Que hace si tenemos un error?
-// TODO probar que funciona esta función al llamar desde la UI
 func addDeviceOnline(mode string, id string, dev *config.SnmpDeviceCfg) error {
 	// First doing Ping
 	l := log.WithFields(logrus.Fields{

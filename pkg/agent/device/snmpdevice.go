@@ -58,8 +58,7 @@ type SnmpDevice struct {
 	Influx *output.InfluxDB `json:"-"`
 	// LastError     time.Time
 	// Runtime stats
-	stats stats.GatherStats // Runtime Internal statistic
-	// TODO asegurarnos que cuando se escriba aquí esté protegido por el rtData
+	stats stats.GatherStats  // Runtime Internal statistic
 	Stats *stats.GatherStats // Public info for thread safe accessing to the data ()
 
 	// runtime controls
@@ -133,7 +132,6 @@ func (d *SnmpDevice) GetBasicStats() *stats.GatherStats {
 }
 
 // GetBasicStats get basic info for this device
-// TODO cuidado con data races
 func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 	sum := 0
 	d.DeviceConnected = false
@@ -479,7 +477,6 @@ func (d *SnmpDevice) firstSnmpConnect(connectionParams snmp.ConnectionParams) bo
 		d.rtData.Unlock()
 		connected = true
 		// send counters when device active and not connected ( no reset needed only status fields/tags are sen
-		// d.stats.Send() // TODO gestion de stats
 	}
 	d.stats.SetStatus(d.DeviceActive, d.DeviceConnected)
 	return connected
@@ -551,7 +548,6 @@ func (d *SnmpDevice) StartGather() {
 	   				d.rtData.Lock()
 	   				d.DeviceActive = enabled
 	   				d.rtData.Unlock()
-	   				// TODO gestionar stats
 	   				if enabled {
 	   					d.stats.SetActive(true)
 	   				} else {
@@ -588,7 +584,6 @@ func (d *SnmpDevice) StartGather() {
 				d.rtData.Unlock()
 				break
 				// send counters when device active and not connected ( no reset needed only status fields/tags are sen
-				// d.stats.Send() // TODO gestion de stats
 			}
 		}
 

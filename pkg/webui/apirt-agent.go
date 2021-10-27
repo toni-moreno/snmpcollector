@@ -132,7 +132,6 @@ func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	}
 	err := connectionParams.Validation()
 	if err != nil {
-		// TODO cambiar a l.Errorf?
 		l.Debugf("ERROR on query device : %s", err)
 		ctx.JSON(400, fmt.Errorf("SNMP parameter validation: %v", err))
 		return
@@ -146,7 +145,6 @@ func PingSNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	}
 	sysinfo, err := snmpClient.Connect(cfg.SystemOIDs)
 	if err != nil {
-		// TODO cambiar a l.Errorf?
 		l.Debugf("ERROR on query device : %s", err)
 		ctx.JSON(400, fmt.Errorf("unable to connect: %v", err))
 		return
@@ -248,7 +246,6 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	}
 	err := connectionParams.Validation()
 	if err != nil {
-		// TODO cambiar a l.Errorf?
 		l.Debugf("ERROR on query device : %s", err)
 		ctx.JSON(400, fmt.Errorf("SNMP parameter validation: %v", err))
 		return
@@ -262,7 +259,6 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	}
 	sysinfo, err := snmpClient.Connect(cfg.SystemOIDs)
 	if err != nil {
-		// TODO cambiar a l.Errorf?
 		l.Debugf("ERROR on query device : %s", err)
 		ctx.JSON(400, fmt.Errorf("unable to connect: %v", err))
 		return
@@ -272,7 +268,6 @@ func QuerySNMPDevice(ctx *Context, cfg config.SnmpDeviceCfg) {
 	result, err := snmpClient.Query(getmode, data)
 	elapsed := time.Since(start)
 	if err != nil {
-		// TODO cambiar a l.Errorf?
 		l.Debugf("ERROR  on query device : %s", err)
 		ctx.JSON(400, fmt.Errorf("unable to query: %v", err))
 		return

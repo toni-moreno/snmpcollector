@@ -70,8 +70,7 @@ type Measurement struct {
 	Active    bool
 	Connected bool
 	// Measurement statistics
-	stats stats.GatherStats // Runtime Internal statistic
-	// TODO asegurarnos que cuando se escriba aquí esté protegido por el rtData
+	stats     stats.GatherStats  // Runtime Internal statistic
 	Stats     *stats.GatherStats // Public info for thread safe accessing to the data ()
 	statsData sync.RWMutex
 }
@@ -84,7 +83,6 @@ func (m *Measurement) GetBasicStats() *stats.GatherStats {
 }
 
 // GetBasicStats get basic info for this device
-// TODO cuidado con data races
 func (m *Measurement) getBasicStats() *stats.GatherStats {
 	stat := m.stats.ThSafeCopy()
 	stat.TagMap = m.stats.TagMap
@@ -138,8 +136,6 @@ func (m *Measurement) InvalidateMetrics() {
  *init MetricTable
  * This function actually connects to the device to gather values
  */
-// TODO ver como llamar a esta función para que tenga más lógica
-// TODO separar en dos? Una que se ejecuta al comienzo de la gorutina y otra que se llama al hacer el update filters?
 func (m *Measurement) Init() error {
 	if m.cfg.GetMode == "indexed_multiple" {
 		// Create, init and store the var into base measurement
@@ -152,7 +148,6 @@ func (m *Measurement) Init() error {
 		if err != nil {
 			return err
 		}
-		// TODO si es "indexed_multiple" se sale aqui del Init() ??
 		m.InitFilters()
 		return nil
 	}
@@ -173,11 +168,6 @@ func (m *Measurement) Init() error {
 		// Final Selected Indexes are All Indexed
 		m.CurIndexedLabels = m.AllIndexedLabels
 	}
-
-	// TODO que pasa si m.cfg.GetMode no es indexed_multiple ni ninguno del otro if?
-	// TODO Usar if-else if-else error ?
-	// TODO si quitamos el return nil del if de indexed_multiple, mover el InitFilters a la zona común tras el condicional
-	// TODO el InitBuildRuntime creo que se llama en ambos casos (saliendo por el runtime o llegando aqu, al llamar a InitFilter). Si quitamos el return, mover el InitBuildRuntime aqui fuera?
 
 	/********************************
 	 * Initialize Metric Runtime data in one array m-values
@@ -1187,7 +1177,7 @@ func (m *Measurement) gatherOnce(
 	// Mark previous values as old so we can know if new metrics
 	// have been gathered
 	m.InvalidateMetrics()
-	m.stats.ResetCounters() // TODO, necesario? mejor devolver las métricas y aqui setearlas con el lock apropiado
+	m.stats.ResetCounters()
 
 	m.Debugf("-------Processing measurement : %s", m.ID)
 
@@ -1197,15 +1187,11 @@ func (m *Measurement) gatherOnce(
 		m.Log.Debug("get lock to avoid concurrent gathering")
 		gatherLock.Lock()
 	}
-	// TODO si usa SnmpGetData obtiene los valores de m.snmpOids, si lo hace de SnmpWalkData lo obtiene de m.cfg.FieldMetric? Esto es normal?
 	// Get data from device and set the values to the snmp metrics structs
 
 	nGets, nProcs, nErrs := m.GetData()
 	m.stats.UpdateSnmpGetStats(nGets, nProcs, nErrs)
 
-	// TODO que hace esta función?
-	// TODO esta funcion necesita conex con la db?? Cuando se ha inicializado? Globlamente en el main.
-	// TODO Acceso a la db en cada gather de cada measurement, no parece muy eficiente.
 	m.ComputeOidConditionalMetrics()
 	if gatherLock != nil {
 		m.Log.Debug("release lock to avoid concurrent gathering")
