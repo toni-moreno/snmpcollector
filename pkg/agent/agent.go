@@ -209,15 +209,6 @@ func DeviceProcessStart() {
 	}
 }
 
-// ReleaseDevices releases all devices resources.
-func ReleaseDevices() {
-	mutex.RLock()
-	for _, c := range devices {
-		c.End()
-	}
-	mutex.RUnlock()
-}
-
 func init() {
 	go Bus.Start()
 }
@@ -261,10 +252,10 @@ func IsDeviceInRuntime(id string) bool {
 // DeleteDeviceInRuntime removes the device `id` from the runtime array.
 func DeleteDeviceInRuntime(id string) error {
 	if dev, ok := devices[id]; ok {
+		// Stop all device processes and its measurements. Once finished they will be removed
+		// from the bus and node closed (snmp connections for measurements will be closed)
 		dev.StopGather()
 		log.Debugf("Bus retuned from the exit message to the ID device %s", id)
-		dev.LeaveBus(Bus)
-		dev.End()
 		mutex.Lock()
 		delete(devices, id)
 		mutex.Unlock()
@@ -298,6 +289,8 @@ func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 		// If device goroutine has finished, leave the bus so it won't get blocked trying
 		// to send messages to a not running device.
 		dev.LeaveBus(Bus)
+		// Close dev node (used in bus)
+		dev.Node.Close()
 	}()
 	mutex.Unlock()
 }
@@ -322,7 +315,8 @@ func Start() {
 func End() (time.Duration, error) {
 	start := time.Now()
 	log.Infof("END: begin device Gather processes stop... at %s", start.String())
-	// stop all device processes
+	// Stop all device processes and its measurements. Once finished they will be removed
+	// from the bus and node closed (snmp connections for measurements will be closed)
 	DeviceProcessStop()
 	log.Info("END: begin selfmon Gather processes stop...")
 	// stop the selfmon process
@@ -330,8 +324,6 @@ func End() (time.Duration, error) {
 	log.Info("END: waiting for all Gather goroutines stop...")
 	// wait until Done
 	gatherWg.Wait()
-	log.Info("END: releasing Device Resources")
-	ReleaseDevices()
 	log.Info("END: releasing Selfmonitoring Resources")
 	selfmonProc.End()
 	log.Info("END: begin sender processes stop...")

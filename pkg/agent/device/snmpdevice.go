@@ -434,23 +434,6 @@ func (d *SnmpDevice) LeaveBus(b *bus.Bus) {
 	b.Leave(d.Node)
 }
 
-// End The Opposite of Init() uninitialize all variables
-func (d *SnmpDevice) End() {
-	d.Node.Close()
-	// TODO que debería hacer esta variable.
-	// Cuando se llama desde ReleaseDevices parece que solo se quiere liberar las conex snmp (que si estamos cerrando, y siendo UDP, no se si tiene mucho sentido).
-	// Cuando se llama desde DeleteDeviceInRunTime ya se ha hecho un StopGather, está función sería la que cerrase las conex?
-	// En cualquier caso dejo comentado el for porque d.snmpClientMap ya no existe
-	/*
-		for _, val := range d.snmpClientMap {
-			val.Release()
-		}
-	*/
-	// release files
-	// os.Close(d.log.Out)
-	// release snmp resources
-}
-
 // SetSelfMonitoring set the output device where send monitoring metrics
 func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	d.selfmon = cfg
@@ -663,6 +646,11 @@ func (d *SnmpDevice) StartGather() {
 
 			// Start the loop that will gather metrics and handle signals
 			m.GatherLoop(node, snmpClient, d.Freq, d.cfg.UpdateFltFreq, d.VarMap, d.TagMap, d.cfg.SystemOIDs, d.Influx, gatherLock)
+
+			// If measurement exists, remove it from the bus, close the created node and the snmp connection
+			deviceControlBus.Leave(node)
+			node.Close()
+			snmpClient.Release()
 		}(meas)
 	}
 
@@ -707,6 +695,7 @@ func (d *SnmpDevice) StartGather() {
 				deviceWG.Wait()
 				// Signal the caller of this command that all have finished correctly
 				d.isStopped <- true
+				d.log.Info("exit device")
 				return
 			case bus.LogLevel:
 				level := val.Data.(string)
