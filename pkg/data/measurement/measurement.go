@@ -1115,7 +1115,9 @@ func (m *Measurement) InitFilters() {
 // A read lock is taken to avoid trying to read at the same time that the gather process is running.
 func (m *Measurement) MarshalJSON() ([]byte, error) {
 	m.rtData.RLock()
+	m.statsData.Lock()
 	defer m.rtData.RUnlock()
+	defer m.statsData.Unlock()
 
 	return json.Marshal(&struct {
 		ID               string
@@ -1128,6 +1130,8 @@ func (m *Measurement) MarshalJSON() ([]byte, error) {
 		Filter           filter.Filter
 		MultiIndexMeas   []*Measurement
 		Enabled          bool
+		Connected        bool
+		Stats            *stats.GatherStats
 	}{
 		ID:               m.ID,
 		MName:            m.MName,
@@ -1139,6 +1143,8 @@ func (m *Measurement) MarshalJSON() ([]byte, error) {
 		Filter:           m.Filter,
 		MultiIndexMeas:   m.MultiIndexMeas,
 		Enabled:          m.Enabled,
+		Connected:        m.Connected,
+		Stats:            m.Stats,
 	})
 }
 

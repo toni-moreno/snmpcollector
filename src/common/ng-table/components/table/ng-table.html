@@ -79,10 +79,10 @@
           <label style="display: inline; margin-right: 2px " container=body [tooltip]=" 'Test connection '+ row.ID " class="label label-primary glyphicon glyphicon glyphicon-flash " (click)="testConnection(row) "></label>
         </span>
                 <span style="padding-left: 12px ">
-          <label style="display: inline; margin-right: 2px " container=body [tooltip]="row.DeviceActive ? 'Active' : 'Not active' " [ngClass]="row.DeviceActive ? 'glyphicon glyphicon-play label label-success' :
+          <label style="display: inline; margin-right: 2px " container=body [tooltip]="row.Active ? 'Active' : 'Not active' " [ngClass]="row.Active ? 'glyphicon glyphicon-play label label-success' :
           'glyphicon glyphicon-pause label label-danger' "></label>
         </span>
-                <label style="display: inline; margin-right: 2px " container=body [tooltip]="row.DeviceConnected ? 'Connected' : 'Not connected' " [ngClass]="row.DeviceConnected ? 'glyphicon glyphicon-globe label label-success' :
+                <label style="display: inline; margin-right: 2px " container=body [tooltip]="row.Connected ? 'Connected' : 'Not connected' " [ngClass]="row.Connected ? 'glyphicon glyphicon-globe label label-success' :
         'glyphicon glyphicon-warning-sign label label-danger' "></label>
             </td>
             <ng-container *ngIf="checkRows ">

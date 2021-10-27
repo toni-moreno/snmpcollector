@@ -24,7 +24,7 @@ export const ExtraActions: Object = {
           type: 'boolean',
           enabled: '<i class="glyphicon glyphicon-pause"></i>',
           disabled: '<i class="glyphicon glyphicon-play"></i>',
-          property: 'DeviceActive',
+          property: 'Active',
           action: "SetActive"
         }
       ] 

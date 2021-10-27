@@ -155,7 +155,6 @@ export class RuntimeComponent implements OnDestroy {
     filteredData.forEach((item: any) => {
       let flag = false;
       this.columns.forEach((column: any) => {
-        console.log(item)
         if (item[column.name] === null) {
           item[column.name] = '--'
         }
@@ -190,14 +189,14 @@ export class RuntimeComponent implements OnDestroy {
     let sortedData = this.changeSort(filteredData, this.config);
     this.rows = page && this.config.paging ? this.changePage(page, sortedData) : sortedData;
     this.length = sortedData.length;
-    this.activeDevices = sortedData.filter((item) => { return item.DeviceActive }).length
-    this.noConnectedDevices = sortedData.filter((item) => { if (item.DeviceActive === true && item.DeviceConnected === false) return true }).length
+    this.activeDevices = sortedData.filter((item) => { return item.Active }).length
+    this.noConnectedDevices = sortedData.filter((item) => { if (item.Active === true && item.Connected === false) return true }).length
   }
 
   public onExtraActionClicked(data: any) {
     switch (data.action) {
       case 'SetActive':
-        this.changeActiveDevice(data.row.ID, !data.row.DeviceActive)
+        this.changeActiveDevice(data.row.ID, !data.row.Active)
         break;
       case 'SnmpReset':
         this.forceSnmpReset(data.row.ID, 'hard');
@@ -316,8 +315,6 @@ export class RuntimeComponent implements OnDestroy {
                     tmpColumn = { title: fieldName, name: fieldName, icon: micon, tooltipInfo: fdata ,transform: mtype }
                   break;
                 }
-                console.log("MTYPE:",mtype)
-                console.log(tmpColumn)
                 this.tmpcolumns.push(tmpColumn);
               }
               this.finalColumns.push(this.tmpcolumns);
@@ -386,13 +383,13 @@ export class RuntimeComponent implements OnDestroy {
       .subscribe(
       data => {
         _.forEach(this.runtime_devs, function (d, key) {
-          console.log(d, key)
           if (d.ID == id) {
-            d.DeviceActive = !d.DeviceActive;
+            d.Active = !d.Active;
             return false
           }
         })
-        console.log(this.runtime_devs);
+        // runtime_dev is only differnet null on runtime device view
+        // as the property is different than list, DeviceActive is used
         if (this.runtime_dev != null) {
           this.runtime_dev.DeviceActive = !this.runtime_dev.DeviceActive;
         }
@@ -544,17 +541,17 @@ export class RuntimeComponent implements OnDestroy {
       this.noConnectedFilter = false;
       this.deactiveFilter = false;
       this.activeFilter = true;
-      this.data = this.runtime_devs.filter((item) => { if (item.DeviceActive === true) return true })
+      this.data = this.runtime_devs.filter((item) => { if (item.Active === true) return true })
     } else if (this.deactiveFilter === false && option === 'deactive') {
       this.noConnectedFilter = false;
       this.activeFilter = false;
       this.deactiveFilter = true;
-      this.data = this.runtime_devs.filter((item) => { if (item.DeviceActive === false) return true })
+      this.data = this.runtime_devs.filter((item) => { if (item.Active === false) return true })
     } else if (this.noConnectedFilter === false && option === 'noconnected') {
       this.noConnectedFilter = true;
       this.activeFilter = false;
       this.deactiveFilter = false;
-      this.data = this.runtime_devs.filter((item) => { if (item.DeviceConnected === false && item.DeviceActive === true) return true })
+      this.data = this.runtime_devs.filter((item) => { if (item.Connected === false && item.Active === true) return true })
     } else {
       this.data = this.runtime_devs;
       this.noConnectedFilter = false;
