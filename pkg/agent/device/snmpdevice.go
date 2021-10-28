@@ -67,6 +67,8 @@ type SnmpDevice struct {
 
 	DeviceActive    bool
 	DeviceConnected bool
+	// StateDebug is false by default and change to active when the API enable the debug of all measurement SNMP connections
+	StateDebug bool
 
 	Node      *bus.Node `json:"-"`
 	isStopped chan bool `json:"-"`
@@ -107,6 +109,7 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 		VarMap       map[string]interface{}
 		Stats        *stats.GatherStats // Public info for thread safe accessing to the data ()
 		CurLogLevel  string
+		StateDebug   bool
 	}{
 		SysInfo:      d.SysInfo,
 		TagMap:       d.TagMap,
@@ -115,6 +118,7 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 		VarMap:       d.VarMap,
 		Stats:        d.Stats,
 		CurLogLevel:  d.CurLogLevel,
+		StateDebug:   d.StateDebug,
 	}, "", "  ")
 	if err != nil {
 		d.Errorf("Error on Get JSON data from device")
@@ -332,6 +336,8 @@ func (d *SnmpDevice) Init(c *config.SnmpDeviceCfg) error {
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	d.log.Formatter = customFormatter
 	customFormatter.FullTimestamp = true
+
+	d.StateDebug = d.cfg.SnmpDebug
 
 	d.DeviceActive = d.cfg.Active
 	d.stats.SetStatus(d.DeviceActive, false)
@@ -682,6 +688,32 @@ func (d *SnmpDevice) StartGather() {
 		case val := <-d.Node.Read:
 			d.Infof("Received Message: %s (%+v)", val.Type, val.Data)
 			switch val.Type {
+			case bus.Enabled:
+				active, ok := val.Data.(bool)
+				if !ok {
+					d.log.Errorf("invalid value for active bus message: %v", val.Data)
+					continue
+				}
+				deviceControlBus.Broadcast(val)
+				d.rtData.Lock()
+				d.DeviceActive = active
+				if active {
+					d.stats.SetActive(true)
+				} else {
+					d.stats.SetStatus(false, false)
+				}
+				d.Infof("STATUS  ACTIVE  [%t] ", active)
+				d.rtData.Unlock()
+			case bus.SNMPDebug:
+				debug, ok := val.Data.(bool)
+				if !ok {
+					d.log.Errorf("invalid value for debug bus message: %v", val.Data)
+					continue
+				}
+				deviceControlBus.Broadcast(val)
+				d.rtData.Lock()
+				d.StateDebug = debug
+				d.rtData.Unlock()
 			case bus.Exit:
 				d.log.Infof("invoked asynchronous EXIT from SNMP Gather process ")
 				// This broadcast is blocking, will wait till all measurement goroutines have received the message
@@ -711,7 +743,7 @@ func (d *SnmpDevice) StartGather() {
 				d.CurLogLevel = d.log.Level.String()
 				d.rtData.Unlock()
 
-			default: // exit, snmpresethard, snmpdebug, setsnmpmaxrep, forcegather, enabled, filterupdate
+			default: // exit, snmpresethard, snmpdebug, setsnmpmaxrep, forcegather, filterupdate
 				d.Infof("invoked %+v, passing message to measurements", val)
 				// Blocking operation. Waits till all measurements have received it
 				deviceControlBus.Broadcast(val)

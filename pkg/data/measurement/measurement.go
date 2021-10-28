@@ -959,13 +959,13 @@ func (m *Measurement) GatherLoop(
 	if m.Active {
 		_, err := m.snmpClient.Connect(systemOIDs)
 		if err != nil {
-			m.Log.Error("Not able to connect at the start of the measurement")
+			m.Log.Errorf("Not able to connect at the start of the measurement: %v", err)
 		} else {
 			// If the connection is succesfull, initialize
 			m.Connected = true
 			errInit := m.Init()
 			if errInit != nil {
-				m.Log.Error("Not able to initialize at the start of the measurement")
+				m.Log.Errorf("Not able to initialize at the start of the measurement: %v", errInit)
 			} else {
 				// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
 				m.initialized = true
@@ -982,7 +982,7 @@ func (m *Measurement) GatherLoop(
 			// Connect
 			_, err := m.snmpClient.Connect(systemOIDs)
 			if err != nil {
-				m.Log.Error("Not able to connect")
+				m.Log.Error("Not able to connect inside of the loop: %v", err)
 			} else {
 				m.Connected = true
 			}
@@ -992,7 +992,9 @@ func (m *Measurement) GatherLoop(
 		if m.Active && m.Connected && !m.initialized {
 			err := m.Init()
 			if err != nil {
-				m.Log.Error("Not able to initialize at the start of the measurement")
+				m.Log.Errorf("Not able to initialize inside of the loop: %v", err)
+				// If there is an error initializing, force reconnect
+				m.Connected = false
 			} else {
 				// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
 				m.initialized = true
@@ -1056,10 +1058,7 @@ func (m *Measurement) GatherLoop(
 				if err != nil {
 					m.Log.Errorf("releasing snmp client: %v", err)
 				}
-				err = m.Init()
-				if err != nil {
-					m.Log.Errorf("init failed in snmpreset hard: %s", err)
-				}
+				m.initialized = false
 			case bus.SNMPDebug:
 				debug, ok := val.Data.(bool)
 				if !ok {
