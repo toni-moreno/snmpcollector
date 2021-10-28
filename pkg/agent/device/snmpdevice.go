@@ -97,6 +97,8 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 	// Get read lock for SnmpDevice struct (protect all values except Measurements)
 	d.rtData.RLock()
 	defer d.rtData.RUnlock()
+	d.statsData.Lock()
+	defer d.statsData.Unlock()
 
 	// To avoid data racing while reading SnmpDevice.Measurements, Measurement implements a custom
 	// MarshalJSON function, grabbing there the lock

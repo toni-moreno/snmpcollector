@@ -101,11 +101,11 @@ func (b *Bus) Start() {
 	for {
 		select {
 		case received := <-b.in:
-			nodes := []*Node{}
+			nodes := make([]*Node, len(b.nodes))
 			switch received.receiver {
 			case "all":
 				b.nodeLock.Lock()
-				nodes = b.nodes[:]
+				copy(nodes, b.nodes)
 				b.nodeLock.Unlock()
 			default:
 				id := received.receiver
