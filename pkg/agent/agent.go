@@ -251,14 +251,15 @@ func IsDeviceInRuntime(id string) bool {
 
 // DeleteDeviceInRuntime removes the device `id` from the runtime array.
 func DeleteDeviceInRuntime(id string) error {
+	// Avoid modifications to devices while deleting device
+	mutex.Lock()
+	defer mutex.Unlock()
 	if dev, ok := devices[id]; ok {
 		// Stop all device processes and its measurements. Once finished they will be removed
 		// from the bus and node closed (snmp connections for measurements will be closed)
 		dev.StopGather()
 		log.Debugf("Bus retuned from the exit message to the ID device %s", id)
-		mutex.Lock()
 		delete(devices, id)
-		mutex.Unlock()
 		return nil
 	}
 	log.Errorf("There is no  %s device in the runtime device list", id)
@@ -289,8 +290,6 @@ func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 		// If device goroutine has finished, leave the bus so it won't get blocked trying
 		// to send messages to a not running device.
 		dev.LeaveBus(Bus)
-		// Close dev node (used in bus)
-		dev.Node.Close()
 	}()
 	mutex.Unlock()
 }
