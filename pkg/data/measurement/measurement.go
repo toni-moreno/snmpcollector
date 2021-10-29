@@ -952,6 +952,8 @@ func (m *Measurement) GatherLoop(
 
 	m.stats.GatherFreq = gatherFreq
 	m.stats.FilterFreq = filterFreq
+	m.stats.SetFilterNextTime(time.Now().Add(time.Duration(filterFreq) * time.Second).Unix())
+	m.stats.SetGatherNextTime(time.Now().Add(time.Duration(gatherFreq) * time.Second).Unix())
 
 	m.snmpClient = &snmpCli
 	// Try to connect for the first time, init metrics and gather data if Enabled
@@ -968,10 +970,16 @@ func (m *Measurement) GatherLoop(
 				m.Log.Errorf("Not able to initialize at the start of the measurement: %v", errInit)
 			} else {
 				// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
+				// Set influxClient as nil, the first time it shouldn't send metrics
 				m.initialized = true
-				m.rtData.Lock()
-				m.GetData()
-				m.rtData.Unlock()
+				err := m.gatherOnce(gatherLock, varMap, tagMap, nil)
+				if err != nil {
+					// if error is because of no response from any metric
+					// we can suppose the connection has been dropped
+					m.Connected = false
+					m.stats.SetStatus(m.Active, m.Connected)
+					m.Log.Error(err)
+				}
 			}
 		}
 	}
@@ -998,9 +1006,15 @@ func (m *Measurement) GatherLoop(
 			} else {
 				// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
 				m.initialized = true
-				m.rtData.Lock()
-				m.GetData()
-				m.rtData.Unlock()
+				// Set influxClient as nil, the first time it shouldn't send metrics
+				err := m.gatherOnce(gatherLock, varMap, tagMap, nil)
+				if err != nil {
+					// if error is because of no response from any metric
+					// we can suppose the connection has been dropped
+					m.Connected = false
+					m.stats.SetStatus(m.Active, m.Connected)
+					m.Log.Error(err)
+				}
 			}
 		}
 		m.stats.SetStatus(m.Active, m.Connected)
@@ -1208,13 +1222,16 @@ func (m *Measurement) gatherOnce(
 	m.stats.AddMeasStats(metSent, metError, measSent, measError)
 
 	sentStats := time.Now()
-	bpts, _ := influxClient.BP()
-	if bpts != nil {
-		(*bpts).AddPoints(points)
-		// send data
-		influxClient.Send(bpts)
-	} else {
-		m.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
+	// check if the influxClient is nil and skip the send process
+	if influxClient != nil {
+		bpts, _ := influxClient.BP()
+		if bpts != nil {
+			(*bpts).AddPoints(points)
+			// send data
+			influxClient.Send(bpts)
+		} else {
+			m.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
+		}
 	}
 	elapsedSentStats := time.Since(sentStats)
 	m.stats.AddSentDuration(sentStats, elapsedSentStats)
