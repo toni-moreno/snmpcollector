@@ -79,42 +79,47 @@
                         <div class="panel-heading"><span class="text-primary glyphicon glyphicon-dashboard" style="margin-top: 2px; margin-right: 10px"></span>Statistics SNMP Device</div>
                         <div class="panel-body">
                             <table class="table-striped table-bordered">
+                                <tr></tr>
                                 <ng-template ngFor let-item [ngForOf]="deviceCounterDef" let-i="index">
                                     <tr *ngIf="item.show">
                                         <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
                                         <span style="padding-right:10px"> {{item.label}} </span>
-                                        <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i]}}</td>
-                                        <td *ngIf="item.type=='time'" style="padding-left:10px">{{ runtime_dev['Stats']['Counters'][i]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
-                                        <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i] | elapsedseconds:3 }}</td>
+                                        <ng-container *ngIf="item.source == 'counters'">
+                                            <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][item.idx]}}</td>
+                                            <td *ngIf="item.type=='time'"  style="padding-left:10px">{{ runtime_dev['Stats']['Counters'][item.idx]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                            <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][item.idx] | elapsedseconds:3 }}</td>
+                                        </ng-container>
+                                        <ng-container *ngIf="item.source == 'stats'">
+                                            <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats'][item.id]}}</td>
+                                            <td *ngIf="item.type=='time'"  style="padding-left:10px">{{ runtime_dev['Stats'][item.id]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                            <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats'][item.id] | elapsedseconds:3 }}</td>
+                                        </ng-container>
                                     </tr>
                                 </ng-template>
                             </table>
                         </div>
                     </div>
                     <div class="panel panel-default col-md-5" style="padding-left: 0px; padding-right: 0px; margin-left:30px">
-                        <div class="panel-heading"><span class="text-primary glyphicon glyphicon-tag" style="margin-top: 2px; margin-right: 10px"></span>Statistics Measurement</div>
+                        <div class="panel-heading"><span class="text-primary glyphicon glyphicon-dashboard" style="margin-top: 2px; margin-right: 10px"></span>Statistics Measurement -   {{runtime_dev['Measurements'][measActive].MName}}</div>
                         <div class="panel-body">
-                            {{runtime_dev['Measurements'][measActive].MName}}
                             <table class="table-striped table-bordered">
-                                <tr>
-                                    <span style="padding-right:10px"> Reload Loop Pending</span>
-                                    <td style="padding-left:10px">{{ runtime_dev['Stats'].ReloadLoopsPending }}</td>
-                                </tr>
+                                <tr></tr>
                                 <ng-template ngFor let-item [ngForOf]="measCounterDef" let-i="index">
                                     <tr *ngIf="item.show">
                                         <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
                                         <span style="padding-right:10px"> {{item.label}} </span>
-                                        <td *ngIf="item.type=='counter'" style="padding-left:10px">{{ runtime_dev['Measurements'][measActive]['Stats']['Counters'][i] }}</td>
-                                        <td *ngIf="item.type=='time'" style="padding-left:10px">{{ runtime_dev['Measurements'][measActive]['Stats']['Counters'][i]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
-                                        <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats']['Counters'][i]| elapsedseconds:3 }}</td>
+                                        <ng-container *ngIf="item.source == 'counters'">
+                                            <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats']['Counters'][item.idx]}}</td>
+                                            <td *ngIf="item.type=='time'"  style="padding-left:10px">{{ runtime_dev['Measurements'][measActive]['Stats']['Counters'][item.idx]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                            <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats']['Counters'][item.idx] | elapsedseconds:3 }}</td>
+                                        </ng-container>
+                                        <ng-container *ngIf="item.source == 'stats'">
+                                            <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats'][item.id]}}</td>
+                                            <td *ngIf="item.type=='time'"  style="padding-left:10px">{{ runtime_dev['Measurements'][measActive]['Stats'][item.id]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                            <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats'][item.id] | elapsedseconds:3 }}</td>
+                                        </ng-container>
                                     </tr>
                                 </ng-template>
-                                <ng-container *ngFor="let varmap of runtime_dev['VarMap'] | objectParser" >
-                                    <tr>
-                                        <th style="padding-right:10px"> {{varmap.key}} </th>
-                                        <td style="padding-left:10px">{{varmap.value}}</td>
-                                    </tr>
-                                </ng-container>
                             </table>
                         </div>
                     </div>

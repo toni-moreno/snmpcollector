@@ -22,7 +22,8 @@
                 </th>
                 </ng-container>
             </ng-container>
-            <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column" (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important; white-space:nowrap" container=body [tooltip]="column.tooltipInfo ? tooltipValues : ( column.tooltip ? column.name : '')">
+            <th *ngFor="let column of columns" [ngTableSorting]="config" [column]="column" (sortChanged)="onChangeTable($event)" ngClass="{{column.className || ''}}" style="vertical-align: middle; text-align: center; width:auto !important; white-space:nowrap" container=body [tooltip]="column.tooltipInfo ? tooltipValues : ( column.tooltip ? column.tooltip : column.name)">
+
                 <ng-template #tooltipValues>
                     <ng-container>
                         <h6> {{column.title}} </h6>
