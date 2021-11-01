@@ -920,25 +920,7 @@ func (m *Measurement) GatherLoop(
 	influxClient *output.InfluxDB,
 	gatherLock *sync.Mutex,
 ) {
-	m.Log.Info("MeasurementLoop")
-
-	// Measurement Freq better than device Freq
-	gatherFreq := deviceFreq
-	if m.cfg.Freq != 0 {
-		gatherFreq = m.cfg.Freq
-	}
-	gatherTicker := time.NewTicker(time.Duration(gatherFreq) * time.Second)
-	defer gatherTicker.Stop()
-	// Filter frequency
-	filterFreq := deviceFreq * deviceUpdateFilterFreq
-	updateFilterTicker := time.NewTicker(time.Duration(filterFreq) * time.Second)
-	defer updateFilterTicker.Stop()
-	// update stats info
-
-	m.stats.GatherFreq = gatherFreq
-	m.stats.FilterFreq = filterFreq
-	m.stats.SetFilterNextTime(time.Now().Add(time.Duration(filterFreq) * time.Second).Unix())
-	m.stats.SetGatherNextTime(time.Now().Add(time.Duration(gatherFreq) * time.Second).Unix())
+	m.Log.Info("MeasurementLoop Fist Check....")
 
 	m.snmpClient = &snmpCli
 	// Try to connect for the first time, init metrics and gather data if Enabled
@@ -969,7 +951,33 @@ func (m *Measurement) GatherLoop(
 		}
 	}
 
+	m.Log.Info("MeasurementLoop Init Loop Align....")
+
+	// Measurement Freq better than device Freq ( creatint ticker)
+	gatherFreq := deviceFreq
+	if m.cfg.Freq != 0 {
+		gatherFreq = m.cfg.Freq
+	}
+	utils.WaitAlignForNextCycle(gatherFreq, m.Log)
+	gatherTicker := time.NewTicker(time.Duration(gatherFreq) * time.Second)
+	defer gatherTicker.Stop()
+
+	// Measurement Filter frequency better than device Fileter Freq ( creating ticker)
+	filterFreq := deviceFreq * deviceUpdateFilterFreq
+	if m.cfg.UpdateFltFreq != 0 {
+		filterFreq = gatherFreq * m.cfg.UpdateFltFreq
+	}
+	updateFilterTicker := time.NewTicker(time.Duration(filterFreq) * time.Second)
+	defer updateFilterTicker.Stop()
+
+	// updating stats info
+	m.stats.GatherFreq = gatherFreq
+	m.stats.FilterFreq = filterFreq
+	m.stats.SetFilterNextTime(time.Now().Add(time.Duration(filterFreq) * time.Second).Unix())
+	m.stats.SetGatherNextTime(time.Now().Add(time.Duration(gatherFreq) * time.Second).Unix())
+
 	for {
+		m.Log.Info("MeasurementLoop new Iteration")
 		// In each iteration, if measurement is enabled and not connected, try again to connect
 		if m.Active && !m.Connected {
 			// Connect
