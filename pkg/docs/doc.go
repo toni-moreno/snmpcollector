@@ -23,9 +23,9 @@ package docs
 import (
 	"time"
 
-	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
+	"github.com/toni-moreno/snmpcollector/pkg/data/stats"
 	"github.com/toni-moreno/snmpcollector/pkg/webui"
 )
 
@@ -52,7 +52,7 @@ type rtAgentDurationResponseWrapper struct {
 // swagger:response idOfDeviceStatResp
 type rtAgentDeviceStatResponseWrapper struct {
 	// in:body
-	Body map[string]*device.DevStat
+	Body map[string]*stats.GatherStats
 }
 
 // swagger:response idOfArrayDeviceStatResp

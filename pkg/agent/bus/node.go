@@ -25,6 +25,32 @@ const (
 	SetSNMPMaxRep
 )
 
+func (c Command) String() string {
+	switch c {
+	case Exit:
+		return "Exit"
+	case SyncExit:
+		return "SyncExit"
+	case Enabled:
+		return "Enabled"
+	case LogLevel:
+		return "LogLevel"
+	case ForceGather:
+		return "ForceGather"
+	case FilterUpdate:
+		return "FilterUpdate"
+	case SNMPResetHard:
+		return "SNMPResetHard"
+	case SNMPReset:
+		return "SNMPReset"
+	case SNMPDebug:
+		return "SNMPDebug"
+	case SetSNMPMaxRep:
+		return "SetSNMPMaxRep"
+	}
+	return ""
+}
+
 // Message a basic message type
 type Message struct {
 	Type Command

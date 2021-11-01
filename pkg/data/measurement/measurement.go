@@ -56,7 +56,7 @@ type Measurement struct {
 	TagName []string
 	// MetricTable data from OidSnmpMap structured to be passed to the UI (with ToJSON).
 	// We use pointers, so the data is the same here and OidSnmpMap.
-	MetricTable *MetricTable
+	MetricTable *metric.MetricTable
 	// OidSnmpMap store values returned from the snmp queries
 	OidSnmpMap       map[string]*metric.SnmpMetric `json:"-"` // snmpMetric mapped with real OID's
 	AllIndexedLabels map[string]string             //`json:"-"` //all available values on the remote device
@@ -159,7 +159,7 @@ func (m *Measurement) Init() error {
 	 * Initialize Metric Runtime data in one array m-values
 	 * ******************************/
 	m.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the walk device] | OID=>Metric MAP")
-	m.MetricTable = NewMetricTable(m.cfg, m.Log, m.CurIndexedLabels)
+	m.MetricTable = metric.NewMetricTable(m.cfg, m.Log, m.CurIndexedLabels)
 
 	m.InitFilters()
 
@@ -386,7 +386,7 @@ func (m *Measurement) LoadMultiIndex() error {
 	m.TagName = tag
 	m.AllIndexedLabels = mil
 	m.CurIndexedLabels = mil
-	m.MetricTable = NewMetricTable(m.cfg, m.Log, mil)
+	m.MetricTable = metric.NewMetricTable(m.cfg, m.Log, mil)
 
 	m.InitBuildRuntime()
 	return nil
@@ -500,7 +500,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool) error {
 	// now we have the 	m.Filterlabels array initialized with only those values which we will need
 	// Loading final Values to query with snmp
 	m.CurIndexedLabels = m.Filter.MapLabels(m.AllIndexedLabels)
-	m.MetricTable = NewMetricTable(m.cfg, m.Log, m.CurIndexedLabels)
+	m.MetricTable = metric.NewMetricTable(m.cfg, m.Log, m.CurIndexedLabels)
 	return err
 }
 
@@ -1141,7 +1141,7 @@ func (m *Measurement) MarshalJSON() ([]byte, error) {
 		ID               string
 		MName            string
 		TagName          []string
-		MetricTable      *MetricTable
+		MetricTable      *metric.MetricTable
 		AllIndexedLabels map[string]string
 		CurIndexedLabels map[string]string
 		FilterCfg        *config.MeasFilterCfg

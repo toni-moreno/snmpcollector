@@ -143,13 +143,13 @@ func (b *Bus) Start() {
 // Send send message to one receiver to the Bus
 func (b *Bus) Send(id string, m *Message) {
 	b.in <- MsgCtrl{sender: nil, payload: m, receiver: id}
-	log.Debugf("BUS: unicast message %s , %+v sent to node %s", m.Type, m.Data, id)
+	log.Debugf("BUS: unicast message %s , %+v sent to node %s", m.Type.String(), m.Data, id)
 	<-b.waitsync
 }
 
 // Broadcast send message to all nodes attached to the bus
 func (b *Bus) Broadcast(m *Message) {
 	b.in <- MsgCtrl{sender: nil, payload: m, receiver: "all"}
-	log.Debugf("BUS: Broadcast message %s , %+v sent", m.Type, m.Data)
+	log.Debugf("BUS: Broadcast message %s , %+v sent", m.Type.String(), m.Data)
 	<-b.waitsync
 }
