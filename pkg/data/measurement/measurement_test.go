@@ -26,8 +26,8 @@ func ProcessMeasurementFull(m *Measurement, varmap map[string]interface{}) error
 	m.ComputeOidConditionalMetrics()
 	m.ComputeEvaluatedMetrics(varmap)
 
-	m.Infof("GETS: %d,NPROCS: %d ,NERRS %d", nGets, nProcs, nErrs)
-	m.Infof("GOT CURR INDEXED VALUES --> %+v ", m.CurIndexedLabels)
+	m.Log.Infof("GETS: %d,NPROCS: %d ,NERRS %d", nGets, nProcs, nErrs)
+	m.Log.Infof("GOT CURR INDEXED VALUES --> %+v ", m.CurIndexedLabels)
 	return nil
 }
 
@@ -60,14 +60,14 @@ func OrderMapByKey(m map[string]string) string {
 }
 
 func GetOutputInfluxMetrics(m *Measurement) {
-	m.Infof("GOT MEAS --> %+v", m)
+	m.Log.Infof("GOT MEAS --> %+v", m)
 
 	metSent, metError, measSent, measError, ptarray := m.GetInfluxPoint(map[string]string{})
 
-	m.Infof("METRIC SENT[%d],METRIC ERROR[%d],MEAS SENT[%d], MEAS ERROR[%d]", metSent, metError, measSent, measError)
+	m.Log.Infof("METRIC SENT[%d],METRIC ERROR[%d],MEAS SENT[%d], MEAS ERROR[%d]", metSent, metError, measSent, measError)
 
 	for _, v := range ptarray {
-		m.Infof("GOT V %+v", v)
+		m.Log.Infof("GOT V %+v", v)
 		fields, _ := v.Fields()
 		tags := OrderMapByKey(v.Tags())
 

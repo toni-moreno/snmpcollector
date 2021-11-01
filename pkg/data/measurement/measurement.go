@@ -92,7 +92,7 @@ func (m *Measurement) getBasicStats() *stats.GatherStats {
 }
 
 func (m *Measurement) SetStats(st stats.GatherStats) {
-	// TODO: st contains a lock and its beign passed as value. Could create a problem?
+	// TODO: st contains a lock and its being passed as value. Could create a problem?
 	m.stats = st
 	m.statsData.Lock()
 	m.Stats = m.getBasicStats()
@@ -158,7 +158,7 @@ func (m *Measurement) Init() error {
 	/********************************
 	 * Initialize Metric Runtime data in one array m-values
 	 * ******************************/
-	m.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the walk device] | OID=>Metric MAP")
+	m.Log.Debug("Initialize OID measurement per label => map of metric object per field | OID array [ready to send to the walk device] | OID=>Metric MAP")
 	m.MetricTable = metric.NewMetricTable(m.cfg, m.Log, m.CurIndexedLabels)
 
 	m.InitFilters()
@@ -211,14 +211,14 @@ func (m *Measurement) InitMultiIndex() error {
 	return nil
 }
 
-// AddMultiFilter - initializes filter for each existin measurement defined in MultiIndexMeas
+// AddMultiFilter - initializes filter for each existing measurement defined in MultiIndexMeas
 func (m *Measurement) AddMultiFilter() {
 	for _, meas := range m.MultiIndexMeas {
 		meas.AddFilter(meas.FilterCfg, false)
 	}
 }
 
-// UpdateMultiFilter - updates filter for each existin measurement defined in MultiIndexMeas
+// UpdateMultiFilter - updates filter for each existing measurement defined in MultiIndexMeas
 func (m *Measurement) UpdateMultiFilter() {
 	for _, meas := range m.MultiIndexMeas {
 		meas.UpdateFilter()
@@ -255,12 +255,12 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 
 	sort.Sort(MultiIndexFormatArray(allindex))
 
-	m.Debugf("Starting to process %d multiindex", len(allindex))
+	m.Log.Debugf("Starting to process %d multiindex", len(allindex))
 
 	// Process dependencies | si: sort indexed | index: index info
 	for si, index := range allindex {
 		// Load on index Dependency all dependency params
-		m.Debugf("[%s] - GOT INDEX MULTIPARAMS --> %+v", index.Label, index.Dependency)
+		m.Log.Debugf("[%s] - GOT INDEX MULTIPARAMS --> %+v", index.Label, index.Dependency)
 
 		if index.Dependency != nil {
 			if index.Dependency.Index > len(allindex)-1 {
@@ -274,7 +274,7 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 
 			// Check if the index is itself, just skip it
 			if si == ri {
-				m.Warnf("[%s] - Detected same IDX on dependency index, skipping it", index.Label)
+				m.Log.Warnf("[%s] - Detected same IDX on dependency index, skipping it", index.Label)
 				continue
 			}
 
@@ -284,7 +284,7 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 				if index.Dependency.Start != -1 {
 					section, err = sectionDotSlice(ci, index.Dependency.Start, index.Dependency.End)
 					if err != nil {
-						m.Warnf("[%] - SectionDotSlice Error: %s", index.Label, err)
+						m.Log.Warnf("[%] - SectionDotSlice Error: %s", index.Label, err)
 						return nil, nil, err
 					}
 				}
@@ -316,7 +316,7 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 			index.TagName = append(allindex[ri].TagName, index.TagName...)
 
 		} else {
-			m.Debugf("[%s] - has no dependency", index.Label)
+			m.Log.Debugf("[%s] - has no dependency", index.Label)
 		}
 	}
 
@@ -368,8 +368,8 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 	if errmerge != nil {
 		return nil, nil, errmerge
 	}
-	m.Debugf("Got final multiindex result index labels: %+v", fresult.CurIndexedLabels)
-	m.Debugf("Got final multiindex result tag names: %+v", fresult.TagName)
+	m.Log.Debugf("Got final multiindex result index labels: %+v", fresult.CurIndexedLabels)
+	m.Log.Debugf("Got final multiindex result tag names: %+v", fresult.TagName)
 
 	return fresult.CurIndexedLabels, fresult.TagName, nil
 }
@@ -446,7 +446,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool) error {
 	// If multi and the current measurement doesn't have any filter to be applied, just skip it
 	if m.FilterCfg == nil {
 		if multi {
-			m.Infof("No filter on base base measurement, skipping %s", m.cfg.ID)
+			m.Log.Infof("No filter on base base measurement, skipping %s", m.cfg.ID)
 			return err
 		}
 		return fmt.Errorf("Error invalid  NIL  filter on measurment %s ", m.cfg.ID)
@@ -465,7 +465,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool) error {
 	case "OIDCondition":
 		cond, err2 := dbc.GetOidConditionCfgByID(m.FilterCfg.FilterName)
 		if err2 != nil {
-			m.Errorf("Error getting filter id %s OIDCondition [id: %s ] data : %s", m.FilterCfg.ID, m.FilterCfg.FilterName, err)
+			m.Log.Errorf("Error getting filter id %s OIDCondition [id: %s ] data : %s", m.FilterCfg.ID, m.FilterCfg.FilterName, err)
 		}
 
 		if cond.IsMultiple {
@@ -494,7 +494,7 @@ func (m *Measurement) AddFilter(f *config.MeasFilterCfg, multi bool) error {
 
 	err = m.Filter.Update()
 	if err != nil {
-		m.Errorf("Error while trying to apply file Filter  ERROR: %s", err)
+		m.Log.Errorf("Error while trying to apply file Filter  ERROR: %s", err)
 	}
 
 	// now we have the 	m.Filterlabels array initialized with only those values which we will need
@@ -513,7 +513,7 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 	}
 
 	// fist update  all indexed--------
-	m.Infof("Re Loading Indexed values")
+	m.Log.Infof("Re Loading Indexed values")
 
 	// if its indexed_multiple, we need to update internal filters and create the new metric table on based one
 	if m.cfg.GetMode == "indexed_multiple" {
@@ -527,7 +527,7 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 		il, err2 := m.loadIndexedLabels()
 
 		if err2 != nil {
-			m.Errorf("Error while trying to reload Indexed Labels for baseOid %s : ERROR: %s", m.cfg.IndexOID, err2)
+			m.Log.Errorf("Error while trying to reload Indexed Labels for baseOid %s : ERROR: %s", m.cfg.IndexOID, err2)
 			return false, err2
 		}
 		m.AllIndexedLabels = il
@@ -535,20 +535,20 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 
 	// Reload measurement indexes
 	if m.Filter == nil {
-		m.Debugf("There is no filter configured in this measurement %s", m.cfg.ID)
+		m.Log.Debugf("There is no filter configured in this measurement %s", m.cfg.ID)
 		// check if curindexed different of AllIndexed
 		delIndexes := utils.DiffKeyValuesInMap(m.CurIndexedLabels, m.AllIndexedLabels)
 		newIndexes := utils.DiffKeyValuesInMap(m.AllIndexedLabels, m.CurIndexedLabels)
 
 		if len(newIndexes) == 0 && len(delIndexes) == 0 {
 			// no changes on the Filter
-			m.Infof("No changes found on the Index for this measurement")
+			m.Log.Infof("No changes found on the Index for this measurement")
 			return false, nil
 		}
 		m.CurIndexedLabels = m.AllIndexedLabels
 
-		m.Debugf("NEW INDEXES: %+v", newIndexes)
-		m.Debugf("DELETED INDEXES: %+v", delIndexes)
+		m.Log.Debugf("NEW INDEXES: %+v", newIndexes)
+		m.Log.Debugf("DELETED INDEXES: %+v", delIndexes)
 
 		if len(delIndexes) > 0 {
 			m.MetricTable.Pop(delIndexes)
@@ -559,16 +559,16 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 		return true, nil
 	}
 	//----------------
-	m.Infof("Applying filter : [ %s ] on measurement", m.FilterCfg.ID)
+	m.Log.Infof("Applying filter : [ %s ] on measurement", m.FilterCfg.ID)
 
 	err = m.Filter.Update()
 	if err != nil {
-		m.Errorf("Error while trying to apply Filter : ERROR: %s", err)
+		m.Log.Errorf("Error while trying to apply Filter : ERROR: %s", err)
 		return false, err
 	}
 	// check if all values have been filtered to send a warnign message.
 	if m.Filter.Count() == 0 {
-		m.Warnf("WARNING after applying filter no values on this measurement will be sent")
+		m.Log.Warnf("WARNING after applying filter no values on this measurement will be sent")
 	}
 	// check if newfilterlabels are different than previous.
 
@@ -581,12 +581,12 @@ func (m *Measurement) UpdateFilter() (bool, error) {
 
 	if len(newIndexes) == 0 && len(delIndexes) == 0 {
 		// no changes on the Filter
-		m.Infof("No changes on the filter %s ", m.FilterCfg.FType)
+		m.Log.Infof("No changes on the filter %s ", m.FilterCfg.FType)
 		return false, nil
 	}
 
-	m.Debugf("NEW INDEXES: %+v", newIndexes)
-	m.Debugf("DELETED INDEXES: %+v", delIndexes)
+	m.Log.Debugf("NEW INDEXES: %+v", newIndexes)
+	m.Log.Debugf("DELETED INDEXES: %+v", delIndexes)
 
 	m.CurIndexedLabels = newIndexedLabels
 
@@ -608,19 +608,19 @@ func (m *Measurement) GetData() (int64, int64, int64) {
 	var errors int64
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
-		m.Debugf("DEBUG pdu [%+v] || Value type %T [%x]", pdu, pdu.Value, pdu.Type)
+		m.Log.Debugf("DEBUG pdu [%+v] || Value type %T [%x]", pdu, pdu.Value, pdu.Type)
 		gathered++
 		if pdu.Value == nil {
-			m.Warnf("no value retured by pdu :%+v", pdu)
+			m.Log.Warnf("no value retured by pdu :%+v", pdu)
 			errors++
 			return nil // if error return the bulk process will stop
 		}
 		if metr, ok := m.OidSnmpMap[pdu.Name]; ok {
-			m.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
+			m.Log.Debugf("OK measurement %s SNMP RESULT OID %s MetricFound", pdu.Name, pdu.Value)
 			processed++
 			metr.SetRawData(pdu, now)
 		} else {
-			m.Debugf("returned OID from device: %s  Not Found in measurement /metr list: %+v, %v", pdu.Name, m.cfg.ID, m.OidSnmpMap)
+			m.Log.Debugf("returned OID from device: %s  Not Found in measurement metric list: %+v, %v", pdu.Name, m.cfg.ID, m.OidSnmpMap)
 		}
 		return nil
 	}
@@ -631,7 +631,7 @@ func (m *Measurement) GetData() (int64, int64, int64) {
 	} else {
 		for _, v := range m.cfg.FieldMetric {
 			if err := m.snmpClient.Walk(v.BaseOID, setRawData); err != nil {
-				m.Errorf("SNMP WALK for OID (%s) get error: %s", v.BaseOID, err)
+				m.Log.Errorf("SNMP WALK for OID (%s) get error: %s", v.BaseOID, err)
 				errors += int64(m.MetricTable.Len())
 			}
 		}
@@ -652,14 +652,14 @@ func (m *Measurement) ComputeOidConditionalMetrics() {
 		for _, v := range m.cfg.OidCondMetric {
 			evalkey := m.cfg.ID + "." + v.ID
 			if metr, ok := m.OidSnmpMap[evalkey]; ok {
-				m.Debugf("OK OidCondition  metric found %s Eval KEY", evalkey)
+				m.Log.Debugf("OK OidCondition  metric found %s Eval KEY", evalkey)
 				metr.Compute(m.snmpClient.Walk, dbc)
 			} else {
-				m.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
+				m.Log.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 			}
 		}
 	default:
-		m.Warnf("Warning there is CONDITIONAL metrics on indexed measurements!!")
+		m.Log.Warnf("Warning there is CONDITIONAL metrics on indexed measurements!!")
 	}
 }
 
@@ -679,7 +679,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 			parameters[k] = v
 		}
 
-		m.Debugf("Building parrameters array for index measurement %s", m.cfg.ID)
+		m.Log.Debugf("Building parrameters array for index measurement %s", m.cfg.ID)
 		parameters["NFR"] = len(m.AllIndexedLabels)                          // Number of non filtered rows
 		parameters["NR"] = len(m.CurIndexedLabels)                           // Number of current rows (like awk) --after filtered applied  --
 		parameters["NF"] = len(m.cfg.FieldMetric) + len(m.cfg.OidCondMetric) // Number of fields ( like awk)
@@ -688,7 +688,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 			if metr, ok := m.OidSnmpMap[v.BaseOID]; ok {
 				metr.GetEvaluableVariables(parameters)
 			} else {
-				m.Debugf("Evaluated metric not Found for Eval key %s", v.BaseOID)
+				m.Log.Debugf("Evaluated metric not Found for Eval key %s", v.BaseOID)
 			}
 		}
 		for _, v := range m.cfg.OidCondMetric {
@@ -696,19 +696,19 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 			if metr, ok := m.OidSnmpMap[RealOID]; ok {
 				metr.GetEvaluableVariables(parameters)
 			} else {
-				m.Debugf("Evaluated OIDCondition metric not Found for Eval key %s", RealOID)
+				m.Log.Debugf("Evaluated OIDCondition metric not Found for Eval key %s", RealOID)
 			}
 		}
-		m.Debugf("PARAMETERS: %+v", parameters)
+		m.Log.Debugf("PARAMETERS: %+v", parameters)
 		// compute Evalutated metrics
 		for _, v := range m.cfg.EvalMetric {
 			evalkey := m.cfg.ID + "." + v.ID
 			if metr, ok := m.OidSnmpMap[evalkey]; ok {
-				m.Debugf("OK Evaluated metric found %s Eval KEY", evalkey)
+				m.Log.Debugf("OK Evaluated metric found %s Eval KEY", evalkey)
 				metr.Compute(parameters)
 				metr.GetEvaluableVariables(parameters)
 			} else {
-				m.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
+				m.Log.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 			}
 		}
 	case "indexed", "indexed_it", "indexed_mit", "indexed_multiple":
@@ -719,7 +719,7 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 				parameters[k] = v
 			}
 			// building parameters array
-			m.Debugf("Building parrameters array for index %s/%s", key, val)
+			m.Log.Debugf("Building parrameters array for index %s/%s", key, val)
 			parameters["NFR"] = len(m.AllIndexedLabels) // Number of non filtered rows
 			parameters["NR"] = len(m.CurIndexedLabels)  // Number of rows (like awk)
 			parameters["NF"] = len(m.cfg.FieldMetric)   // Number of fields ( like awk)
@@ -727,22 +727,22 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 			// getting all values to the array
 			for _, v := range m.cfg.FieldMetric {
 				if metr, ok := m.OidSnmpMap[v.BaseOID+"."+key]; ok {
-					m.Debugf("OK Field metric found %s with FieldName %s", metr.GetID(), metr.GetFieldName())
+					m.Log.Debugf("OK Field metric found %s with FieldName %s", metr.GetID(), metr.GetFieldName())
 					metr.GetEvaluableVariables(parameters)
 				} else {
-					m.Debugf("Evaluated metric not Found for Eval key %s")
+					m.Log.Debugf("Evaluated metric not Found for Eval key %s")
 				}
 			}
-			m.Debugf("PARAMETERS: %+v", parameters)
+			m.Log.Debugf("PARAMETERS: %+v", parameters)
 			// compute Evalutated metrics
 			for _, v := range m.cfg.EvalMetric {
 				evalkey := m.cfg.ID + "." + v.ID + "." + key
 				if metr, ok := m.OidSnmpMap[evalkey]; ok {
-					m.Debugf("OK Evaluated metric found %s Eval KEY", evalkey)
+					m.Log.Debugf("OK Evaluated metric found %s Eval KEY", evalkey)
 					metr.Compute(parameters)
 					metr.GetEvaluableVariables(parameters)
 				} else {
-					m.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
+					m.Log.Debugf("Evaluated metric not Found for Eval key %s", evalkey)
 				}
 			}
 		}
@@ -750,18 +750,18 @@ func (m *Measurement) ComputeEvaluatedMetrics(catalog map[string]interface{}) {
 }
 
 func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
-	m.Debugf("Looking up column names %s ", m.cfg.IndexOID)
+	m.Log.Debugf("Looking up column names %s ", m.cfg.IndexOID)
 
 	allindex := make(map[string]string)
 
 	setRawData := func(pdu gosnmp.SnmpPDU) error {
-		m.Debugf("received SNMP  pdu:%+v", pdu)
+		m.Log.Debugf("received SNMP  pdu:%+v", pdu)
 		if pdu.Value == nil {
-			m.Warnf("no value retured by pdu :%+v", pdu)
+			m.Log.Warnf("no value retured by pdu :%+v", pdu)
 			return nil // if error return the bulk process will stop
 		}
 		if len(pdu.Name) < m.curIdxPos+1 {
-			m.Warnf("Received PDU OID smaller  than minimal index(%d) positionretured by pdu :%+v", m.curIdxPos, pdu)
+			m.Log.Warnf("Received PDU OID smaller  than minimal index(%d) position returned by pdu :%+v", m.curIdxPos, pdu)
 			return nil // if error return the bulk process will stop
 		}
 		// i := strings.LastIndex(pdu.Name, ".")
@@ -775,22 +775,22 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		switch pdu.Type {
 		case gosnmp.OctetString:
 			name = string(pdu.Value.([]byte))
-			m.Debugf("Got the following OctetString index for [%s/%s]", suffix, name)
+			m.Log.Debugf("Got the following OctetString index for [%s/%s]", suffix, name)
 		case gosnmp.Counter32, gosnmp.Counter64, gosnmp.Gauge32, gosnmp.Uinteger32:
 			name = strconv.FormatUint(snmp.PduVal2UInt64(pdu), 10)
-			m.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
+			m.Log.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
 		case gosnmp.Integer:
 			name = strconv.FormatInt(snmp.PduVal2Int64(pdu), 10)
-			m.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
+			m.Log.Debugf("Got the following Numeric index for [%s/%s]", suffix, name)
 		case gosnmp.IPAddress:
 			var err error
 			name, err = snmp.PduVal2IPaddr(pdu)
-			m.Debugf("Got the following IPaddress index for [%s/%s]", suffix, name)
+			m.Log.Debugf("Got the following IPaddress index for [%s/%s]", suffix, name)
 			if err != nil {
-				m.Errorf("Error on  IndexedLabel  IPAddress  to string conversion: %s", err)
+				m.Log.Errorf("Error on  IndexedLabel  IPAddress  to string conversion: %s", err)
 			}
 		default:
-			m.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric or IPAddress Value", m.cfg.IndexOID)
+			m.Log.Errorf("Error in IndexedLabel  IndexLabel %s ERR: Not String or numeric or IPAddress Value", m.cfg.IndexOID)
 		}
 		allindex[suffix] = name
 		return nil
@@ -799,7 +799,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 	m.curIdxPos = m.idxPosInOID
 	err := m.snmpClient.Walk(m.cfg.IndexOID, setRawData)
 	if err != nil {
-		m.Errorf("LOADINDEXEDLABELS - SNMP WALK error: %s", err)
+		m.Log.Errorf("LOADINDEXEDLABELS - SNMP WALK error: %s", err)
 		return allindex, err
 	}
 	if m.cfg.GetMode == "indexed" {
@@ -822,7 +822,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		m.curIdxPos = m.idx2PosInOID
 		err = m.snmpClient.Walk(m.cfg.TagOID, setRawData)
 		if err != nil {
-			m.Errorf("SNMP WALK over IndexOID error: %s", err)
+			m.Log.Errorf("SNMP WALK over IndexOID error: %s", err)
 			return allindex, err
 		}
 
@@ -834,20 +834,20 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		// allindex["9008"]="eth0"
 		//    key2="9008"
 		//    val2="eth0"
-		m.Debugf("ORIGINAL INDEX: %+v", allindexOrigin)
-		m.Debugf("INDIRECT  INDEX : %+v", allindex)
+		m.Log.Debugf("ORIGINAL INDEX: %+v", allindexOrigin)
+		m.Log.Debugf("INDIRECT  INDEX : %+v", allindex)
 
 		allindexIt := make(map[string]string)
 		for key1, val1 := range allindexOrigin {
 			if val2, ok := allindex[val1]; ok {
 				allindexIt[key1] = formatTag(m.Log, m.cfg.IndexTagFormat, map[string]string{"IDX1": key1, "VAL1": val1, "IDX2": val1, "VAL2": val2}, "VAL2")
 			} else {
-				m.Warnf("There is not valid index : %s on TagOID : %s", val1, m.cfg.TagOID)
+				m.Log.Warnf("There is not valid index : %s on TagOID : %s", val1, m.cfg.TagOID)
 			}
 		}
 
 		if len(allindexOrigin) != len(allindexIt) {
-			m.Warnf("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexIt)
+			m.Log.Warnf("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexIt)
 		}
 		return allindexIt, nil
 
@@ -866,7 +866,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 			m.curIdxPos = len(tagcfg.TagOID)
 			err = m.snmpClient.Walk(tagcfg.TagOID, setRawData)
 			if err != nil {
-				m.Errorf("SNMP WALK over IndexOID error: %s", err)
+				m.Log.Errorf("SNMP WALK over IndexOID error: %s", err)
 				return allindex, err
 			}
 			// Create a base map, we need it to mantain the key1 as the first index, so we can reference it back to as the core index
@@ -885,14 +885,14 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 					allindexIt[key1] = val2
 				} else {
 					// Set debug due to large logs generated. This case is generic, so a not match can be normal
-					m.Debugf("[%d] - There is not valid index : %s on TagOID : %s", k, val1, tagcfg.TagOID)
+					m.Log.Debugf("[%d] - There is not valid index : %s on TagOID : %s", k, val1, tagcfg.TagOID)
 				}
 			}
 			allindexRes = allindexIt
 		}
 
 		if len(allindexOrigin) != len(allindexRes) {
-			m.Warnf("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexRes)
+			m.Log.Warnf("Not all indexes have been indirected\n First Idx [%+v]\n Tagged Idx [ %+v]", allindexOrigin, allindexRes)
 		}
 
 		return allindexRes, nil
@@ -924,7 +924,7 @@ func (m *Measurement) GatherLoop(
 
 	m.snmpClient = &snmpCli
 	// Try to connect for the first time, init metrics and gather data if Enabled
-	// if not enabled will be initializated on the main loop
+	// if not enabled will be initialized on the main loop
 	if m.Active {
 		_, err := m.snmpClient.Connect(systemOIDs)
 		if err != nil {
@@ -936,7 +936,7 @@ func (m *Measurement) GatherLoop(
 			if errInit != nil {
 				m.Log.Errorf("Not able to initialize at the start of the measurement: %v", errInit)
 			} else {
-				// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
+				// If connection and initialization are correct, mark the measurement as initiliazed and gather data for the first time
 				// Set influxClient as nil, the first time it shouldn't send metrics
 				m.initialized = true
 				err := m.gatherOnce(gatherLock, varMap, tagMap, nil)
@@ -997,7 +997,7 @@ func (m *Measurement) GatherLoop(
 				// If there is an error initializing, force reconnect
 				m.Connected = false
 			} else {
-				// If connection and initialization are correct, mark the measurement as initilizated and gather data for the first time
+				// If connection and initialization are correct, mark the measurement as initialized and gather data for the first time
 				m.initialized = true
 				// Set influxClient as nil, the first time it shouldn't send metrics
 				err := m.gatherOnce(gatherLock, varMap, tagMap, nil)
@@ -1033,7 +1033,7 @@ func (m *Measurement) GatherLoop(
 			// if not filtered the value should be 0 for filter counters
 			m.stats.Send()
 		case val := <-busNode.Read:
-			m.Infof("measurement received message: %s (%+v)", val.Type, val.Data)
+			m.Log.Infof("measurement received message: %s (%+v)", val.Type, val.Data)
 			switch val.Type {
 			case bus.FilterUpdate:
 				m.filterUpdate()
@@ -1058,7 +1058,7 @@ func (m *Measurement) GatherLoop(
 						m.Log.Errorf("releasing snmp client in disabled: %v", err)
 					}
 				}
-				m.Infof("STATUS  ACTIVE  [%t] ", active)
+				m.Log.Infof("STATUS  ACTIVE  [%t] ", active)
 				m.rtData.Unlock()
 			case bus.SNMPReset:
 				err := m.snmpClient.Release()
@@ -1115,13 +1115,13 @@ func (m *Measurement) InitFilters() {
 	}
 	// If multi, filters need to be propagated into the internal array and reload all
 	if mfilter != nil || multi {
-		m.Debugf("filters %s found for device  and measurement %s ", mfilter.ID, m.ID)
+		m.Log.Debugf("filters %s found for device  and measurement %s ", mfilter.ID, m.ID)
 		err := m.AddFilter(mfilter, multi)
 		if err != nil {
-			m.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.ID, err)
+			m.Log.Errorf("Error on initialize Filter for Measurement %s , Error:%s no data will be gathered for this measurement", m.ID, err)
 		}
 	} else {
-		m.Debugf("no filters found for device on measurement %s", m.ID)
+		m.Log.Debugf("no filters found for device on measurement %s", m.ID)
 	}
 	// m.ApplyFilterts...
 	// Initialize internal structs after
@@ -1194,7 +1194,7 @@ func (m *Measurement) gatherOnce(
 	m.InvalidateMetrics()
 	m.stats.ResetCounters()
 
-	m.Debugf("-------Processing measurement : %s", m.ID)
+	m.Log.Debugf("-------Processing measurement : %s", m.ID)
 
 	// If gatherLock its defined it means we should gather data sequentially.
 	// We get this lock to avoid another goroutines to gather data at the same time.
@@ -1228,7 +1228,7 @@ func (m *Measurement) gatherOnce(
 			// send data
 			influxClient.Send(bpts)
 		} else {
-			m.Warnf("Can not send data to the output DB becaouse of batchpoint creation error")
+			m.Log.Warnf("Can not send data to the output DB because of batchpoint creation error")
 		}
 	}
 	elapsedSentStats := time.Since(sentStats)
@@ -1248,7 +1248,7 @@ func (m *Measurement) gatherOnce(
 
 // filterUpdate does ... TODO
 func (m *Measurement) filterUpdate() {
-	m.Debug("filterUpdate")
+	m.Log.Debug("filterUpdate")
 	// Do not try to update filters if measurement is disabled or it doesn't have a connection or measurement is not initialized
 	if !m.Active || !m.Connected || !m.initialized {
 		return
@@ -1260,7 +1260,7 @@ func (m *Measurement) filterUpdate() {
 	start := time.Now()
 	changed, err := m.UpdateFilter()
 	if err != nil {
-		m.Errorf("Error on update Indexes/filter : ERR: %s", err)
+		m.Log.Errorf("Error on update Indexes/filter : ERR: %s", err)
 		return
 	}
 	if changed {
@@ -1268,7 +1268,7 @@ func (m *Measurement) filterUpdate() {
 	}
 	duration := time.Since(start)
 	m.stats.SetFltUpdateStats(start, duration) // TODO
-	m.Infof("snmp INIT runtime measurements/filters took [%s] ", duration)
+	m.Log.Infof("snmp INIT runtime measurements/filters took [%s] ", duration)
 }
 
 // SetSNMPClient used by unit tests to insert the snmp client
