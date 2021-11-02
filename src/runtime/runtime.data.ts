@@ -5,14 +5,14 @@ export const RuntimeComponentConfig: any =
       { title: 'ID', name: 'ID' },
       { title: 'TagMap', name: 'TagMap', tooltip: 'List of device tags' },
       { title: 'SysDesc', name: 'SysDescription', tooltip: 'Response of SysDescription OID query' },
-      { title: 'Device Next Gather', name: 'GatherNextTime', tooltip: 'GatherFreq: Frequency of gather in seconds', transform: 'toDate' },
-      { title: 'Device G.Freq', name: 'GatherFreq', tooltip: 'GatherFreq: Frequency of gather in seconds', },
-      { title: '#Meas', name: 'NumMeasurements', tooltip: 'Number of measurements on device' },
+      { title: 'Next Statistic Update', name: 'GatherNextTime', tooltip: 'Expected time where statistics will be updated', transform: 'toDate' },
+      { title: 'Statistics update Freq', name: 'GatherFreq', tooltip: ' Frequency of statistics gathering from measurements in seconds', },
+      { title: '#Meas', name: 'NumMeasurements', tooltip: 'Number of measurements collected on the device in the last statistics period ' },
       { title: '#Metrics', name: 'NumMetrics', tooltip: 'Number of metrics created on device' },
-      { title: 'Get.Errs', name: 'Counter7', tooltip: 'SnmpOIDGetErrors: number of  oid with errors for all measurements on last period' },
-      { title: 'M.Errs', name: 'Counter14', tooltip: 'MeasurementSentErrors: number of measuremenets formatted with errors on last period' },
-      { title: 'G.Time', name: 'Counter16', tooltip: 'CycleGatherDuration time: elapsed time taken to get all measurement info on last period', transform: 'elapsedseconds' },
-      { title: 'F.Time', name: 'Counter18', tooltip: 'CycleGatherDuration time: elapsed time taken to compute all applicable filters on the device on last period', transform: 'elapsedseconds' }
+      { title: 'Get.Errs', name: 'Counter7', tooltip: 'SnmpOIDGetErrors: number of  oid with errors for all measurements on last statistics period' },
+      { title: 'M.Errs', name: 'Counter14', tooltip: 'MeasurementSentErrors: number of measurements formatted with errors on last statistics period' },
+      { title: 'G.Time', name: 'Counter16', tooltip: 'CycleGatherDuration time: elapsed time taken to get all measurement info on last statistics period', transform: 'elapsedseconds' },
+      { title: 'F.Time', name: 'Counter18', tooltip: 'CycleGatherDuration time: elapsed time taken to compute all applicable filters on the device on last statistics period', transform: 'elapsedseconds' }
     ],
   }; 
 
@@ -64,8 +64,8 @@ export const DeviceCounterDef: CounterType[] = [
   { show: true, source: "counters", id: "CycleGatherDuration", idx:16, label: "Cycle Gather Duration", type: "duration", tooltip: "Elapsed time taken to get all measurement info" },
   { show: false, source: "counters", id: "FilterStartTime", idx:17, label: "Filter update Start Time", type: "time", tooltip: "Last Filter time" },
   { show: true, source: "counters", id: "FilterDuration", idx:18, label: "Filter update Duration", type: "duration", tooltip: "Elapsed time taken to compute all applicable filters on the device" },
-  { show: false, source: "counters", id: "BackEndSentStartTime", idx:19, label: "BackEnd (influxdb) Sent Start Time", type: "time", tooltip: "Last sent time" },
-  { show: false, source: "counters", id: "BackEndSentDuration", idx:20, label: "BackEnd (influxdb) Sent Duration", type: "duration", tooltip: "Elapsed time taken to send data to the db backend" },
+  { show: false, source: "counters", id: "BackEndSentStartTime", idx:19, label: "BackEnd DB Sent Start Time", type: "time", tooltip: "Last sent time" },
+  { show: false, source: "counters", id: "BackEndSentDuration", idx:20, label: "BackEnd DB Sent Duration", type: "duration", tooltip: "Elapsed time taken to send data to the db backend" },
 ];
 
 export const MeasurementCounterDef: CounterType[] = [
@@ -86,8 +86,8 @@ export const MeasurementCounterDef: CounterType[] = [
   { show: true, source: "counters", id: "MeasurementSentErrors", idx: 14, label: "Series sent Errors", type: "counter", tooltip: "Number of series formatted with errors" },
   { show: false, source: "counters", id: "FilterStartTime", idx: 17, label: "Filter update Start Time", type: "time", tooltip: "Last Filter time" },
   { show: true, source: "counters", id: "FilterDuration", idx: 18, label: "Filter update Duration", type: "duration", tooltip: "Elapsed time taken to compute all applicable filters on the device" },
-  { show: false, source: "counters", id: "BackEndSentStartTime", idx: 19, label: "BackEnd (influxdb) Sent Start Time", type: "time", tooltip: "Last sent time" },
-  { show: true, source: "counters", id: "BackEndSentDuration", idx:20, label: "BackEnd (influxdb) Sent Duration", type: "duration", tooltip: "Elapsed time taken to send data to the db backend" },
+  { show: false, source: "counters", id: "BackEndSentStartTime", idx: 19, label: "BackEnd DB Sent Start Time", type: "time", tooltip: "Last sent time" },
+  { show: true, source: "counters", id: "BackEndSentDuration", idx:20, label: "BackEnd DB Sent Duration", type: "duration", tooltip: "Elapsed time taken to send data to the db backend" },
   { show: true, source: "stats", id: "GatherFreq", label: "Gather Frequency", type: "duration", tooltip: "Gather frequency" },
   { show: true, source: "counters", id: "CycleGatherStartTime", idx: 15, label: "Cycle Gather Start Time", type: "time", tooltip: "Last gather time" },
   { show: true, source: "counters", id: "CycleGatherDuration", idx: 16, label: "Cycle Gather Duration", type: "duration", tooltip: "Elapsed time taken to get all measurement info" },
