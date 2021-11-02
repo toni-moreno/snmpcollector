@@ -953,7 +953,7 @@ func (m *Measurement) GatherLoop(
 
 	m.Log.Info("MeasurementLoop Init Loop Align....")
 
-	// Measurement Freq better than device Freq ( creatint ticker)
+	// Measurement Freq overrides Device Freq (creating ticker)
 	gatherFreq := deviceFreq
 	if m.cfg.Freq != 0 {
 		gatherFreq = m.cfg.Freq
@@ -962,8 +962,8 @@ func (m *Measurement) GatherLoop(
 	gatherTicker := time.NewTicker(time.Duration(gatherFreq) * time.Second)
 	defer gatherTicker.Stop()
 
-	// Measurement Filter frequency better than device Fileter Freq ( creating ticker)
-	filterFreq := deviceFreq * deviceUpdateFilterFreq
+	// Measurement Filter Freq overrides Device Filter Freq (creating ticker)
+	filterFreq := gatherFreq * deviceUpdateFilterFreq
 	if m.cfg.UpdateFltFreq != 0 {
 		filterFreq = gatherFreq * m.cfg.UpdateFltFreq
 	}
