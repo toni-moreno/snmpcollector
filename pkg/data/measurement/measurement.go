@@ -926,10 +926,11 @@ func (m *Measurement) GatherLoop(
 	// Try to connect for the first time, init metrics and gather data if Enabled
 	// if not enabled will be initialized on the main loop
 	if m.Active {
-		_, err := m.snmpClient.Connect(systemOIDs)
+		info, err := m.snmpClient.Connect(systemOIDs)
 		if err != nil {
 			m.Log.Errorf("Not able to connect at the start of the measurement: %v", err)
 		} else {
+			m.stats.SetSysInfo(info.SysDescr)
 			// If the connection is succesfull, initialize
 			m.Connected = true
 			errInit := m.Init()
@@ -981,13 +982,13 @@ func (m *Measurement) GatherLoop(
 		// In each iteration, if measurement is enabled and not connected, try again to connect
 		if m.Active && !m.Connected {
 			// Connect
-			_, err := m.snmpClient.Connect(systemOIDs)
+			info, err := m.snmpClient.Connect(systemOIDs)
 			if err != nil {
 				m.Log.Error("Not able to connect inside of the loop: %v", err)
 			} else {
 				m.Connected = true
+				m.stats.SetSysInfo(info.SysDescr)
 			}
-
 		}
 		// If measurement is not initialized, do it. Could be because it returned an error while starting.
 		if m.Active && m.Connected && !m.initialized {

@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/gosnmp/gosnmp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
@@ -143,9 +144,15 @@ func (c *Client) SetDebug(debug bool) {
 // It also try to obtain some basic OIDs to check if everything works.
 func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
 	c.Log.Debug("client.Connect")
+	retries := c.ConnectionParams.Retries
+	timeout := c.ConnectionParams.Timeout
+
+	c.ConnectionParams.Retries = 0
+	c.ConnectionParams.Retries = 5
+
 	goSNMPClient, err := GetClient(c.ConnectionParams, c.Log)
 	if err != nil {
-		return nil, fmt.Errorf("initializating the goSNMP client: %v", err)
+		return nil, fmt.Errorf("initializing the goSNMP client: %v", err)
 	}
 
 	// Close previous client if it exists
@@ -164,6 +171,8 @@ func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
 	}
 
 	c.Connected = true
+	c.snmpClient.Retries = retries
+	c.snmpClient.Timeout = time.Duration(timeout) * time.Second
 
 	return sysinfo, nil
 }
