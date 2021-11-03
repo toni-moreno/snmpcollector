@@ -73,9 +73,8 @@ type SnmpDevice struct {
 	Node      *bus.Node `json:"-"`
 	isStopped chan bool `json:"-"`
 
-	CurLogLevel     string
-	Gather          func()                                                            `json:"-"`
-	InitSnmpConnect func(mkey string, debug bool, maxrep uint8) (*snmp.Client, error) `json:"-"`
+	CurLogLevel string
+	Gather      func() `json:"-"`
 	// Needed to inicialize measurement selfmon
 	selfmon *selfmon.SelfMon
 }
@@ -141,11 +140,15 @@ func (d *SnmpDevice) GetBasicStats() *stats.GatherStats {
 func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 	sum := 0
 	d.DeviceConnected = false
+	sysinfo := ""
 	for _, m := range d.Measurements {
 		st := m.GetBasicStats()
 		d.stats.Combine(st)
 		d.DeviceConnected = d.DeviceConnected || st.Connected
 		sum += len(m.OidSnmpMap)
+		if st.Connected {
+			sysinfo = st.SysDescription
+		}
 	}
 	d.stats.SetStatus(d.DeviceActive, d.DeviceConnected)
 	stat := d.stats.ThSafeCopy()
@@ -154,11 +157,7 @@ func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 	if d.DeviceConnected {
 		stat.NumMeasurements = len(d.Measurements)
 		stat.NumMetrics = sum
-		if d.SysInfo != nil {
-			stat.SysDescription = d.SysInfo.SysDescr
-		} else {
-			stat.SysDescription = ""
-		}
+		stat.SysDescription = sysinfo
 	}
 
 	return stat
@@ -448,31 +447,6 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	d.stats.SetSelfMonitoring(cfg)
 }
 
-func (d *SnmpDevice) firstSnmpConnect(connectionParams snmp.ConnectionParams) bool {
-	var connected bool
-	snmpClient := snmp.Client{
-		ID:               d.cfg.Host,
-		DisableBulk:      d.cfg.DisableBulk,
-		ConnectionParams: connectionParams,
-		Log:              d.log,
-	}
-	sysinfo, err := snmpClient.Connect(d.cfg.SystemOIDs)
-	if err != nil {
-		d.Errorf("unable to connect")
-		d.DeviceConnected = false
-		connected = false
-	} else {
-		// Avoid data race while modifying d.SysInfo and d.Measurements (in InitDevMeasurements)
-		d.rtData.Lock()
-		d.SysInfo = sysinfo
-		d.rtData.Unlock()
-		connected = true
-		// send counters when device active and not connected ( no reset needed only status fields/tags are sen
-	}
-	d.stats.SetStatus(d.DeviceActive, d.DeviceConnected)
-	return connected
-}
-
 // StartGather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) StartGather() {
 	d.Infof("Initializating gather process for device on host (%s)", d.cfg.Host)
@@ -565,10 +539,6 @@ func (d *SnmpDevice) StartGather() {
 		}(meas)
 	}
 
-	if d.DeviceActive {
-		d.firstSnmpConnect(connectionParams)
-	}
-
 	deviceTicker := time.NewTicker(time.Duration(d.cfg.Freq) * time.Second)
 	defer deviceTicker.Stop()
 	d.stats.GatherFreq = d.cfg.Freq
@@ -577,13 +547,9 @@ func (d *SnmpDevice) StartGather() {
 	for {
 		select {
 		case <-deviceTicker.C:
+			// updating stats
+			d.stats.SetStatus(d.DeviceActive, d.DeviceConnected)
 			d.stats.SetGatherNextTime(time.Now().Add(time.Duration(d.cfg.Freq) * time.Second).Unix())
-			if d.DeviceActive && !d.DeviceConnected {
-				// connect
-				d.firstSnmpConnect(connectionParams)
-			}
-
-			// Some online actions can change Stats
 			d.statsData.Lock()
 			d.Stats = d.getBasicStats()
 			d.statsData.Unlock()

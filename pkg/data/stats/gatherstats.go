@@ -146,6 +146,13 @@ func (s *GatherStats) reset() {
 	}
 }
 
+// SetSysInfo
+func (s *GatherStats) SetSysInfo(info string) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.SysDescription = info
+}
+
 // SetFilterNextTime get Counter for stats
 func (s *GatherStats) SetFilterNextTime(t int64) {
 	s.mutex.Lock()
@@ -244,6 +251,7 @@ func (s *GatherStats) ThSafeCopy() *GatherStats {
 	st.FilterNextTime = s.FilterNextTime
 	st.FilterFreq = s.FilterFreq
 	st.GatherFreq = s.GatherFreq
+	st.SysDescription = s.SysDescription
 	return st
 }
 
