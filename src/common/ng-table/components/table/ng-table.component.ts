@@ -115,8 +115,12 @@ export class NgTableComponent {
     }
     if  (transform === "toDate") {
       let toint : number = +html
-      let test = new DatePipe('en-US').transform(toint*1000,'yyyy/M/d HH:mm:ss ');
-      html = test.toString();
+      if (toint === 0) {
+        html = "-"
+      } else {
+        let test = new DatePipe('en-US').transform(toint*1000,'yyyy/M/d HH:mm:ss ');
+        html = test.toString();
+      }
     }
     if (typeof html === 'object') {
       var test: any = '<ul class="list-unstyled">';
