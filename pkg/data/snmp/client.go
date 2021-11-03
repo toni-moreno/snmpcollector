@@ -148,8 +148,7 @@ func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
 	timeout := c.ConnectionParams.Timeout
 
 	c.ConnectionParams.Retries = 0
-	c.ConnectionParams.Retries = 5
-
+	c.ConnectionParams.Timeout = 5
 	goSNMPClient, err := GetClient(c.ConnectionParams, c.Log)
 	if err != nil {
 		return nil, fmt.Errorf("initializing the goSNMP client: %v", err)
