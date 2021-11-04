@@ -55,7 +55,7 @@
                         <div class="panel-heading"><span class="text-primary glyphicon glyphicon-info-sign" style="margin-top: 2px; margin-right: 10px"></span>SysInfo</div>
                         <div class="panel-body" style="overflow-x: scroll !important; overflow-y: scroll !important; height:200px">
                             <table class="table-striped table-bordered">
-                                <tr *ngFor="let info of runtime_dev['SysInfo'] | objectParser">
+                                <tr *ngFor="let info of runtime_dev['Stats']['SysInfo'] | objectParser">
                                     <span>{{info.key}}</span>
                                     <td style="padding-left:10px">{{info.value }}</td>
                                 </tr>

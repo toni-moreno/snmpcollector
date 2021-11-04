@@ -930,7 +930,7 @@ func (m *Measurement) GatherLoop(
 		if err != nil {
 			m.Log.Errorf("Not able to connect at the start of the measurement: %v", err)
 		} else {
-			m.stats.SetSysInfo(info.SysDescr)
+			m.stats.SetSysInfo(*info)
 			// If the connection is succesfull, initialize
 			m.Connected = true
 			errInit := m.Init()
@@ -987,7 +987,7 @@ func (m *Measurement) GatherLoop(
 				m.Log.Error("Not able to connect inside of the loop: %v", err)
 			} else {
 				m.Connected = true
-				m.stats.SetSysInfo(info.SysDescr)
+				m.stats.SetSysInfo(*info)
 			}
 		}
 		// If measurement is not initialized, do it. Could be because it returned an error while starting.

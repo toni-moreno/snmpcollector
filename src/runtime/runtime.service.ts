@@ -26,6 +26,9 @@ export class RuntimeService {
                   console.log("FOREACH LOOP",value,key);
                   tmp.ID = key;
                   _.forEach(value, function(val,key) {
+                     if (key == "SysInfo") {
+                         tmp["SysDescr"] = val["SysDescr"]
+                     }
                      if (key == "Counters") {
                         let i = 0;
                          for (let a of val) {

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
+	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
@@ -83,7 +84,7 @@ type GatherStats struct {
 	Connected bool
 	// extra measurement statistics
 	NumMeasurements int
-	SysDescription  string
+	SysInfo         snmp.SysInfo
 	NumMetrics      int
 	// Gather
 	GatherFreq     int
@@ -147,10 +148,10 @@ func (s *GatherStats) reset() {
 }
 
 // SetSysInfo
-func (s *GatherStats) SetSysInfo(info string) {
+func (s *GatherStats) SetSysInfo(info snmp.SysInfo) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.SysDescription = info
+	s.SysInfo = info
 }
 
 // SetFilterNextTime get Counter for stats
@@ -251,7 +252,7 @@ func (s *GatherStats) ThSafeCopy() *GatherStats {
 	st.FilterNextTime = s.FilterNextTime
 	st.FilterFreq = s.FilterFreq
 	st.GatherFreq = s.GatherFreq
-	st.SysDescription = s.SysDescription
+	st.SysInfo = s.SysInfo
 	return st
 }
 
