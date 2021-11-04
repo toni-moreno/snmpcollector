@@ -14,8 +14,8 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
+	xlog "xorm.io/xorm/log"
 
 	// _ needed to sqlite3
 	_ "github.com/mattn/go-sqlite3"
@@ -98,7 +98,7 @@ func (dbc *DatabaseCfg) InitDB() error {
 		log.Infof("Enabled SQL logging into: %s", dbc.LogMode)
 		dbc.x.ShowSQL(true)
 		if dbc.LogMode == "console" {
-			dbc.x.SetLogger(xorm.NewSimpleLogger(os.Stdout))
+			dbc.x.SetLogger(xlog.NewSimpleLogger(os.Stdout))
 		} else {
 			filename := "sql.log"
 			if len(dbc.SQLLogFile) > 0 {
@@ -108,12 +108,12 @@ func (dbc *DatabaseCfg) InitDB() error {
 			if err != nil {
 				log.Errorln("Fail to create log file  ", error)
 			}
-			dbc.x.SetLogger(xorm.NewSimpleLogger(f))
+			dbc.x.SetLogger(xlog.NewSimpleLogger(f))
 		}
 
 	}
 	if dbc.Debug == "true" {
-		dbc.x.Logger().SetLevel(core.LOG_DEBUG)
+		dbc.x.Logger().SetLevel(xlog.LOG_DEBUG)
 	}
 
 	// Sync tables

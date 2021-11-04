@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 )
 
 // GeneralConfig has miscellaneous configuration options
