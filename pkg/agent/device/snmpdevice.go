@@ -44,8 +44,6 @@ func SetLogDir(l string) {
 type SnmpDevice struct {
 	cfg *config.SnmpDeviceCfg
 	log *logrus.Logger
-	// basic sistem info
-	SysInfo *snmp.SysInfo
 	// runtime built TagMap
 	TagMap map[string]string
 	// Refresh data to show in the frontend
@@ -112,7 +110,6 @@ func (d *SnmpDevice) ToJSON() ([]byte, error) {
 		CurLogLevel  string
 		StateDebug   bool
 	}{
-		SysInfo:      d.SysInfo,
 		TagMap:       d.TagMap,
 		Freq:         d.Freq,
 		Measurements: d.Measurements,
@@ -140,14 +137,14 @@ func (d *SnmpDevice) GetBasicStats() *stats.GatherStats {
 func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 	sum := 0
 	d.DeviceConnected = false
-	sysinfo := ""
+	sysinfo := snmp.SysInfo{}
 	for _, m := range d.Measurements {
 		st := m.GetBasicStats()
 		d.stats.Combine(st)
 		d.DeviceConnected = d.DeviceConnected || st.Connected
 		sum += len(m.OidSnmpMap)
 		if st.Connected {
-			sysinfo = st.SysDescription
+			sysinfo = st.SysInfo
 		}
 	}
 	d.stats.SetStatus(d.DeviceActive, d.DeviceConnected)
@@ -157,7 +154,7 @@ func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 	if d.DeviceConnected {
 		stat.NumMeasurements = len(d.Measurements)
 		stat.NumMetrics = sum
-		stat.SysDescription = sysinfo
+		stat.SysInfo = sysinfo
 	}
 
 	return stat

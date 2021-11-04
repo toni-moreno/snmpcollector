@@ -4,7 +4,7 @@ export const RuntimeComponentConfig: any =
     'table-columns' : [
       { title: 'ID', name: 'ID' },
       { title: 'TagMap', name: 'TagMap', tooltip: 'List of device tags' },
-      { title: 'SysDesc', name: 'SysDescription', tooltip: 'Response of SysDescription OID query' },
+      { title: 'SysDesc', name: 'SysDescr', tooltip: 'Response of SysDescription OID query' },
       { title: 'Next Statistic Update', name: 'GatherNextTime', tooltip: 'Expected time where statistics will be updated', transform: 'toDate' },
       { title: 'Statistics update Freq', name: 'GatherFreq', tooltip: ' Frequency of statistics gathering from measurements in seconds', },
       { title: '#Meas', name: 'NumMeasurements', tooltip: 'Number of measurements collected on the device in the last statistics period ' },
