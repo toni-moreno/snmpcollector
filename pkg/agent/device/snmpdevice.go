@@ -492,6 +492,7 @@ func (d *SnmpDevice) StartGather() {
 	// Create a bus to control all goroutines created to manage this device
 	deviceControlBus := bus.NewBus()
 	go deviceControlBus.Start()
+	defer deviceControlBus.Destroy()
 
 	// Control when all goroutines have finished
 	var deviceWG sync.WaitGroup

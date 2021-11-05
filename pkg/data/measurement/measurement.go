@@ -1033,7 +1033,11 @@ func (m *Measurement) GatherLoop(
 			// sending only once all statistics for this measurement
 			// if not filtered the value should be 0 for filter counters
 			m.stats.Send()
-		case val := <-busNode.Read:
+		case val, busChannelOpen := <-busNode.Read:
+			if !busChannelOpen {
+				m.Log.Infof("measurement channel bus closed: exiting")
+				return
+			}
 			m.Log.Infof("measurement received message: %s (%+v)", val.Type, val.Data)
 			switch val.Type {
 			case bus.FilterUpdate:
