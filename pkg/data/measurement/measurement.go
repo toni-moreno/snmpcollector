@@ -902,6 +902,30 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 	}
 }
 
+// SetupSnmpCli for external use
+// set the SNMP client for this measurement
+// perform SNMP Connection
+// Initialize the measurement
+// update statistics
+func (m *Measurement) SetupSnmpCli(cli snmp.Client, systemOIDs []string) error {
+	m.snmpClient = &cli
+	info, err := m.snmpClient.Connect(systemOIDs)
+	if err != nil {
+		m.Log.Errorf("Not able to connect at the start of the measurement: %v", err)
+		return err
+	}
+	m.stats.SetSysInfo(*info)
+	// If the connection is succesfull, initialize
+	m.Connected = true
+	errInit := m.Init()
+	if errInit != nil {
+		m.Log.Errorf("Not able to initialize at the start of the measurement: %v", errInit)
+		return err
+	}
+	m.initialized = true
+	return nil
+}
+
 // GatherLoop do all measurement processing, gathering metrics, handling filters and receiving messages from device
 // deviceBus used by device to pass messages to the measurements.
 // deviceFreq used if the measurement does not have frequency.
@@ -940,7 +964,7 @@ func (m *Measurement) GatherLoop(
 				// If connection and initialization are correct, mark the measurement as initiliazed and gather data for the first time
 				// Set influxClient as nil, the first time it shouldn't send metrics
 				m.initialized = true
-				err := m.gatherOnce(gatherLock, varMap, tagMap, nil)
+				err := m.GatherOnce(gatherLock, varMap, tagMap, nil)
 				if err != nil {
 					// if error is because of no response from any metric
 					// we can suppose the connection has been dropped
@@ -1001,7 +1025,7 @@ func (m *Measurement) GatherLoop(
 				// If connection and initialization are correct, mark the measurement as initialized and gather data for the first time
 				m.initialized = true
 				// Set influxClient as nil, the first time it shouldn't send metrics
-				err := m.gatherOnce(gatherLock, varMap, tagMap, nil)
+				err := m.GatherOnce(gatherLock, varMap, tagMap, nil)
 				if err != nil {
 					// if error is because of no response from any metric
 					// we can suppose the connection has been dropped
@@ -1022,7 +1046,7 @@ func (m *Measurement) GatherLoop(
 			// compute next gather time ( needed to show in the UI )
 			m.stats.SetGatherNextTime(time.Now().Add(time.Duration(gatherFreq) * time.Second).Unix())
 			// Gather
-			err := m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
+			err := m.GatherOnce(gatherLock, varMap, tagMap, influxClient)
 			if err != nil {
 				// if error is because of no response from any metric
 				// we can suppose the connection has been dropped
@@ -1043,7 +1067,7 @@ func (m *Measurement) GatherLoop(
 			case bus.FilterUpdate:
 				m.filterUpdate()
 			case bus.ForceGather:
-				m.gatherOnce(gatherLock, varMap, tagMap, influxClient)
+				m.GatherOnce(gatherLock, varMap, tagMap, influxClient)
 			case bus.Enabled:
 				active, ok := val.Data.(bool)
 				if !ok {
@@ -1167,11 +1191,11 @@ func (m *Measurement) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// gatherOnce metrics from device, process them and send values to the backend.
+// GatherOnce metrics from device, process them and send values to the backend.
 // It also checks if it should run based on the measurement state.
 // At the end of the function it could change the status of the connection (to not
 // connected) if it was unable to get data
-func (m *Measurement) gatherOnce(
+func (m *Measurement) GatherOnce(
 	gatherLock *sync.Mutex,
 	varMap map[string]interface{},
 	tagMap map[string]string,

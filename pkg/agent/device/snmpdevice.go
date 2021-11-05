@@ -444,6 +444,11 @@ func (d *SnmpDevice) SetSelfMonitoring(cfg *selfmon.SelfMon) {
 	d.stats.SetSelfMonitoring(cfg)
 }
 
+// GetSystemOIDs needed for external tools
+func (d *SnmpDevice) GetSystemOIDs() []string {
+	return d.cfg.SystemOIDs
+}
+
 // StartGather Main GoRutine method to begin snmp data collecting
 func (d *SnmpDevice) StartGather() {
 	d.Infof("Initializating gather process for device on host (%s)", d.cfg.Host)
