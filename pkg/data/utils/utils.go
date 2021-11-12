@@ -8,12 +8,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // WaitAlignForNextCycle waiths untile a next cycle begins aligned with second 00 of each minute
-func WaitAlignForNextCycle(SecPeriod int, l *logrus.Logger) {
+func WaitAlignForNextCycle(SecPeriod int, l Logger) {
 	i := int64(time.Duration(SecPeriod) * time.Second)
 	remain := i - (time.Now().UnixNano() % i)
 	l.Infof("Waiting %s to round until nearest interval... (Cycle = %d seconds)", time.Duration(remain).String(), SecPeriod)

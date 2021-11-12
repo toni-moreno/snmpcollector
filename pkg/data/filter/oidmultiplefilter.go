@@ -5,8 +5,8 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/gosnmp/gosnmp"
-	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // OidMultipleFilter a new Oid condition filter
@@ -21,11 +21,11 @@ type OidMultipleFilter struct {
 
 	dbc  *config.DatabaseCfg
 	Walk func(string, gosnmp.WalkFunc) error `json:"-"`
-	log  *logrus.Logger
+	log  utils.Logger
 }
 
 // NewOidMultipleFilter create a new filter for OID conditions
-func NewOidMultipleFilter(cond string, l *logrus.Logger) *OidMultipleFilter {
+func NewOidMultipleFilter(cond string, l utils.Logger) *OidMultipleFilter {
 	return &OidMultipleFilter{EvalCondition: cond, log: l}
 }
 

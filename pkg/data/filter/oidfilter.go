@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/gosnmp/gosnmp"
-	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/data/snmp"
 	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
@@ -18,12 +17,12 @@ type OidFilter struct {
 	OidCond      string
 	TypeCond     string
 	ValueCond    string
-	log          *logrus.Logger
+	log          utils.Logger
 	Walk         func(string, gosnmp.WalkFunc) error `json:"-"`
 }
 
 // NewOidFilter create a new filter for OID conditions
-func NewOidFilter(oidcond string, typecond string, value string, l *logrus.Logger) *OidFilter {
+func NewOidFilter(oidcond string, typecond string, value string, l utils.Logger) *OidFilter {
 	return &OidFilter{OidCond: oidcond, TypeCond: typecond, ValueCond: value, log: l}
 }
 

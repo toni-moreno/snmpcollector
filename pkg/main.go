@@ -196,13 +196,13 @@ func main() {
 	writePIDFile()
 	// Init BD config
 	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGABRT, syscall.SIGINT)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT)
 	go func() {
 		for {
 			select {
 			case sig := <-c:
 				switch sig {
-				case syscall.SIGABRT, syscall.SIGINT:
+				case syscall.SIGINT:
 					log.Infof("Received %v signal: Forcing shutdown", sig)
 					os.Exit(1)
 				case syscall.SIGTERM:

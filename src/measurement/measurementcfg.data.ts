@@ -5,6 +5,8 @@ export const MeasurementCfgComponentConfig: any =
       { title: 'ID', name: 'ID' },
       { title: 'Name', name: 'Name' },
       { title: 'GetMode', name: 'GetMode' },
+      { title: 'Polling Period (sec)', name: 'Freq' },
+      { title: 'Update Filter (Cycles)', name: 'UpdateFltFreq' },
       { title: 'Index OID', name: 'IndexOID', transform: 'multi' },
       { title: 'Tag OID', name: 'TagOID', transform: 'multi' },
       { title: 'Index Tag', name: 'IndexTag', transform: 'multi' },

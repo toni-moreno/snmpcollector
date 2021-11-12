@@ -50,15 +50,28 @@
     <div class="col-md-12" *ngIf="isRequesting == false">
         <div class="col-md-12" *ngIf="runtime_dev">
             <div class="row">
-                <div class="col-md-6" *ngIf="runtime_dev['DeviceConnected'] !== false">
-                    <div class="panel panel-default col-md-12" style="padding-left: 0px; padding-right: 0px;">
+                <div class="col-md-7" *ngIf="runtime_dev['DeviceConnected'] !== false">
+                    <div class="panel panel-default col-md-6" style="padding-left: 0px; padding-right: 0px;">
                         <div class="panel-heading"><span class="text-primary glyphicon glyphicon-info-sign" style="margin-top: 2px; margin-right: 10px"></span>SysInfo</div>
-                        <div class="panel-body" style="overflow-x: scroll !important">
+                        <div class="panel-body" style="overflow-x: scroll !important; overflow-y: scroll !important; height:200px">
                             <table class="table-striped table-bordered">
-                                <tr *ngFor="let info of runtime_dev['SysInfo'] | objectParser">
+                                <tr *ngFor="let info of runtime_dev['Stats']['SysInfo'] | objectParser">
                                     <span>{{info.key}}</span>
                                     <td style="padding-left:10px">{{info.value }}</td>
                                 </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="panel panel-default col-md-5" style="padding-left: 0px; padding-right: 0px; margin-left: 10px;">
+                        <div class="panel-heading"><span class="text-primary glyphicon glyphicon-tag" style="margin-top: 2px; margin-right: 10px"></span>Override Catalog Vars</div>
+                        <div class="panel-body" style="overflow-x: scroll !important; overflow-y: scroll !important; height:200px">
+                            <table class="table-striped table-bordered">
+                                <ng-container *ngFor="let varmap of runtime_dev['VarMap'] | objectParser" >
+                                    <tr>
+                                        <th style="margin-right:10px"> {{varmap.key}} </th>
+                                        <td style="margin-left:10px">{{varmap.value}}</td>
+                                    </tr>
+                                </ng-container>
                             </table>
                         </div>
                     </div>
@@ -66,37 +79,52 @@
                         <div class="panel-heading"><span class="text-primary glyphicon glyphicon-dashboard" style="margin-top: 2px; margin-right: 10px"></span>Statistics SNMP Device</div>
                         <div class="panel-body">
                             <table class="table-striped table-bordered">
-                                <tr>
-                                    <span style="padding-right:10px"> Reload Loop Pending</span>
-                                    <td style="padding-left:10px">{{ runtime_dev['Stats'].ReloadLoopsPending }}</td>
-                                </tr>
-                                <ng-template ngFor let-item [ngForOf]="counterDef" let-i="index">
+                                <tr></tr>
+                                <ng-template ngFor let-item [ngForOf]="deviceCounterDef" let-i="index">
                                     <tr *ngIf="item.show">
                                         <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
                                         <span style="padding-right:10px"> {{item.label}} </span>
-                                        <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i]}}</td>
-                                        <td *ngIf="item.type=='time'" style="padding-left:10px">{{ runtime_dev['Stats']['Counters'][i]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
-                                        <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][i] | elapsedseconds:3 }}</td>
+                                        <ng-container *ngIf="item.source == 'counters'">
+                                            <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][item.idx]}}</td>
+                                            <td *ngIf="item.type=='time'"  style="padding-left:10px">{{ runtime_dev['Stats']['Counters'][item.idx]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                            <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats']['Counters'][item.idx] | elapsedseconds:3 }}</td>
+                                        </ng-container>
+                                        <ng-container *ngIf="item.source == 'stats'">
+                                            <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Stats'][item.id]}}</td>
+                                            <td *ngIf="item.type=='time'"  style="padding-left:10px">{{ runtime_dev['Stats'][item.id]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                            <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Stats'][item.id] | elapsedseconds:3 }}</td>
+                                        </ng-container>
                                     </tr>
                                 </ng-template>
                             </table>
                         </div>
                     </div>
                     <div class="panel panel-default col-md-5" style="padding-left: 0px; padding-right: 0px; margin-left:30px">
-                        <div class="panel-heading"><span class="text-primary glyphicon glyphicon-tag" style="margin-top: 2px; margin-right: 10px"></span>Override Catalog Vars</div>
+                        <div class="panel-heading"><span class="text-primary glyphicon glyphicon-dashboard" style="margin-top: 2px; margin-right: 10px"></span>Statistics Measurement -   {{runtime_dev['Measurements'][measActive].MName}}</div>
                         <div class="panel-body">
                             <table class="table-striped table-bordered">
-                                <ng-container *ngFor="let varmap of runtime_dev['VarMap'] | objectParser" >
-                                    <tr>
-                                        <th style="padding-right:10px"> {{varmap.key}} </th>
-                                        <td style="padding-left:10px">{{varmap.value}}</td>
+                                <tr></tr>
+                                <ng-template ngFor let-item [ngForOf]="measCounterDef" let-i="index">
+                                    <tr *ngIf="item.show">
+                                        <span class="glyphicon glyphicon-question-sign" tooltip="{{item.tooltip}}"></span>
+                                        <span style="padding-right:10px"> {{item.label}} </span>
+                                        <ng-container *ngIf="item.source == 'counters'">
+                                            <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats']['Counters'][item.idx]}}</td>
+                                            <td *ngIf="item.type=='time'"  style="padding-left:10px">{{ runtime_dev['Measurements'][measActive]['Stats']['Counters'][item.idx]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                            <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats']['Counters'][item.idx] | elapsedseconds:3 }}</td>
+                                        </ng-container>
+                                        <ng-container *ngIf="item.source == 'stats'">
+                                            <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats'][item.id]}}</td>
+                                            <td *ngIf="item.type=='time'"  style="padding-left:10px">{{ runtime_dev['Measurements'][measActive]['Stats'][item.id]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                            <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats'][item.id] | elapsedseconds:3 }}</td>
+                                        </ng-container>
                                     </tr>
-                                </ng-container>
+                                </ng-template>
                             </table>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <div class="panel panel-default" style="padding-bottom: 0px">
                         <div class="panel-heading"><span class="text-primary glyphicon glyphicon-cog" style="margin-top: 2px; margin-right: 10px"></span>Runtime Operations</div>
                         <div class="panel-body">
@@ -109,7 +137,7 @@
                                             <span class="glyphicon glyphicon-question-sign" tooltip="Enable or disable the Gathering Process(only online not saved in the configuration database)"></span>
                                         </div>
                                         <div class="col-md-5 text-right">
-                                            <button type="button" (click)="runtime_dev.DeviceActive ? changeActiveDevice(runtime_dev.ID,false) : changeActiveDevice(runtime_dev.ID,true)" [ngClass]="runtime_dev.DeviceActive ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.DeviceActive ? 'Disable' : 'Enable'}}</button>
+                                            <button type="button" (click)="runtime_dev.Stats.Active ? changeActiveDevice(runtime_dev.ID,false) : changeActiveDevice(runtime_dev.ID,true)" [ngClass]="runtime_dev.Stats.Active ? 'btn btn-danger' : 'btn btn-success'">{{runtime_dev.Stats.Active ? 'Disable' : 'Enable'}}</button>
                                         </div>
                                     </div>
                                 </li>
@@ -158,7 +186,6 @@
                                         <div class="col-md-8 text-left">
                                             <span>Force Filter/Indexes Update</span>
                                             <span class="glyphicon glyphicon-question-sign" tooltip="Force Filter update on next gathering cycle "></span>
-                                            <span>Pending Cycles: {{ runtime_dev['Stats'].ReloadLoopsPending }} </span>
                                         </div>
                                         <div class="col-md-4 text-right">
                                             <button type="button" (click)="forceFltUpdate(runtime_dev.ID)" [ngClass]="'btn btn-primary'">Force Now</button>

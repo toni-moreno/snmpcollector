@@ -14,6 +14,10 @@ export class MeasurementService {
 
     parseJSON(key,value) {
         if ( key == 'IndexAsValue' ) return ( value === "true" || value === true);
+        if ( key == 'Freq' ||
+        key == 'UpdateFltFreq') {
+            return parseInt(value);
+        }
         return value;
     }
 
@@ -40,6 +44,13 @@ export class MeasurementService {
             if (measurement) {
                 _.forEach(measurement,function(value,key){
                     console.log("FOREACH LOOP",value,key);
+                    if (value.Freq == 0 ) {
+                        value.Freq = '-'
+                    }
+                    if (value.UpdateFltFreq == 0 ) {
+                        value.UpdateFltFreq = '-'
+                    }
+
                     if (value.GetMode == "indexed_mit") {
                         if (value.MultiTagOID.length > 0 ) {
                         value.TagOID = {multi: {}}

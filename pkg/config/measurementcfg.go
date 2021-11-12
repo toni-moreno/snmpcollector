@@ -19,8 +19,8 @@ type MeasurementFieldReport struct {
 // MeasurementCfg the measurement configuration
 // swagger:model MeasurementCfg
 type MeasurementCfg struct {
-	ID                string                   `xorm:"'id' unique" binding:"Required"`
-	Name              string                   `xorm:"name" binding:"Required"`
+	ID   string `xorm:"'id' unique" binding:"Required"`
+	Name string `xorm:"name" binding:"Required"`
 	GetMode           string                   `xorm:"getmode" binding:"In(value,indexed,indexed_it,indexed_mit,indexed_multiple)"` // value ,indexed  (direct tag), indexed_it ( indirect_tag)
 	IndexOID          string                   `xorm:"indexoid"`                                                                    // only valid if Indexed (direct or indirect)
 	TagOID            string                   `xorm:"tagoid"`
@@ -35,6 +35,8 @@ type MeasurementCfg struct {
 	FieldMetric       []*SnmpMetricCfg         `xorm:"-" json:"-"`
 	EvalMetric        []*SnmpMetricCfg         `xorm:"-" json:"-"`
 	OidCondMetric     []*SnmpMetricCfg         `xorm:"-" json:"-"`
+	Freq              int                      `xorm:"'freq'" binding:"IntegerNotZero"`
+	UpdateFltFreq     int                      `xorm:"'update_flt_freq'" binding:"UIntegerAndLessOne"`
 	Description       string                   `xorm:"description"`
 }
 

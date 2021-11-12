@@ -1,92 +1,256 @@
 package snmp
 
 import (
+	"fmt"
+	"io"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/gosnmp/gosnmp"
-	"github.com/sirupsen/logrus"
-	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
-type Client struct {
-	snmpClient  *gosnmp.GoSNMP
-	log         *logrus.Logger
-	DisableBulk bool
-	Walk        func(string, gosnmp.WalkFunc) error
-	MaxOids     int
-	Info        *SysInfo
+// SNMPV3Params store SNMP configuration related only with protocol V3
+type V3Params struct {
+	SecLevel        string
+	AuthUser        string
+	AuthPass        string
+	PrivPass        string
+	PrivProt        string
+	AuthProt        string
+	ContextName     string
+	ContextEngineID string
 }
 
-func New(cfg *config.SnmpDeviceCfg, l *logrus.Logger, mkey string, debug bool, maxrep uint8) (*Client, error) {
-	cli := &Client{}
-	c, s, err := GetClient(cfg, l, mkey, debug, maxrep)
-	if err != nil {
-		return nil, err
-	}
-	cli.log = l
-	cli.snmpClient = c
-	cli.Info = s
-	cli.DisableBulk = cfg.DisableBulk
-	if cfg.MaxOids > 0 {
-		cli.MaxOids = cfg.MaxOids
-	} else {
-		cli.MaxOids = 60
+// ConnectionParams store all needed information to create a new snmpGo client
+type ConnectionParams struct {
+	// Host is the hostname or IP of the device
+	Host string
+	// Port where the SNMP connection should be established
+	Port int
+	// Timeout is the timeout for one SNMP request/response, in seconds
+	Timeout int
+	// Retries is the number of retries to attempt.
+	Retries int
+	// SnmpVersion which SNMP protocol version use. Allowed values: 1, 2c or 3
+	SnmpVersion string
+	// Community is an SNMP Community string. Optinal in v1, mandatory in v2c, not used in v3.
+	Community string
+	// MaxRepetitions sets the GETBULK max-repetitions used by BulkWalk*. Only for v2c or v3.
+	MaxRepetitions uint8
+	// MaxOids is the number of OIDs returned in a single Get call to the goSNMP client
+	MaxOids int
+	// Debug if enabled, log all SNMP operations to a new file.
+	Debug bool
+	// V3Params store specific values only for SNMP v3
+	V3Params V3Params
+}
+
+type Client struct {
+	snmpClient *gosnmp.GoSNMP
+	// Log is the logger used to trace this client
+	Log utils.Logger
+	// ID used to generate the debug file name
+	ID          string
+	DisableBulk bool
+	// Connected define if the this client is considered Connected
+	Connected        bool
+	ConnectionParams ConnectionParams
+}
+
+// Validation check if SNMP parameters are valid to establish a SNMP connection.
+func (c ConnectionParams) Validation() error {
+	if c.SnmpVersion != "1" && c.SnmpVersion != "2c" && c.SnmpVersion != "3" {
+		return fmt.Errorf("invalid snmp version: %s", c.SnmpVersion)
 	}
 
-	switch {
-	case cli.snmpClient.Version == gosnmp.Version1 || cli.DisableBulk:
-		cli.Walk = cli.snmpClient.Walk
-	default:
-		cli.Walk = cli.snmpClient.BulkWalk
+	if c.SnmpVersion == "2c" {
+		if c.Community == "" {
+			return fmt.Errorf("snmp community its mandatory for v2c clients")
+		}
+	} else if c.SnmpVersion == "3" {
+
+		if c.V3Params.AuthUser == "" {
+			return fmt.Errorf("AuthUser is mandatory for v3 clients")
+		}
+
+		// Check if sec level is one the allowed values
+		if _, ok := seclpmap[c.V3Params.SecLevel]; !ok {
+			return fmt.Errorf("unknown SecLevel for SNMP v3: %v", c.V3Params.SecLevel)
+		}
+
+		if c.V3Params.SecLevel == "AuthNoPriv" || c.V3Params.SecLevel == "AuthPriv" {
+			// AuthPass should be defined for Auth* level
+			if c.V3Params.AuthPass == "" {
+				return fmt.Errorf("AuthPass is mandatory for v3 clients with SecLevel AuthPriv or AuthNoPriv")
+			}
+
+			// Check if auth protocol is one the allowed values
+			if _, ok := authpmap[c.V3Params.AuthProt]; !ok {
+				return fmt.Errorf("unknown AuthProt for SNMP v3: %v", c.V3Params.AuthProt)
+			}
+		}
+
+		if c.V3Params.SecLevel == "AuthPriv" {
+			if c.V3Params.PrivPass == "" {
+				return fmt.Errorf("PrivPass is mandatory for v3 clients with SecLevel AuthPriv")
+			}
+
+			// Check if priv protocol is one the allowed values
+			if _, ok := privpmap[c.V3Params.PrivProt]; !ok {
+				return fmt.Errorf("unknown PrivProt for SNMP v3: %v", c.V3Params.PrivProt)
+			}
+		}
 	}
-	return cli, nil
+
+	return nil
 }
 
 // Release release the GoSNMP object
 func (c *Client) Release() error {
+	c.Log.Debug("client.Release")
+	c.Connected = false
 	if c.snmpClient != nil {
 		return c.snmpClient.Conn.Close()
 	}
 	return nil
 }
 
-func (c *Client) Connect() error {
-	if c.snmpClient != nil {
-		return c.snmpClient.Connect()
+// SetMaxRep change the MaxRepetitions of the snmp client.
+// It changes the current client and also the ConnectionParams to reuse the same
+// value if a regeneration of the client is done.
+func (c *Client) SetMaxRep(rep uint8) {
+	c.Log.Debugf("client.SetMaxRep %v", rep)
+	c.snmpClient.MaxRepetitions = uint32(rep)
+	c.ConnectionParams.MaxRepetitions = rep
+}
+
+// SetDebug configure a new logger for the goSNMP client to log everything to a different file
+// It also changes the ConnectionParams to reuse this value in case of a reconnection.
+func (c *Client) SetDebug(debug bool) {
+	c.Log.Debugf("client.SetDebug %v", debug)
+	if debug {
+		c.snmpClient.Logger = GetDebugLogger(c.ID)
+	} else {
+		nullLogger := gosnmp.NewLogger(log.New(io.Discard, "", 0))
+		c.snmpClient.Logger = nullLogger
 	}
-	return nil
+	c.ConnectionParams.Debug = debug
+}
+
+// Connect using the info stored in the struct, generate the goSNMP client and make the first connection to the
+// device to check if it works.
+// It also try to obtain some basic OIDs to check if everything works.
+func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
+	c.Log.Debug("client.Connect")
+	retries := c.ConnectionParams.Retries
+	timeout := c.ConnectionParams.Timeout
+
+	c.ConnectionParams.Retries = 0
+	c.ConnectionParams.Timeout = 5
+	goSNMPClient, err := GetClient(c.ConnectionParams, c.Log)
+	if err != nil {
+		return nil, fmt.Errorf("initializing the goSNMP client: %v", err)
+	}
+
+	// Close previous client if it exists
+	if c.snmpClient != nil {
+		err = c.snmpClient.Conn.Close()
+		if err != nil {
+			c.Log.Warnf("closing SNMP connection: %v", err)
+		}
+	}
+
+	c.snmpClient = goSNMPClient
+
+	sysinfo, err := c.SysInfoQuery(systemOIDs)
+	if err != nil {
+		return nil, fmt.Errorf("obtaining the sysInfo: %v", err)
+	}
+
+	c.Connected = true
+	c.snmpClient.Retries = retries
+	c.snmpClient.Timeout = time.Duration(timeout) * time.Second
+
+	return sysinfo, nil
+}
+
+// SysInfoQuery return the SysInfo from the device.
+// It is used as a test to check if the device is working.
+// It will query a set of default basic OIDs (check GetSysInfo), or the defined in the parameter if it
+// is not empty and its first element is not the string "null"
+func (c *Client) SysInfoQuery(systemOIDs []string) (*SysInfo, error) {
+	c.Log.Debug("client.SysInfoQuery")
+
+	if len(systemOIDs) > 0 && systemOIDs[0] != "" && systemOIDs[0] != "null" {
+		c.Log.Infof("Detected alternate %d SystemOID's ", len(systemOIDs))
+		// this device has an alternate System Description (Non MIB-2 based systems)
+		si, err := GetAlternateSysInfo(c.snmpClient, c.Log, systemOIDs)
+		if err != nil {
+			c.Log.Errorf("error on get Alternate System Info ERROR [%s] for OID's [%s] ", err, strings.Join(systemOIDs[:], ","))
+			return nil, err
+		}
+		c.Log.Infof("Got basic system info %#v ", si)
+		return &si, err
+	}
+	// For most devices System Description could be got with MIB-2::System base OID's
+	si, err := GetSysInfo(c.snmpClient, c.Log)
+	if err != nil {
+		c.Log.Errorf("error on get System Info %s", err)
+		return nil, err
+	}
+	c.Log.Infof("Got basic system info %#v ", si)
+
+	return &si, err
 }
 
 func (c *Client) Target() string {
 	return c.snmpClient.Target
 }
 
-// SetSnmpClient set a GoSNMP client to the Measurement
-func (c *Client) Get(oids []string, f gosnmp.WalkFunc) error {
-	l := len(oids)
-	c.log.Infof("LEN %d : %+v | client : %+v", l, oids, c)
+// Walk selects how to gather data based on the SNMP version and a custom flag
+func (c *Client) Walk(rootOid string, walkFn gosnmp.WalkFunc) error {
+	if c.snmpClient.Version == gosnmp.Version1 || c.DisableBulk {
+		return c.snmpClient.Walk(rootOid, walkFn)
+	}
+	return c.snmpClient.BulkWalk(rootOid, walkFn)
+}
 
-	for i := 0; i < l; i += c.MaxOids {
-		end := i + c.MaxOids
+// SetSnmpClient get the values of the list of OIDs in groups of c.MaxOids.
+// Send each value to the walkfunc (second parameter).
+func (c *Client) Get(oids []string, walkFunc gosnmp.WalkFunc) error {
+	l := len(oids)
+	c.Log.Debugf("LEN %d : %+v | client : %+v", l, oids, c)
+
+	// Get values in groups of c.MaxOids
+	for i := 0; i < l; i += c.snmpClient.MaxOids {
+		end := i + c.snmpClient.MaxOids
 		if end > l {
 			end = len(oids)
 		}
-		c.log.Infof("Getting snmp data from %d to %d", i, end)
+		c.Log.Debugf("Getting snmp data from %d to %d", i, end)
 		pkt, err := c.snmpClient.Get(oids[i:end])
 		if err != nil {
-			c.log.Debugf("selected OIDS %+v", oids[i:end])
-			c.log.Errorf("SNMP (%s) for OIDs (%d/%d) get error: %s\n", c.snmpClient.Target, i, end, err)
+			c.Log.Debugf("selected OIDS %+v", oids[i:end])
+			c.Log.Errorf("SNMP (%s) for OIDs (%d/%d) get error: %s\n", c.snmpClient.Target, i, end, err)
 			continue
 		}
 
 		for _, pdu := range pkt.Variables {
-			c.log.Debugf("DEBUG pdu [%+v] || Value type %T [%x] ", pdu, pdu.Value, pdu.Type)
+			c.Log.Debugf("DEBUG pdu [%+v] || Value type %T [%x] ", pdu, pdu.Value, pdu.Type)
 			if pdu.Value == nil {
 				continue
 			}
-			if err := f(pdu); err != nil {
+			if err := walkFunc(pdu); err != nil {
 				return err
 			}
 		}
 	}
 
 	return nil
+}
+
+func (c *Client) Query(mode string, oid string) ([]EasyPDU, error) {
+	return Query(c.snmpClient, mode, oid)
 }

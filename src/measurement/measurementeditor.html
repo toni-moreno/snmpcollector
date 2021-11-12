@@ -39,12 +39,13 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label col-sm-2" for="Name">Name</label> <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement name used on InfluxDB server"></i>
+        <label class="control-label col-sm-2" for="Name">Name</label> <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Measurement name used on the output DB server"></i>
         <div class="col-sm-9">
           <input formControlName="Name" id="Name" [ngModel]="measurementForm.value.Name"/>
           <control-messages [control]="measurementForm.controls.Name"></control-messages>
         </div>
       </div>
+
     </div>
 
       <div class="well well-sm">
@@ -63,6 +64,24 @@
             <option value="indexed_multiple">(snmp Table) Multiple indexes </option>
           </select>
           <control-messages [control]="measurementForm.controls.GetMode"></control-messages>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Freq">Freq</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Preferred Frequency of snmp data polling (in seconds) [it will take the device config if not set]"></i>
+        <div class="col-sm-9">
+          <input formControlName="Freq" id="Freq" [ngModel]="measurementForm.value.Freq" />
+          <control-messages [control]="measurementForm.controls.Freq"></control-messages>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="measurementForm.value.GetMode != 'value'">
+        <label class="control-label col-sm-2" for="UpdateFltFreq">UpdateFltFreq</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Number of snmp data gather cycles the collector will take to update  indexes and filters if (indexed/snmptable) measurements of snmp data polling (time will be this number*freq seconds) <br> Set this value to -1 to disable indexes and filters updates  [it will take the device config if not set]"></i>
+        <div class="col-sm-9">
+          <input formControlName="UpdateFltFreq" id="UpdateFltFreq" [ngModel]="measurementForm.value.UpdateFltFreq" />
+          <control-messages [control]="measurementForm.controls.UpdateFltFreq"></control-messages>
         </div>
       </div>
 

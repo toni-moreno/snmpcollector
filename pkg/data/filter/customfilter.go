@@ -1,8 +1,8 @@
 package filter
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // CustomFilter a filter created from a device query, usuali used only with the DeviceOrigin , but could be used on more than one but
@@ -12,11 +12,11 @@ type CustomFilter struct {
 	EnableAlias  bool
 	dbc          *config.DatabaseCfg
 
-	log *logrus.Logger
+	log utils.Logger
 }
 
 // NewCustomFilter creates a new CustomFilter
-func NewCustomFilter(cid string, enableAlias bool, l *logrus.Logger) *CustomFilter {
+func NewCustomFilter(cid string, enableAlias bool, l utils.Logger) *CustomFilter {
 	return &CustomFilter{CustomID: cid, EnableAlias: enableAlias, log: l}
 }
 

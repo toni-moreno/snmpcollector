@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/toni-moreno/snmpcollector/pkg/data/utils"
 )
 
 // two byte-oriented functions identical except for operator comparing c to 127.
@@ -49,7 +49,7 @@ func formatDec2ASCII(input string) string {
 	return stripCtlAndExtFromBytes(string(bArray))
 }
 
-func formatReGexp(l *logrus.Logger, input string, pattern string, replace string) string {
+func formatReGexp(l utils.Logger, input string, pattern string, replace string) string {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		l.Errorf("FormatReGexp  Input[%s] Pattern [%s] Error [%s] ", input, pattern, err)
@@ -94,7 +94,7 @@ func sectionDotSlice(input string, first int, last int) (string, error) {
 	return output, err
 }
 
-func formatTag(l *logrus.Logger, format string, data map[string]string, def string) string {
+func formatTag(l utils.Logger, format string, data map[string]string, def string) string {
 	if len(format) == 0 {
 		return data[def]
 	}
@@ -140,11 +140,7 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 			case sectionmode == "ALL":
 				section = v
 			case strings.HasPrefix(sectionmode, "DOT["):
-				re2, err := regexp.Compile("DOT\\[(\\d*):(\\d*)\\]")
-				if err != nil {
-					l.Warnf("FormatTag[%s]: DOT - Regex ERROR %s ", format, err)
-					break
-				}
+				re2 := regexp.MustCompile("DOT\\[(\\d*):(\\d*)\\]")
 				match2 := re2.FindStringSubmatch(sectionmode)
 				if len(match2) < 3 {
 					l.Warnf("FormatTag[%s]: DOT - ERROR on number or parameters %+v  for string %s", format, match2, sectionmode)
@@ -171,11 +167,7 @@ func formatTag(l *logrus.Logger, format string, data map[string]string, def stri
 				l.Debugf("FormatTag[%s]: final section first/last[%d/%d] from [%s] took [%s] ", format, first, last, v, section)
 
 			case strings.HasPrefix(sectionmode, "REGEX/"):
-				re2, err := regexp.Compile("REGEX/(.*)/(.*)/")
-				if err != nil {
-					l.Warnf("FormatTag[%s]: REGEX - Regex ERROR %s ", format, err)
-					break
-				}
+				re2 := regexp.MustCompile("REGEX/(.*)/(.*)/")
 				match2 := re2.FindStringSubmatch(sectionmode)
 				if len(match2) < 3 {
 					l.Warnf("FormatTag[%s]: REGEX - ERROR on number or parameters %+v  for string %s", format, match2, sectionmode)
