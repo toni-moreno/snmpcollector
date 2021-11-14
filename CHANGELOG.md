@@ -1,3 +1,15 @@
+# v 0.13.0 ( unreleased )
+
+### New Features
+
+* updated from go 1.16 to 1.17.3
+* updates xorm from github/go-xorm/* to xorm.io/* (thanks to https://github.com/dcarbone ) 
+* fixes default value on SnmpDeviceCfg.Active to be compatible with mariadb, mysql, and pgsql (thanks to https://github.com/dcarbone ) 
+
+### Fixes
+
+### breaking changes
+
 # v 0.12.0 ( 2021-11-14 )
 
 ### New Features
