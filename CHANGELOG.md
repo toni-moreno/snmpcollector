@@ -1,10 +1,8 @@
-# v 0.12.0 ( unreleased)
+# v 0.12.0 ( 2021-11-14 )
 
 ### New Features
 
-### Fixes
-
-### breaking changes
+* Added option to override device gathering frequency on the measurement config  (resolves #404)
 
 # v 0.11.0 ( 2021-10-13 )
 
