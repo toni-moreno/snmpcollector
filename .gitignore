@@ -5,6 +5,7 @@ npm-debug.log
 /dist
 /public_gen
 /tmp
+/vendor
 
 public/css/*.min.css
 
