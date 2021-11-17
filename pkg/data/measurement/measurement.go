@@ -984,22 +984,32 @@ func (m *Measurement) GatherLoop(
 		gatherFreq = m.cfg.Freq
 	}
 	utils.WaitAlignForNextCycle(gatherFreq, m.Log)
+
+	// Gather ticker initialization and stats
 	gatherTicker := time.NewTicker(time.Duration(gatherFreq) * time.Second)
 	defer gatherTicker.Stop()
+	m.stats.GatherFreq = gatherFreq
+	m.stats.SetGatherNextTime(time.Now().Add(time.Duration(gatherFreq) * time.Second).Unix())
 
+	// Filter ticker initialization and stats
 	// Measurement Filter Freq overrides Device Filter Freq (creating ticker)
 	filterFreq := gatherFreq * deviceUpdateFilterFreq
 	if m.cfg.UpdateFltFreq != 0 {
 		filterFreq = gatherFreq * m.cfg.UpdateFltFreq
 	}
-	updateFilterTicker := time.NewTicker(time.Duration(filterFreq) * time.Second)
-	defer updateFilterTicker.Stop()
-
-	// updating stats info
-	m.stats.GatherFreq = gatherFreq
-	m.stats.FilterFreq = filterFreq
-	m.stats.SetFilterNextTime(time.Now().Add(time.Duration(filterFreq) * time.Second).Unix())
-	m.stats.SetGatherNextTime(time.Now().Add(time.Duration(gatherFreq) * time.Second).Unix())
+	var updateFilterTicker *time.Ticker
+	if filterFreq <= 0 {
+		// version < 0.12 set -1 to deviceUpdateFilterFreq
+		// we can simulate the ticker is deactivated by seting for 1 weeks
+		// and stopping it
+		updateFilterTicker = time.NewTicker(604800 * time.Second)
+		updateFilterTicker.Stop()
+	} else {
+		updateFilterTicker = time.NewTicker(time.Duration(filterFreq) * time.Second)
+		m.stats.FilterFreq = filterFreq
+		m.stats.SetFilterNextTime(time.Now().Add(time.Duration(filterFreq) * time.Second).Unix())
+		defer updateFilterTicker.Stop()
+	}
 
 	for {
 		m.Log.Info("MeasurementLoop new Iteration")
