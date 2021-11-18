@@ -78,7 +78,7 @@
 
       <div class="form-group" *ngIf="measurementForm.value.GetMode != 'value'">
         <label class="control-label col-sm-2" for="UpdateFltFreq">UpdateFltFreq</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Number of snmp data gather cycles the collector will take to update  indexes and filters if (indexed/snmptable) measurements of snmp data polling (time will be this number*freq seconds) <br> Set this value to -1 to disable indexes and filters updates  [it will take the device config if not set]"></i>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Number of snmp data gather cycles the collector will take to update  indexes and filters if (indexed/snmptable) measurements of snmp data polling (time will be this number*freq seconds) <br> Set this value to -1 to disable indexes and filters updates only for this measurement  [if set to 0 it will take the device Filter frequency config instead]"></i>
         <div class="col-sm-9">
           <input formControlName="UpdateFltFreq" id="UpdateFltFreq" [ngModel]="measurementForm.value.UpdateFltFreq" />
           <control-messages [control]="measurementForm.controls.UpdateFltFreq"></control-messages>

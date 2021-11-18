@@ -115,7 +115,10 @@
                                         </ng-container>
                                         <ng-container *ngIf="item.source == 'stats'">
                                             <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats'][item.id]}}</td>
-                                            <td *ngIf="item.type=='time'"  style="padding-left:10px">{{ runtime_dev['Measurements'][measActive]['Stats'][item.id]*1000 | date:'yyyy/M/d HH:mm:ss' }}</td>
+                                            <ng-container *ngIf="item.type=='time'">
+                                                <td *ngIf="runtime_dev['Stats'][item.id] > 0"  style="padding-left:10px">{{ runtime_dev['Stats'][item.id]*1000 | date:'yyyy/M/d HH:mm:ss' }}  </td>
+                                                <td *ngIf="runtime_dev['Stats'][item.id] <= 0"  style="padding-left:10px">(deactivated)</td>
+                                            </ng-container>
                                             <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats'][item.id] | elapsedseconds:3 }}</td>
                                         </ng-container>
                                     </tr>
