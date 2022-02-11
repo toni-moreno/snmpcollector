@@ -1018,7 +1018,7 @@ func (m *Measurement) GatherLoop(
 			// Connect
 			info, err := m.snmpClient.Connect(systemOIDs)
 			if err != nil {
-				m.Log.Error("Not able to connect inside of the loop: %v", err)
+				m.Log.Errorf("Not able to connect inside of the loop: %v", err)
 			} else {
 				m.Connected = true
 				m.stats.SetSysInfo(*info)
