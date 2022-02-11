@@ -8,6 +8,8 @@
 
 ### Fixes
 
+* fix #516
+
 ### breaking changes
 
 # v 0.12.0 ( 2021-11-14 )
@@ -15,6 +17,14 @@
 ### New Features
 
 * Added option to override device gathering frequency on the measurement config  (resolves #404)
+
+
+### breaking changes
+
+* SnmpCollector internal stats have been updated to send data related to gathered measurement instead of device
+  this breaks with old dashboards. more information here:
+  https://github.com/toni-moreno/snmpcollector/wiki/Troubleshooting#dashboards
+
 
 # v 0.11.0 ( 2021-10-13 )
 

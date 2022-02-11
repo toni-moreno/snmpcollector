@@ -147,6 +147,7 @@ func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
 	retries := c.ConnectionParams.Retries
 	timeout := c.ConnectionParams.Timeout
 
+	// change values only to check connection
 	c.ConnectionParams.Retries = 0
 	c.ConnectionParams.Timeout = 5
 	goSNMPClient, err := GetClient(c.ConnectionParams, c.Log)
@@ -165,13 +166,14 @@ func (c *Client) Connect(systemOIDs []string) (*SysInfo, error) {
 	c.snmpClient = goSNMPClient
 
 	sysinfo, err := c.SysInfoQuery(systemOIDs)
+	// Restore configuration values
+	c.snmpClient.Retries = retries
+	c.snmpClient.Timeout = time.Duration(timeout) * time.Second
 	if err != nil {
 		return nil, fmt.Errorf("obtaining the sysInfo: %v", err)
 	}
 
 	c.Connected = true
-	c.snmpClient.Retries = retries
-	c.snmpClient.Timeout = time.Duration(timeout) * time.Second
 
 	return sysinfo, nil
 }
