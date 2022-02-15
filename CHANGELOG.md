@@ -9,6 +9,8 @@
 ### Fixes
 
 * fix #516
+* fix #514 , also changed overall device filter_duration stat to retrieve the max instead of the sum of times
+* fix UI exception on device runtime view when the device is not connected
 
 ### breaking changes
 

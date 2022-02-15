@@ -39,9 +39,9 @@
         <label [tooltip]="'Back to list'" container="body" style="font-size:130%; margin-top:10px; border-right: 1px solid; padding-right: 5px;"><i class="text-primary glyphicon glyphicon-tasks" (click)="reloadData()"></i></label>
         <ng-container *ngIf="runtime_dev">
             <label [tooltip]="'Refresh'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i class="glyphicon glyphicon-refresh" (click)="initRuntimeInfo(runtime_dev.ID,measActive)"></i></label>
-            <label *ngIf [tooltip]="'Test Connection'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i [ngClass]="runtime_dev['DeviceConnected'] === false ? ['text-danger glyphicon glyphicon-flash'] : ['text-warning glyphicon glyphicon-flash']" (click)="showTestConnectionModal(runtime_dev)"></i></label>
-            <h4 style="display:inline; border-right: 1px solid; padding-right: 5px" [ngClass]="runtime_dev['DeviceConnected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</h4>
-            <h4 *ngIf="runtime_dev['DeviceConnected'] == false" class="text-danger" style="display:inline; border-right: 1px solid; padding-right: 5px;"> Device is not connected</h4>
+            <label *ngIf [tooltip]="'Test Connection'" container="body" style="margin-top:10px; font-size:130%; border-right: 1px solid; padding-right: 5px;"><i [ngClass]="runtime_dev['Stats']['Connected'] === false ? ['text-danger glyphicon glyphicon-flash'] : ['text-warning glyphicon glyphicon-flash']" (click)="showTestConnectionModal(runtime_dev)"></i></label>
+            <h4 style="display:inline; border-right: 1px solid; padding-right: 5px" [ngClass]="runtime_dev['Stats']['Connected'] === false ? 'text-danger' : 'text-success' ">{{runtime_dev.ID}}</h4>
+            <h4 *ngIf="runtime_dev['Stats']['Connected'] == false" class="text-danger" style="display:inline; border-right: 1px solid; padding-right: 5px;"> Device is not connected</h4>
             <label style="margin-left: 10px; font-size: 100%" class="label label-info" *ngFor="let tag of runtime_dev['TagMap'] | objectParser"> {{tag.key}}:{{tag.value}}</label>
         </ng-container>
     </div>
@@ -50,7 +50,7 @@
     <div class="col-md-12" *ngIf="isRequesting == false">
         <div class="col-md-12" *ngIf="runtime_dev">
             <div class="row">
-                <div class="col-md-7" *ngIf="runtime_dev['DeviceConnected'] !== false">
+                <div class="col-md-7" *ngIf="runtime_dev['Stats']['Connected'] !== false">
                     <div class="panel panel-default col-md-6" style="padding-left: 0px; padding-right: 0px;">
                         <div class="panel-heading"><span class="text-primary glyphicon glyphicon-info-sign" style="margin-top: 2px; margin-right: 10px"></span>SysInfo</div>
                         <div class="panel-body" style="overflow-x: scroll !important; overflow-y: scroll !important; height:200px">
@@ -116,8 +116,8 @@
                                         <ng-container *ngIf="item.source == 'stats'">
                                             <td *ngIf="item.type=='counter'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats'][item.id]}}</td>
                                             <ng-container *ngIf="item.type=='time'">
-                                                <td *ngIf="runtime_dev['Stats'][item.id] > 0"  style="padding-left:10px">{{ runtime_dev['Stats'][item.id]*1000 | date:'yyyy/M/d HH:mm:ss' }}  </td>
-                                                <td *ngIf="runtime_dev['Stats'][item.id] <= 0"  style="padding-left:10px">(deactivated)</td>
+                                                <td *ngIf="runtime_dev['Measurements'][measActive]['Stats'][item.id] > 0"  style="padding-left:10px">{{ runtime_dev['Measurements'][measActive]['Stats'][item.id]*1000 | date:'yyyy/M/d HH:mm:ss' }}  </td>
+                                                <td *ngIf="runtime_dev['Measurements'][measActive]['Stats'][item.id] <= 0"  style="padding-left:10px">(deactivated)</td>
                                             </ng-container>
                                             <td *ngIf="item.type=='duration'" style="padding-left:10px">{{runtime_dev['Measurements'][measActive]['Stats'][item.id] | elapsedseconds:3 }}</td>
                                         </ng-container>
@@ -243,7 +243,7 @@
             </div>
         </div>
         <div class="row" *ngIf="runtime_dev">
-            <div *ngIf="runtime_dev['Measurements']" class="col-md-12" style="margin-left:10px">
+            <div *ngIf="runtime_dev['Stats']['Connected'] == true && runtime_dev['Measurements']" class="col-md-12" style="margin-left:10px">
                 <br>
                 <div class="col-md-2">
                     <h4>

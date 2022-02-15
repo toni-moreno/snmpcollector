@@ -357,7 +357,7 @@ func (s *GatherStats) Combine(sc *GatherStats) {
 	s.Counters[BackEndSentDuration] = s.Counters[BackEndSentDuration].(float64) + sc.Counters[BackEndSentDuration].(float64)
 	// Filter Durations
 	s.Counters[FilterStartTime] = minI(s.Counters[FilterStartTime].(int64), sc.Counters[FilterStartTime].(int64))
-	s.Counters[FilterDuration] = s.Counters[FilterDuration].(float64) + sc.Counters[FilterDuration].(float64)
+	s.Counters[FilterDuration] = maxf(s.Counters[FilterDuration].(float64), sc.Counters[FilterDuration].(float64))
 }
 
 // AddMeasStats add measurement stats to the device stats object
