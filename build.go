@@ -42,8 +42,8 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
 
-	ensureGoPath()
-	//readVersionFromPackageJson()
+	// ensureGoPath()
+	// readVersionFromPackageJson()
 	readVersionFromGit()
 
 	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
@@ -92,6 +92,10 @@ func main() {
 			createDebPackages()
 			sha1FilesInDist()
 		case "sha1-dist":
+			sha1FilesInDist()
+		case "pkg-all":
+			os.Mkdir("./dist", 0755)
+			createLinuxPackages()
 			sha1FilesInDist()
 		case "latest":
 			os.Mkdir("./dist", 0755)
@@ -155,6 +159,12 @@ func readVersionFromGit() {
 	}
 
 	linuxPackageVersion = strings.TrimSpace(string(out))
+	re := regexp.MustCompile(`(?m)v[0-9]+\.[0-9]+\.[0-9]+`)
+	if !re.MatchString(linuxPackageVersion) {
+		log.Fatalf("Error, Git Release doesn't match the patter vX.Y.Z: %s", linuxPackageVersion)
+	}
+	//remove v from version 
+	linuxPackageVersion = strings.TrimPrefix(linuxPackageVersion,"v")
 	version = linuxPackageVersion
 	linuxPackageIteration = ""
 
@@ -396,7 +406,7 @@ func rmr(paths ...string) {
 func clean() {
 	//	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
 	rmr("public")
-	//rmr("tmp")
+	// rmr("tmp")
 	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/toni-moreno/snmpcollector", goos, goarch)))
 }
 

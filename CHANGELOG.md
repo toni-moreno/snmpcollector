@@ -1,10 +1,12 @@
-# v 0.13.0 ( unreleased )
+# v0.13.0 ( 2022-02-16 )
 
 ### New Features
 
 * updated from go 1.16 to 1.17.3
 * updates xorm from github/go-xorm/* to xorm.io/* (thanks to https://github.com/dcarbone ) 
-* fixes default value on SnmpDeviceCfg.Active to be compatible with mariadb, mysql, and pgsql (thanks to https://github.com/dcarbone ) 
+* fixes default value on SnmpDeviceCfg.Active to be compatible with mariadb, mysql, and pgsql (thanks to https://github.com/dcarbone )
+* updated build system to be generate release packages from github-actions CI
+
 
 ### Fixes
 
@@ -14,7 +16,7 @@
 
 ### breaking changes
 
-# v 0.12.0 ( 2021-11-14 )
+# v0.12.0 ( 2021-11-14 )
 
 ### New Features
 
@@ -28,7 +30,7 @@
   https://github.com/toni-moreno/snmpcollector/wiki/Troubleshooting#dashboards
 
 
-# v 0.11.0 ( 2021-10-13 )
+# v0.11.0 ( 2021-10-13 )
 
 ### New Features
 
@@ -47,7 +49,7 @@
 
 ### breaking changes
 
-# v 0.10.0 ( 2021-03-06 )
+# v0.10.0 ( 2021-03-06 )
 ### New Features
 * added support for PostgreSQL as config database.
 * added option to redirect influxdb HTTP writes over HTTP(S)_PROXY variables.
@@ -67,7 +69,7 @@
 
 ### breaking changes
 
-# v 0.9.0 ( 2021-01-04 )
+# v0.9.0 ( 2021-01-04 )
 ### New Features
 * Added snmpmetric unit tests
 * Updated to last "gosnmp" v1.28.0 release
@@ -84,7 +86,7 @@
 ### breaking changes
 * Measurement TagName property (only retrieved on runtime API) changed from `string` to `[]string`
 
-# v 0.8.1 ( 2020-10-06 ) 
+# v0.8.1 ( 2020-10-06 ) 
 ### New Features
 * Upgraded dependencies from dep to gomodules
 * Added config through environment vars ( docker friendly ),implements #420
@@ -103,7 +105,7 @@
 * no longer supported "-httpPort" command line parameter use "-httpListen" instead (still supported but deprecated Port option at config file) 
 * DOCKER IMAGE upgrade needs for previous ownership change to UID/GID=472 on all its persistent files/volumes 
 
-# v 0.8.0 ( 2018-11-05) 
+# v0.8.0 ( 2018-11-05) 
 ### New Features
 * Added new capabilities to add , modify and delete devices online ( avoids restart the gathering ocess  on the other devices) 
 * Go 1.9.8 to 1.11 binaries 
@@ -118,7 +120,7 @@
 * STRINGPARSER SnmpMetric Type no longer will be Scaled with Scale/shift values.
 
 
-# v 0.7.7 (2018-05-28)
+# v0.7.7 (2018-05-28)
 ### New Features
 * Added SIGTERM handler to stop gracefully all device gathering gourutines and flush pending data to its defined output db.
 * Added SIGHUP handler to reload complete configuration and restart gathering process (as in the 'Reload Config' WebUI option)
@@ -131,7 +133,7 @@ field | description
 fields_sent | number of fields sent to the DB on the last period
 fields_sent_max | max number of fields sent to the DB on the last period
 
-# v 0.7.6 (2018-01-17)
+# v0.7.6 (2018-01-17)
 ### New Features
 * Go 1.8.2 to 1.9.2 binaries
 * Added new value on NFR (Non Filtered Rows)  with total index length before filter applied, for STRINGEVAL metric types.
@@ -184,7 +186,7 @@ mem.mCacheInuse| MCacheInuse is bytes of allocated mcache structures.
   cicle_gather_start_time|cycle_gather_start_time
 
 
-# v 0.7.5 (2017-12-16)
+# v0.7.5 (2017-12-16)
 ### New Features
 * Added Hard snmp reset option to remap all measurements again when some problem happens when trying to do snmp connection  init on first attemps. (fix #271)
 * Added a new Runtime option to Force Gather data even if device is not active ( useful for configuration testing )(implements #275)If active the current gathering period won't be changed, and this will be an extra point.
@@ -204,7 +206,7 @@ mem.mCacheInuse| MCacheInuse is bytes of allocated mcache structures.
 * Fixed table  name field snmp_device_cfg.system_o_i_ds  to snmp_device_cfg.systemoids , to migrate data you should only execute
 update snmp_device_cfg set systemoids = system_o_i_ds ;
 
-# v 0.7.4 (2017-09-23)
+# v0.7.4 (2017-09-23)
 ### New Features
 * added new Alternate SystemOID's map to extend snmpcollector to non MIB-2 based devices (as by example Proxy Squid), is important to get system description and also to check connectivity with the device.
 * added new SNMPv3 parameters ContextEngineID and ContextName
@@ -218,7 +220,7 @@ update snmp_device_cfg set systemoids = system_o_i_ds ;
 
 ### breaking changes
 
-# v 0.7.3 (2017-06-26)
+# v0.7.3 (2017-06-26)
 ### New Features
 * added new BITS snmp SMI type to send named array strings as Fields or tags.
 * added new BITS Check (BITSCHK) cooked type to check only a specific position.
@@ -235,7 +237,7 @@ update snmp_device_cfg set systemoids = system_o_i_ds ;
 
 ### breaking changes
 
-# v 0.7.2 (2017-05-27)
+# v0.7.2 (2017-05-27)
 ### New Features
 * added new ndif (numeric different) oid condition comparison
 * added new comunication Bus, improves webui to devices message send in unicast and broadcast mode.
@@ -251,7 +253,7 @@ update snmp_device_cfg set systemoids = system_o_i_ds ;
 ### breaking changes
 
 
-# v 0.7.1 (2017-05-17)
+# v0.7.1 (2017-05-17)
 ### New Features
 * Improved self monitoring process, renamed and added new device statistics metrics.
 * Added backgound colours on runtime data to validate or invalidate data.
@@ -276,7 +278,7 @@ process_t | cicle_gather_duration
 getsent | snmp_oid_get_processed
 geterror | snmp_oid_get_errors
 
-# v 0.7.0 (2017-04-29)
+# v0.7.0 (2017-04-29)
 ### New Features
 * added a gonsmp fix for snmpv3 performance problems.
 * updated all dependencies
@@ -287,7 +289,7 @@ geterror | snmp_oid_get_errors
 
 ### breaking changes
 
-# v 0.6.6
+# v0.6.6
 ### New Features
 * Compilation with Go1.8
 * added Docker image to hub tonimoreno/snmpcollector
@@ -304,7 +306,7 @@ geterror | snmp_oid_get_errors
 
 ### breaking changes
 
-# v 0.6.5
+# v0.6.5
 ### New Features
 * Refactored and Improved form Validation options,to allow dynamic validators  on some parameters changes
 * Added new Multiple OID condition Filter and filter check improvements.
@@ -318,7 +320,7 @@ geterror | snmp_oid_get_errors
 ### breaking changes
 
 
-# v 0.6.4
+# v0.6.4
 ### New Features
 * Measurement Filters refactor , added CustomFilter.
 * Added OID condition as new SNMP Metric Type
@@ -347,10 +349,10 @@ DROP TABLE meas_filter_cfg_old;
 CREATE UNIQUE INDEX `UQE_meas_filter_cfg_id` ON `meas_filter_cfg` (`id`);
 ```
 
-# v 0.6.3
+# v0.6.3
 * this version have been bypassed for technical reasons
 
-# v 0.6.2
+# v0.6.2
 ### New Features
 * Metric Type standarization according to RFC2578 SMIv2.
 * new IndexTagFormat to the measurement enabling custom Tag names
@@ -372,7 +374,7 @@ update snmp_metric_cfg set datasrctype='IpAddress' where datasrctype  = 'IPADDR'
 alter table influx_measurement_cfg rename to measurement_cfg;
 ```
 
-# v 0.6.1
+# v0.6.1
 ### New Features
 * upgraded to angular 2.4.1/router 3.4.1/ng2-bootstrap 1.1.16-9/angular-cli 1.0.0-beta.24/ zone.js 0.7.4 /rxjs 5.0.1
 * new bundle system based on angular-cli and npm
@@ -387,7 +389,7 @@ alter table influx_measurement_cfg rename to measurement_cfg;
 
 ### breaking changes
 
-# v 0.6.0
+# v0.6.0
 ### New Features
 * new metric types based on SNMP ANS1 types
 * new snmp runtime console
@@ -400,7 +402,7 @@ alter table influx_measurement_cfg rename to measurement_cfg;
 
 ### breaking changes
 
-# v 0.5.6
+# v0.5.6
 ### New features.
 * UI Enhanced login aspect
 * added DisableBulk option to devices with problems in bulk queries like some IBM devices
@@ -419,7 +421,7 @@ alter table influx_measurement_cfg rename to measurement_cfg;
 ### breaking changes
 
 
-# v 0.5.5
+# v0.5.5
 ### New features.
 * Online Reload Configuration
 * New runtime WebUI option which enables user inspect online current gathered snmp values for all measurements on all devices, also allow interact to change logging and debug options and also deactivate device.
@@ -430,7 +432,7 @@ alter table influx_measurement_cfg rename to measurement_cfg;
 ### breaking changes
 * no longer needed options flags: freq, repeat, verbose ; since all this features can be changed on the WebUI
 
-# v 0.5.4
+# v0.5.4
 ### New features.
 * added UpdateFltFreq option to periodically update the status of the tables and filters
 * added Security to the Collector API
@@ -443,12 +445,12 @@ alter table influx_measurement_cfg rename to measurement_cfg;
 ### breaking changes
 * none
 
-# v 0.5.3
+# v0.5.3
 ### New features.
 * WebUI now shows data in tables and can be filtered.
 
 
-# v 0.5.2
+# v0.5.2
 ### New features.
 * Added Runtime Version to the snmpcollector API
 * Estandarized Description for all objects.
@@ -461,7 +463,7 @@ alter table influx_measurement_cfg rename to measurement_cfg;
 * none
 
 
-# v 0.5.1
+# v0.5.1
 ### New features.
 * Define field metric as Tag (IsTag = true) => type STRING,HWADDR,IP
 * Defined measurment Indexed  "index" as value on special devices with no special Index OID.
@@ -476,7 +478,7 @@ alter table influx_measurement_cfg rename to measurement_cfg;
 ### breaking changes
 * none
 
-# v 0.5.0
+# v0.5.0
 ### New features.
 * new WebIU with all forms to insert , update , delete objects.
 * Major internal snmpdeice/measurement refactor
