@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, ViewChild,ViewContainerRef } from '
 import { FormBuilder, Validators} from '@angular/forms';
 import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 import { SnmpDeviceService } from '../snmpdevice/snmpdevicecfg.service';
-import { InfluxServerService } from '../influxserver/influxservercfg.service';
+import { OutputService } from '../output/outputcfg.service';
 import { MeasGroupService } from '../measgroup/measgroupcfg.service';
 import { MeasFilterService } from '../measfilter/measfiltercfg.service';
 import { VarCatalogService } from '../varcatalog/varcatalogcfg.service';
@@ -30,7 +30,7 @@ declare var _:any;
 
 @Component({
   selector: 'snmpdevs',
-  providers: [SnmpDeviceService, InfluxServerService, MeasGroupService, MeasFilterService, VarCatalogService,BlockUIService],
+  providers: [SnmpDeviceService, OutputService, MeasGroupService, MeasFilterService, VarCatalogService,BlockUIService],
   templateUrl: './snmpdeviceeditor.html',
   styleUrls: ['../css/component-styles.css']
 })
@@ -63,7 +63,7 @@ export class SnmpDeviceCfgComponent {
   filteroptions: any;
   selectgroups: IMultiSelectOption[] = [];
   selectfilters: IMultiSelectOption[] = [];
-  selectinfluxservers: IMultiSelectOption[] = [];
+  selectoutputs: IMultiSelectOption[] = [];
   selectvarcatalogs: IMultiSelectOption[] = [];
   private mySettingsInflux: IMultiSelectSettings = {
       singleSelect: true,
@@ -98,7 +98,7 @@ export class SnmpDeviceCfgComponent {
   selectedVars: Array<any> = [];
   public extraActions: any = ExtraActions;
 
-  constructor(public snmpDeviceService: SnmpDeviceService, public varCatalogService: VarCatalogService, public influxserverDeviceService: InfluxServerService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService,  public exportServiceCfg : ExportServiceCfg, builder: FormBuilder, private _blocker: BlockUIService) {
+  constructor(public snmpDeviceService: SnmpDeviceService, public varCatalogService: VarCatalogService, public outputDeviceService: OutputService, public measgroupsDeviceService: MeasGroupService, public measfiltersDeviceService: MeasFilterService,  public exportServiceCfg : ExportServiceCfg, builder: FormBuilder, private _blocker: BlockUIService) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
@@ -379,7 +379,7 @@ export class SnmpDeviceCfgComponent {
     } else {
       this.setDynamicFields(null);
     }
-    this.getInfluxServersforDevices();
+    this.getOutputsForDevices();
     this.getMeasGroupsforDevices();
     this.getMeasFiltersforDevices();
     this.getVarCatalogsforDevices();
@@ -389,7 +389,7 @@ export class SnmpDeviceCfgComponent {
   editDevice(row) {
     let id = row.ID;
     //Get select options
-    this.getInfluxServersforDevices();
+    this.getOutputsForDevices();
     this.getMeasGroupsforDevices();
     this.getMeasFiltersforDevices();
     this.getVarCatalogsforDevices();
@@ -560,15 +560,15 @@ updateAllSelectedItems(mySelectedArray,field,value, append?) {
       );
   }
 
-  getInfluxServersforDevices() {
-    this.influxserverDeviceService.getInfluxServer(null)
+  getOutputsForDevices() {
+    this.outputDeviceService.getOutput(null)
       .subscribe(
       data => {
       //  this.influxservers = data;
-        this.selectinfluxservers = [];
+        this.selectoutputs = [];
         for (let entry of data) {
           console.log(entry)
-          this.selectinfluxservers.push({ 'id': entry.ID, 'name': entry.ID });
+          this.selectoutputs.push({ 'id': entry.ID, 'name': entry.ID, 'badge': entry.BackendType, 'parent': true });
         }
       },
       err => console.error(err),

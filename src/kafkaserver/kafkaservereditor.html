@@ -1,0 +1,396 @@
+<h2>{{defaultConfig.name}}</h2>
+<ng-container [ngSwitch]="editmode">
+  <ng-template ngSwitchCase="list">
+    <test-modal #viewModal titleName='KafkaDB Servers'></test-modal>
+    <test-modal #viewModalDelete titleName='Deleting:'
+      [customMessage]="['Deleting this KafkaDB Server will affect the following components','Deleting this KafkaDB Server will NOT affect any component. Safe delete']"
+      [customMessageClass]="['alert alert-danger','alert alert-success']" [showValidation]="true"
+      [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteKafkaServer($event)">
+    </test-modal>
+    <export-file-modal #exportFileModal [showValidation]="true" [exportType]="defaultConfig['slug']"
+      [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
+    <table-list #listTableComponent [typeComponent]="defaultConfig['slug']" [data]="data"
+      [columns]="defaultConfig['table-columns']" [counterItems]="counterItems" [counterErrors]="counterErrors"
+      [selectedArray]="selectedArray" [isRequesting]="isRequesting" [tableRole]="tableRole" [sanitizeCell]="cellParser"
+      [roleActions]="overrideRoleActions" (customClicked)="customActions($event)"></table-list>
+  </ng-template>
+  <ng-template ngSwitchDefault>
+    <form [formGroup]="kafkaserverForm" class="form-horizontal"
+      (ngSubmit)="editmode === 'create' ? saveKafkaServer() : updateKafkaServer()">
+      <ng-container>
+        <div class="row well well-sm">
+          <h4 style="display:inline">
+            <i class="glyphicon glyphicon-cog text-info"></i> {{ editmode | uppercase}}
+          </h4>
+          <div class="pull-right" style="margin-right: 20px">
+            <div style="display:inline" tooltip='Submit' container=body><button class="btn btn-success" type="submit"
+                [disabled]="!kafkaserverForm.valid"> <i class="glyphicon glyphicon-ok-circle"></i></button></div>
+            <div style="display:inline" tooltip='Reset' container=body><button class="btn btn-warning" type="reset"
+                [disabled]="!kafkaserverForm.dirty"><i class="glyphicon glyphicon-ban-circle"></i> </button></div>
+            <div style="display:inline" tooltip='Cancel' container=body><button class="btn btn-danger" type="button"
+                (click)="cancelEdit()"><i class="glyphicon glyphicon-remove-circle"></i></button></div>
+          </div>
+        </div>
+      </ng-container>
+      <div class="form-fixed-height">
+        <div class="well well-sm">
+          <span class="editsection">
+            Connection Settings
+          </span>
+          <div class="form-group" style="margin-top: 25px">
+            <label class="control-label col-sm-2" for="ID">ID</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="Unique identifier of KafkaDB server"></i>
+            <div class="col-sm-9">
+              <input formControlName="ID" id="ID" [ngModel]="kafkaserverForm.value.ID" />
+              <control-messages [control]="kafkaserverForm.controls.ID"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="Brokers">Brokers</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="Addresses of Kafka brokers, separated by commas"></i>
+            <div class="col-sm-9">
+              <input formControlName="Brokers" id="Brokers" placeholder="127.0.0.1:9092, localhost:9092"
+                [ngModel]="kafkaserverForm.value.Brokers" />
+              <control-messages [control]="kafkaserverForm.controls.Brokers"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="MaxRetry">MaxRetry</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true"
+              tooltip="The maximum number of times to retry sending a metric before failing until the next flush."></i>
+            <div class="col-sm-9">
+              <input formControlName="MaxRetry" id="MaxRetry" [ngModel]="kafkaserverForm.value.MaxRetry" />
+              <control-messages [control]="kafkaserverForm.controls.MaxRetry"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="RequiredAcks">RequiredAcks</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true"
+              tooltip="RequiredAcks is used in Produce Requests to tell the broker how many replica acknowledgements it must see before responding. 0 : the producer never waits for an acknowledgement from the broker. This option provides the lowest latency but the weakest durability guarantees (some data will be lost when a server fails). 1 : the producer gets an acknowledgement after the leader replica has received the data. This option provides better durability as the client waits until the server acknowledges the request as successful (only messages that were written to the now-dead leader but not yet replicated will be lost). -1: the producer gets an acknowledgement after all in-sync replicas have received the data. This option provides the best durability, we guarantee that no messages will be lost as long as at least one in sync replica remains."></i>
+            <div class="col-sm-9">
+              <input formControlName="RequiredAcks" id="RequiredAcks" [ngModel]="kafkaserverForm.value.RequiredAcks" />
+              <control-messages [control]="kafkaserverForm.controls.RequiredAcks"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="MaxMessageBytes">MaxMessageBytes</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true"
+              tooltip="The maximum permitted size of a message. Should be set equal to or smaller than the brokers message.max.bytes"></i>
+            <div class="col-sm-9">
+              <input formControlName="MaxMessageBytes" id="MaxMessageBytes" [ngModel]="kafkaserverForm.value.MaxMessageBytes" />
+              <control-messages [control]="kafkaserverForm.controls.MaxMessageBytes"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="IdempotentWrites">IdempotentWrites</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="If true, exactly one copy of each message is written"></i>
+            <div class="col-sm-9">
+              <select formControlName="IdempotentWrites" id="Active" [ngModel]="kafkaserverForm.value.IdempotentWrites">
+                <option value="true">True</option>
+                <option value="false">False</option>
+              </select>
+              <control-messages [control]="kafkaserverForm.controls.IdempotentWrites"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="Version">Version</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true"
+              tooltip="Set the minimal supported Kafka version. Setting this enables the use of new Kafka features and APIs. Of particular interested, lz4 compression requires at least version 0.10.0.0."></i>
+            <div class="col-sm-9">
+              <input formControlName="Version" id="Version" [ngModel]="kafkaserverForm.value.Version" />
+              <control-messages [control]="kafkaserverForm.controls.Version"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="ClientID">ClientID</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="Optional Client id"></i>
+            <div class="col-sm-9">
+              <input formControlName="ClientID" id="ClientID" [ngModel]="kafkaserverForm.value.ClientID" />
+              <control-messages [control]="kafkaserverForm.controls.ClientID"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <div *ngIf="alertHandler" class="col-md-offset-2 col-sm-5">
+              <div [ngClass]="['panel-body', 'bg-'+alertHandler.type,'text-'+alertHandler.type]">
+                <span>{{alertHandler.result}} - Ping elapsed: {{alertHandler.elapsed / 1000000 }} ms</span>
+                <p>{{alertHandler.msg}}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="well well-sm">
+          <span class="editsection">Kafka Settings</span>
+          <div class="form-group" style="margin-top: 25px">
+            <label class="control-label col-sm-2" for="Keys">Topic</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="Kafka topic for producer messages"></i>
+            <div class="col-sm-9">
+              <input formControlName="Topic" id="Topic" [ngModel]="kafkaserverForm.value.Topic" />
+              <control-messages [control]="kafkaserverForm.controls.Topic"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="Keys">TopicTag</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true"
+              tooltip="The value of this tag will be used as the topic.  If not set the 'topic' option is used"></i>
+            <div class="col-sm-9">
+              <input formControlName="TopicTag" id="TopicTag" [ngModel]="kafkaserverForm.value.TopicTag" />
+              <control-messages [control]="kafkaserverForm.controls.TopicTag"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="ExcludeTopicTag">Exclude Topic Tag</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="If true, the 'topic_tag' will be removed from to the metric"></i>
+            <div class="col-sm-9">
+              <select formControlName="ExcludeTopicTag" id="ExcludeTopicTag"
+                [ngModel]="kafkaserverForm.value.ExcludeTopicTag">
+                <option value="true">True</option>
+                <option value="false">False</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2">Topic Suffix - Method</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="Authentification user to the DB"></i>
+            <div class="col-sm-9">
+              <select formControlName="Method" id="Method" [ngModel]="kafkaserverForm.value.Method">
+                <option value="measurement">Measurement</option>
+                <option value="tags">Tags</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="Keys">Topic Suffix - Keys</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="Authentification user to the DB"></i>
+            <div class="col-sm-9">
+              <input formControlName="Keys" id="Keys" [ngModel]="kafkaserverForm.value.Keys" />
+              <control-messages [control]="kafkaserverForm.controls.Keys"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="Separator">Topic Suffix - Separator</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="Topic suffix separator"></i>
+            <div class="col-sm-9">
+              <input formControlName="Separator" id="Separator" [ngModel]="kafkaserverForm.value.Separator" />
+              <control-messages [control]="kafkaserverForm.controls.Separator"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2 info">Topic Result</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="Authentification user to the DB"></i>
+            <div class="col-sm-9" class="info" style="padding-top:5px">
+              <ng-container *ngIf="kafkaserverForm.value.Method == 'measurement'">
+                <span
+                  *ngIf="kafkaserverForm.value.TopicTag != ''">{{'{tag::'+kafkaserverForm.value.TopicTag+'.value}'}}{{kafkaserverForm.value.Separator}}{{'{measurement.name}'}}</span>
+                <span
+                  *ngIf="kafkaserverForm.value.TopicTag == ''">{{kafkaserverForm.value.Topic}}{{kafkaserverForm.value.Separator}}{{'{measurement.name}'}}</span>
+              </ng-container>
+              <ng-container *ngIf="kafkaserverForm.value.Method == 'tags'">
+                <span
+                  *ngIf="kafkaserverForm.value.TopicTag != ''">{{'{tag::'+kafkaserverForm.value.TopicTag+'.value}'}}{{kafkaserverForm.value.Separator}}
+                  <ng-container
+                    *ngFor="let tkey of kafkaserverForm.value.Keys let i=index;  let fi = first;  let li = last;">
+                    {{'{tag::'+tkey+'.value}'}}{{li === false ? kafkaserverForm.value.Separator : ''}}
+                  </ng-container>
+                </span>
+                <span
+                  *ngIf="kafkaserverForm.value.TopicTag == ''">{{kafkaserverForm.value.Topic}}{{kafkaserverForm.value.Separator}}
+                  <ng-container
+                    *ngFor="let tkey of kafkaserverForm.value.Keys let i=index;  let fi = first;  let li = last;">
+                    {{'{tag::'+tkey+'.value}'}}{{li === false ? kafkaserverForm.value.Separator : ''}}
+                  </ng-container>
+                </span>
+              </ng-container>
+            </div>
+          </div>
+          <hr>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="RoutingTag">RoutingTag</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true"
+              tooltip="The routing tag specifies a tagkey on the metric whose value is used as the message key. The message key is used to determine which partition to send the message to. This tag is prefered over the RoutingKey option."></i>
+            <div class="col-sm-9">
+              <input formControlName="RoutingTag" id="RoutingTag" [ngModel]="kafkaserverForm.value.RoutingTag" />
+              <control-messages [control]="kafkaserverForm.controls.RoutingTag"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="RoutingKey">RoutingKey</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true"
+              tooltip="The routing key is set as the message key and used to determine which partition to send the message to.  This value is only used when no routing_tag is set or as a fallback when the tag specified in routing tag is not found. If set to 'random', a random value will be generated for each message. When unset, no message key is added and each message is routed to a random partition."></i>
+            <div class="col-sm-9">
+              <input formControlName="RoutingKey" id="RoutingKey" [ngModel]="kafkaserverForm.value.RoutingKey" />
+              <control-messages [control]="kafkaserverForm.controls.RoutingKey"></control-messages>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="CompressionCodec">CompressionCodec</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true"
+              tooltip="Authentification password to the DB of the user {{kafkaserverForm.value.User}}"></i>
+            <div class="col-sm-9">
+              <select formControlName="CompressionCodec" id="CompressionCodec"
+                [ngModel]="kafkaserverForm.value.CompressionCodec">
+                <option value="0">None</option>
+                <option value="1">Gzip</option>
+                <option value="2">Snappy</option>
+                <option value="3">LZ4</option>
+                <option value="4">ZSTD</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="well well-sm">
+          <span class="editsection">TLS Settings</span>
+          <div class="form-group" style="margin-top: 25px">
+            <label class="control-label col-sm-2" for="EnableTLS">EnableTLS</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="If true, TLS is enabled"></i>
+            <div class="col-sm-9">
+              <select formControlName="EnableTLS" id="EnableTLS"
+              (click)="setDynamicFields(checkFields(kafkaserverForm.value.EnableTLS,kafkaserverForm.value.Socks5ProxyEnabled))"
+              [ngModel]="kafkaserverForm.value.EnableTLS">
+                <option value="true">True</option>
+                <option value="false">False</option>
+              </select>
+            </div>
+          </div>
+          <div *ngIf="kafkaserverForm.value.EnableTLS == true || kafkaserverForm.value.EnableTLS == 'true'">
+            <div class="form-group" *ngIf="kafkaserverForm.controls.ServerName">
+              <label class="control-label col-sm-2" for="ServerName">ServerName</label>
+              <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+                tooltipAnimation="true" tooltip="TLS Server name"></i>
+              <div class="col-sm-9">
+                <input formControlName="ServerName" id="ServerName" [ngModel]="kafkaserverForm.value.ServerName" />
+                <control-messages [control]="kafkaserverForm.controls.ServerName"></control-messages>
+              </div>
+            </div>
+            <div class="form-group" *ngIf="kafkaserverForm.controls.InsecureSkipVerify">
+              <label class="control-label col-sm-2" for="InsecureSkipVerify">InsecureSkipVerify</label>
+              <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+                tooltipAnimation="true" tooltip="Use TLS but skip chain & host verification"></i>
+              <div class="col-sm-9">
+                <input formControlName="InsecureSkipVerify" id="InsecureSkipVerify"
+                  [ngModel]="kafkaserverForm.value.InsecureSkipVerify" />
+                <control-messages [control]="kafkaserverForm.controls.InsecureSkipVerify"></control-messages>
+              </div>
+            </div>
+            <div class="form-group" *ngIf="kafkaserverForm.controls.TLSMinVersion">
+              <label class="control-label col-sm-2" for="TLSMinVersion">TLSMinVersion</label>
+              <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+                tooltipAnimation="true" tooltip="Min TLS version"></i>
+              <div class="col-sm-9">
+                <input formControlName="TLSMinVersion" id="TLSMinVersion"
+                  [ngModel]="kafkaserverForm.value.TLSMinVersion" />
+                <control-messages [control]="kafkaserverForm.controls.TLSMinVersion"></control-messages>
+              </div>
+            </div>
+            <div class="form-group" *ngIf="kafkaserverForm.controls.TLSCA">
+              <label class="control-label col-sm-2" for="TLSCA">TLSCA</label>
+              <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+                tooltipAnimation="true" tooltip="TLS CA path"></i>
+              <div class="col-sm-9">
+                <input formControlName="TLSCA" id="TLSCA" [ngModel]="kafkaserverForm.value.TLSCA" />
+                <control-messages [control]="kafkaserverForm.controls.TLSCA"></control-messages>
+              </div>
+            </div>
+            <div class="form-group" *ngIf="kafkaserverForm.controls.TLSCert">
+              <label class="control-label col-sm-2" for="TLSCert">TLSCert</label>
+              <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+                tooltipAnimation="true" tooltip="TLS Cert path"></i>
+              <div class="col-sm-9">
+                <input formControlName="TLSCert" id="TLSCert" [ngModel]="kafkaserverForm.value.TLSCert" />
+                <control-messages [control]="kafkaserverForm.controls.TLSCert"></control-messages>
+              </div>
+            </div>
+            <div class="form-group" *ngIf="kafkaserverForm.controls.TLSKey">
+              <label class="control-label col-sm-2" for="TLSKey">TLSKey</label>
+              <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+                tooltipAnimation="true" tooltip="TLS Key path"></i>
+              <div class="col-sm-9">
+                <input formControlName="TLSKey" id="TLSKey" [ngModel]="kafkaserverForm.value.TLSKey" />
+                <control-messages [control]="kafkaserverForm.controls.TLSKey"></control-messages>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="well well-sm">
+          <span class="editsection">Socks5 Settings</span>
+          <div class="form-group" style="margin-top: 25px">
+            <label class="control-label col-sm-2" for="Socks5ProxyEnabled">Socks5ProxyEnabled</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="If true, Socks5 Proxy is enabled"></i>
+            <div class="col-sm-9">
+              <select formControlName="Socks5ProxyEnabled" id="Socks5ProxyEnabled"
+                (click)="setDynamicFields(checkFields(kafkaserverForm.value.EnableTLS,kafkaserverForm.value.Socks5ProxyEnabled))"
+                [ngModel]="kafkaserverForm.value.Socks5ProxyEnabled">
+                <option value="true">True</option>
+                <option value="false">False</option>
+              </select>
+            </div>
+          </div>
+          <div
+            *ngIf="kafkaserverForm.value.Socks5ProxyEnabled == true || kafkaserverForm.value.Socks5ProxyEnabled == 'true'">
+            <div class="form-group" *ngIf="kafkaserverForm.controls.Socks5ProxyAddress">
+              <label class="control-label col-sm-2" for="Socks5ProxyAddress">Socks5ProxyAddress</label>
+              <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+                tooltipAnimation="true" tooltip="Socks5 proxy address"></i>
+              <div class="col-sm-9">
+                <input formControlName="Socks5ProxyAddress" id="Socks5ProxyAddress"
+                  [ngModel]="kafkaserverForm.value.Socks5ProxyAddress" />
+                <control-messages [control]="kafkaserverForm.controls.Socks5ProxyAddress"></control-messages>
+              </div>
+            </div>
+            <div class="form-group" *ngIf="kafkaserverForm.controls.Socks5ProxyUsername">
+              <label class="control-label col-sm-2" for="Socks5ProxyUsername">Socks5ProxyUsername</label>
+              <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+                tooltipAnimation="true" tooltip="Socks5 proxy username"></i>
+              <div class="col-sm-9">
+                <input formControlName="Socks5ProxyUsername" id="Socks5ProxyUsername"
+                  [ngModel]="kafkaserverForm.value.Socks5ProxyUsername" />
+                <control-messages [control]="kafkaserverForm.controls.Socks5ProxyUsername"></control-messages>
+              </div>
+            </div>
+            <div class="form-group" *ngIf="kafkaserverForm.controls.Socks5ProxyPassword">
+              <label class="control-label col-sm-2" for="Socks5ProxyPassword">Socks5ProxyPassword</label>
+              <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+                tooltipAnimation="true" tooltip="Socks5 proxy password"></i>
+              <div class="col-sm-9">
+                <input formControlName="Socks5ProxyPassword" id="Socks5ProxyPassword"
+                  [ngModel]="kafkaserverForm.value.Socks5ProxyPassword" />
+                <control-messages [control]="kafkaserverForm.controls.Socks5ProxyPassword"></control-messages>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="well well-sm">
+          <span class="editsection">Extra Settings</span>
+          <div class="form-group" style="margin-top: 25px">
+            <label class="control-label col-sm-2" for="Description">Description</label>
+            <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign"
+              tooltipAnimation="true" tooltip="Description of the Kafka Server"></i>
+            <div class="col-sm-9">
+              <input formControlName="Description" id="Description" [ngModel]="kafkaserverForm.value.Description" />
+              <control-messages [control]="kafkaserverForm.controls.Description"></control-messages>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </ng-template>
+</ng-container>

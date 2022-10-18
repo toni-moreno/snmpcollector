@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs/Rx';
 import { FormsModule, NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 
-declare var _:any;
+declare var _: any;
 
 const MULTISELECT_VALUE_ACCESSOR: any = {
     provide: NG_VALUE_ACCESSOR,
@@ -23,6 +23,7 @@ export interface IMultiSelectOption {
     id: any;
     name: string;
     badge?: string;
+    parent?: boolean;
 }
 
 export interface IMultiSelectSettings {
@@ -37,6 +38,8 @@ export interface IMultiSelectSettings {
     dynamicTitleMaxItems?: number;
     maxHeight?: string;
     singleSelect?: boolean;
+    uniqueSelect?: boolean;
+    returnOption?: boolean;
 }
 
 export interface IMultiSelectTexts {
@@ -98,7 +101,7 @@ export class MultiSelectSearchFilter {
                     <a href="javascript:;" role="menuitem" tabindex="-1" (click)="setSelected($event, option)">
                         <input *ngIf="settings.checkedStyle == 'checkboxes'" type="checkbox" [checked]="isSelected(option)" />
                         <span *ngIf="settings.checkedStyle == 'glyphicon'" style="width: 16px;" [ngClass]="isSelected(option) ? ['glyphicon glyphicon-ok' , 'text-success'] : 'glyphicon'"></span>
-                        <span *ngIf="option.badge" style="padding-left: 10px"> | </span> 
+                        <span *ngIf="option.badge && !option.parent" style="padding-left: 10px"> | </span> 
                         {{ option.name }} <span *ngIf="option.badge" class="badge badge-multi"> {{option.badge}} </span>
                     </a>
                 </li>
@@ -111,6 +114,7 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
     @Input() options: Array<IMultiSelectOption>;
     @Input() settings: IMultiSelectSettings;
     @Input() texts: IMultiSelectTexts;
+    @Input() extravar: any;
     @Output() selectionLimitReached = new EventEmitter();
     @HostListener('document: click', ['$event.target'])
     onClick(target) {
@@ -126,8 +130,8 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
         }
     }
 
-    protected onModelChange: Function = (_: any) => {};
-    protected onModelTouched: Function = () => {};
+    protected onModelChange: Function = (_: any) => { };
+    protected onModelTouched: Function = () => { };
     protected model: any[];
     public title: string;
     protected differ: any;
@@ -169,7 +173,7 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
         this.title = this.texts.defaultTitle;
     }
 
-    writeValue(value: any) : void {
+    writeValue(value: any): void {
         if (value !== undefined) {
             this.model = value;
         }
@@ -188,7 +192,7 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
     }
 
     ngDoCheck() {
-        if(this.model){
+        if (this.model) {
             if (this.settings.singleSelect) {
                 this.updateNumSelected();
                 this.updateTitle();
@@ -210,15 +214,23 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
     }
 
     isSelected(option: IMultiSelectOption): boolean {
-        if (this.settings.singleSelect === true) return (this.model === option.id);
+        if (this.settings.singleSelect === true && !this.settings.uniqueSelect) {
+            return (this.model === option.id);
+        } else if (this.settings.singleSelect === true && this.settings.uniqueSelect) {
+            let uniqesel: any = (option.id + ".." + option.badge)
+            return this.model === uniqesel
+        }
         return this.model && this.model.indexOf(option.id) > -1;
     }
 
     setSelected(event: Event, option: IMultiSelectOption) {
-
-        if (this.settings.singleSelect === true) {
+        if (this.settings.singleSelect === true && !this.settings.uniqueSelect) {
             this.model = option.id;
-        } else {
+        } else if (this.settings.singleSelect === true && this.settings.uniqueSelect === true) {
+            let uniqsel: any = option.id + ".." + option.badge
+            this.model = uniqsel;
+        }
+        else {
             if (!this.model) this.model = [];
             var index = this.model.indexOf(option.id);
             if (index > -1) {
@@ -233,8 +245,14 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
             }
         }
         if (this.settings.closeOnSelect) {
-        this.toggleDropdown();
+            this.toggleDropdown();
         }
+
+        // if (this.settings.returnOption === true) {
+        //     console.log("this.model: ", this.model, option)
+        //     this.onModelChange(option);
+        //     return
+        // }
 
         this.onModelChange(this.model);
     }
@@ -245,18 +263,32 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
     }
 
     updateTitle() {
+        let tmpmodel: any = this.model
+        if (this.settings.uniqueSelect) {
+            if (tmpmodel.split('..').length == 1) {
+                let t: any = tmpmodel + ".." + this.extravar
+                this.model = t
+            }
+        }
         if (this.numSelected === 0) {
             this.title = this.texts.defaultTitle;
         } else if (this.settings.dynamicTitleMaxItems >= this.numSelected) {
-            if (this.settings.singleSelect === true) {
+            if (this.settings.singleSelect === true && !this.settings.uniqueSelect) {
                 this.title = this.options
-                .filter((option) => this.model === option.id)
-                .map((fil) => fil.name).toString();
+                    .filter((option) => this.model === option.id)
+                    .map((fil) => fil.name).toString();
+            } else if (this.settings.singleSelect === true && this.settings.uniqueSelect) {
+                this.title = this.options
+                    .filter((option) => {
+                        let uniqueselect: any = option.id + ".." + option.badge;
+                        if (this.model === uniqueselect) return true
+                    })
+                    .map((fil) => fil.name).toString();
             } else {
                 this.title = this.options
-                .filter((option: IMultiSelectOption) => this.model && this.model.indexOf(option.id) > -1)
-                .map((option: IMultiSelectOption) => option.name)
-                .join(', ');
+                    .filter((option: IMultiSelectOption) => this.model && this.model.indexOf(option.id) > -1)
+                    .map((option: IMultiSelectOption) => option.name)
+                    .join(', ');
             }
         } else {
             this.title = this.numSelected + ' ' + (this.numSelected === 1 ? this.texts.checked : this.texts.checkedPlural);
@@ -264,8 +296,8 @@ export class MultiselectDropdown implements OnInit, DoCheck, ControlValueAccesso
     }
 
     checkAll() {
-        if(!this.model) this.model = [];
-        let newEntries = _.differenceWith(new MultiSelectSearchFilter().transform(this.options,this.searchFilterText).map(option => option.id),this.model,_.isEqual);
+        if (!this.model) this.model = [];
+        let newEntries = _.differenceWith(new MultiSelectSearchFilter().transform(this.options, this.searchFilterText).map(option => option.id), this.model, _.isEqual);
         this.model = newEntries.concat(this.model);
         this.onModelChange(this.model);
     }

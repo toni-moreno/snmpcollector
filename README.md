@@ -1,6 +1,6 @@
 # SnmpCollector [![Go Report Card](https://goreportcard.com/badge/github.com/toni-moreno/snmpcollector)](https://goreportcard.com/report/github.com/toni-moreno/snmpcollector)
 
-SnmpCollector is a full featured Generic SNMP data collector with Web Administration Interface Open Source tool which has as main goal simplify  the configuration for getting data from any  device which snmp protocol support and send resulting data to an influxdb backend.
+SnmpCollector is a full featured Generic SNMP data collector with Web Administration Interface Open Source tool which has as main goal simplify  the configuration for getting data from any  device which snmp protocol support and send resulting data to an InfluxDB and Kafka backends.
 
 For complete information on installation from binary package and configuration you could read the [snmpcollector wiki](https://github.com/toni-moreno/snmpcollector/wiki).
 
@@ -13,6 +13,7 @@ If you want to build a package yourself, or contribute. Here is a guide for how 
 
 - Go 1.5 for snmpcollector < 0.8
 - Go 1.11 for snmpcollector >= 0.8
+- Go 1.17 for snmpcollector >= 0.13
 - NodeJS >=6.2.1
 
 ### Get Code and  setup example config

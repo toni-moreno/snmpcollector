@@ -326,10 +326,10 @@
         Data Settings
       </span>
       <div class="form-group" style="margin-top: 25px">
-        <label class="control-label col-sm-2" for="OutDB">InfluxDB Server</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="InfluxDB server"></i>
+        <label class="control-label col-sm-2" for="OutDB">Output</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Output server"></i>
         <div class="col-sm-9">
-          <ss-multiselect-dropdown [options]="selectinfluxservers" formControlName="OutDB" [texts]="myTexts" [settings]="mySettingsInflux" [ngModel]="snmpdevForm.value.OutDB"></ss-multiselect-dropdown>
+          <ss-multiselect-dropdown [options]="selectoutputs" formControlName="OutDB" [texts]="myTexts" [settings]="mySettingsInflux" [ngModel]="snmpdevForm.value.OutDB"></ss-multiselect-dropdown>
           <control-messages [control]="snmpdevForm.controls.OutDB"></control-messages>
         </div>
       </div>

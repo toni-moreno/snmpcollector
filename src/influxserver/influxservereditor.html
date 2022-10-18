@@ -181,14 +181,6 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="control-label col-sm-2" for="BufferSize">Buffer Size</label>
-        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Maximum number of Data Points SnmpCollector will enqueue waitting to send to the data backend (once the buffer will be full points will be descarted ie =>data loss)"></i>
-        <div class="col-sm-9">
-          <input formControlName="BufferSize" id="BufferSize" [ngModel]="influxserverForm.value.BufferSize"/>
-          <control-messages [control]="influxserverForm.controls.BufferSize"></control-messages>
-        </div>
-      </div>
-      <div class="form-group">
         <label class="control-label col-sm-2" for="Description">Description</label>
         <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the InfluxDB Server"></i>
         <div class="col-sm-9">

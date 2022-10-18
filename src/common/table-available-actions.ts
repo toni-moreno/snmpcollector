@@ -16,6 +16,10 @@ export class AvailableTableActions {
         return this.getMetricAvailableActions();
       case 'influxcfg':
         return this.getInfluxServersAvailableActions();
+      case 'kafkacfg':
+        return this.getKafkaServersAvailableActions();
+      case 'outputcfg':
+          return this.getOutputAvailableActions();
       case 'oidconditioncfg':
         return this.getOIDConditionsAvailableActions();
       case 'measgroupcfg':
@@ -193,7 +197,46 @@ export class AvailableTableActions {
     return tableAvailableActions;
   }
 
+  getOutputAvailableActions(data?: any): any {
+    let tableAvailableActions = [
+      //Remove Action
+      {
+        'title': 'Remove', 'content':
+          { 'type': 'button', 'action': 'RemoveAllSelected' }
+      },
+      //Change Property Action
+      {
+        'title': 'Change property', 'content':
+        {
+          'type': 'selector', 'action': 'ChangeProperty', 'options': [
+            {
+              'title': 'Active', 'type': 'boolean', 'options': [
+                'true', 'false'
+              ]
+            },
+            {'title': 'BufferSize','type':'input', 'options':
+            new FormGroup({
+              formControl : new FormControl(0, Validators.required)
+            })
+          },
+          ]
+        },
+      }
+    ];
+    return tableAvailableActions;
+  }
+
   getMeasGroupsAvailableActions (data ? : any) : any {
+    let tableAvailableActions = [
+    //Remove Action
+      {'title': 'Remove', 'content' :
+        {'type' : 'button','action' : 'RemoveAllSelected'}
+      }
+    ];
+    return tableAvailableActions;
+  }
+
+  getKafkaServersAvailableActions (data ? : any) : any {
     let tableAvailableActions = [
     //Remove Action
       {'title': 'Remove', 'content' :

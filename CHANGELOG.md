@@ -1,3 +1,21 @@
+# v0.14.0 ( unreleased )
+
+### New Features
+
+* add Kafka as available Backend - on backend and UI
+* add internal buffer to store metrics and improved management/control/writes to the backend, based on time (see breaking change)
+* add new dropped series metric to selfmon stats
+
+### Fixes
+
+* fix #343
+
+### Breaking Changes
+
+* refactor metrics sender engine with new output/backend refactor. The metrics are now sent in batches based on an interval and it
+* UI: new Output component and InfluxDB is moved as an Output backend
+* SNMPCollector OutDB refers now to an Output instead of an InfluxDB Server, a migration script is done to migrate current InfluxDBServers to Outputs
+
 # v0.13.1 ( 2022-11-15 )
 
 ### New Features

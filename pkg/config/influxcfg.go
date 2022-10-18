@@ -20,7 +20,7 @@ func (dbc *DatabaseCfg) GetInfluxCfgByID(id string) (InfluxCfg, error) {
 		return InfluxCfg{}, err
 	}
 	if len(cfgarray) > 1 {
-		return InfluxCfg{}, fmt.Errorf("Error %d results on get SnmpDeviceCfg by id %s", len(cfgarray), id)
+		return InfluxCfg{}, fmt.Errorf("Error %d results on get InfluxCfg by id %s", len(cfgarray), id)
 	}
 	if len(cfgarray) == 0 {
 		return InfluxCfg{}, fmt.Errorf("Error no values have been returned with this id %s in the influx config table", id)
@@ -86,7 +86,7 @@ func (dbc *DatabaseCfg) AddInfluxCfg(dev InfluxCfg) (int64, error) {
 
 /*DelInfluxCfg for deleting influx databases from ID*/
 func (dbc *DatabaseCfg) DelInfluxCfg(id string) (int64, error) {
-	var affecteddev, affected int64
+	var affectedouts, affected int64
 	var err error
 
 	session := dbc.x.NewSession()
@@ -95,9 +95,8 @@ func (dbc *DatabaseCfg) DelInfluxCfg(id string) (int64, error) {
 		return 0, err
 	}
 	defer session.Close()
-	// deleting references in SnmpDevCfg
 
-	affecteddev, err = session.Where("outdb='" + id + "'").Cols("outdb").Update(&SnmpDeviceCfg{})
+	affectedouts, err = session.Where("id_backend='" + id + "' and backend_type = 'influxdb'").Cols("outdb").Delete(&OutputBackends{})
 	if err != nil {
 		session.Rollback()
 		return 0, fmt.Errorf("Error on Delete Device with id on delete SnmpDevCfg with id: %s, error: %s", id, err)
@@ -113,8 +112,8 @@ func (dbc *DatabaseCfg) DelInfluxCfg(id string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Infof("Deleted Successfully influx db with ID %s [ %d Devices Affected  ]", id, affecteddev)
-	dbc.addChanges(affected + affecteddev)
+	log.Infof("Deleted Successfully influx db with ID %s [ %d Outputs Affected  ]", id, affectedouts)
+	dbc.addChanges(affected + affectedouts)
 	return affected, nil
 }
 
@@ -128,13 +127,14 @@ func (dbc *DatabaseCfg) UpdateInfluxCfg(id string, dev InfluxCfg) (int64, error)
 		return 0, err
 	}
 	defer session.Close()
+
 	if id != dev.ID { // ID has been changed
-		affecteddev, err = session.Where("outdb='" + id + "'").Cols("outdb").Update(&SnmpDeviceCfg{OutDB: dev.ID})
+		affecteddev, err = session.Where("id_backend='" + id + "' and backend_type='influxdb'").Cols("id_backend").Update(&OutputBackends{IDBackend: dev.ID})
 		if err != nil {
 			session.Rollback()
-			return 0, fmt.Errorf("Error on Update InfluxConfig on update id(old)  %s with (new): %s, error: %s", id, dev.ID, err)
+			return 0, fmt.Errorf("Error on Update InfluxConfig on update id(old) %s with (new): %s, error: %s", id, dev.ID, err)
 		}
-		log.Infof("Updated Influx Config to %d devices ", affecteddev)
+		log.Infof("Updated Influx Config to %d outputs ", affecteddev)
 	}
 
 	affected, err = session.Where("id='" + id + "'").UseBool().AllCols().Update(dev)
@@ -154,19 +154,19 @@ func (dbc *DatabaseCfg) UpdateInfluxCfg(id string, dev InfluxCfg) (int64, error)
 
 /*GetInfluxCfgAffectOnDel for deleting devices from ID*/
 func (dbc *DatabaseCfg) GetInfluxCfgAffectOnDel(id string) ([]*DbObjAction, error) {
-	var devices []*SnmpDeviceCfg
+	var outputs []*OutputBackends
 	var obj []*DbObjAction
-	if err := dbc.x.Where("outdb='" + id + "'").Find(&devices); err != nil {
-		log.Warnf("Error on Get Outout db id %s for devices , error: %s", id, err)
+	if err := dbc.x.Where("id_backend='" + id + "' and backend_type = 'influxdb'").Find(&outputs); err != nil {
+		log.Warnf("Error on Get Output id %s for devices , error: %s", id, err)
 		return nil, err
 	}
 
-	for _, val := range devices {
+	for _, val := range outputs {
 		obj = append(obj, &DbObjAction{
-			Type:     "snmpdevicecfg",
-			TypeDesc: "SNMP Devices",
-			ObID:     val.ID,
-			Action:   "Reset InfluxDB Server from SNMPDevice to 'default' InfluxDB Server",
+			Type:     "outputcfg",
+			TypeDesc: "Outputs",
+			ObID:     val.IDOutput,
+			Action:   "Remove InfluxDB Server from Outputs",
 		})
 	}
 	return obj, nil

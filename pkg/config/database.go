@@ -118,46 +118,55 @@ func (dbc *DatabaseCfg) InitDB() error {
 
 	// Sync tables
 	if err = dbc.x.Sync(new(VarCatalogCfg)); err != nil {
-		log.Fatalf("Fail to sync database VarCatalogCfg: %v\n", err)
+		log.Fatalf("Fail to sync database VarCatalogCfg: %v", err)
+	}
+	if err = dbc.x.Sync(new(OutputCfg)); err != nil {
+		log.Fatalf("Fail to sync database OutputCfg: %v", err)
 	}
 	if err = dbc.x.Sync(new(InfluxCfg)); err != nil {
-		log.Fatalf("Fail to sync database InfluxCfg: %v\n", err)
+		log.Fatalf("Fail to sync database InfluxCfg: %v", err)
+	}
+	if err = dbc.x.Sync(new(KafkaCfg)); err != nil {
+		log.Fatalf("Fail to sync database KafkaCfg: %v", err)
+	}
+	if err = dbc.x.Sync(new(OutputBackends)); err != nil {
+		log.Fatalf("Fail to sync database OutputBackends: %v", err)
 	}
 	if err = dbc.x.Sync(new(SnmpDeviceCfg)); err != nil {
-		log.Fatalf("Fail to sync database SnmpDeviceCfg: %v\n", err)
+		log.Fatalf("Fail to sync database SnmpDeviceCfg: %v", err)
 	}
 	if err = dbc.x.Sync(new(SnmpMetricCfg)); err != nil {
-		log.Fatalf("Fail to sync database SnmpMetricCfg: %v\n", err)
+		log.Fatalf("Fail to sync database SnmpMetricCfg: %v", err)
 	}
 	if err = dbc.x.Sync(new(MeasurementCfg)); err != nil {
-		log.Fatalf("Fail to sync database MeasurementCfg: %v\n", err)
+		log.Fatalf("Fail to sync database MeasurementCfg: %v", err)
 	}
 	if err = dbc.x.Sync(new(MeasFilterCfg)); err != nil {
-		log.Fatalf("Fail to sync database MeasurementFilterCfg : %v\n", err)
+		log.Fatalf("Fail to sync database MeasurementFilterCfg : %v", err)
 	}
 	if err = dbc.x.Sync(new(MeasurementFieldCfg)); err != nil {
-		log.Fatalf("Fail to sync database MeasurementFieldCfg: %v\n", err)
+		log.Fatalf("Fail to sync database MeasurementFieldCfg: %v", err)
 	}
 	if err = dbc.x.Sync(new(MGroupsCfg)); err != nil {
-		log.Fatalf("Fail to sync database MGroupCfg: %v\n", err)
+		log.Fatalf("Fail to sync database MGroupCfg: %v", err)
 	}
 	if err = dbc.x.Sync(new(MGroupsMeasurements)); err != nil {
-		log.Fatalf("Fail to sync database MGroupsMeasurements: %v\n", err)
+		log.Fatalf("Fail to sync database MGroupsMeasurements: %v", err)
 	}
 	if err = dbc.x.Sync(new(SnmpDevMGroups)); err != nil {
-		log.Fatalf("Fail to sync database SnmpDevMGroups: %v\n", err)
+		log.Fatalf("Fail to sync database SnmpDevMGroups: %v", err)
 	}
 	if err = dbc.x.Sync(new(SnmpDevFilters)); err != nil {
-		log.Fatalf("Fail to sync database SnmpDevFilters: %v\n", err)
+		log.Fatalf("Fail to sync database SnmpDevFilters: %v", err)
 	}
 	if err = dbc.x.Sync(new(CustomFilterCfg)); err != nil {
-		log.Fatalf("Fail to sync database CustomFilterCfg: %v\n", err)
+		log.Fatalf("Fail to sync database CustomFilterCfg: %v", err)
 	}
 	if err = dbc.x.Sync(new(CustomFilterItems)); err != nil {
-		log.Fatalf("Fail to sync database CustomFilterItems: %v\n", err)
+		log.Fatalf("Fail to sync database CustomFilterItems: %v", err)
 	}
 	if err = dbc.x.Sync(new(OidConditionCfg)); err != nil {
-		log.Fatalf("Fail to sync database OidConditionCfg: %v\n", err)
+		log.Fatalf("Fail to sync database OidConditionCfg: %v", err)
 	}
 	return nil
 }
@@ -191,12 +200,25 @@ func CatalogVar2Map(cv map[string]*VarCatalogCfg) map[string]interface{} {
 // LoadDbConfig get data from database
 func (dbc *DatabaseCfg) LoadDbConfig(cfg *DBConfig) {
 	var err error
+
+	// migration
+	dbc.StartMigration()
+
 	// Load Global Variables
 	VarCatalog := make(map[string]*VarCatalogCfg)
 	VarCatalog, err = dbc.GetVarCatalogCfgMap("")
 	if err != nil {
 		log.Warningf("Some errors on get Global variables :%v", err)
 	}
+
+	// err = dbc.StartMigration()
+	// if err != nil {
+	// 	log.Errorf("ERRORRRR: %+v", err)
+	// }
+
+	// load backends as interface
+	//cfg.Backends = dbc.GetBackendsCfgMap("")
+
 	cfg.VarCatalog = make(map[string]interface{}, len(VarCatalog))
 	cfg.VarCatalog = CatalogVar2Map(VarCatalog)
 
@@ -204,6 +226,11 @@ func (dbc *DatabaseCfg) LoadDbConfig(cfg *DBConfig) {
 	cfg.Influxdb, err = dbc.GetInfluxCfgMap("")
 	if err != nil {
 		log.Warningf("Some errors on get Influx db's :%v", err)
+	}
+
+	cfg.Kafka, err = dbc.GetKafkaCfgMap("")
+	if err != nil {
+		log.Warningf("Some errors on get Kafka  :%v", err)
 	}
 
 	// Load metrics
@@ -237,5 +264,11 @@ func (dbc *DatabaseCfg) LoadDbConfig(cfg *DBConfig) {
 	if err != nil {
 		log.Warningf("Some errors on get SnmpDeviceConf :%v", err)
 	}
+
+	cfg.Outputs, err = dbc.GetOutputCfgMap("")
+	if err != nil {
+		log.Warningf("Some errors on get Outputs  :%v", err)
+	}
+
 	dbc.resetChanges()
 }

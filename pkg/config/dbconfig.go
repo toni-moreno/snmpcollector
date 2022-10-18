@@ -48,6 +48,58 @@ type SnmpDeviceCfg struct {
 	MeasFilters       []string `xorm:"-"`
 }
 
+// OutputCfg is the main configuration for any supported backend type
+// the relation will be 1:1 to the backend ID
+// swagger:model OutputCfg
+
+type OutputCfg struct {
+	ID              string `xorm:"'id' unique" binding:"Required"`
+	BackendType     string `xorm:"-" binding:"Required;In(kafka,influxdb)"`
+	Active          bool   `xorm:"'active' default TRUE"`
+	EnqueueOnError  bool   `xorm:"'enqueue_on_error' default TRUE"`
+	BufferSize      int    `xorm:"'buffer_size' default 131070" binding:"Required;IntegerNotZero"`
+	MetricBatchSize int    `xorm:"'metric_batch_size' default 13000" binding:"Required;IntegerNotZero"`
+	FlushInterval   int    `xorm:"'flush_interval' default 60" binding:"Required;IntegerNotZero"`
+	Backend         string `xorm:"-"`
+	Description     string `xorm:"description"`
+}
+
+// KafkaCfg is the main configuration for any Kafka
+// swagger:model KafkaCfg
+type KafkaCfg struct {
+	ID                  string   `xorm:"'id' unique" binding:"Required"`
+	Brokers             []string `xorm:"brokers" binding:"Required"`
+	Topic               string   `xorm:"topic"`
+	Method              string   `xorm:"topic_suffix_method" binding:"Required;In(measurement,tags)"`
+	Keys                []string `xorm:"topic_suffix_keys"`
+	Separator           string   `xorm:"topic_suffix_separator"`
+	ExcludeTopicTag     bool     `xorm:"exclude_topic_tag"`
+	TopicTag            string   `xorm:"topic_tag"`
+	RoutingTag          string   `xorm:"routing_tag"`
+	RoutingKey          string   `xorm:"routing_key"`
+	Description         string   `xorm:"description"`
+	RequiredAcks        int      `xorm:"'required_acks' default -1"`
+	MaxRetry            int      `xorm:"'max_retry' default 3"`
+	MaxMessageBytes     int      `xorm:"max_message_bytes"`
+	IdempotentWrites    bool     `xorm:"idempotent_writes"`
+	TLSCA               string   `xorm:"tls_ca"`
+	TLSCert             string   `xorm:"tls_cert"`
+	TLSKey              string   `xorm:"tls_key"`
+	TLSKeyPwd           string   `xorm:"tls_key_pwd"`
+	TLSMinVersion       string   `xorm:"tls_min_version"`
+	InsecureSkipVerify  bool     `xorm:"insecure_skip_verify"`
+	ServerName          string   `xorm:"tls_server_name"`
+	Version             string   `xorm:"version"`
+	ClientID            string   `xorm:"client_id"`
+	CompressionCodec    int      `xorm:"compression_codec"`
+	EnableTLS           bool     `xorm:"enable_tls"`
+	Socks5ProxyEnabled  bool     `xorm:"socks5_enabled"`
+	Socks5ProxyAddress  string   `xorm:"socks5_address"`
+	Socks5ProxyUsername string   `xorm:"socks5_username"`
+	Socks5ProxyPassword string   `xorm:"socks5_password"`
+	MetadataFull        bool     `xorm:"metadata_full"`
+}
+
 // InfluxCfg is the main configuration for any InfluxDB TSDB
 // swagger:model InfluxCfg
 type InfluxCfg struct {
@@ -66,7 +118,7 @@ type InfluxCfg struct {
 	SSLCert            string `xorm:"ssl_cert"`
 	SSLKey             string `xorm:"ssl_key"`
 	InsecureSkipVerify bool   `xorm:"insecure_skip_verify"`
-	BufferSize         int    `xorm:"'buffer_size' default 65535"`
+	BufferSize         int    `xorm:"-" json:"-"`
 	Description        string `xorm:"description"`
 }
 
@@ -136,6 +188,17 @@ type SnmpDevMGroups struct {
 	IDMGroupCfg string `xorm:"id_mgroup_cfg"`
 }
 
+// create unique entry based on output_id+backend_id,backend_type so we allow to define multiple
+// backends with the same name and they differ on backend_type
+// backend_type allow us to distinguish between different supported backends
+// and allow them to be extended with custom ui
+// even if we support multiple outputs, the relations are still ok
+type OutputBackends struct {
+	IDOutput    string `xorm:"'id_output'"`
+	IDBackend   string `xorm:"'id_backend'"`
+	BackendType string `xorm:"'backend_type'"`
+}
+
 // DBConfig read from DB
 type DBConfig struct {
 	Metrics      map[string]*SnmpMetricCfg
@@ -144,7 +207,11 @@ type DBConfig struct {
 	GetGroups    map[string]*MGroupsCfg
 	SnmpDevice   map[string]*SnmpDeviceCfg
 	Influxdb     map[string]*InfluxCfg
-	VarCatalog   map[string]interface{}
+	Kafka        map[string]*KafkaCfg
+	// NEW
+	Outputs map[string]*OutputCfg
+
+	VarCatalog map[string]interface{}
 }
 
 /*

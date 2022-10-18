@@ -53,7 +53,7 @@ type SnmpDevice struct {
 	// Variable map
 	VarMap map[string]interface{}
 	// Influx client shared between measurement goroutines to send data and stats to the backend
-	Influx *output.InfluxDB `json:"-"`
+	SinkDB *output.SinkDB `json:"-"`
 	// LastError     time.Time
 	// Runtime stats
 	stats stats.GatherStats  // Runtime Internal statistic
@@ -161,21 +161,21 @@ func (d *SnmpDevice) getBasicStats() *stats.GatherStats {
 }
 
 // GetOutSenderFromMap to get info about the sender will use
-func (d *SnmpDevice) GetOutSenderFromMap(influxdb map[string]*output.InfluxDB) (*output.InfluxDB, error) {
+func (d *SnmpDevice) GetOutSenderFromMap(outputs map[string]*output.SinkDB) (*output.SinkDB, error) {
 	if len(d.cfg.OutDB) == 0 {
 		d.Warnf("No OutDB configured on the device")
 	}
 	var ok bool
 	name := d.cfg.OutDB
-	if d.Influx, ok = influxdb[name]; !ok {
+	if d.SinkDB, ok = outputs[name]; !ok {
 		// we assume there is always a default db
-		if d.Influx, ok = influxdb["default"]; !ok {
+		if d.SinkDB, ok = outputs["default"]; !ok {
 			// but
-			return nil, fmt.Errorf("No influx config for snmp device: %s", d.cfg.ID)
+			return nil, fmt.Errorf("no output config for snmp device: %s", d.cfg.ID)
 		}
 	}
 
-	return d.Influx, nil
+	return d.SinkDB, nil
 }
 
 // ForceGather send message to force a data gather execution
@@ -533,7 +533,7 @@ func (d *SnmpDevice) StartGather() {
 			}
 
 			// Start the loop that will gather metrics and handle signals
-			m.GatherLoop(node, snmpClient, d.Freq, d.cfg.UpdateFltFreq, d.VarMap, d.TagMap, d.cfg.SystemOIDs, d.Influx, gatherLock)
+			m.GatherLoop(node, snmpClient, d.Freq, d.cfg.UpdateFltFreq, d.VarMap, d.TagMap, d.cfg.SystemOIDs, d.SinkDB, gatherLock)
 
 			// If measurement exists, remove it from the bus, close the created node and the snmp connection
 			deviceControlBus.Leave(node)

@@ -191,6 +191,10 @@ func WebServer(publicPath string, httpListen string, cfg *config.HTTPConfig, id 
 
 	NewAPICfgInfluxServer(m)
 
+	NewAPICfgKafkaServer(m)
+
+	NewAPICfgOutput(m)
+
 	NewAPICfgSnmpDevice(m)
 
 	NewAPICfgCustomFilter(m)

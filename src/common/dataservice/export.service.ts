@@ -15,7 +15,6 @@ export class ExportServiceCfg {
         // return an observable
         return this.httpAPI.get('/api/cfg/export/'+type+'/'+id)
         .map((res) => {
-        //return new Blob([res.arrayBuffer()],{type: "application/octet-stream" })
         return [new Blob([res['_body']],{type: "application/json"}),res.json()];
         })
     }
@@ -37,15 +36,3 @@ export class ExportServiceCfg {
         })
     }
 }
-
-
-/*this.exportServiceCfg.exportRecursive(item.exportType, item.row.ID).subscribe(
-data => {
-  console.log(data);
-  saveAs(data[0], data[1].Info.FileName || item.row.ID + ".json");
-},
-err => console.error(err),
-() => console.log("DONE"),
-)
-console.log(item);
-*/

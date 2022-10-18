@@ -20,6 +20,7 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/output/backend"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/impexp"
@@ -170,6 +171,8 @@ func init() {
 	snmp.SetLogDir(logDir)
 
 	output.SetLogger(log)
+	backend.SetLogger(log)
+
 	selfmon.SetLogger(log)
 	// devices needs access to all db loaded data
 	device.SetDBConfig(&agent.DBConfig)

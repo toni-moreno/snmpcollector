@@ -56,7 +56,9 @@ export class TreeView {
 
   public colorsObject : Object = {
    "snmpdevicecfg" : 'danger',
+   "outputcfg" : 'success',
    "influxcfg" : 'info',
+   "kafkacfg" : 'primary',
    "measfiltercfg": 'warning',
    "oidconditioncfg" : 'success',
    "customfiltercfg" : 'default',
@@ -68,7 +70,7 @@ export class TreeView {
  };
  recursive : boolean;
 
-    show() {
+  show() {
     console.log("SHOWN");
   }
   constructor(){
@@ -79,7 +81,6 @@ export class TreeView {
   toggleVisible() {
     this.visible = !this.visible;
   }
-
 
   public addItem(ObjectID: any, ObjectTypeID: any): void {
     this.addClicked.emit({ ObjectID, ObjectTypeID, "Options" : {'Recursive': false }});

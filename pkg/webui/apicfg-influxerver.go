@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-macaron/binding"
 	"github.com/toni-moreno/snmpcollector/pkg/agent"
-	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/output/backend"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"gopkg.in/macaron.v1"
 )
@@ -267,7 +267,7 @@ func PingInfluxServer(ctx *Context, cfg config.InfluxCfg) {
 	//       "$ref": "#/responses/idOfStringResp"
 
 	log.Infof("trying to ping influx server %s : %+v", cfg.ID, cfg)
-	_, elapsed, message, err := output.Ping(&cfg)
+	_, elapsed, message, err := backend.Ping(&cfg)
 	type result struct {
 		Result  string
 		Elapsed time.Duration

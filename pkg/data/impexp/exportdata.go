@@ -111,7 +111,7 @@ func (e *ExportData) UpdateTmpObject() {
 	e.tmpObjects = nil
 }
 
-// Export  exports data
+// Export exports data
 func (e *ExportData) Export(ObjType string, id string, recursive bool, level int) error {
 	switch ObjType {
 	case "snmpdevicecfg":
@@ -130,7 +130,20 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool, level int
 		for _, val := range v.MeasFilters {
 			e.Export("measfiltercfg", val, recursive, level+1)
 		}
-		e.Export("influxcfg", v.OutDB, recursive, level+1)
+		e.Export("outputcfg", v.OutDB, recursive, level+1)
+	case "outputcfg":
+		v, err := dbc.GetOutputCfgByID(id)
+		if err != nil {
+			return err
+		}
+		e.PrependObject(&ExportObject{ObjectTypeID: "outputcfg", ObjectID: id, ObjectCfg: v})
+		switch v.BackendType {
+		case "influxdb":
+			e.Export("influxcfg", v.Backend, recursive, level+1)
+		case "kafka":
+			e.Export("kafkacfg", v.Backend, recursive, level+1)
+		default:
+		}
 	case "influxcfg":
 		// contains sensible probable
 		v, err := dbc.GetInfluxCfgByID(id)
@@ -138,6 +151,13 @@ func (e *ExportData) Export(ObjType string, id string, recursive bool, level int
 			return err
 		}
 		e.PrependObject(&ExportObject{ObjectTypeID: "influxcfg", ObjectID: id, ObjectCfg: v})
+	case "kafkacfg":
+		// contains sensible probable
+		v, err := dbc.GetKafkaCfgByID(id)
+		if err != nil {
+			return err
+		}
+		e.PrependObject(&ExportObject{ObjectTypeID: "kafkacfg", ObjectID: id, ObjectCfg: v})
 	case "measfiltercfg":
 		v, err := dbc.GetMeasFilterCfgByID(id)
 		if err != nil {

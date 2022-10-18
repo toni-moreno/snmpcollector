@@ -16,6 +16,8 @@ import { MeasFilterService } from '../../measfilter/measfiltercfg.service';
 import { CustomFilterService } from '../../customfilter/customfilter.service';
 import { VarCatalogService } from '../../varcatalog/varcatalogcfg.service';
 import { Subscription } from 'rxjs';
+import { KafkaServerService } from 'kafkaserver/kafkaservercfg.service';
+import { OutputService } from 'output/outputcfg.service';
 
 @Component({
   selector: 'export-file-modal',
@@ -149,7 +151,7 @@ import { Subscription } from 'rxjs';
           </div>
         </div>`,
         styleUrls: ['./import-modal-styles.css'],
-        providers: [ExportServiceCfg, InfluxServerService, SnmpDeviceService, SnmpMetricService, MeasurementService, OidConditionService,MeasGroupService, MeasFilterService, CustomFilterService, VarCatalogService, TreeView]
+        providers: [ExportServiceCfg, KafkaServerService, OutputService, InfluxServerService, SnmpDeviceService, SnmpMetricService, MeasurementService, OidConditionService,MeasGroupService, MeasFilterService, CustomFilterService, VarCatalogService, TreeView]
 })
 
 export class ExportFileModal {
@@ -173,6 +175,7 @@ export class ExportFileModal {
   public mySubscriber: Subscription;
 
   constructor(builder: FormBuilder, public exportServiceCfg : ExportServiceCfg,
+    public kafkaServerService: KafkaServerService, public outputService: OutputService,
     public influxServerService: InfluxServerService, public metricMeasService: SnmpMetricService,
     public measurementService: MeasurementService, public oidConditionService : OidConditionService,
     public snmpDeviceService: SnmpDeviceService, public measGroupService: MeasGroupService,
@@ -198,15 +201,17 @@ export class ExportFileModal {
 
    //Single Object
   public colorsObject : Object = {
-   "snmpdevicecfg" : 'danger',
-   "influxcfg" : 'info',
-   "measfiltercfg": 'warning',
-   "oidconditioncfg" : 'success',
-   "customfiltercfg" : 'default',
-   "measurementcfg" : 'primary',
-   "snmpmetriccfg" : 'warning',
-   "measgroupcfg" : 'success',
-   "varcatalogcfg" : 'default'
+    "snmpdevicecfg" : 'danger',
+    "outputcfg" : 'success',
+    "influxcfg" : 'info',
+    "kafkacfg" : 'primary',
+    "measfiltercfg": 'warning',
+    "oidconditioncfg" : 'success',
+    "customfiltercfg" : 'default',
+    "measurementcfg" : 'primary',
+    "snmpmetriccfg" : 'warning',
+    "measgroupcfg" : 'success',
+    "varcatalogcfg" : 'default'
    };
 
   //Control to load exported result
@@ -234,7 +239,9 @@ export class ExportFileModal {
   //Bulk Objects
   public objectTypes : any = [
    {'Type':"snmpdevicecfg", 'Class' : 'danger', 'Visible': false},
+   {'Type':"outputcfg" ,'Class' : 'success', 'Visible': false},
    {'Type':"influxcfg" ,'Class' : 'info', 'Visible': false},
+   {'Type':"kafkacfg" ,'Class' : 'primary', 'Visible': false},
    {'Type':"measfiltercfg", 'Class' : 'warning','Visible': false},
    {'Type':"oidconditioncfg", 'Class' : 'success', 'Visible': false},
    {'Type':"customfiltercfg", 'Class' : 'default', 'Visible': false},
@@ -436,8 +443,37 @@ export class ExportFileModal {
        );
 
       break;
+      case 'outputcfg':
+      this.mySubscriber = this.outputService.getOutput(filter)
+       .subscribe(
+       data => {
+         this.dataArray=data;
+         this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
+       },
+       err => {console.log(err)},
+       () => {console.log("DONE")}
+       );
+      break;
+
       case 'influxcfg':
       this.mySubscriber = this.influxServerService.getInfluxServer(filter)
+       .subscribe(
+       data => {
+         this.dataArray=data;
+         this.resultArray = this.dataArray;
+         for (let i in this.dataArray[0]) {
+           this.listFilterProp.push({ 'id': i, 'name': i });
+         }
+       },
+       err => {console.log(err)},
+       () => {console.log("DONE")}
+       );
+      break;
+      case 'kafkacfg':
+      this.mySubscriber = this.kafkaServerService.getKafkaServer(filter)
        .subscribe(
        data => {
          this.dataArray=data;
