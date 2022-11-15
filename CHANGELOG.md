@@ -1,3 +1,13 @@
+# v0.13.1 ( 2022-11-15 )
+
+### New Features
+
+### Fixes
+
+* fix #524
+
+### breaking changes
+
 # v0.13.0 ( 2022-02-16 )
 
 ### New Features

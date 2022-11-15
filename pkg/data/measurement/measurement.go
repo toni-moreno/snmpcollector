@@ -196,7 +196,8 @@ func (m *Measurement) InitMultiIndex() error {
 
 		// create entirely new measurement based on provided CFG
 		mm := New(&mcfg, m.measFilters, m.mFilters, m.Active, m.Log)
-		mm.SetSNMPClient(*m.snmpClient)
+		// use same pointer on same snmpClient as multimeas inherits connection flow from the main measurement
+		mm.snmpClient = m.snmpClient
 		err := mm.Init()
 		if err != nil {
 			return fmt.Errorf("init multi measurement %s..%s", m.ID, v.Label)
@@ -797,6 +798,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 	}
 	// needed to get data for different indexes
 	m.curIdxPos = m.idxPosInOID
+
 	err := m.snmpClient.Walk(m.cfg.IndexOID, setRawData)
 	if err != nil {
 		m.Log.Errorf("LOADINDEXEDLABELS - SNMP WALK error: %s", err)
