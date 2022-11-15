@@ -4,7 +4,7 @@
     "company": "Toni Inc"
   },
   "name": "snmpcollector",
-  "version": "0.12.0",
+  "version": "0.13.1",
   "repository": {
     "type": "git",
     "url": "http://github.com/toni-moreno/snmpcollector.git"
