@@ -7,7 +7,8 @@ import (
 	"sync"
 	"time"
 
-	client "github.com/influxdata/influxdb1-client/v2"
+	"github.com/influxdata/telegraf"
+	metric "github.com/influxdata/telegraf/metric"
 	"github.com/sirupsen/logrus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
@@ -21,20 +22,24 @@ func SetLogger(l *logrus.Logger) {
 }
 
 // SelfMon configuration for self monitoring
+// selfmon allows to gather data from all outputs and send metrics to a definid output
+// selfmon should run within a goroutine and it should send metrics using the default backend
+// that should be already defined as a SinkDB with an attached backend
 type SelfMon struct {
 	cfg                 *config.SelfMonConfig
-	Influx              *output.InfluxDB
-	OutDBs              map[string]*output.InfluxDB // needed to get statistics
+	Output              *output.SinkDB
+	OutDBs              map[string]*output.SinkDB // needed to get statistics
 	runtimeStatsRunning bool
 	TagMap              map[string]string
-	bps                 *client.BatchPoints
-	chExit              chan bool
-	mutex               sync.Mutex
-	RtMeasName          string // devices measurement name
-	GvmMeasName         string // Self agent GoVirtualMachine measurement name
-	OutMeasName         string // Output DB's measurement name
-	initialized         bool
-	imutex              sync.Mutex
+	tick                *time.Ticker
+
+	chExit      chan bool
+	mutex       sync.Mutex
+	RtMeasName  string // devices measurement name
+	GvmMeasName string // Self agent GoVirtualMachine measurement name
+	OutMeasName string // Output DB's measurement name
+	initialized bool
+	imutex      sync.Mutex
 	// memory for GVM data colletion
 	lastSampleTime time.Time
 	lastPauseNs    uint64
@@ -48,12 +53,12 @@ func NewNotInit(c *config.SelfMonConfig) *SelfMon {
 
 // Init Initialize the Object data and check for consistence
 func (sm *SelfMon) Init() {
-	if sm.CheckAndSetInitialized() == true {
+	if sm.CheckAndSetInitialized() {
 		log.Info("Self monitoring thread  already Initialized (skipping Initialization)")
 		return
 	}
-	sm.OutDBs = make(map[string]*output.InfluxDB)
 
+	// declare all the available outputs to gather metrics from
 	// Init extra tags
 	if len(sm.cfg.ExtraTags) > 0 {
 		sm.TagMap = make(map[string]string)
@@ -82,10 +87,18 @@ func (sm *SelfMon) Init() {
 	}
 
 	sm.chExit = make(chan bool)
+	// initialize ticker with the current time
+	// we should review if we should sync with the output ticker as it can send metrics witha freq delay
+	// if the output sent ticks before the selfmon ticker
+	if sm.cfg.Freq <= 0 {
+		log.Infof("No freq defined, defaulting to 60s")
+		sm.cfg.Freq = 60
+	}
+	sm.tick = time.NewTicker(time.Duration(sm.cfg.Freq) * time.Second)
 }
 
 // SetOutDB set the output devices for query its statistics
-func (sm *SelfMon) SetOutDB(odb map[string]*output.InfluxDB) {
+func (sm *SelfMon) SetOutDB(odb map[string]*output.SinkDB) {
 	sm.OutDBs = odb
 }
 
@@ -115,28 +128,10 @@ func (sm *SelfMon) IsInitialized() bool {
 }
 
 // SetOutput set out data
-func (sm *SelfMon) SetOutput(val *output.InfluxDB) {
+func (sm *SelfMon) SetOutput(val *output.SinkDB) {
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
-	sm.Influx = val
-	// Creating a bachpoint to begin writing data
-	sm.bps, _ = sm.Influx.BP()
-}
-
-func (sm *SelfMon) sendData() {
-	sm.mutex.Lock()
-	defer sm.mutex.Unlock()
-	sm.Influx.Send(sm.bps)
-	// BatchPoint Init again
-	sm.bps, _ = sm.Influx.BP()
-}
-
-func (sm *SelfMon) addDataPoint(pt *client.Point) {
-	sm.mutex.Lock()
-	defer sm.mutex.Unlock()
-	if sm.bps != nil {
-		(*sm.bps).AddPoint(pt)
-	}
+	sm.Output = val
 }
 
 // AddDeviceMetrics add data from devices
@@ -146,6 +141,8 @@ func (sm *SelfMon) AddMetrics(t string, id string, fields map[string]interface{}
 	}
 	sm.mutex.Lock()
 	defer sm.mutex.Unlock()
+	var tmetrics []telegraf.Metric
+
 	// Selfmon tags
 	tagMap := make(map[string]string)
 	for k, v := range sm.TagMap {
@@ -172,17 +169,17 @@ func (sm *SelfMon) AddMetrics(t string, id string, fields map[string]interface{}
 	tagMap["type"] = t
 
 	now := time.Now()
-	pt, err := client.NewPoint(
-		sm.RtMeasName,
-		tagMap,
-		fields,
-		now)
-	if err != nil {
-		log.Warnf("Error on compute Stats data Point %+v for %s : %s: Error:%s", fields, t, id, err)
+	tmetric := metric.New(sm.RtMeasName, tagMap, fields, now)
+	// Validate that at least len of fields > 0 and len of tags > 0
+	if len(fields) == 0 {
+		log.Warnf("error, empty fields: [%d]", len(fields))
 		return
 	}
-
-	(*sm.bps).AddPoint(pt)
+	tmetrics = append(tmetrics, tmetric)
+	lmet, err := sm.Output.SendToBuffer(tmetrics, "selfmon"+sm.RtMeasName)
+	if err != nil {
+		log.Errorf("unable to send metrics to the buffer - dropped metrics: %d, err: %s", lmet, err)
+	}
 }
 
 // End Release the SelMon Object
@@ -204,7 +201,6 @@ func (sm *SelfMon) StartGather(wg *sync.WaitGroup) {
 	}
 
 	sm.runtimeStatsRunning = true
-
 	go sm.reportStats(wg)
 }
 
@@ -215,24 +211,27 @@ func (sm *SelfMon) StopGather() {
 	}
 }
 
+// getOutDBStats gather stats from all outputs, we need to query them and add the metrics to the output buffer
 func (sm *SelfMon) getOutDBStats() {
 	now := time.Now()
+	var tmetrics []telegraf.Metric
 
-	for dbname, db := range sm.OutDBs {
-		stats := db.GetResetStats()
+	for dbname, sinkdb := range sm.OutDBs {
+		stats := sinkdb.GetResetStats()
 
-		tm := make(map[string]string)
+		tags := make(map[string]string)
 		fields := make(map[string]interface{})
 
 		for k, v := range sm.TagMap {
-			tm[k] = v
+			tags[k] = v
 		}
-		tm["outdb"] = dbname
+		tags["outdb"] = dbname
 
 		fields["fields_sent"] = stats.FieldSent
 		fields["fields_sent_max"] = stats.FieldSentMax
 
 		fields["points_sent"] = stats.PSent
+		fields["points_dropped"] = stats.PDropped
 		fields["points_sent_max"] = stats.PSentMax
 
 		fields["write_sent"] = stats.WriteSent
@@ -248,18 +247,21 @@ func (sm *SelfMon) getOutDBStats() {
 			fields["write_time_avg"] = sec / float64(stats.WriteSent)
 		}
 
-		pt, err := client.NewPoint(sm.OutMeasName, tm, fields, now)
-		if err != nil {
-			log.Warnf("Error on compute Stats data Point %+v for database %s: Error:%s", fields, dbname, err)
-			return
+		tmetric := metric.New(sm.OutMeasName, tags, fields, now)
+		// Validate that at least len of fields > 0 and len of tags > 0
+		if len(tags) == 0 || len(fields) == 0 {
+			log.Warnf("error, empty tags [%d] or fields: [%d]", len(tags), len(fields))
+			continue
 		}
-
-		// add data to the batchpoint
-		sm.addDataPoint(pt)
+		tmetrics = append(tmetrics, tmetric)
 	}
+	sm.Output.SendToBuffer(tmetrics, "selfmon"+sm.OutMeasName)
 }
 
 func (sm *SelfMon) getRuntimeStats() {
+
+	var tmetrics []telegraf.Metric
+
 	nsInMs := float64(time.Millisecond)
 	memStats := &runtime.MemStats{}
 	runtime.ReadMemStats(memStats)
@@ -310,22 +312,15 @@ func (sm *SelfMon) getRuntimeStats() {
 		fields["gc.gc_per_interval"] = diff
 	}
 	sm.lastNumGc = memStats.NumGC
-
 	sm.lastSampleTime = now
 
-	pt, err := client.NewPoint(
-		sm.GvmMeasName,
-		sm.TagMap,
-		fields,
-		now,
-	)
-	if err != nil {
-		log.Warnf("Error on compute Stats data Point %+v for GVB : Error:%s", fields, err)
-		return
+	tmetric := metric.New(sm.GvmMeasName, sm.TagMap, fields, now)
+	// Validate that at least len of fields > 0 and len of tags > 0
+	if len(fields) == 0 {
+		log.Warnf("error, empty fields: [%d]", len(fields))
 	}
-
-	// add data to the batchpoint
-	sm.addDataPoint(pt)
+	tmetrics = append(tmetrics, tmetric)
+	sm.Output.SendToBuffer(tmetrics, "selfmon"+sm.GvmMeasName)
 }
 
 func (sm *SelfMon) reportStats(wg *sync.WaitGroup) {
@@ -333,27 +328,17 @@ func (sm *SelfMon) reportStats(wg *sync.WaitGroup) {
 	wg.Add(1)
 	log.Info("SELFMON: Beginning  selfmonitor process for device")
 
-	s := time.Tick(time.Duration(sm.cfg.Freq) * time.Second)
 	sm.lastSampleTime = time.Now()
 	for {
-		// Get BVM stats
-		sm.getRuntimeStats()
-		//
-		sm.getOutDBStats()
-		// BatchPoint Send
-		sm.sendData()
-
-	LOOP:
-		for {
-			select {
-			case <-s:
-				// log.Infof("SELFMON: breaking LOOP  ")
-				break LOOP
-			case <-sm.chExit:
-				log.Infof("SELFMON: EXIT from SelfMonitoring Gather process ")
-				sm.runtimeStatsRunning = false
-				return
-			}
+		select {
+		case <-sm.tick.C:
+			// Get BVM stats
+			sm.getRuntimeStats()
+			sm.getOutDBStats()
+		case <-sm.chExit:
+			log.Infof("SELFMON: EXIT from SelfMonitoring Gather process ")
+			sm.runtimeStatsRunning = false
+			return
 		}
 	}
 }

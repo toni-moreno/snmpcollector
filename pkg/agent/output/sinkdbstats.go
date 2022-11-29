@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// InfluxStats  get stats
-type InfluxStats struct {
+// SinkDBStats get stats
+type SinkDBStats struct {
 	// Fields Sent
 	FieldSent int64
 	// Field Sent the max
@@ -15,9 +15,11 @@ type InfluxStats struct {
 	PSent int64
 	// PSentMax the max
 	PSentMax int64
+	// Points dropped
+	PDropped int64
 	// WriteSent BatchPoints sent
 	WriteSent int64
-	// WriteErrors BatchPoints with  errors
+	// WriteErrors BatchPoints with errors
 	WriteErrors int64
 	// WriteTime
 	WriteTime time.Duration
@@ -29,14 +31,15 @@ type InfluxStats struct {
 }
 
 // GetResetStats get stats for this InfluxStats Output
-func (is *InfluxStats) GetResetStats() *InfluxStats {
+func (is *SinkDBStats) GetResetStats() *SinkDBStats {
 	is.mutex.Lock()
 	defer is.mutex.Unlock()
-	retstat := &InfluxStats{
+	retstat := &SinkDBStats{
 		FieldSent:         is.FieldSent,
 		FieldSentMax:      is.FieldSentMax,
 		PSent:             is.PSent,
 		PSentMax:          is.PSentMax,
+		PDropped:          is.PDropped,
 		WriteSent:         is.WriteSent,
 		WriteErrors:       is.WriteErrors,
 		WriteTime:         is.WriteTime,
@@ -46,6 +49,7 @@ func (is *InfluxStats) GetResetStats() *InfluxStats {
 	is.FieldSent = 0
 	is.FieldSentMax = 0
 	is.PSent = 0
+	is.PDropped = 0
 	is.PSentMax = 0
 	is.WriteSent = 0
 	is.WriteErrors = 0
@@ -55,35 +59,37 @@ func (is *InfluxStats) GetResetStats() *InfluxStats {
 	return retstat
 }
 
-// WriteOkUpdate update stats on write ok
-func (is *InfluxStats) WriteOkUpdate(ps int64, fs int64, wt time.Duration, bufferPercent float32) {
+// FillStats updates in threadsafe the current SinkDBStats
+func (is *SinkDBStats) FillStats(ps, pd, fs, ws, we int64, wt time.Duration, bpUsed float32) {
 	is.mutex.Lock()
 	defer is.mutex.Unlock()
+	// PointSent
 	if is.PSentMax < ps {
 		is.PSentMax = ps
 	}
+	is.PSent += ps
+
+	// PDropped
+	is.PDropped += pd
+
+	// Write Time
 	if is.WriteTimeMax < wt {
 		is.WriteTimeMax = wt
 	}
+	is.WriteTime += wt
+
+	// FieldSent
 	if is.FieldSentMax < fs {
 		is.FieldSentMax = fs
 	}
-	is.WriteSent++
 	is.FieldSent += fs
-	is.PSent += ps
-	is.WriteTime += wt
-	is.BufferPercentUsed = bufferPercent
-}
 
-// WriteErrUpdate update stats on write error
-func (is *InfluxStats) WriteErrUpdate(wt time.Duration, bufferPercent float32) {
-	is.mutex.Lock()
-	defer is.mutex.Unlock()
+	// WriteSent, WriteErrors
+	is.WriteSent += ws
+	is.WriteErrors += we
 
-	if is.WriteTimeMax < wt {
-		is.WriteTimeMax = wt
+	// BufferPercentUsed
+	if is.BufferPercentUsed < bpUsed {
+		is.BufferPercentUsed = bpUsed
 	}
-	is.WriteErrors++
-	is.WriteTime += wt
-	is.BufferPercentUsed = bufferPercent
 }

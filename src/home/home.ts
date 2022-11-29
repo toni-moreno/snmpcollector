@@ -29,11 +29,13 @@ export class Home {
   nativeWindow: any
   response: string;
   api: string;
-  item_type: string;
+  item_type: {'item': string, 'parent': string} = {'item': '', 'parent': 'none'};
   version: RInfo;
   configurationItems : Array<any> = [
   {'title': 'Variable Catalog', 'selector' : 'varcatalog'},
-  {'title': 'Influx Servers', 'selector' : 'influxserver'},
+  {'title': 'Outputs', 'selector': 'output'},
+  {'title': 'Kafka Servers', 'selector' : 'kafkaserver', 'parent': 'output'},
+  {'title': 'Influx Servers', 'selector' : 'influxserver', 'parent': 'output'},
   {'title': 'OID Conditions', 'selector' : 'oidcondition'},
   {'title': 'SNMP Metrics', 'selector' : 'snmpmetric'},
   {'title': 'Measurements', 'selector' : 'measurement'},
@@ -56,7 +58,7 @@ export class Home {
   constructor(private winRef: WindowRef,public router: Router, public httpAPI: HttpService, private _blocker: BlockUIService, public homeService: HomeService) {
     this.nativeWindow = winRef.nativeWindow;
     this.getFooterInfo();
-    this.item_type= "runtime";
+    this.item_type.item= "runtime";
   }
 
   link(url: string) {
@@ -80,9 +82,9 @@ export class Home {
     this.mode = !this.mode
   }
 
-  clickMenu(selected : string) : void {
-    this.item_type = "";
-    this.item_type = selected;
+  clickMenu(selected : string, parent: string = 'none') : void {
+    this.item_type.item = selected;
+    this.item_type.parent = parent
   }
 
   showImportModal() {

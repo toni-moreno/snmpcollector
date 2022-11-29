@@ -59,8 +59,10 @@ const (
 	DeviceActive = 21
 	// DeviceConnected 1 if connected 0 if not
 	DeviceConnected = 22
+	// MetricsDropped all metrics that are discarded due to full buffer
+	MeasurementDropped = 23
 	// DevStatTypeSize special value to set the last stat position
-	DevStatTypeSize = 23
+	DevStatTypeSize = 24
 )
 
 // GatherStats minimal info to show users
@@ -126,6 +128,7 @@ func (s *GatherStats) Init(t string, id string, tm map[string]string, l utils.Lo
 	s.Counters[BackEndSentDuration] = 0.0
 	s.Counters[DeviceActive] = 0
 	s.Counters[DeviceConnected] = 0
+	s.Counters[MeasurementDropped] = 0
 }
 
 func (s *GatherStats) reset() {
@@ -218,6 +221,7 @@ func (s *GatherStats) getMetricFields() map[string]interface{} {
 		/*12*/ "metric_sent_errors": s.Counters[MetricSentErrors],
 		/*13*/ "measurement_sent": s.Counters[MeasurementSent],
 		/*14*/ "measurement_sent_errors": s.Counters[MeasurementSentErrors],
+		/*23*/ "measurement_dropped": s.Counters[MeasurementDropped],
 		/*15*/ "cycle_gather_start_time": s.Counters[CycleGatherStartTime],
 		/*16*/ "cycle_gather_duration": s.Counters[CycleGatherDuration],
 		/*17*/ "filter_start_time": s.Counters[FilterStartTime],
@@ -290,7 +294,7 @@ func (s *GatherStats) Send() {
 		connectedTag = "true"
 		s.log.Infof("[%s] STATS SNMP GET: snmp polling took [%f seconds] SNMP: Gets [%d] , Processed [%d], Errors [%d]", s.Type, s.Counters[CycleGatherDuration], s.Counters[SnmpOIDGetAll], s.Counters[SnmpOIDGetProcessed], s.Counters[SnmpOIDGetErrors])
 		s.log.Infof("[%s] STATS SNMP FILTER: filter polling took [%f seconds] ", s.Type, s.Counters[FilterDuration])
-		s.log.Infof("[%s] STATS INFLUX: influx send took [%f seconds]", s.Type, s.Counters[BackEndSentDuration])
+		s.log.Infof("[%s] STATS BUFFER: buffer send took [%f seconds]", s.Type, s.Counters[BackEndSentDuration])
 		fields = s.getMetricFields()
 	case s.Active && !s.Connected:
 		activeTag = "true"
@@ -345,6 +349,7 @@ func (s *GatherStats) Combine(sc *GatherStats) {
 	s.Counters[MetricSentErrors] = s.Counters[MetricSentErrors].(int) + sc.Counters[MetricSentErrors].(int)
 	s.Counters[MeasurementSent] = s.Counters[MeasurementSent].(int) + sc.Counters[MeasurementSent].(int)
 	s.Counters[MeasurementSentErrors] = s.Counters[MeasurementSentErrors].(int) + sc.Counters[MeasurementSentErrors].(int)
+	s.Counters[MeasurementDropped] = s.Counters[MeasurementDropped].(int) + sc.Counters[MeasurementDropped].(int)
 	// Snmp Stats
 	s.Counters[SnmpOIDGetAll] = s.Counters[SnmpOIDGetAll].(int) + sc.Counters[SnmpOIDGetAll].(int)
 	s.Counters[SnmpOIDGetProcessed] = s.Counters[SnmpOIDGetProcessed].(int) + sc.Counters[SnmpOIDGetProcessed].(int)
@@ -361,13 +366,15 @@ func (s *GatherStats) Combine(sc *GatherStats) {
 }
 
 // AddMeasStats add measurement stats to the device stats object
-func (s *GatherStats) AddMeasStats(mets int64, mete int64, meass int64, mease int64) {
+func (s *GatherStats) AddMeasStats(mets int64, mete int64, meass int64, mease int64, measd int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.Counters[MetricSent] = s.Counters[MetricSent].(int) + int(mets)
 	s.Counters[MetricSentErrors] = s.Counters[MetricSentErrors].(int) + int(mete)
 	s.Counters[MeasurementSent] = s.Counters[MeasurementSent].(int) + int(meass)
 	s.Counters[MeasurementSentErrors] = s.Counters[MeasurementSentErrors].(int) + int(mease)
+	s.Counters[MeasurementDropped] = s.Counters[MeasurementDropped].(int) + int(measd)
+
 }
 
 // UpdateSnmpGetStats update snmp statistics

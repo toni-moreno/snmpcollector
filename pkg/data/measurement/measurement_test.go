@@ -59,16 +59,16 @@ func OrderMapByKey(m map[string]string) string {
 	return buffer.String()
 }
 
-func GetOutputInfluxMetrics(m *Measurement) {
-	m.Log.Infof("GOT MEAS --> %+v", m)
+func GetOutputGenericMetrics(m *Measurement) {
+	m.Log.Infof("Processing measurement %+v", m)
 
-	metSent, metError, measSent, measError, ptarray := m.GetInfluxPoint(map[string]string{})
+	metSent, metError, measSent, measError, ptarray := m.GenMetrics(map[string]string{})
 
 	m.Log.Infof("METRIC SENT[%d],METRIC ERROR[%d],MEAS SENT[%d], MEAS ERROR[%d]", metSent, metError, measSent, measError)
 
 	for _, v := range ptarray {
 		m.Log.Infof("GOT V %+v", v)
-		fields, _ := v.Fields()
+		fields := v.Fields()
 		tags := OrderMapByKey(v.Tags())
 
 		for fname, fvalue := range fields {
@@ -200,7 +200,7 @@ func Example_Measurement_GetMode_Value() {
 
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:52
@@ -390,7 +390,7 @@ func Example_Measurement_GetMode_Indexed() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:input ValueType:int64  Value:51
@@ -529,7 +529,7 @@ func Example_Measurement_GetMode_Indexed_Indirect() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:input ValueType:int64  Value:51
@@ -697,7 +697,7 @@ func Example_Measurement_GetMode_Indexed_Multi_Indirect() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth1 } Field:input ValueType:int64  Value:51
@@ -864,7 +864,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portAlias:myPort2, portDesc:Not defined, portName:Not defined } Field:input ValueType:int64  Value:52
@@ -1025,7 +1025,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndexDIM2() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1183,7 +1183,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1337,7 +1337,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1495,7 +1495,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLSTRING() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1653,7 +1653,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1818,7 +1818,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_SKIP_CUSTOMRESULT_COMPL
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ ifType:5, portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1972,6 +1972,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_C
 
 	// 6.- MEASUREMENT ENGINE SETUP
 
+	l.SetLevel(logrus.DebugLevel)
 	m := New(cfg, []string{}, map[string]*config.MeasFilterCfg{}, true, l)
 	m.SetSNMPClient(cli)
 
@@ -1983,7 +1984,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_C
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ ifType:5, portDesc:port1, portName:eth1 } Field:input ValueType:int64  Value:51
@@ -1994,6 +1995,10 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_DIM2_FILLNONE_CUSTOMRESULT_C
 	// Measurement:interfaces_data Tags:{ ifType:5, portDesc:port3 } Field:output ValueType:int64  Value:23
 	// Measurement:interfaces_data Tags:{ ifType:6, portDesc:port4 } Field:input ValueType:int64  Value:54
 	// Measurement:interfaces_data Tags:{ ifType:6, portDesc:port4 } Field:output ValueType:int64  Value:24
+
+	// GetOutputGenericMetricsInflux(m)
+	// // Unordered Output:
+
 }
 
 func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
@@ -2204,7 +2209,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_CMSTATS() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ cmInfo:3, cmName:NonLocal, ifName:FastEthernet0/0, policyDirection:1, policyMapName:CPP } Field:cbQosCMPrePolicyByte64 ValueType:int64  Value:69858
@@ -2333,8 +2338,8 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 
 	metrics := map[string]*config.SnmpMetricCfg{
 		"cisco_cbQosMatchPrePolicyPkt64": {
-			ID: "cisco_cbQosMatchPrePolicyPkt64",
-			FieldName: "cbQosMatchPrePolicyPkt64	",
+			ID:          "cisco_cbQosMatchPrePolicyPkt64",
+			FieldName:   "cbQosMatchPrePolicyPkt64	",
 			Description: "",
 			BaseOID:     ".1.3.6.1.4.1.9.9.166.1.16.1.1.3",
 			DataSrcType: "Counter64",
@@ -2448,7 +2453,7 @@ func Example_Measurement_GetMode_Indexed_MultiIndex_QOS_MATCH_NAME() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ cmName:ICMP, ifName:FastEthernet0/0, matchStmtName:CLASS_BACKUP, policyDirection:2, policyMapName:LAN_Out } Field:cbQosMatchPrePolicyPkt64	 ValueType:int64  Value:8
@@ -2600,7 +2605,7 @@ func Example_Measurement_value_STRINGEVAL() {
 
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:test_name Tags:{} Field:metric_2_name ValueType:int64  Value:52
@@ -2742,7 +2747,7 @@ func Example_Measurement_Indexed_STRINGEVAL() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth2 } Field:input ValueType:int64  Value:52
@@ -2898,7 +2903,7 @@ func Example_Measurement_Indexed_Indirect_STRINGEVAL() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth2 } Field:input ValueType:int64  Value:52
@@ -3068,7 +3073,7 @@ func Example_Measurement_Indexed_Multi_Indirect_STRINGEVAL() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ portName:eth2 } Field:input ValueType:int64  Value:52
@@ -3206,7 +3211,7 @@ func Example_Measurement_GetMode_Indexed_MULTISTRINGPARSER_SKIPFIELD() {
 		return
 	}
 
-	GetOutputInfluxMetrics(m)
+	GetOutputGenericMetrics(m)
 
 	// Unordered Output:
 	// Measurement:interfaces_data Tags:{ myValue:value2, portName:eth2 } Field:output ValueType:int64  Value:22

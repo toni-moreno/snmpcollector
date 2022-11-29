@@ -29,6 +29,8 @@ import { SnmpMetricCfgComponent } from './snmpmetric/snmpmetriccfg.component';
 import { MeasurementCfgComponent } from './measurement/measurementcfg.component';
 import { MeasGroupCfgComponent } from './measgroup/measgroupcfg.component';
 import { MeasFilterCfgComponent } from './measfilter/measfiltercfg.component';
+import { OutputCfgComponent } from './output/outputcfg.component';
+import { KafkaServerCfgComponent } from './kafkaserver/kafkaservercfg.component';
 import { InfluxServerCfgComponent } from './influxserver/influxservercfg.component';
 import { RuntimeComponent } from './runtime/runtime.component';
 import { CustomFilterCfgComponent } from './customfilter/customfiltercfg.component';
@@ -81,6 +83,8 @@ import { SwaggerUiComponent} from './swagger-ui/swagger-ui.component';
     MeasurementCfgComponent,
     MeasGroupCfgComponent,
     MeasFilterCfgComponent,
+    OutputCfgComponent,
+    KafkaServerCfgComponent,
     InfluxServerCfgComponent,
     CustomFilterCfgComponent,
     VarCatalogCfgComponent,

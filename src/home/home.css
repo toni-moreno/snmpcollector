@@ -1,3 +1,8 @@
 .body {
  background-color: #C1BFBF;
 }
+
+.child {
+ padding-left: 8px;
+ font-size: 12px;
+}

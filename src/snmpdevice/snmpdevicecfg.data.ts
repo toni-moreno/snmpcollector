@@ -12,7 +12,7 @@ export const SnmpDeviceCfgComponentConfig: any =
       { title: 'Polling Period (sec)', name: 'Freq' },
       { title: 'Update Filter (Cycles)', name: 'UpdateFltFreq' },
       { title: 'Concurrent Gather', name: 'ConcurrentGather' },
-      { title: 'Influx DB', name: 'OutDB' },
+      { title: 'Output', name: 'OutDB' },
       { title: 'Log Level', name: 'LogLevel' },
       { title: 'Disable Snmp Bulk Queries', name: 'DisableBulk' },
       { title: 'MaxOids for SNMP GET', name: 'MaxOids' },

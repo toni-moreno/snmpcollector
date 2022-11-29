@@ -2,7 +2,11 @@ import { Component, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { FormBuilder, Validators} from '@angular/forms';
 import { FormArray, FormGroup, FormControl} from '@angular/forms';
 
-import { InfluxServerService } from './influxservercfg.service';
+import { KafkaServerService } from '../kafkaserver/kafkaservercfg.service';
+import { InfluxServerService } from '../influxserver/influxservercfg.service';
+
+
+import { OutputService } from './outputcfg.service';
 import { ValidationService } from '../common/validation.service'
 import { ExportServiceCfg } from '../common/dataservice/export.service'
 
@@ -15,29 +19,37 @@ import { TableActions } from '../common/table-actions';
 import { AvailableTableActions } from '../common/table-available-actions';
 
 import { TableListComponent } from '../common/table-list.component';
-import { InfluxServerCfgComponentConfig, TableRole, OverrideRoleActions } from './influxservercfg.data';
+import { OutputCfgComponentConfig, TableRole, OverrideRoleActions } from './outputcfg.data';
+
+import { IMultiSelectOption, IMultiSelectSettings, IMultiSelectTexts } from '../common/multiselect-dropdown';
 
 declare var _:any;
 
 @Component({
-  selector: 'influxservers',
-  providers: [InfluxServerService, ValidationService],
-  templateUrl: './influxservereditor.html',
+  selector: 'outputs',
+  providers: [OutputService, ValidationService, KafkaServerService, InfluxServerService],
+  templateUrl: './outputeditor.html',
   styleUrls: ['../css/component-styles.css']
 })
 
-export class InfluxServerCfgComponent {
+export class OutputCfgComponent {
   @ViewChild('viewModal') public viewModal: GenericModal;
   @ViewChild('viewModalDelete') public viewModalDelete: GenericModal;
   @ViewChild('exportFileModal') public exportFileModal : ExportFileModal;
 
   itemsPerPageOptions : any = ItemsPerPageOptions;
   editmode: string; //list , create, modify
-  influxservers: Array<any>;
+  outputs: Array<any>;
   filter: string;
-  influxserverForm: any;
+  outputForm: any;
   myFilterValue: any;
   alertHandler : any = null;
+
+  private mySettings: IMultiSelectSettings = {
+    singleSelect: true,
+    returnOption: true,
+    uniqueSelect: true,
+};
 
 
   //Initialization data, rows, colunms for Table
@@ -46,7 +58,7 @@ export class InfluxServerCfgComponent {
   public tableAvailableActions : any;
 
   selectedArray : any = [];
-  public defaultConfig : any = InfluxServerCfgComponentConfig;
+  public defaultConfig : any = OutputCfgComponentConfig;
   public tableRole : any = TableRole;
   public overrideRoleActions: any = OverrideRoleActions;
   public isRequesting : boolean;
@@ -61,6 +73,10 @@ export class InfluxServerCfgComponent {
   private builder;
   private oldID : string;
   
+  backends: Array<any>;
+  selectbackends: IMultiSelectOption[] = [];
+
+
   //Set config
   public config: any = {
     paging: true,
@@ -69,41 +85,34 @@ export class InfluxServerCfgComponent {
     className: ['table-striped', 'table-bordered']
   };
 
-  constructor(public influxServerService: InfluxServerService, public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
+  constructor(public outputService: OutputService, public influxServerService: InfluxServerService, public kafkaServerService: KafkaServerService,  public exportServiceCfg : ExportServiceCfg, builder: FormBuilder) {
     this.editmode = 'list';
     this.reloadData();
     this.builder = builder;
   }
 
   createStaticForm() {
-    this.influxserverForm = this.builder.group({
-      ID: [this.influxserverForm ? this.influxserverForm.value.ID : '', Validators.required],
-      Host: [this.influxserverForm ? this.influxserverForm.value.Host : '', Validators.required],
-      Port: [this.influxserverForm ? this.influxserverForm.value.Port : '', Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
-      DB: [this.influxserverForm ? this.influxserverForm.value.DB : '', Validators.required],
-      User: [this.influxserverForm ? this.influxserverForm.value.User : '', Validators.required],
-      Password: [this.influxserverForm ? this.influxserverForm.value.Password : '', Validators.required],
-      Retention: [this.influxserverForm ? this.influxserverForm.value.Retention : 'autogen', Validators.required],
-      Precision: [this.influxserverForm ? this.influxserverForm.value.Precision : 's', Validators.required],
-      Timeout: [this.influxserverForm ? this.influxserverForm.value.Timeout : 30, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
-      UserAgent: [this.influxserverForm ? this.influxserverForm.value.UserAgent : ''],
-      EnableSSL: [this.influxserverForm ? this.influxserverForm.value.EnableSSL : 'false'],
-      SSLCA: [this.influxserverForm ? this.influxserverForm.value.SSLCA : ''],
-      SSLCert: [this.influxserverForm ? this.influxserverForm.value.SSLCert : ''],
-      SSLKey: [this.influxserverForm ? this.influxserverForm.value.SSLKey : ''],
-      InsecureSkipVerify: [this.influxserverForm ? this.influxserverForm.value.InsecureSkipVerify : 'true'],
-      Description: [this.influxserverForm ? this.influxserverForm.value.Description : '']
+    this.outputForm = this.builder.group({
+      ID: [this.outputForm ? this.outputForm.value.ID : '', Validators.required],
+      BackendType: [this.outputForm ? this.outputForm.value.BackendType : '', Validators.required],
+      Active: [this.outputForm ? this.outputForm.value.Active : 'true', Validators.required],
+      EnqueueOnError: [this.outputForm ? this.outputForm.value.EnqueueOnError : 'true', Validators.required],
+      BufferSize: [this.outputForm ? this.outputForm.value.BufferSize : 131070, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
+      MetricBatchSize: [this.outputForm ? this.outputForm.value.MetricBatchSize : 15000, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
+      FlushInterval: [this.outputForm ? this.outputForm.value.FlushInterval : 60, Validators.compose([Validators.required, ValidationService.uintegerNotZeroValidator])],
+      Backend: [this.outputForm ? this.outputForm.value.Backend : '', Validators.required],
+      Description: [this.outputForm ? this.outputForm.value.Description : '']
     });
   }
 
   reloadData() {
     // now it's a simple subscription to the observable
     this.alertHandler = null;
-    this.influxServerService.getInfluxServer(null)
+    this.outputService.getOutput(null)
       .subscribe(
       data => {
         this.isRequesting = false;
-        this.influxservers = data
+        this.outputs = data
         this.data = data;
       },
       err => console.error(err),
@@ -137,12 +146,12 @@ export class InfluxServerCfgComponent {
         this.exportItem(action.event);
       break;
       case 'new' :
-        this.newInfluxServer()
+        this.newOutput()
       case 'view':
         this.viewItem(action.event);
       break;
       case 'edit':
-        this.editInfluxServer(action.event);
+        this.editOutput(action.event);
       break;
       case 'remove':
         this.removeItem(action.event);
@@ -168,8 +177,8 @@ export class InfluxServerCfgComponent {
     this.isRequesting = true;
     for (let i in myArray) {
       console.log("Removing ",myArray[i].ID)
-      this.deleteInfluxServer(myArray[i].ID,true);
-      obsArray.push(this.deleteInfluxServer(myArray[i].ID,true));
+      this.deleteOutput(myArray[i].ID,true);
+      obsArray.push(this.deleteOutput(myArray[i].ID,true));
     }
     this.genericForkJoin(obsArray);
   }
@@ -177,7 +186,7 @@ export class InfluxServerCfgComponent {
   removeItem(row) {
     let id = row.ID;
     console.log('remove', id);
-    this.influxServerService.checkOnDeleteInfluxServer(id)
+    this.outputService.checkOnDeleteOutput(id)
       .subscribe(
       data => {
         console.log(data);
@@ -188,18 +197,21 @@ export class InfluxServerCfgComponent {
       () => { }
       );
   }
-  newInfluxServer() {
+  newOutput() {
     //No hidden fields, so create fixed Form
     this.createStaticForm();
+    this.getBackendsforOutput();
     this.editmode = "create";
   }
 
-  editInfluxServer(row) {
+  
+  editOutput(row) {
     let id = row.ID;
-    this.influxServerService.getInfluxServerById(id)
+    this.getBackendsforOutput()
+    this.outputService.getOutputById(id)
       .subscribe(data => {
-        this.influxserverForm = {};
-        this.influxserverForm.value = data;
+        this.outputForm = {};
+        this.outputForm.value = data;
         this.oldID = data.ID
         this.createStaticForm();
         this.editmode = "modify";
@@ -208,15 +220,15 @@ export class InfluxServerCfgComponent {
       );
  	}
 
-  deleteInfluxServer(id, recursive?) {
+  deleteOutput(id, recursive?) {
     if (!recursive) {
-    this.influxServerService.deleteInfluxServer(id)
+    this.outputService.deleteOutput(id)
       .subscribe(data => { },
       err => console.error(err),
       () => { this.viewModalDelete.hide(); this.editmode = "list"; this.reloadData() }
       );
     } else {
-      return this.influxServerService.deleteInfluxServer(id, true)
+      return this.outputService.deleteOutput(id, true)
       .do(
         (test) =>  { this.counterItems++},
         (err) => { this.counterErrors.push({'ID': id, 'error' : err})}
@@ -229,9 +241,10 @@ export class InfluxServerCfgComponent {
     this.reloadData();
   }
 
-  saveInfluxServer() {
-    if (this.influxserverForm.valid) {
-      this.influxServerService.addInfluxServer(this.influxserverForm.value)
+  saveOutput() {
+    if (this.outputForm.valid) {
+      console.log(this.outputForm)
+      this.outputService.addOutput(this.outputForm.value)
         .subscribe(data => { console.log(data) },
         err => {
           console.log(err);
@@ -248,7 +261,7 @@ export class InfluxServerCfgComponent {
     if (!append)
     for (let component of mySelectedArray) {
       component[field] = value;
-      obsArray.push(this.updateInfluxServer(true,component));
+      obsArray.push(this.updateOutput(true,component));
     } else {
       let tmpArray = [];
       if(!Array.isArray(value)) value = value.split(',');
@@ -260,7 +273,7 @@ export class InfluxServerCfgComponent {
         tmpArray = newEntries.concat(component[field])
         console.log(tmpArray);
         component[field] = tmpArray;
-        obsArray.push(this.updateInfluxServer(true,component));
+        obsArray.push(this.updateOutput(true,component));
       }
     }
     this.genericForkJoin(obsArray);
@@ -268,15 +281,15 @@ export class InfluxServerCfgComponent {
     this.counterErrors = [];
   }
 
-  updateInfluxServer(recursive?, component?) {
+  updateOutput(recursive?, component?) {
     if(!recursive) {
-      if (this.influxserverForm.valid) {
+      if (this.outputForm.valid) {
         var r = true;
-        if (this.influxserverForm.value.ID != this.oldID) {
-          r = confirm("Changing Influx Server ID from " + this.oldID + " to " + this.influxserverForm.value.ID + ". Proceed?");
+        if (this.outputForm.value.ID != this.oldID) {
+          r = confirm("Changing Output ID from " + this.oldID + " to " + this.outputForm.value.ID + ". Proceed?");
         }
         if (r == true) {
-          this.influxServerService.editInfluxServer(this.influxserverForm.value, this.oldID, true)
+          this.outputService.editOutput(this.outputForm.value, this.oldID, true)
             .subscribe(data => { console.log(data) },
             err => console.error(err),
             () => { this.editmode = "list"; this.reloadData() }
@@ -284,7 +297,7 @@ export class InfluxServerCfgComponent {
         }
       }
     } else {
-      return this.influxServerService.editInfluxServer(component, component.ID)
+      return this.outputService.editOutput(component, component.ID)
       .do(
         (test) =>  { this.counterItems++ },
         (err) => { this.counterErrors.push({'ID': component['ID'], 'error' : err['_body']})}
@@ -295,19 +308,47 @@ export class InfluxServerCfgComponent {
     }
   }
 
-
-  testInfluxServerConnection() {
-    this.influxServerService.testInfluxServer(this.influxserverForm.value, true)
-    .subscribe(
-    data =>  this.alertHandler = {msg: 'Influx Version: '+data['Message'], result : data['Result'], elapsed: data['Elapsed'], type: 'success', closable: true},
-    err => {
-        let error = err.json();
-        this.alertHandler = {msg: error['Message'], elapsed: error['Elapsed'], result : error['Result'], type: 'danger', closable: true}
-      },
-    () =>  { console.log("DONE")}
-  );
-
+  selectBackend(event: any) {
+    let composename = event.split("..")
+    if (event != "" && composename.length > 1) {
+      for (let entry of this.selectbackends) {
+        if (composename[0] == entry["id"] && composename[1] == entry["badge"]) {
+          this.outputForm.controls["BackendType"].setValue(composename[1])
+        }
+      }
+    }
   }
+
+  getBackendsforOutput() {
+    this.selectbackends = [];
+    this.backends = [];
+
+    this.influxServerService.getInfluxServer(null)
+      .subscribe(
+      data => {
+        this.backends.push(data);
+        for (let entry of data) {
+          console.log(entry)
+          this.selectbackends.push({ 'id': entry.ID, 'name': entry.ID, 'badge': "influxdb", 'parent': true });
+        }
+       },
+      err => console.error(err),
+      () => console.log('DONE')
+      );
+    this.kafkaServerService.getKafkaServer(null)
+    .subscribe(
+      data => {
+        this.backends.push(data);
+        for (let entry of data) {
+          console.log(entry)
+          this.selectbackends.push({ 'id': entry.ID, 'name': entry.ID, 'badge': "kafka", 'parent': true });
+        }
+       },
+      err => console.error(err),
+      () => console.log('DONE')
+      );
+  }
+
 
   genericForkJoin(obsArray: any) {
     Observable.forkJoin(obsArray)

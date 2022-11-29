@@ -1,19 +1,17 @@
-export const InfluxServerCfgComponentConfig: any =
+export const OutputCfgComponentConfig: any =
   {
-    'name' : 'Outputs > InfluxDB Server',
+    'name' : 'Outputs',
     'table-columns' : [
       { title: 'ID', name: 'ID' },
-      { title: 'Host', name: 'Host' },
-      { title: 'Port', name: 'Port' },
-      { title: 'Enable SSL',name:'EnableSSL'},
-      { title: 'DB', name: 'DB' },
-      { title: 'User', name: 'User' },
-      { title: 'Retention', name: 'Retention' },
-      { title: 'Precision', name: 'Precision' },
-      { title: 'Timeout', name: 'Timeout' },
-      { title: 'User Agent', name: 'UserAgent' }
+      { title: 'Active', name: 'Active' },
+      { title: 'Enq. On Error', name: 'EnqueueOnError' },
+      { title: 'BackendType', name: 'BackendType' },
+      { title: 'BufferSize', name: 'BufferSize' },
+      { title: 'MetricBatchSize', name: 'MetricBatchSize' },
+      { title: 'FlushInterval', name: 'FlushInterval' },
+      { title: 'Backend', name: 'Backend'}
     ],
-    'slug' : 'influxcfg'
+    'slug' : 'outputcfg'
   }; 
 
   export const TableRole : string = 'fulledit';

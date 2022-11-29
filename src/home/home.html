@@ -54,7 +54,7 @@
                     <span class="title-menu"><i class="glyphicon glyphicon-cog" style="padding-right: 8px"></i>Configuration</span>
                 </li>
                 <li *ngFor="let menuItem of configurationItems; let last=last" [ngClass]="last ? 'last-li' : ''">
-                    <a (click)="clickMenu(menuItem.selector)" role="button" [ngClass]="item_type === menuItem.selector ? 'active-menu' : ''">{{menuItem.title}}</a>
+                    <a (click)="clickMenu(menuItem.selector, menuItem.parent)" role="button" [ngClass]="(item_type.item === menuItem.selector || item_type.parent === menuItem.selector ? 'active-menu' : '') + (menuItem.parent ? ' child' : '')">{{menuItem.parent ? '- ' : ''}}{{menuItem.title}}</a>
                 </li>
 
                 <li class="last-li">
@@ -93,7 +93,13 @@
                     <export-file-modal #exportBulkFileModal [showValidation]="true" [bulkExport]="true" [prepareExport]="false" [textValidation]="'Export'" titleName='Exporting Data:'></export-file-modal>
 
                     <div class="col-lg-12">
-                        <p [ngSwitch]="item_type">
+                        <p [ngSwitch]="item_type.item">
+                            <ng-template ngSwitchCase="output">
+                                <outputs></outputs>
+                             </ng-template>
+                             <ng-template ngSwitchCase="kafkaserver">
+                                <kafkaservers></kafkaservers>
+                             </ng-template>  
                             <ng-template ngSwitchCase="influxserver">
                               <influxservers></influxservers>
                            </ng-template>

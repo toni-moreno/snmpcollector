@@ -1,0 +1,114 @@
+<h2>{{defaultConfig.name}}</h2>
+<ng-container [ngSwitch]="editmode">
+  <ng-template ngSwitchCase="list">
+    <test-modal #viewModal titleName='Output'></test-modal>
+    <test-modal #viewModalDelete titleName='Deleting:' [customMessage]="['Deleting this Output will affect the following components','Deleting this Output Server will NOT affect any component. Safe delete']" [customMessageClass]="['alert alert-danger','alert alert-success']"
+        [showValidation]="true" [textValidation]="'Delete'" [controlSize]="true" (validationClicked)="deleteOutput($event)">
+    </test-modal>
+    <export-file-modal #exportFileModal [showValidation]="true" [exportType]="defaultConfig['slug']" [textValidation]="'Export'" titleName='Exporting:'></export-file-modal>
+    <table-list #listTableComponent [typeComponent]="defaultConfig['slug']" [data]="data" [columns]="defaultConfig['table-columns']" [counterItems]="counterItems" [counterErrors]="counterErrors" [selectedArray]="selectedArray" [isRequesting]="isRequesting" [tableRole]="tableRole"
+    [sanitizeCell]="cellParser" [roleActions]="overrideRoleActions" (customClicked)="customActions($event)"></table-list>
+  </ng-template>
+  <ng-template ngSwitchDefault>
+    <form [formGroup]="outputForm" class="form-horizontal" (ngSubmit)="editmode === 'create' ? saveOutput() : updateOutput()">
+      <ng-container>
+        <div class="row well well-sm">
+          <h4 style="display:inline">
+          <i class="glyphicon glyphicon-cog text-info"></i> {{ editmode | uppercase}}
+        </h4>
+        <div class="pull-right" style="margin-right: 20px">
+          <div style="display:inline" tooltip='Submit' container=body><button class="btn btn-success" type="submit" [disabled]="!outputForm.valid"> <i class="glyphicon glyphicon-ok-circle"></i></button></div>
+          <div style="display:inline" tooltip='Reset' container=body><button class="btn btn-warning" type="reset" [disabled]="!outputForm.dirty"><i class="glyphicon glyphicon-ban-circle"></i> </button></div>
+          <div style="display:inline" tooltip='Cancel' container=body><button class="btn btn-danger" type="button" (click)="cancelEdit()"><i class="glyphicon glyphicon-remove-circle"></i></button></div>
+        </div>
+      </div>
+    </ng-container>
+    <div class="form-fixed-height">
+    <div class="well well-sm">
+      <span class="editsection">
+        Output Settings
+      </span>
+      <div class="form-group" style="margin-top: 25px">
+        <label class="control-label col-sm-2" for="ID">ID</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Unique identifier of Output"></i>
+        <div class="col-sm-9">
+          <input formControlName="ID" id="ID" [ngModel]="outputForm.value.ID"/>
+          <control-messages [control]="outputForm.controls.ID"></control-messages>
+        </div>
+      </div>
+			<div class="form-group">
+				<label class="control-label col-sm-2" for="Backend">Backend</label>
+				<i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Related backend to send data into"></i>
+				<div class="col-sm-9">
+            <ss-multiselect-dropdown [options]="selectbackends" formControlName="Backend" [texts]="myTexts" [extravar]="outputForm.value.BackendType"  [settings]="mySettings" [(ngModel)]="outputForm.value.Backend" (ngModelChange)="selectBackend($event)"></ss-multiselect-dropdown>            
+					  <control-messages [control]="outputForm.controls.Backend"></control-messages>
+            <label class="label label-info">{{outputForm.value.BackendType}}</label>
+				</div>
+			</div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="Active">Active</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Active output"></i>
+        <div class="col-sm-9">
+          <select formControlName="Active" id="Active" [ngModel]="outputForm.value.Active">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+          <control-messages [control]="outputForm.controls.Active"></control-messages>
+        </div>
+      </div>
+    </div>
+    <div class="well well-sm">
+      <span class="editsection">Buffer Settings</span>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="EnqueueOnError">EnqueueOnError</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="If true, the metrics remains on buffer, if false the metrics will be dropped if there are errors"></i>
+        <div class="col-sm-9">
+          <select formControlName="EnqueueOnError" id="EnqueueOnError" [ngModel]="outputForm.value.EnqueueOnError">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+          <control-messages [control]="outputForm.controls.EnqueueOnError"></control-messages>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="BufferSize">BufferSize</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Metrics buffersize, if buffer is full, metrics will be dropped"></i>
+        <div class="col-sm-9">
+          <input formControlName="BufferSize" id="BufferSize"  [ngModel]="outputForm.value.BufferSize"/>
+          <control-messages [control]="outputForm.controls.BufferSize"></control-messages>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="MetricBatchSize">MetricBatchSize</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Metrics batchsize, send the metrics in bathces with maximum metric size"></i>
+        <div class="col-sm-9">
+          <input formControlName="MetricBatchSize" id="MetricBatchSize"  [ngModel]="outputForm.value.MetricBatchSize"/>
+          <control-messages [control]="outputForm.controls.MetricBatchSize"></control-messages>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="FlushInterval">FlushInterval</label>
+        <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="FlushInterval interval to try to flush data into selected backend"></i>
+        <div class="col-sm-9">
+          <input formControlName="FlushInterval" id="FlushInterval" [ngModel]="outputForm.value.FlushInterval" />
+          <control-messages [control]="outputForm.controls.FlushInterval"></control-messages>
+        </div>
+      </div>
+    </div>
+    <div class="well well-sm">
+      <span class="editsection">
+        Extra Settings
+      </span>
+      <div class="form-group" style="margin-top: 25px">
+      <label class="control-label col-sm-2" for="Description">Description</label>
+      <i placement="top" style="float: left" class="info control-label glyphicon glyphicon-info-sign" tooltipAnimation="true" tooltip="Description of the Output"></i>
+      <div class="col-sm-9">
+        <textarea class="form-control" style="width: 50%" rows="2" formControlName="Description" id="Description" [ngModel]="outputForm.value.Description"> </textarea>
+        <control-messages [control]="outputForm.controls.Description"></control-messages>
+      </div>
+    </div>
+  </div>
+  </div>
+</form>
+  </ng-template>
+</ng-container>

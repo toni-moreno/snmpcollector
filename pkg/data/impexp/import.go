@@ -22,11 +22,13 @@ func (e *ExportData) ImportCheck() (*ExportData, error) {
 			o.Error = fmt.Sprintf("Error inconsistent data not ObjectCfg found on Imported data for id: %s", o.ObjectID)
 			return nil, errors.New(o.Error)
 		}
+		// try to marshal into a generic object
 		raw, err := json.Marshal(o.ObjectCfg)
 		if err != nil {
 			o.Error = fmt.Sprintf("error on reformating object %s: error: %s ", o.ObjectID, err)
 			return nil, errors.New(o.Error)
 		}
+		// iterate over all known types
 		switch o.ObjectTypeID {
 		case "snmpdevicecfg":
 			data := config.SnmpDeviceCfg{}
@@ -54,6 +56,36 @@ func (e *ExportData) ImportCheck() (*ExportData, error) {
 				break
 			}
 			_, err := dbc.GetInfluxCfgByID(o.ObjectID)
+			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
+				duplicated = append(duplicated, o)
+			}
+		case "kafkacfg":
+			data := config.KafkaCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
+			_, err := dbc.GetKafkaCfgByID(o.ObjectID)
+			if err == nil {
+				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
+				duplicated = append(duplicated, o)
+			}
+		case "outputcfg":
+			data := config.OutputCfg{}
+			json.Unmarshal(raw, &data)
+			ers := binding.RawValidate(data)
+			if ers.Len() > 0 {
+				e, _ := json.Marshal(ers)
+				o.Error = string(e)
+				duplicated = append(duplicated, o)
+				break
+			}
+			_, err := dbc.GetOutputCfgByID(o.ObjectID)
 			if err == nil {
 				o.Error = fmt.Sprintf("Duplicated object %s in the database", o.ObjectID)
 				duplicated = append(duplicated, o)
@@ -219,7 +251,50 @@ func (e *ExportData) Import(overwrite bool, autorename bool) error {
 			if err != nil {
 				return err
 			}
-
+		case "outputcfg":
+			log.Debugf("Importing outputcfg : %+v", o.ObjectCfg)
+			data := config.OutputCfg{}
+			json.Unmarshal(raw, &data)
+			var err error
+			_, err = dbc.GetOutputCfgByID(o.ObjectID)
+			if err == nil { // value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateOutputCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddOutputCfg(data)
+			if err != nil {
+				return err
+			}
+		case "kafkacfg":
+			log.Debugf("Importing kafkacfg : %+v", o.ObjectCfg)
+			data := config.KafkaCfg{}
+			json.Unmarshal(raw, &data)
+			var err error
+			_, err = dbc.GetKafkaCfgByID(o.ObjectID)
+			if err == nil { // value exist already in the database
+				if overwrite == true {
+					_, err2 := dbc.UpdateKafkaCfg(o.ObjectID, data)
+					if err2 != nil {
+						return fmt.Errorf("Error on overwrite object [%s] %s : %s", o.ObjectTypeID, o.ObjectID, err2)
+					}
+					break
+				}
+			}
+			if autorename == true {
+				data.ID = data.ID + suffix
+			}
+			_, err = dbc.AddKafkaCfg(data)
+			if err != nil {
+				return err
+			}
 		case "influxcfg":
 			log.Debugf("Importing influxcfg : %+v", o.ObjectCfg)
 			data := config.InfluxCfg{}

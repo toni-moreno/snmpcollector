@@ -261,7 +261,7 @@ func (m *Measurement) BuildMultiIndexLabels() (map[string]string, []string, erro
 	// Process dependencies | si: sort indexed | index: index info
 	for si, index := range allindex {
 		// Load on index Dependency all dependency params
-		m.Log.Debugf("[%s] - GOT INDEX MULTIPARAMS --> %+v", index.Label, index.Dependency)
+		m.Log.Debugf("[%s] - Got Index multiparams: %+v", index.Label, index.Dependency)
 
 		if index.Dependency != nil {
 			if index.Dependency.Index > len(allindex)-1 {
@@ -768,7 +768,7 @@ func (m *Measurement) loadIndexedLabels() (map[string]string, error) {
 		// i := strings.LastIndex(pdu.Name, ".")
 		suffix := pdu.Name[m.curIdxPos+1:]
 
-		if m.cfg.IndexAsValue == true {
+		if m.cfg.IndexAsValue {
 			allindex[suffix] = suffix
 			return nil
 		}
@@ -943,7 +943,7 @@ func (m *Measurement) GatherLoop(
 	varMap map[string]interface{},
 	tagMap map[string]string,
 	systemOIDs []string,
-	influxClient *output.InfluxDB,
+	output *output.SinkDB,
 	gatherLock *sync.Mutex,
 ) {
 	m.Log.Info("MeasurementLoop Fist Check....")
@@ -1066,7 +1066,7 @@ func (m *Measurement) GatherLoop(
 			// compute next gather time ( needed to show in the UI )
 			m.stats.SetGatherNextTime(time.Now().Add(time.Duration(gatherFreq) * time.Second).Unix())
 			// Gather
-			err := m.GatherOnce(gatherLock, varMap, tagMap, influxClient)
+			err := m.GatherOnce(gatherLock, varMap, tagMap, output)
 			if err != nil {
 				// if error is because of no response from any metric
 				// we can suppose the connection has been dropped
@@ -1088,7 +1088,7 @@ func (m *Measurement) GatherLoop(
 				m.filterUpdate()
 			case bus.ForceGather:
 				m.stats.ResetCounters()
-				m.GatherOnce(gatherLock, varMap, tagMap, influxClient)
+				m.GatherOnce(gatherLock, varMap, tagMap, output)
 			case bus.Enabled:
 				active, ok := val.Data.(bool)
 				if !ok {
@@ -1220,7 +1220,7 @@ func (m *Measurement) GatherOnce(
 	gatherLock *sync.Mutex,
 	varMap map[string]interface{},
 	tagMap map[string]string,
-	influxClient *output.InfluxDB,
+	output *output.SinkDB,
 ) error {
 	start := time.Now()
 	// Do not gather data if measurement is disabled or it doesn't have a connection or measurement is not initialized
@@ -1263,22 +1263,18 @@ func (m *Measurement) GatherOnce(
 
 	m.ComputeEvaluatedMetrics(varMap)
 
-	// prepare batchpoint
-	metSent, metError, measSent, measError, points := m.GetInfluxPoint(tagMap)
-	m.stats.AddMeasStats(metSent, metError, measSent, measError)
-
+	// prepare metrics
+	metSent, metError, measSent, measError, metrics := m.GenMetrics(tagMap)
+	var measDrop int
 	sentStats := time.Now()
-	// check if the influxClient is nil and skip the send process
-	if influxClient != nil {
-		bpts, _ := influxClient.BP()
-		if bpts != nil {
-			(*bpts).AddPoints(points)
-			// send data
-			influxClient.Send(bpts)
-		} else {
-			m.Log.Warnf("Can not send data to the output DB because of batchpoint creation error")
+	if output != nil {
+		tm, err := output.SendToBuffer(metrics, m.ID)
+		if err != nil {
+			measDrop = tm
+			m.Log.Errorf("unable to send metrics to the buffer - dropped metrics: %d, err: %s", measDrop, err)
 		}
 	}
+	m.stats.AddMeasStats(metSent, metError, measSent, measError, int64(measDrop))
 	elapsedSentStats := time.Since(sentStats)
 	m.stats.AddSentDuration(sentStats, elapsedSentStats)
 
@@ -1289,7 +1285,7 @@ func (m *Measurement) GatherOnce(
 	m.Stats = m.getBasicStats()
 	m.statsData.Unlock()
 	if nProcs == 0 {
-		return fmt.Errorf("Device not connected")
+		return fmt.Errorf("device not connected")
 	}
 	return nil
 }

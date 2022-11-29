@@ -8,6 +8,7 @@ import (
 	"github.com/toni-moreno/snmpcollector/pkg/agent/bus"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/device"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/output"
+	"github.com/toni-moreno/snmpcollector/pkg/agent/output/backend"
 	"github.com/toni-moreno/snmpcollector/pkg/agent/selfmon"
 	"github.com/toni-moreno/snmpcollector/pkg/config"
 	"github.com/toni-moreno/snmpcollector/pkg/data/stats"
@@ -70,8 +71,8 @@ var (
 	mutex sync.RWMutex
 	// devices is the runtime snmp devices map
 	devices map[string]*device.SnmpDevice
-	// influxdb is the runtime devices output db map
-	influxdb map[string]*output.InfluxDB
+	// outputs is the runtime devices output db map
+	outputs map[string]*output.SinkDB
 
 	selfmonProc *selfmon.SelfMon
 	// gatherWg synchronizes device specific goroutines
@@ -113,23 +114,62 @@ func CheckAndUnSetReloadProcess() bool {
 	return retval
 }
 
-// PrepareInfluxDBs initializes all configured output DBs in the SQL database.
+// PrepareOutputs initializes all configured output DBs in the SQL database.
 // If there is no "default" key, creates a dummy output db which does nothing.
-func PrepareInfluxDBs() map[string]*output.InfluxDB {
-	idb := make(map[string]*output.InfluxDB)
+func PrepareOutputs() map[string]*output.SinkDB {
+	outtemps := make(map[string]*output.SinkDB)
+	var err error
 
-	var defFound bool
-	for k, c := range DBConfig.Influxdb {
-		if k == "default" {
-			defFound = true
+	// Outputs finally follows his own lifecycle and has relation with backend as 1:1
+	// we need to retrieve all available outputs and retrieve the backend configuration based on map
+	// the influx/kafka params should be retrieved with special DBConfig as an interface
+	for id, out := range DBConfig.Outputs {
+		// load config
+		sinkDB := &output.SinkDB{
+			Cfg: out,
 		}
-		idb[k] = output.NewNotInitInfluxDB(c)
+		// supported outputs - kafka, influxdb
+		switch out.BackendType {
+		case "kafka":
+			if bcfg, ok := DBConfig.Kafka[out.Backend]; ok {
+				sinkDB.Backend, err = backend.NewNotInitKafka(bcfg)
+				if err != nil {
+					log.Errorf("Unable to initialize Kafka backend - %s", out.Backend)
+					continue
+				}
+			} else {
+				log.Errorf("Kafka server not found, output %s not registered", out.ID)
+				continue
+			}
+		case "influxdb":
+			if bcfg, ok := DBConfig.Influxdb[out.Backend]; ok {
+				sinkDB.Backend = backend.NewNotInitInfluxDB(bcfg)
+			} else {
+				log.Errorf("Influx server not found, output %s not registered", out.ID)
+				continue
+			}
+		}
+		// register on temp outputs
+		outtemps[id] = sinkDB
 	}
-	if defFound == false {
-		log.Warn("No Output default found influxdb devices found !!")
-		idb["default"] = output.DummyDB
+
+	if _, ok := outtemps["default"]; !ok {
+		log.Warn("No Output default devices found")
+		cfg := config.OutputCfg{
+			ID:             "dummy",
+			BackendType:    "dummy",
+			Backend:        "dummy",
+			Active:         false,
+			EnqueueOnError: false,
+			BufferSize:     0,
+		}
+		outtemps["default"] = &output.SinkDB{
+			Cfg:     &cfg,
+			Backend: backend.NewNotInitDummyDB(),
+		}
 	}
-	return idb
+	//return idb
+	return outtemps
 }
 
 // GetDevice returns the snmp device with the given id.
@@ -137,14 +177,14 @@ func PrepareInfluxDBs() map[string]*output.InfluxDB {
 func GetDevice(id string) (*device.SnmpDevice, error) {
 	var dev *device.SnmpDevice
 	var ok bool
-	if CheckReloadProcess() == true {
+	if CheckReloadProcess() {
 		log.Warning("There is a reload process running while trying to get device info")
-		return nil, fmt.Errorf("There is a reload process running.... please wait until finished ")
+		return nil, fmt.Errorf("there is a reload process running.... please wait until finished ")
 	}
 	mutex.RLock()
 	defer mutex.RUnlock()
 	if dev, ok = devices[id]; !ok {
-		return nil, fmt.Errorf("There is not any device with id %s running", id)
+		return nil, fmt.Errorf("there is not any device with id %s running", id)
 	}
 	return dev, nil
 }
@@ -154,9 +194,9 @@ func GetDevice(id string) (*device.SnmpDevice, error) {
 func GetDeviceJSONInfo(id string) ([]byte, error) {
 	var dev *device.SnmpDevice
 	var ok bool
-	if CheckReloadProcess() == true {
-		log.Warning("There is a reload process running while trying to get device info")
-		return nil, fmt.Errorf("There is a reload process running.... please wait until finished ")
+	if CheckReloadProcess() {
+		log.Warnf("There is a reload process running while trying to get device info")
+		return nil, fmt.Errorf("there is a reload process running.... please wait until finished ")
 	}
 	mutex.RLock()
 	defer mutex.RUnlock()
@@ -177,28 +217,28 @@ func GetDevStats() map[string]*stats.GatherStats {
 	return devstats
 }
 
-// StopInfluxOut stops sending data to output influxDB servers.
-func StopInfluxOut(idb map[string]*output.InfluxDB) {
+// StopInfluxOut stops sending data to output outputs servers.
+func StopOutputs(idb map[string]*output.SinkDB) {
 	for k, v := range idb {
-		log.Infof("Stopping Influxdb out %s", k)
+		log.Infof("Stopping output %s", k)
 		v.StopSender()
 	}
 }
 
-// ReleaseInfluxOut closes the influxDB connections and releases the associated resources.
-func ReleaseInfluxOut(idb map[string]*output.InfluxDB) {
+// ReleaseOutputs closes the output connections and releases the associated resources.
+func ReleaseOutputs(idb map[string]*output.SinkDB) {
 	for k, v := range idb {
-		log.Infof("Release Influxdb resources %s", k)
+		log.Infof("Release output resources %s", k)
 		v.End()
 	}
 }
 
-// DeviceProcessStop stops all device polling goroutines
+// DeviceProcessStop stops all device polling goroutines.
 func DeviceProcessStop() {
 	Bus.Broadcast(&bus.Message{Type: bus.Exit})
 }
 
-// DeviceProcessStart starts all device polling goroutines
+// DeviceProcessStart starts all device polling goroutines.
 func DeviceProcessStart() {
 	mutex.Lock()
 	devices = make(map[string]*device.SnmpDevice)
@@ -213,26 +253,34 @@ func init() {
 	go Bus.Start()
 }
 
-func initSelfMonitoring(idb map[string]*output.InfluxDB) {
-	log.Debugf("INFLUXDB2: %+v", idb)
+// initSelfMonitoring initialize the selfmon gourutine.
+func initSelfMonitoring(outdbs map[string]*output.SinkDB) {
+	// create new selfmon
 	selfmonProc = selfmon.NewNotInit(&MainConfig.Selfmon)
 
+	// if its enabled, try to find the default backend
 	if MainConfig.Selfmon.Enabled {
-		if val, ok := idb["default"]; ok {
-			// only executed if a "default" influxdb exist
-			val.Init()
-			val.StartSender(&senderWg)
+		if outdb, ok := outdbs["default"]; ok {
+			// initialize the related SinkDB and related sender
+			// declare our sinkdb as a container for generic output
+			err := outdb.Init()
+			if err != nil {
+				log.Errorf("Unable to init output - %s", err)
+				return
+			}
+			outdb.StartSender(&senderWg)
 
+			// initialize the selfmon proc and attach all the outputs
 			selfmonProc.Init()
-			selfmonProc.SetOutDB(idb)
-			selfmonProc.SetOutput(val)
+			selfmonProc.SetOutDB(outdbs)
+			selfmonProc.SetOutput(outdb)
 
 			log.Printf("SELFMON enabled %+v", MainConfig.Selfmon)
 			// Begin the statistic reporting
 			selfmonProc.StartGather(&gatherWg)
 		} else {
 			MainConfig.Selfmon.Enabled = false
-			log.Errorf("SELFMON disabled becaouse of no default db found !!! SELFMON[ %+v ]  INFLUXLIST[ %+v]\n", MainConfig.Selfmon, idb)
+			log.Errorf("SELFMON disabled, no default db found. Selfmon: [%+v] OutDB list: [%+v]\n", MainConfig.Selfmon, outdbs)
 		}
 	} else {
 		log.Printf("SELFMON disabled %+v\n", MainConfig.Selfmon)
@@ -251,12 +299,12 @@ func IsDeviceInRuntime(id string) bool {
 
 // DeleteDeviceInRuntime removes the device `id` from the runtime array.
 func DeleteDeviceInRuntime(id string) error {
-	// Avoid modifications to devices while deleting device
+	// Avoid modifications to devices while deleting device.
 	mutex.Lock()
 	defer mutex.Unlock()
 	if dev, ok := devices[id]; ok {
 		// Stop all device processes and its measurements. Once finished they will be removed
-		// from the bus and node closed (snmp connections for measurements will be closed)
+		// from the bus and node closed (snmp connections for measurements will be closed).
 		dev.StopGather()
 		log.Debugf("Bus retuned from the exit message to the ID device %s", id)
 		delete(devices, id)
@@ -268,20 +316,28 @@ func DeleteDeviceInRuntime(id string) error {
 
 // AddDeviceInRuntime initializes each SNMP device and puts the pointer to the global device map.
 func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
-	// Initialize each SNMP device and put pointer to the global map devices
+	// Initialize each SNMP device and put pointer to the global map devices.
 	dev := device.New(cfg)
 	dev.AttachToBus(Bus)
 	dev.InitCatalogVar(DBConfig.VarCatalog)
 	dev.SetSelfMonitoring(selfmonProc)
 
 	// send a db map to initialize each one its own db if needed
-	outdb, _ := dev.GetOutSenderFromMap(influxdb)
-	outdb.Init()
+	outdb, err := dev.GetOutSenderFromMap(outputs)
+	if err != nil {
+		log.Errorf("Unable to retrieve output from map - %s", err)
+		return
+	}
+	// declare our sinkdb as a container for generic output
+	err = outdb.Init()
+	if err != nil {
+		log.Errorf("Unable to init output - %s", err)
+		return
+	}
 	outdb.StartSender(&senderWg)
-
 	mutex.Lock()
 	devices[k] = dev
-	// Start gather goroutine for device and add it to the wait group for gather goroutines
+	// Start gather goroutine for device and add it to the wait group for gather goroutines.
 	gatherWg.Add(1)
 	go func() {
 		defer gatherWg.Done()
@@ -297,10 +353,10 @@ func AddDeviceInRuntime(k string, cfg *config.SnmpDeviceCfg) {
 // LoadConf loads the DB conf and initializes the device metric config.
 func LoadConf() {
 	MainConfig.Database.LoadDbConfig(&DBConfig)
-	influxdb = PrepareInfluxDBs()
+	outputs = PrepareOutputs()
 
 	// begin self monitoring process if needed, before all goroutines
-	initSelfMonitoring(influxdb)
+	initSelfMonitoring(outputs)
 	config.InitMetricsCfg(&DBConfig)
 }
 
@@ -329,11 +385,11 @@ func End() (time.Duration, error) {
 	// log.Info("DEBUG Gather WAIT %+v", GatherWg)
 	// log.Info("DEBUG SENDER WAIT %+v", senderWg)
 	// stop all Output Emitter
-	StopInfluxOut(influxdb)
+	StopOutputs(outputs)
 	log.Info("END: waiting for all Sender goroutines stop..")
 	senderWg.Wait()
 	log.Info("END: releasing Sender Resources")
-	ReleaseInfluxOut(influxdb)
+	ReleaseOutputs(outputs)
 	log.Infof("END: Finished from %s to %s [Duration : %s]", start.String(), time.Now().String(), time.Since(start).String())
 	return time.Since(start), nil
 }
@@ -341,9 +397,9 @@ func End() (time.Duration, error) {
 // ReloadConf stops the polling, reloads all configuration and restart the polling.
 func ReloadConf() (time.Duration, error) {
 	start := time.Now()
-	if CheckAndSetReloadProcess() == true {
+	if CheckAndSetReloadProcess() {
 		log.Warnf("RELOADCONF: There is another reload process running while trying to reload at %s  ", start.String())
-		return time.Since(start), fmt.Errorf("There is another reload process running.... please wait until finished ")
+		return time.Since(start), fmt.Errorf("there is another reload process running.... please wait until finished ")
 	}
 
 	log.Infof("RELOADCONF INIT: begin device Gather processes stop... at %s", start.String())
